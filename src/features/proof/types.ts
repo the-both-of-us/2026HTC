@@ -30,6 +30,21 @@ export type ProofSkill = {
   attemptedAt: string;
 };
 
+/** A "Read the Grid" question the person answered correctly, checked by code on the server. */
+export type ProofGridSolve = {
+  title: string;
+  /** "the reserve margin", for "Worked out the reserve margin from AESO's reading at 13:45". */
+  skill: string;
+  answer: string;
+  /** AESO's report time, in AESO's words, such as "Nov 07, 2026 13:45" (Alberta time). */
+  asOfLabel: string;
+  figures: { label: string; value: string }[];
+  working: string[];
+  /** The report was over 15 minutes old when it was solved. */
+  stale: boolean;
+  solvedAt: string;
+};
+
 /**
  * Everything the public page shows, frozen at publish time. This is what gets fingerprinted.
  * It never holds the owner id (that is their identity cookie), the map id or the source text.
@@ -44,6 +59,11 @@ export type ProofSnapshot = {
   totalSkills: number;
   skills: ProofSkill[];
   notYetProven: string[];
+  /**
+   * Only on an energy map whose owner solved a grid question. Left out otherwise, rather than
+   * set empty, so a record published before this field existed keeps the same fingerprint.
+   */
+  grid?: ProofGridSolve[];
   publishedAt: string;
 };
 

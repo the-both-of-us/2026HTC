@@ -12,6 +12,8 @@ export type Role = "Grid analyst" | "System operator" | "Field technician";
 type ExerciseBase = {
   id: string;
   title: string;
+  /** What solving it shows, for "Worked out ___ from AESO's reading" on an evidence page. */
+  skill: string;
   prompt: string;
   /** The real figures the learner works from. */
   figures: Figure[];
@@ -59,6 +61,7 @@ function directionExercise(s: GridSnapshot): ChoiceExercise {
     id: "direction",
     kind: "choice",
     title: "Importing or exporting?",
+    skill: "whether Alberta was importing or exporting",
     prompt: "Compare what Alberta generates with what it uses. Is it importing power, exporting power, or balanced?",
     figures: [
       { label: "Net generation", value: `${mw(s.generation)} MW` },
@@ -84,6 +87,7 @@ function windShareExercise(s: GridSnapshot): NumberExercise {
     id: "wind-share",
     kind: "number",
     title: "Wind's share",
+    skill: "wind's share of generation",
     prompt: "What percentage of Alberta's generation is coming from wind in this reading?",
     figures: [
       { label: "Wind output", value: `${mw(wind)} MW` },
@@ -117,6 +121,7 @@ function closestToMaxExercise(s: GridSnapshot): ChoiceExercise | null {
     id: "closest-to-max",
     kind: "choice",
     title: "Closest to its limit",
+    skill: "which fuel group was closest to its limit",
     prompt: "Of these fuel groups, which is running closest to its maximum capability?",
     figures: choices.map((group) => ({
       label: group.name,
@@ -148,6 +153,7 @@ function capacityFactorExercise(s: GridSnapshot): NumberExercise | null {
     id: "capacity-factor",
     kind: "number",
     title: "Renewable capacity factor",
+    skill: "the renewable capacity factor",
     prompt: "Across wind, solar and hydro together, what percentage of maximum capability is producing in this reading?",
     figures: RENEWABLE_FAMILIES.map((family) => ({
       label: FAMILY_LABELS[family],
@@ -176,6 +182,7 @@ function netLoadExercise(s: GridSnapshot): NumberExercise {
     id: "net-load",
     kind: "number",
     title: "Net load",
+    skill: "the net load",
     prompt: "Net load is demand minus wind and solar. It is what every other source has to cover. What is it in this reading?",
     figures: [
       { label: "Alberta load", value: `${mw(s.load)} MW` },
@@ -200,6 +207,7 @@ function gasHeadroomExercise(s: GridSnapshot): NumberExercise | null {
     id: "gas-headroom",
     kind: "number",
     title: "Gas headroom",
+    skill: "the gas headroom",
     prompt: "Headroom is maximum capability minus current output. Across all the gas groups, how many MW of headroom are there on paper?",
     figures: gas.map((group) => ({
       label: group.name,
@@ -229,6 +237,7 @@ function reserveExercise(s: GridSnapshot): NumberExercise | null {
     id: "reserve-margin",
     kind: "number",
     title: "Reserve margin",
+    skill: "the reserve margin",
     prompt: "Contingency reserve is capacity held ready in case a generator or line suddenly fails. How many MW is the dispatched reserve above the requirement? Use a negative number if it is below.",
     figures: [
       { label: "Dispatched reserve", value: `${mw(s.reserveDispatched)} MW` },

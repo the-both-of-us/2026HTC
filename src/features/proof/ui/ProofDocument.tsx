@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import type { ProofSnapshot } from "../types";
 import { DocumentActions } from "./DocumentActions";
+import { GridEvidence } from "./GridEvidence";
 import { formatDateTime, plural, roleLead } from "./format";
 import { PrintSummary } from "./PrintSummary";
 import { ProofQr } from "./ProofQr";
@@ -35,6 +36,7 @@ export function ProofDocument({ snapshot, hash, url }: ProofDocumentProps) {
           ))}
         </section>
 
+        {snapshot.grid && <GridEvidence solves={snapshot.grid} displayName={snapshot.displayName} />}
         <ProvesAndDoesNot />
         <HowChecked />
         <Fingerprint proofId={snapshot.proofId} hash={hash} />

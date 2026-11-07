@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { Check, CircleDashed, RefreshCw, TriangleAlert, X } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
-import { Button } from "@/shared/ui";
+import { Button, ErrorNotice } from "@/shared/ui";
 import {
   answerText,
   buildExercises,
@@ -12,7 +12,12 @@ import {
   type CheckResult,
   type Exercise,
 } from "../exercises";
-import type { GridSnapshot } from "../types";
+import type { GridReading, GridSnapshot } from "../types";
+
+type Reading = Extract<GridReading, { snapshot: GridSnapshot }>;
+
+/** Saving a correct answer to the learner's evidence. An error is a sentence to show. */
+type SaveState = { status: "saving" } | { status: "saved" } | { status: "failed"; message: string };
 
 type Attempt = {
   typed: string;
@@ -22,9 +27,12 @@ type Attempt = {
   revealed: boolean;
   /** Got it right without looking at the working first. */
   earned: boolean;
+  /** The answer sent when it was earned, so a failed save can be retried. */
+  sent: string | null;
+  save: SaveState | null;
 };
 
-const NEW_ATTEMPT: Attempt = { typed: "", chosen: null, result: null, revealed: false, earned: false };
+const NEW_ATTEMPT: Attempt = { typed: "", chosen: null, result: null, revealed: false, earned: false, sent: null, save: null };
 
 function Feedback({ result }: { result: CheckResult | null }) {
   if (!result) return null;
@@ -53,10 +61,35 @@ function Feedback({ result }: { result: CheckResult | null }) {
   );
 }
 
+/**
+ * The server checks the answer again with the same code, against the figures it signed, and
+ * only then saves it. It shows on the evidence page of the learner's energy skill maps.
+ */
+async function saveSolve(reading: Reading, exerciseId: string, answer: string): Promise<SaveState> {
+  try {
+    const response = await fetch("/api/grid/solves", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        exerciseId,
+        answer,
+        reading: { fetchedAt: reading.fetchedAt, seal: reading.seal, snapshot: reading.snapshot },
+      }),
+    });
+    if (response.ok) return { status: "saved" };
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { status: "failed", message: body?.error ?? "We couldn't save that answer. Please try again." };
+  } catch {
+    return { status: "failed", message: "We couldn't reach OryxLearn to save that answer. Check your connection and try again." };
+  }
+}
+
 /** Practice on real numbers: each question is built from one AESO reading, and code checks it. */
-export function ReadTheGrid({ snapshot }: { snapshot: GridSnapshot }) {
+export function ReadTheGrid({ reading }: { reading: Reading }) {
   // The numbers are pinned while someone works, so an answer can't shift under them.
-  const [pinned, setPinned] = useState(snapshot);
+  const [pinnedReading, setPinned] = useState(reading);
+  const pinned = pinnedReading.snapshot;
+  const snapshot = reading.snapshot;
   const exercises = useMemo(() => buildExercises(pinned), [pinned]);
   const [activeId, setActiveId] = useState(exercises[0]?.id ?? "");
   const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
@@ -69,29 +102,38 @@ export function ReadTheGrid({ snapshot }: { snapshot: GridSnapshot }) {
   const solved = exercises.filter((item) => attempts[item.id]?.earned).length;
   const newer = snapshot.asOf !== pinned.asOf;
 
-  const update = (change: Partial<Attempt>) =>
+  const updateFor = (exerciseId: string, change: Partial<Attempt>) =>
     setAttempts((current) => ({
       ...current,
-      [exercise.id]: { ...(current[exercise.id] ?? NEW_ATTEMPT), ...change },
+      [exerciseId]: { ...(current[exerciseId] ?? NEW_ATTEMPT), ...change },
     }));
+  const update = (change: Partial<Attempt>) => updateFor(exercise.id, change);
 
-  const record = (result: CheckResult, extra: Partial<Attempt> = {}) => {
+  const save = async (exerciseId: string, answer: string) => {
+    if (!pinnedReading.seal) return;
+    updateFor(exerciseId, { sent: answer, save: { status: "saving" } });
+    updateFor(exerciseId, { save: await saveSolve(pinnedReading, exerciseId, answer) });
+  };
+
+  const record = (result: CheckResult, answer: string, extra: Partial<Attempt> = {}) => {
     const correct = result.outcome === "correct";
+    const earnedNow = correct && !attempt.revealed && !attempt.earned;
     update({
       ...extra,
       result,
       revealed: attempt.revealed || correct,
-      earned: attempt.earned || (correct && !attempt.revealed),
+      earned: attempt.earned || earnedNow,
     });
+    if (earnedNow) void save(exercise.id, answer);
   };
 
   const submitNumber = (event: FormEvent) => {
     event.preventDefault();
-    if (exercise.kind === "number") record(checkNumber(exercise, attempt.typed));
+    if (exercise.kind === "number") record(checkNumber(exercise, attempt.typed), attempt.typed);
   };
 
   const useNewest = () => {
-    setPinned(snapshot);
+    setPinned(reading);
     setAttempts({});
   };
 
@@ -169,13 +211,26 @@ export function ReadTheGrid({ snapshot }: { snapshot: GridSnapshot }) {
             onSubmitNumber={submitNumber}
             onType={(typed) => update({ typed })}
             onChoose={(choice) => {
-              if (exercise.kind === "choice") record(checkChoice(exercise, choice), { chosen: choice });
+              if (exercise.kind === "choice") record(checkChoice(exercise, choice), choice, { chosen: choice });
             }}
           />
 
-          <div role="status" className="text-base">
+          <div role="status" className="flex flex-col gap-1 text-base">
             <Feedback result={attempt.result} />
+            {attempt.save?.status === "saving" && <p className="text-sm text-ink-soft">Saving it to your evidence.</p>}
+            {attempt.save?.status === "saved" && (
+              <p className="text-sm text-ink-soft">
+                Saved. The server checked it again. It will show on the evidence page of any energy skill map you
+                publish.
+              </p>
+            )}
           </div>
+          {attempt.save?.status === "failed" && (
+            <ErrorNotice
+              message={attempt.save.message}
+              onRetry={() => void save(exercise.id, attempt.sent ?? "")}
+            />
+          )}
 
           {attempt.revealed ? (
             <Working exercise={exercise} />

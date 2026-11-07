@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
+import { listGridSolves } from "@/features/grid";
+import { deriveNodeStates, getSkillMap, isEnergyRelated } from "@/features/skill-map";
 import { getAttempt, getProgress } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { Attempt, SkillMap } from "@/shared/types";
@@ -43,6 +44,9 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
       }),
   );
 
+  // Grid practice is evidence only for a job in the energy sector.
+  const gridSolves = isEnergyRelated(map.sourceText) ? await listGridSolves(ownerId) : [];
+
   const existingId = await getProofIdForMap(map.id);
   const id = existingId ?? randomBytes(12).toString("base64url");
 
@@ -53,6 +57,7 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
     map,
     states,
     attempts,
+    gridSolves,
   });
   if (snapshot.skills.length === 0) {
     throw new ProofError("Prove at least one skill first. Then there is something to share.", 400);

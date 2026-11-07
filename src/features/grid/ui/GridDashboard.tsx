@@ -200,7 +200,7 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
         intro="Alberta's energy sector runs on these numbers. Work them out the way an analyst or operator would. The answers change with the grid, so you can come back tomorrow and the same question has a new answer."
       >
         <Card>
-          <ReadTheGrid snapshot={snapshot} />
+          <ReadTheGrid reading={reading} />
         </Card>
       </Section>
 

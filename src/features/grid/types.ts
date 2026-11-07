@@ -57,10 +57,13 @@ export type GridSnapshot = {
  * - live: read from AESO within the last minute or so.
  * - stale: AESO failed, so this is the last good reading, with its real time.
  * - unavailable: AESO failed and no earlier reading exists. There are no numbers to show.
+ *
+ * `seal` is the server's signature over the snapshot and fetchedAt (see sealReading in solves.ts).
+ * It lets the server trust these figures when a learner sends an answer back with them.
  */
 export type GridReading =
-  | { status: "live"; snapshot: GridSnapshot; fetchedAt: string }
-  | { status: "stale"; snapshot: GridSnapshot; fetchedAt: string }
+  | { status: "live"; snapshot: GridSnapshot; fetchedAt: string; seal?: string }
+  | { status: "stale"; snapshot: GridSnapshot; fetchedAt: string; seal?: string }
   | { status: "unavailable" };
 
 export const AESO_REPORT_URL = "http://ets.aeso.ca/ets_web/ip/Market/Reports/CSDReportServlet";

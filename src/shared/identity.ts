@@ -64,6 +64,24 @@ function unseal(cookieName: string, sealed: string | undefined): string | null {
   return given.length === expected.length && timingSafeEqual(given, expected) ? value : null;
 }
 
+/**
+ * Signs a value the server hands out, so it can tell later that a copy sent back is the one it
+ * gave. `purpose` is signed too, so a signature made for one thing can't pass for another.
+ */
+export function signServerValue(purpose: string, value: string): string | null {
+  const secret = getSecret();
+  return secret ? sign(purpose, value, secret) : null;
+}
+
+/** True only if `signature` is what signServerValue gives for this purpose and value. */
+export function checkServerValue(purpose: string, value: string, signature: string): boolean {
+  const expected = signServerValue(purpose, value);
+  if (!expected) return false;
+  const given = Buffer.from(signature);
+  const wanted = Buffer.from(expected);
+  return given.length === wanted.length && timingSafeEqual(given, wanted);
+}
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: "lax",

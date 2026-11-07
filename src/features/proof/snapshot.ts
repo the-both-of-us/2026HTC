@@ -1,6 +1,7 @@
+import type { GridSolve } from "@/features/grid";
 import { isUsableQuote } from "@/features/teachback";
 import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode } from "@/shared/types";
-import type { ProofSkill, ProofSnapshot, ProofSource } from "./types";
+import type { ProofGridSolve, ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
 type SnapshotInput = {
   proofId: string;
@@ -10,6 +11,8 @@ type SnapshotInput = {
   states: Record<string, NodeState>;
   /** The attempt that proved each node, by node id. */
   attempts: Record<string, Attempt | null>;
+  /** Grid questions the owner solved. Only passed for an energy map. */
+  gridSolves?: GridSolve[];
 };
 
 /** Turns server data into the frozen document. Nothing in here comes from the browser. */
@@ -27,6 +30,8 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
     }
   }
 
+  const grid = (input.gridSolves ?? []).map(toProofGridSolve);
+
   return {
     version: 1,
     proofId: input.proofId,
@@ -37,7 +42,22 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
     totalSkills: map.nodes.length,
     skills,
     notYetProven,
+    ...(grid.length > 0 && { grid }),
     publishedAt: input.publishedAt,
+  };
+}
+
+/** Only what a reader needs. The ids and AESO's ISO time stay out. */
+function toProofGridSolve(solve: GridSolve): ProofGridSolve {
+  return {
+    title: solve.title,
+    skill: solve.skill,
+    answer: solve.answer,
+    asOfLabel: solve.asOfLabel,
+    figures: solve.figures,
+    working: solve.working,
+    stale: solve.stale,
+    solvedAt: solve.solvedAt,
   };
 }
 

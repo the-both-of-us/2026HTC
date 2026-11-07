@@ -1,10 +1,10 @@
 import { connection } from "next/server";
-import { getGridReading } from "@/features/grid";
+import { getGridReading, sealReading } from "@/features/grid";
 
 /** The latest AESO reading. Always read at request time, never prerendered. */
 export async function GET() {
   await connection();
-  const reading = await getGridReading();
+  const reading = sealReading(await getGridReading());
   const isLive = reading.status === "live";
 
   return Response.json(reading, {

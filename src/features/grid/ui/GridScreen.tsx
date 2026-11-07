@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { PageShell, Spinner } from "@/shared/ui";
+import { sealReading } from "../solves";
 import { getGridReading } from "../source";
 import { GridDashboard } from "./GridDashboard";
 
@@ -16,7 +17,7 @@ function GridLoading() {
 /** The reading is fetched per request, so it streams in behind Suspense and is never built in. */
 async function GridLive() {
   await connection();
-  const reading = await getGridReading();
+  const reading = sealReading(await getGridReading());
   return <GridDashboard initial={reading} />;
 }
 
