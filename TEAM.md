@@ -36,12 +36,32 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
   - **Mirza → Abdu: done in `31fd171`.** `import { isPublished } from "@/features/courses"`: `isPublished(mapId): Promise<boolean>`, a single store read that also checks the id is a UUID. Swap it into `access.ts` whenever you like.
 - [x] **Mirza → Abdu: the courses UI is live at `/courses`.** The publish button still needs placing in the map header (the unticked item above). Sample courses can now be started, so the demo can begin at `/courses`, then Start, then teach-back on your own copy. It's `PublishCourseButton` from `@/features/courses/client`, props `{ mapId }`, and it renders nothing for people who don't own the map.
   - **Abdu: done.** It's in the map header, before "Evidence page" and "Start learning". The swap to your `isPublished` in `access.ts` is done too.
-- [ ] **"Delete my data" needs a `deleteUserData(userId): Promise<void>` export** from `@/features/courses` (and from flashcards and quiz if they keep their own). It's live at `/trust` and `DELETE /api/my-data` (`src/features/trust/deleteData.ts`). Today it deletes my records and calls your `unpublishCourse` for the user's published maps, but it can't reach these, so the trust page says they aren't covered yet:
+- [x] **"Delete my data" needs a `deleteUserData(userId): Promise<void>` export** from `@/features/courses` (and from flashcards and quiz if they keep their own). It's live at `/trust` and `DELETE /api/my-data` (`src/features/trust/deleteData.ts`). Today it deletes my records and calls your `unpublishCourse` for the user's published maps, but it can't reach these, so the trust page says they aren't covered yet:
   - `likes/<mapId>/<userId>` (and the like counts they feed), and `course-starts/<mapId>/<userId>`.
   - `flashcards/<mapId>/<nodeId>` and `quiz/<mapId>/<nodeId>` for the user's maps. Taking `mapIds: string[]` is fine too: I call it before deleting the maps, so `listMapsByOwner(userId)` still works then.
   - Only touch that user's records, and let it run twice without failing. Tell me when it's on main and I'll call it and remove the "not covered yet" line.
+  - **Mirza: done, on main.** In `deleteUserData` (trust), after `listMapsByOwner` and before deleting the maps:
+    ```ts
+    import { deleteUserData as deleteCourseData } from "@/features/courses";
+    import { deleteForMaps as deleteFlashcards } from "@/features/flashcards";
+    import { deleteForMaps as deleteQuizzes } from "@/features/quiz";
+    import { forgetAccount } from "@/features/auth";
+    const ids = maps.map((m) => m.id);
+    const { likes, courseStarts } = await deleteCourseData(userId, ids); // also recounts the courses they liked
+    await deleteFlashcards(ids); await deleteQuizzes(ids);
+    await forgetAccount(userId); // the link between their Auth0 sign-in and this id
+    ```
+    All accept only UUIDs, touch only that user's records, and can run twice.
 
 - [ ] **`/dashboard`, `/review`, `/people` and `/battle` are hidden from the sidebar** until they do more than show a heading (and `/api/review`, `/api/network` stop returning 501). Tell me when each is on main and I'll put its link back in `src/shared/ui/SideNav.tsx`, or add it yourself in the same commit.
+
+**From Mirza to Abdu (Sat Nov 7, evening): sign-in is on main** (`cda2f31`, optional Auth0; guests can still do everything except publish and like). These are in your files:
+
+- [ ] **Show the account status** where PageShell says "Learning as a guest": `import { AccountStatusLoader } from "@/features/auth/client"` and render `<AccountStatusLoader />` in the sidebar footer (and the phone top bar). It's a client component, because PageShell is often rendered from client screens. In a server file you can use `<Suspense><AccountStatusServer /></Suspense>` from `@/features/auth`. Both render nothing when Auth0 isn't set up. Details are under "For Abdu" in `src/features/auth/README.md`.
+- [ ] **`<SignInNotice />`** from `@/features/auth/client` just inside `<body>` in `layout.tsx`. It shows "Sign-in didn't finish…" after a failed or expired sign-in.
+- [ ] **Deploy env:** `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET` (a new random 32+ chars per host) and `APP_BASE_URL` (`https://oryxlearn.vercel.app` on Vercel). Mirza sends the values privately. Please add the five names with empty values to `.env.example`. For AWS, tell Mirza the URL so its `/api/auth/callback` can be added in Auth0.
+- [ ] **Shared-laptop takeover (security review finding, in `identity.ts`).** Today `pf_uid` alone proves ownership. If someone copies a guest's signed `pf_uid` on a shared laptop and the next person then signs in there, the account links to that id, and the copied cookie still opens everything. Suggested fix: once an id is linked to an account (`account-of/<userId>` exists in the store), only accept that `pf_uid` together with a matching `pf_account`. A bare `pf_uid` for a linked id should count as no cookie, which gives a fresh guest. Mirza can add a helper `isLinkedUserId(userId)` to `@/features/auth` if you want it.
+- [ ] Sidebar links: none of `/dashboard`, `/review`, `/people` or `/battle` is ready yet. I'll add each link back in `SideNav.tsx` in the same commit that makes the page real, as you suggested.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
