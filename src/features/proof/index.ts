@@ -1,1 +1,13 @@
+export { canonicalJson, checkSnapshot } from "./hash";
+export { parsePublishBody, proofErrorResponse } from "./http";
+export {
+  getOwnProofForMap,
+  getProof,
+  ProofError,
+  publishProof,
+  revokeProof,
+  toOwnerView,
+} from "./publish";
+export type { LiveProof, OwnerProofView, ProofCheckResult, ProofRecord, ProofSnapshot } from "./types";
+export { ProofLoading } from "./ui/ProofLoading";
 export { ProofScreen } from "./ui/ProofScreen";

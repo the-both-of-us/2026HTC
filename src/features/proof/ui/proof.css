@@ -1,0 +1,37 @@
+/*
+ * Printing. The screen version is a long dark document. On paper it becomes one light
+ * page: PrintSummary replaces the transcripts, and the QR code leads back to them.
+ * Tailwind's colours are variables, so swapping the variables recolours everything.
+ */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  /* The app's dark colour scheme would otherwise paint the page margins dark. */
+  html:has(.proof-doc) {
+    color-scheme: light;
+    background: #fff;
+  }
+
+  body:has(.proof-doc) {
+    background: #fff;
+  }
+
+  .proof-doc {
+    --color-paper: #fff;
+    --color-sheet: #fff;
+    --color-rule: #c9ced8;
+    --color-control-edge: #8a93a5;
+    --color-ink: #10141c;
+    --color-ink-soft: #4a5263;
+    --color-proven: #1f7a48;
+    --color-highlight: #e6efe9;
+    /* The body's colour is worked out before these variables change, so set it again here. */
+    color: var(--color-ink);
+    font-size: 10pt;
+    line-height: 1.35;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
