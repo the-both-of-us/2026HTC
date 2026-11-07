@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type SyntheticEvent } from "react";
 import { FAMILY_LABELS, FAMILY_ORDER, mw } from "../metrics";
 import type { GridSnapshot, GridUnit } from "../types";
 import { FAMILY_COLOR, FAMILY_ICON, trackColor } from "./fuelStyle";
@@ -52,6 +52,11 @@ export function UnitField({ snapshot }: { snapshot: GridSnapshot }) {
   );
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  const showUnitUnderPointer = (event: SyntheticEvent) => {
+    const value = (event.target as HTMLElement).dataset.unit;
+    setActiveIndex(value === undefined ? null : Number(value));
+  };
+
   if (units.length === 0) {
     return <p className="text-sm text-ink-soft">This report didn&apos;t include unit-level figures.</p>;
   }
@@ -83,10 +88,9 @@ export function UnitField({ snapshot }: { snapshot: GridSnapshot }) {
         role="img"
         aria-label={`${units.length} generating units grouped by fuel, ${running} of them producing. The table below lists every unit.`}
         className="flex flex-col gap-4"
-        onPointerOver={(event) => {
-          const value = (event.target as HTMLElement).dataset.unit;
-          setActiveIndex(value === undefined ? null : Number(value));
-        }}
+        onPointerOver={showUnitUnderPointer}
+        // A finger lifting counts as the pointer leaving, so a tap has to set it as well.
+        onClick={showUnitUnderPointer}
         onPointerLeave={() => setActiveIndex(null)}
       >
         {families.map((family) => {

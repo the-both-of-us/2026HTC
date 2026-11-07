@@ -8,6 +8,7 @@ import { FAMILY_COLOR } from "./fuelStyle";
 
 /** A block narrower than this share can't fit its label on a phone, so it prints none. */
 const LABEL_FITS_FROM = 12;
+const BAR_HINT = "Hover, tap or tab to a block for its figures.";
 
 function describe(item: FamilyTotal): string {
   return `${FAMILY_LABELS[item.family]}: ${mw(item.output)} MW, ${percent(item.share)} of generation`;
@@ -48,6 +49,8 @@ export function MixBarTall({ snapshot }: { snapshot: GridSnapshot }) {
               type="button"
               aria-label={describe(item)}
               onPointerEnter={() => setActiveFamily(item.family)}
+              // A finger lifting counts as the pointer leaving, so a tap has to set it as well.
+              onClick={() => setActiveFamily(item.family)}
               onFocus={() => setActiveFamily(item.family)}
               onBlur={() => setActiveFamily(null)}
               className="min-w-0.5 rounded-[4px] px-2 text-left text-sm leading-7 font-bold text-on-dark hover:brightness-115 motion-safe:transition-[flex-grow] motion-safe:duration-700"
@@ -67,8 +70,8 @@ export function MixBarTall({ snapshot }: { snapshot: GridSnapshot }) {
         {active
           ? describe(active)
           : charging
-            ? `Storage is charging at ${mw(-charging.output)} MW. Hover or tab to a block for its figures.`
-            : "Hover or tab to a block for its figures."}
+            ? `Storage is charging at ${mw(-charging.output)} MW. ${BAR_HINT}`
+            : BAR_HINT}
       </p>
     </div>
   );

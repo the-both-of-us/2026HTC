@@ -32,7 +32,7 @@ function Feedback({ result }: { result: CheckResult | null }) {
     return (
       <p className="flex items-center gap-2 font-semibold">
         <Check size={18} className="text-proven" aria-hidden="true" />
-        Correct, checked against the live figure.
+        Correct, checked against AESO&apos;s figures.
       </p>
     );
   }

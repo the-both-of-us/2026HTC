@@ -14,8 +14,8 @@ import { ReadTheGrid } from "./ReadTheGrid";
 import { UnitField } from "./UnitField";
 import { useLiveGrid } from "./useLiveGrid";
 
-/** A sentence written by code from the live figures. */
-function headline(snapshot: GridSnapshot): string {
+/** A sentence written by code from the real figures. Old figures are told in the past tense. */
+function headline(snapshot: GridSnapshot, stale: boolean): string {
   const variable = outputOf(snapshot, "wind") + outputOf(snapshot, "solar");
   const share = snapshot.generation > 0 ? (variable / snapshot.generation) * 100 : 0;
   const flow = snapshot.interchange;
@@ -25,7 +25,9 @@ function headline(snapshot: GridSnapshot): string {
       : flow < 0
         ? `importing ${mw(-flow)} MW from its neighbours`
         : "neither importing nor exporting";
-  return `Wind and solar are making ${percent(share)} of Alberta's generation, and the province is ${direction}.`;
+  return stale
+    ? `Wind and solar were making ${percent(share)} of Alberta's generation, and the province was ${direction}.`
+    : `Wind and solar are making ${percent(share)} of Alberta's generation, and the province is ${direction}.`;
 }
 
 function reserveNote(snapshot: GridSnapshot): string {
@@ -131,12 +133,15 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
         <p className="text-sm text-ink-soft">
           Source: <AesoSourceLink />
         </p>
-        <GridRoles />
+        <Section title="Who reads these numbers for a living">
+          <GridRoles />
+        </Section>
       </div>
     );
   }
 
   const { snapshot } = reading;
+  const stale = reading.status === "stale";
 
   return (
     <div className="flex flex-col gap-12">
@@ -146,14 +151,16 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
         <Card className="flex flex-col gap-6">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-end">
             <div>
-              <p className="text-base text-ink-soft">Alberta is using</p>
-              <p className="text-5xl font-bold sm:text-6xl">
+              <p className="text-base text-ink-soft">
+                {stale ? `At ${snapshot.asOfLabel.slice(-5)}, Alberta was using` : "Alberta is using"}
+              </p>
+              <p className="text-5xl font-bold tracking-tight sm:text-6xl">
                 {mw(snapshot.load)}{" "}
-                <span className=" text-2xl font-semibold text-ink-soft sm:text-3xl">MW</span>
+                <span className="text-2xl font-semibold text-ink-soft sm:text-3xl">MW</span>
               </p>
               {previous && <ChangeLine before={previous} after={snapshot} />}
             </div>
-            <p className="text-xl">{headline(snapshot)}</p>
+            <p className="text-xl">{headline(snapshot, stale)}</p>
           </div>
 
           <div className="flex flex-col gap-2.5">
@@ -180,7 +187,7 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
             <Tile
               label="Renewable capacity factor"
               value={renewableFactor(snapshot)}
-              note="Wind, solar and hydro, right now"
+              note={stale ? "Wind, solar and hydro" : "Wind, solar and hydro, right now"}
             />
           </div>
         </Card>
@@ -213,7 +220,7 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
         </div>
       </Section>
 
-      <Section title="Every generator, right now">
+      <Section title={stale ? "Every generator, at the last good reading" : "Every generator, right now"}>
         <Card>
           <UnitField snapshot={snapshot} />
         </Card>
