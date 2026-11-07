@@ -1,0 +1,190 @@
+[
+  {
+    "key": "sql",
+    "area": "SQL",
+    "origin": "fixture: data-analyst-grid",
+    "node": {
+      "id": "sql-queries",
+      "title": "SQL queries",
+      "why": "The analyst must retrieve and combine load, generation, and outage records from database tables.",
+      "prerequisites": [
+        "relational-database-concepts"
+      ],
+      "fromSource": true,
+      "citation": {
+        "kind": "posting",
+        "quote": "Write SQL queries against our historian",
+        "verified": true
+      },
+      "checkpoints": [
+        "An INNER JOIN returns rows only when matching keys exist in both tables.",
+        "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+        "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+        "Using indexes on join columns speeds up query execution by reducing row scans."
+      ]
+    }
+  },
+  {
+    "key": "python",
+    "area": "Python",
+    "origin": "fixture: data-analyst-grid",
+    "node": {
+      "id": "python-pandas",
+      "title": "Python pandas",
+      "why": "Python with pandas is used to clean, transform, and analyze time-series data for reporting.",
+      "prerequisites": [
+        "programming-fundamentals"
+      ],
+      "fromSource": true,
+      "citation": {
+        "kind": "posting",
+        "quote": "working knowledge of Python with pandas",
+        "verified": true
+      },
+      "checkpoints": [
+        "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+        "The .groupby method groups rows by column values and applies aggregate functions.",
+        ".fillna replaces missing values with specified constants or methods like forward fill.",
+        "Vectorized operations on DataFrames execute without explicit Python loops, improving performance."
+      ]
+    }
+  },
+  {
+    "key": "statistics",
+    "area": "Statistics",
+    "origin": "fixture: data-analyst-grid",
+    "node": {
+      "id": "statistics-fundamentals",
+      "title": "Statistics fundamentals",
+      "why": "Statistical concepts such as error metrics and seasonality are used to evaluate forecast performance.",
+      "prerequisites": [],
+      "fromSource": false,
+      "citation": null,
+      "checkpoints": [
+        "Mean absolute error averages absolute differences between predicted and observed values.",
+        "Seasonality refers to regular, periodic fluctuations in a time series.",
+        "Standard deviation measures spread of data around the mean."
+      ]
+    }
+  },
+  {
+    "key": "grid",
+    "area": "Grid operations",
+    "origin": "fixture: data-analyst-grid",
+    "node": {
+      "id": "power-grid-supply-demand",
+      "title": "Power-grid supply-demand",
+      "why": "Understanding how generation and load are balanced informs analysis of grid performance and outages.",
+      "prerequisites": [],
+      "fromSource": true,
+      "citation": {
+        "kind": "posting",
+        "quote": "supply and demand are balanced on a power grid",
+        "verified": true
+      },
+      "checkpoints": [
+        "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+        "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+        "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+        "Reserve capacity is held to handle unexpected outages or demand spikes."
+      ]
+    }
+  },
+  {
+    "key": "writing",
+    "area": "Soft skill",
+    "origin": "fixture: data-analyst-grid",
+    "node": {
+      "id": "technical-writing",
+      "title": "Technical writing",
+      "why": "Clear, non-technical explanations are required for metrics, reports, and documentation meant for non-analysts.",
+      "prerequisites": [],
+      "fromSource": true,
+      "citation": {
+        "kind": "posting",
+        "quote": "Clear writing for people who are not analysts",
+        "verified": true
+      },
+      "checkpoints": [
+        "Plain language replaces jargon with common terms to improve reader comprehension.",
+        "Structured documents use headings, lists, and tables to organize information logically.",
+        "Consistent tense and active voice make explanations clearer and more direct.",
+        "Providing a summary at the beginning gives readers a quick overview of content."
+      ]
+    }
+  },
+  {
+    "key": "transactions",
+    "area": "SQL",
+    "origin": "fixture: junior-backend",
+    "node": {
+      "id": "database-transactions",
+      "title": "Database transactions",
+      "why": "Transactions guarantee that invoices and their payments are saved atomically.",
+      "prerequisites": [
+        "postgresql-schema"
+      ],
+      "fromSource": true,
+      "citation": {
+        "kind": "posting",
+        "quote": "Use transactions so that an invoice",
+        "verified": true
+      },
+      "checkpoints": [
+        "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+        "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+        "Isolation levels control visibility of intermediate transaction data to other concurrent sessions."
+      ]
+    }
+  },
+  {
+    "key": "abtest",
+    "area": "Statistics",
+    "origin": "generated live 2026-11-07T19:19:06.523Z",
+    "node": {
+      "id": "ab-test-design",
+      "title": "A/B test design",
+      "why": "Designing A/B tests determines which product changes should be shipped.",
+      "prerequisites": [
+        "statistical-inference-basics"
+      ],
+      "fromSource": true,
+      "citation": {
+        "kind": "posting",
+        "quote": "Design and analyse A/B tests: choose a primary metric",
+        "verified": true
+      },
+      "checkpoints": [
+        "An A/B test compares two variants by assigning participants randomly to each group.",
+        "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+        "The primary metric defines the outcome that determines which variant performs better."
+      ]
+    }
+  },
+  {
+    "key": "feedback",
+    "area": "Soft skill",
+    "origin": "generated live 2026-11-07T19:19:08.787Z",
+    "node": {
+      "id": "giving-feedback",
+      "title": "Delivering constructive feedback",
+      "why": "To improve agent behavior through targeted criticism.",
+      "prerequisites": [
+        "communication-basics",
+        "leadership-fundamentals"
+      ],
+      "fromSource": true,
+      "citation": {
+        "kind": "posting",
+        "quote": "Give difficult feedback to team members",
+        "verified": true
+      },
+      "checkpoints": [
+        "Effective feedback separates behavior from the person to focus on observable actions.",
+        "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+        "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+        "Feedback that includes a clear action item creates a measurable improvement path."
+      ]
+    }
+  }
+]
