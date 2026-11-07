@@ -2,7 +2,7 @@ import { CircleCheck, CircleMinus } from "lucide-react";
 import type { ReactNode } from "react";
 import type { ProofSnapshot } from "../types";
 import { DocumentActions } from "./DocumentActions";
-import { formatDateTime, plural } from "./format";
+import { formatDateTime, plural, roleLead } from "./format";
 import { PrintSummary } from "./PrintSummary";
 import { ProofQr } from "./ProofQr";
 import { SkillEvidence } from "./SkillEvidence";
@@ -52,7 +52,7 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
           {snapshot.displayName}
         </h1>
         <p className="mt-3 text-lg text-ink-soft">
-          Skills evidence for <span className="font-semibold text-ink">{snapshot.roleTitle}</span>
+          {roleLead(snapshot.sourceKind)} <span className="font-semibold text-ink">{snapshot.roleTitle}</span>
           {snapshot.roleSubtitle ? `, ${snapshot.roleSubtitle}` : ""}
         </p>
       </div>
@@ -122,13 +122,17 @@ function ProvesAndDoesNot() {
               The writer then answered a question built from that explanation, and the AI judged the answer to show
               understanding.
             </ClaimLine>
-            <ClaimLine met>Whether each skill came from the source, with the quote when code could confirm it.</ClaimLine>
+            <ClaimLine met>Whether each skill came from the source they supplied, with the quote when code could confirm it.</ClaimLine>
           </ul>
         </div>
         <div>
           <h3 className="font-bold">It does not show</h3>
           <ul className="mt-2 flex flex-col gap-2">
             <ClaimLine>Who wrote it. The name was typed by the person, and accounts here are anonymous.</ClaimLine>
+            <ClaimLine>
+              That the job or employer is real. The person supplied the posting or PDF, and no employer was involved in this
+              record.
+            </ClaimLine>
             <ClaimLine>That no one helped. Nothing was proctored, so outside help or another AI cannot be ruled out.</ClaimLine>
             <ClaimLine>How they perform on the job, or how many tries they took. Only the passing attempt appears.</ClaimLine>
             <ClaimLine>Any accreditation. It is evidence to read and ask about in an interview, not a certificate.</ClaimLine>
@@ -224,7 +228,7 @@ function Fingerprint({ proofId, hash }: { proofId: string; hash: string }) {
       </p>
       <p className="mt-3 rounded-control border border-rule bg-paper p-3 font-mono text-sm break-all">{hash}</p>
       <p className="mt-2 mb-4 text-sm text-ink-soft">
-        SHA-256. Print or save it: if the record online ever changes, it will stop matching your copy.
+        SHA-256. Print or save it now: if the record online changes later, it will stop matching your saved copy.
       </p>
       <VerifyPanel proofId={proofId} fingerprint={hash} />
     </section>

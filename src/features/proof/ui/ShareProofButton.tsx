@@ -275,7 +275,10 @@ function PublishedView({ proof, provenCount, pending, onEdit, onWithdraw }: Publ
         )}
         {confirming ? (
           <div className="flex w-full flex-col gap-2">
-            <p>Withdraw this page? Its contents are deleted, and anyone with the link will see that it was withdrawn.</p>
+            <p>
+              Withdraw this page? The public copy is removed, and anyone with the link will see that it was withdrawn. Your
+              attempts stay on your map, so you can publish again.
+            </p>
             <div className="flex flex-wrap gap-2">
               <Button variant="subtle" size="sm" pending={pending} onClick={onWithdraw}>
                 Yes, withdraw it

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { computeScore, quoteIsInText } from "@/features/teachback";
 import type { ProofCheckResult, ProofSnapshot } from "./types";
 
@@ -26,10 +26,20 @@ export function hashSnapshot(snapshot: ProofSnapshot): string {
 }
 
 /**
- * Re-checks a stored record from scratch: the fingerprint, every quote against the
- * person's own text, and every score against the formula. No AI is involved.
+ * A signature over the fingerprint, made with a key that lives only in the server's
+ * environment, never in the store. Anyone who can edit the store can recompute a plain
+ * hash, but can't make this without the key. Null when this server has no key.
  */
-export function checkSnapshot(snapshot: ProofSnapshot, storedHash: string): ProofCheckResult {
+export function sealFor(hash: string): string | null {
+  const secret = process.env.PROOF_SEAL_SECRET;
+  return secret ? createHmac("sha256", secret).update(hash, "utf8").digest("hex") : null;
+}
+
+/**
+ * Re-checks a stored record from scratch: the fingerprint, the seal, every quote against
+ * the person's own text, and every score against the formula. No AI is involved.
+ */
+export function checkSnapshot(snapshot: ProofSnapshot, storedHash: string, storedSeal: string | null = null): ProofCheckResult {
   const recomputedHash = hashSnapshot(snapshot);
   const quotes = { verified: 0, total: 0 };
   const scores = { matching: 0, total: snapshot.skills.length };
@@ -45,5 +55,9 @@ export function checkSnapshot(snapshot: ProofSnapshot, storedHash: string): Proo
     if (expected === skill.score) scores.matching += 1;
   }
 
-  return { hashMatches: recomputedHash === storedHash, storedHash, recomputedHash, quotes, scores };
+  // A record with no seal fails on a server with a key, so stripping the seal hides nothing.
+  const expectedSeal = sealFor(recomputedHash);
+  const sealMatches = expectedSeal === null ? null : storedSeal === expectedSeal;
+
+  return { hashMatches: recomputedHash === storedHash, sealMatches, storedHash, recomputedHash, quotes, scores };
 }

@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveNodeStates } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { Attempt, MapProgress, SkillMap, SkillNode } from "@/shared/types";
-import { canonicalJson, checkSnapshot, hashSnapshot } from "./hash";
+import { canonicalJson, checkSnapshot, hashSnapshot, sealFor } from "./hash";
 import {
   cleanDisplayName,
   getOwnProofForMap,
@@ -194,6 +194,53 @@ describe("the fingerprint", () => {
     const result = checkSnapshot(snapshot, hashSnapshot(snapshot));
     expect(result.scores).toEqual({ matching: 0, total: 1 });
     expect(result.quotes).toEqual({ verified: 1, total: 2 });
+  });
+});
+
+describe("the seal", () => {
+  const map = makeMap();
+  const attempt = makeAttempt(map, "joins");
+
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("says nothing when the server has no key", () => {
+    vi.stubEnv("PROOF_SEAL_SECRET", "");
+    const snapshot = snapshotFor(map, attempt);
+    const hash = hashSnapshot(snapshot);
+    expect(sealFor(hash)).toBeNull();
+    expect(checkSnapshot(snapshot, hash, null).sealMatches).toBeNull();
+  });
+
+  it("passes on an untouched record", () => {
+    vi.stubEnv("PROOF_SEAL_SECRET", "test-key");
+    const snapshot = snapshotFor(map, attempt);
+    const hash = hashSnapshot(snapshot);
+    expect(checkSnapshot(snapshot, hash, sealFor(hash)).sealMatches).toBe(true);
+  });
+
+  it("catches a store edit that rehashes the record, which the plain fingerprint can't", () => {
+    vi.stubEnv("PROOF_SEAL_SECRET", "test-key");
+    const snapshot = snapshotFor(map, attempt);
+    const seal = sealFor(hashSnapshot(snapshot));
+
+    snapshot.displayName = "Someone Else";
+    const rehashed = hashSnapshot(snapshot);
+
+    const result = checkSnapshot(snapshot, rehashed, seal);
+    expect(result.hashMatches).toBe(true);
+    expect(result.sealMatches).toBe(false);
+  });
+
+  it("fails a record whose seal was stripped, and one sealed with another key", () => {
+    vi.stubEnv("PROOF_SEAL_SECRET", "test-key");
+    const snapshot = snapshotFor(map, attempt);
+    const hash = hashSnapshot(snapshot);
+    expect(checkSnapshot(snapshot, hash, null).sealMatches).toBe(false);
+    expect(checkSnapshot(snapshot, hash, undefined).sealMatches).toBe(false);
+
+    const seal = sealFor(hash);
+    vi.stubEnv("PROOF_SEAL_SECRET", "another-key");
+    expect(checkSnapshot(snapshot, hash, seal).sealMatches).toBe(false);
   });
 });
 

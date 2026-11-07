@@ -179,6 +179,8 @@ describe("the public page", () => {
       "Strong SQL required",
       "How this was checked",
       "does not show",
+      "a posting this person supplied",
+      "That the job or employer is real",
       "SHA-256",
     ]) {
       expect(html).toContain(text);
@@ -195,6 +197,8 @@ describe("the public page", () => {
     await DELETE(new Request("http://test"), asParams(id));
     const html = await renderPage(id);
     expect(html).toContain("This record was withdrawn");
+    expect(html).toContain("the public copy has been removed");
+    expect(html).not.toContain("deleted");
     expect(html).not.toContain("Maya Chen");
     expect(html).not.toContain("keeps only rows");
   });

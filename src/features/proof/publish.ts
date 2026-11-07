@@ -3,7 +3,7 @@ import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
 import { getAttempt, getProgress } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { Attempt, SkillMap } from "@/shared/types";
-import { hashSnapshot } from "./hash";
+import { hashSnapshot, sealFor } from "./hash";
 import { buildSnapshot } from "./snapshot";
 import type { LiveProof, OwnerProofView, ProofRecord, RevokedProof } from "./types";
 
@@ -58,13 +58,17 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
     throw new ProofError("Prove at least one skill first. Then there is something to share.", 400);
   }
 
-  const record: LiveProof = { state: "live", id, ownerId, mapId: map.id, snapshot, hash: hashSnapshot(snapshot) };
+  const hash = hashSnapshot(snapshot);
+  const record: LiveProof = { state: "live", id, ownerId, mapId: map.id, snapshot, hash, seal: sealFor(hash) };
   await putDoc(proofKey(id), record);
   if (!existingId) await putDoc(indexKey(map.id), { proofId: id });
   return record;
 }
 
-/** Takes a page down. The snapshot is deleted, so the person's words are gone from the store. */
+/**
+ * Takes a page down by removing the public copy. The attempts behind it stay, because the
+ * learner's map needs them, so the page must never claim the person's words are gone everywhere.
+ */
 export async function revokeProof(ownerId: string, proofId: string): Promise<RevokedProof> {
   const record = await getProof(proofId);
   if (!record) throw new ProofError("We could not find that evidence page.", 404);

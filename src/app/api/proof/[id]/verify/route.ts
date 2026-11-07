@@ -20,7 +20,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return Response.json(
       {
         state: "live",
-        ...checkSnapshot(record.snapshot, record.hash),
+        ...checkSnapshot(record.snapshot, record.hash, record.seal),
         algorithm: "SHA-256",
         canonical: canonicalJson(record.snapshot),
       },

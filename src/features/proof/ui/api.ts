@@ -41,6 +41,7 @@ export type VerifyReply =
   | {
       state: "live";
       hashMatches: boolean;
+      sealMatches: boolean | null;
       storedHash: string;
       recomputedHash: string;
       quotes: { verified: number; total: number };

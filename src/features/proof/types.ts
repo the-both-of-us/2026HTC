@@ -54,9 +54,11 @@ export type LiveProof = {
   mapId: string;
   snapshot: ProofSnapshot;
   hash: string;
+  /** See sealFor in hash.ts. Null when the server had no key at publish time. */
+  seal: string | null;
 };
 
-/** Revoking deletes the person's words. Only this note stays, so the page can say what happened. */
+/** Revoking removes the public copy. Only this note stays, so the page can say what happened. */
 export type RevokedProof = {
   state: "revoked";
   id: string;
@@ -81,6 +83,8 @@ export type OwnerProofView = {
 /** What GET /api/proof/[id]/verify returns. */
 export type ProofCheckResult = {
   hashMatches: boolean;
+  /** Null when this server has no seal key, so it can't say either way. */
+  sealMatches: boolean | null;
   storedHash: string;
   recomputedHash: string;
   quotes: { verified: number; total: number };

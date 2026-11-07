@@ -78,10 +78,17 @@ function CheckResults({ checked, fingerprint }: { checked: CheckedRecord; finger
         <ResultLine ok={hashOk}>
           {hashOk
             ? browserHash
-              ? "The fingerprint matches. It was recalculated on our server, then again in your browser."
-              : "The fingerprint matches. It was recalculated on our server."
-            : "The fingerprint does not match. This record has changed since it was published."}
+              ? "This record matches the fingerprint shown here. It was recalculated on our server, then again in your browser."
+              : "This record matches the fingerprint shown here. It was recalculated on our server."
+            : "This record does not match its fingerprint. It has changed since it was published."}
         </ResultLine>
+        {reply.sealMatches !== null && (
+          <ResultLine ok={reply.sealMatches}>
+            {reply.sealMatches
+              ? "The server's seal matches. It needs a key kept outside the data store, so editing the store alone would break it."
+              : "The server's seal does not match. This record was changed outside OryxLearn's publishing step."}
+          </ResultLine>
+        )}
         <ResultLine ok={quotesOk}>
           {reply.quotes.verified} of {reply.quotes.total} quotes found word for word in what this person wrote.
         </ResultLine>
@@ -89,7 +96,11 @@ function CheckResults({ checked, fingerprint }: { checked: CheckedRecord; finger
           {reply.scores.matching} of {reply.scores.total} scores recalculated from the checkpoints and matched.
         </ResultLine>
       </ul>
-      <p className="text-sm text-ink-soft">Checked at {checkedAt}, by code, with no AI involved.</p>
+      <p className="text-sm text-ink-soft">
+        Checked at {checkedAt}, by code, with no AI involved. To be sure nothing changed since you first saw this record,
+        compare the fingerprint with your saved copy. The owner can update their page, which makes a new fingerprint and
+        keeps no history.
+      </p>
       {browserHash && <OneCharacterDemo canonical={reply.canonical} fingerprint={fingerprint} />}
     </div>
   );

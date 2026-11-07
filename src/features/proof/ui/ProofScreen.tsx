@@ -37,7 +37,7 @@ export async function ProofScreen({ id }: { id: string }) {
     return (
       <ProofFrame>
         <Notice icon={<CircleSlash size={28} aria-hidden="true" />} title="This record was withdrawn">
-          Its owner took it down on {formatDateTime(record.revokedAt)}, and what it contained has been deleted. Any copy
+          Its owner took it down on {formatDateTime(record.revokedAt)}, and the public copy has been removed. Any copy
           you hold is no longer backed by this page.
         </Notice>
       </ProofFrame>

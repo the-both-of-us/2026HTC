@@ -1,5 +1,5 @@
 import type { ProofSnapshot } from "../types";
-import { formatDateTime, metCount } from "./format";
+import { formatDateTime, metCount, roleLead } from "./format";
 import { ProofQr } from "./ProofQr";
 
 type PrintSummaryProps = { snapshot: ProofSnapshot; hash: string; url: string };
@@ -13,7 +13,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
           <p className="font-semibold">OryxLearn evidence record</p>
           <h1 className="mt-1 text-[22pt] leading-tight font-bold">{snapshot.displayName}</h1>
           <p className="mt-0.5">
-            {snapshot.roleTitle}
+            {roleLead(snapshot.sourceKind)} {snapshot.roleTitle}
             {snapshot.roleSubtitle ? `, ${snapshot.roleSubtitle}` : ""}
           </p>
           <p className="mt-2 text-[14pt] font-bold">
@@ -78,7 +78,8 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
           <p className="font-semibold">What it does not show</p>
           <p>
             It was not proctored, so it cannot rule out outside help. The name was typed by the person and is not a
-            checked identity. This is not an accredited credential.
+            checked identity. The person supplied the posting or PDF, and no employer was involved. This is not an
+            accredited credential.
           </p>
         </div>
       </div>

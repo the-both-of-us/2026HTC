@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateTime, formatDuration, highlightSegments, integrityLines } from "./format";
+import { formatDateTime, formatDuration, highlightSegments, integrityLines, roleLead, sourceName } from "./format";
 
 describe("highlightSegments", () => {
   const text = "An inner join keeps matches. A left join keeps every left row.";
@@ -64,5 +64,14 @@ describe("words on the page", () => {
 
   it("gives the same date in every time zone", () => {
     expect(formatDateTime("2026-11-07T18:47:16.560Z")).toBe("November 7, 2026, 18:47 UTC");
+  });
+});
+
+describe("how the source is named", () => {
+  it("says the person supplied it, so it can't read as coming from an employer", () => {
+    expect(sourceName({ status: "verified", kind: "posting", quote: "q", page: null })).toBe("From the posting this person supplied");
+    expect(sourceName({ status: "verified", kind: "pdf", quote: "q", page: 2 })).toBe("From the PDF this person supplied, page 2");
+    expect(roleLead("posting")).toContain("a posting this person supplied");
+    expect(roleLead("pdf")).toContain("a PDF this person supplied");
   });
 });

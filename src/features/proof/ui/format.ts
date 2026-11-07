@@ -1,5 +1,5 @@
 /** Plain functions that turn evidence into the words and pieces the page shows. No React here. */
-import type { IntegritySignals } from "@/shared/types";
+import type { IntegritySignals, SourceKind } from "@/shared/types";
 import type { ProofSkill, ProofSource } from "../types";
 
 export function plural(count: number, word: string): string {
@@ -52,9 +52,16 @@ export function scoreLine(skill: ProofSkill): string {
 }
 
 export function sourceName(source: Extract<ProofSource, { status: "verified" }>): string {
-  if (source.kind === "posting") return "From the job posting";
-  if (source.kind === "pdf") return source.page === null ? "From the PDF" : `From the PDF, page ${source.page}`;
-  return "From the source";
+  if (source.kind === "posting") return "From the posting this person supplied";
+  if (source.kind === "pdf") {
+    return source.page === null ? "From the PDF this person supplied" : `From the PDF this person supplied, page ${source.page}`;
+  }
+  return "From the source this person supplied";
+}
+
+/** Says the role came from what the person supplied, so it can't read as an employer's own record. */
+export function roleLead(sourceKind: SourceKind): string {
+  return sourceKind === "pdf" ? "Skills evidence for a PDF this person supplied:" : "Skills evidence for a posting this person supplied:";
 }
 
 export type TextSegment = {
