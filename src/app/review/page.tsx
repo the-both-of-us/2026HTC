@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ReviewScreen } from "@/features/review";
+import { ReviewScreen } from "@/features/review/client";
 
 export const metadata: Metadata = { title: "Review" };
 
