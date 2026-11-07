@@ -24,8 +24,11 @@ export function useVoiceInterview({ attemptId, adapters, initial, onAnswer, onTy
   // The latest callbacks are used without restarting the interview when a parent re-renders.
   useEffect(() => session.setCallbacks({ onAnswer, onTypeInstead }));
 
-  // Leaving the page must turn the microphone off.
-  useEffect(() => () => session.dispose(), [session]);
+  // Leaving the page must turn the microphone off. Strict Mode runs this twice, so mounting revives it.
+  useEffect(() => {
+    session.activate();
+    return () => session.dispose();
+  }, [session]);
 
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot, session.getSnapshot);
   return { session, snapshot };

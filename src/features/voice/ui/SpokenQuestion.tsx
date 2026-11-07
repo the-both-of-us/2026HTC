@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { spokenWordCount, splitWords } from "../captions";
+import { captionFollower, splitWords } from "../captions";
 
 type SpokenQuestionProps = {
   id: string;
@@ -22,14 +22,18 @@ export function SpokenQuestion({ id, question, following, getPosition, size }: S
 
   useEffect(() => {
     if (!following) return;
+    const follow = captionFollower(words);
     let raf = 0;
     const tick = () => {
       const { seconds, duration } = getPosition();
-      setSpoken(spokenWordCount(words, seconds, duration));
+      setSpoken(follow(seconds, duration));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      setSpoken(0);
+    };
   }, [following, getPosition, words]);
 
   const className =

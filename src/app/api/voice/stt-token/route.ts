@@ -1,6 +1,7 @@
 import { handleSttToken } from "@/features/voice";
-import { getUserId } from "@/shared/identity";
+import { readUserId } from "@/shared/identity";
 
 export async function POST(request: Request) {
-  return handleSttToken(request, await getUserId());
+  // readUserId, not getUserId: a caller with no cookie must not be handed a new identity here.
+  return handleSttToken(request, await readUserId());
 }

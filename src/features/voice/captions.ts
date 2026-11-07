@@ -47,3 +47,15 @@ export function spokenWordCount(words: readonly string[], seconds: number, realD
   }
   return usable ? count : Math.min(count, words.length - 1);
 }
+
+/**
+ * Follows one playback. Words already lit stay lit: the real duration can arrive late and be
+ * longer than the estimate, and the caption must never step backward when it does.
+ */
+export function captionFollower(words: readonly string[]): (seconds: number, realDuration: number | null) => number {
+  let furthest = 0;
+  return (seconds, realDuration) => {
+    furthest = Math.max(furthest, spokenWordCount(words, seconds, realDuration));
+    return furthest;
+  };
+}

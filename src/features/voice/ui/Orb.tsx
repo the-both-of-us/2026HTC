@@ -200,7 +200,7 @@ export function Orb({ mood, getMeter, className }: OrbProps) {
       context.beginPath();
       for (let point = 0; point <= POINTS; point++) {
         const angle = (point / POINTS) * Math.PI * 2;
-        const r = coreRadius + terrain(angle, -1) * radius * 0.012;
+        const r = coreRadius + terrain(angle, -1) * radius * 0.004;
         const x = cx + Math.cos(angle) * r;
         const y = cy + Math.sin(angle) * r;
         if (point === 0) context.moveTo(x, y);

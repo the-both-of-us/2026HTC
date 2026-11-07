@@ -25,6 +25,8 @@ const WATCH_INTERVAL_MS = 250;
 const GRANT_FRESH_MS = 20_000;
 const SOCKET_OPEN = 1;
 
+type PendingGrant = { value: Promise<SttGrant>; at: number; failed: boolean };
+
 export type ListenerHandlers = {
   onTurn(update: TurnUpdate): void;
   onFailed(reason: FallbackReason): void;
@@ -39,7 +41,13 @@ export class Listener {
   private socket: SocketLike | null = null;
   private mic: MicHandle | null = null;
   private queue: (Blob | ArrayBuffer)[] = [];
-  private grant: { value: Promise<SttGrant>; at: number } | null = null;
+  private grant: PendingGrant | null = null;
+  /**
+   * Which take is current. A tap can stop one take and start another while the old one is
+   * still waiting on a permission prompt or a timer. When that wait ends, the old take sees
+   * the number has moved on, cleans up only what is its own, and leaves the new take alone.
+   */
+  private run = 0;
   private watch: ReturnType<typeof setInterval> | null = null;
   private connectTimer: ReturnType<typeof setTimeout> | null = null;
   private endOfTurn: (() => void) | null = null;
@@ -59,35 +67,43 @@ export class Listener {
 
   /** Fetches a token ahead of time, so the mic opens without a wait. Failures wait for start(). */
   prepare(): void {
-    if (this.grant && Date.now() - this.grant.at < GRANT_FRESH_MS) return;
-    const value = this.deps.fetchGrant();
-    value.catch(() => {});
-    this.grant = { value, at: Date.now() };
+    if (this.grant && !this.grant.failed && this.isFresh(this.grant)) return;
+    this.grant = this.fetchGrant();
   }
 
   async start(): Promise<void> {
     if (this.stage !== "idle" && this.stage !== "closed") return;
+    const run = ++this.run;
     this.stage = "opening";
     this.queue = [];
     this.lastText = "";
     this.transcriptChanged = false;
 
+    // Voice is already known to be off, so don't ask for a microphone it can't use.
+    if (this.grant?.failed && this.isFresh(this.grant)) {
+      this.grant = null;
+      this.fail("token");
+      return;
+    }
+
     // The mic starts at once and the audio waits in a queue, so the first words aren't lost.
-    const micReady = this.deps.openMic((chunk) => this.sendAudio(chunk));
+    const micReady = this.deps.openMic((chunk) => {
+      if (run === this.run) this.sendAudio(chunk);
+    });
     micReady.catch(() => {});
 
     this.prepare();
-    const grantPromise = this.grant!.value;
+    let pending = this.grant!;
     this.grant = null;
 
     let mic: MicHandle;
     try {
       mic = await micReady;
     } catch (error) {
-      this.fail(error instanceof MicError ? error.reason : "unsupported");
+      if (run === this.run) this.fail(error instanceof MicError ? error.reason : "unsupported");
       return;
     }
-    if (this.stage !== "opening") {
+    if (run !== this.run) {
       mic.release();
       return;
     }
@@ -95,23 +111,28 @@ export class Listener {
     this.handlers.onMicLive?.();
     this.startWatch();
 
+    // The learner may have sat on the permission prompt until this token was nearly dead.
+    if (!this.isFresh(pending)) pending = this.fetchGrant();
+
     let grant: SttGrant;
     try {
-      grant = await grantPromise;
+      grant = await pending.value;
     } catch {
-      this.fail("token");
+      if (run === this.run) this.fail("token");
       return;
     }
-    if (this.stage !== "opening") return;
+    if (run !== this.run) return;
     this.openSocket(grant);
   }
 
   /** Done: ends the turn. Resolves when the words are final and everything is closed. */
   async finish(): Promise<void> {
+    const run = this.run;
     // Done tapped before the socket opened: wait for it, because the words are in the queue.
     // It has a limit, because a browser's permission prompt can wait forever.
     if (this.stage === "opening") {
       await Promise.race([new Promise<void>((resolve) => (this.opened = resolve)), delay(CONNECT_TIMEOUT_MS)]);
+      if (run !== this.run) return;
       this.opened = null;
     }
     if (this.stage === "closed" || this.stage === "idle" || this.stage === "finishing") return;
@@ -122,11 +143,13 @@ export class Listener {
     if (wasStreaming) {
       this.mic?.flush();
       await delay(TAIL_MS);
+      if (run !== this.run) return;
       if (this.socketIsOpen()) {
         this.mic?.flush();
         const ended = new Promise<void>((resolve) => (this.endOfTurn = resolve));
         this.socket!.send(FORCE_END_TURN);
         await Promise.race([ended, delay(END_OF_TURN_CAP_MS)]);
+        if (run !== this.run) return;
         this.endOfTurn = null;
       }
     }
@@ -136,6 +159,7 @@ export class Listener {
       const closed = new Promise<void>((resolve) => (this.socketClosed = resolve));
       this.socket!.send(CLOSE_STREAM);
       await Promise.race([closed, delay(CLOSE_WAIT_MS)]);
+      if (run !== this.run) return;
     }
     this.teardown();
   }
@@ -205,6 +229,7 @@ export class Listener {
   }
 
   private startWatch(): void {
+    this.stopWatch();
     const frame = { level: 0, bands: new Float32Array(16) };
     let watchdog = NEW_WATCHDOG;
     this.watch = setInterval(() => {
@@ -224,6 +249,18 @@ export class Listener {
     if (this.stage === "closed" || this.stage === "idle") return;
     this.teardown();
     this.handlers.onFailed(reason);
+  }
+
+  private fetchGrant(): PendingGrant {
+    const grant: PendingGrant = { value: this.deps.fetchGrant(), at: Date.now(), failed: false };
+    grant.value.catch(() => {
+      grant.failed = true;
+    });
+    return grant;
+  }
+
+  private isFresh(grant: PendingGrant): boolean {
+    return Date.now() - grant.at < GRANT_FRESH_MS;
   }
 
   private socketIsOpen(): boolean {
@@ -246,6 +283,7 @@ export class Listener {
   }
 
   private teardown(): void {
+    this.run += 1;
     this.stage = "closed";
     this.stopWatch();
     this.clearConnectTimer();
@@ -261,9 +299,9 @@ export class Listener {
         // Already closed.
       }
     }
-    this.endOfTurn?.();
-    this.socketClosed?.();
-    this.opened?.();
+    const waiting = [this.endOfTurn, this.socketClosed, this.opened];
+    this.endOfTurn = this.socketClosed = this.opened = null;
+    for (const resolve of waiting) resolve?.();
   }
 }
 

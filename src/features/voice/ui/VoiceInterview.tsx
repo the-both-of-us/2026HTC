@@ -10,23 +10,33 @@ import { Orb, type OrbMood } from "./Orb";
 import { SpokenQuestion } from "./SpokenQuestion";
 import { useVoiceInterview } from "./useVoiceInterview";
 
+type AnswerHandler<Result> = (text: string, inputMethod: InputMethod) => Promise<Result> | Result;
+
 export type VoiceInterviewProps = {
   attemptId: string;
   question: string;
-  /**
-   * The learner sent an answer. Return { passed, feedback } to show the result here, or
-   * nothing if the parent takes over. Throw if sending failed, and they can try again.
-   */
-  onAnswer: (text: string, inputMethod: InputMethod) => Promise<VoiceVerdict | void> | VoiceVerdict | void;
   /** Called whenever the interview moves to typing, with whatever has been heard. */
   onTypeInstead: (partialText: string) => void;
-  /** Shows a Continue button with the verdict. */
-  onContinue?: () => void;
   /** For the preview only. */
   adapters?: VoiceAdapters;
   /** For the preview only. */
   initial?: { state?: VoiceState; transcript?: Transcript; meter?: AudioMeter };
-};
+} & (
+  | {
+      /**
+       * The learner sent an answer. Return { passed, feedback } to show the result here.
+       * Throw if sending failed, and they can try again.
+       */
+      onAnswer: AnswerHandler<VoiceVerdict | void>;
+      /** The way out of the verdict. Required, so that screen always has a next step. */
+      onContinue: () => void;
+    }
+  | {
+      /** The learner sent an answer, and the parent takes over from here. Throw if sending failed. */
+      onAnswer: AnswerHandler<void>;
+      onContinue?: undefined;
+    }
+);
 
 /** One spoken follow-up question and its answer. A new attempt starts afresh. */
 export function VoiceInterview(props: VoiceInterviewProps) {
@@ -58,7 +68,7 @@ const FALLBACK_SENTENCE: Record<FallbackReason, string> = {
 
 const NOTICE_SENTENCE: Record<VoiceNotice, string> = {
   "nothing-heard": "That didn't pick up any words. Check your microphone and try again, or type instead.",
-  "send-failed": "Your answer wasn't sent. It's still here, so you can send it again.",
+  "send-failed": "We couldn't confirm your answer was received. It's still here, so you can send it again.",
 };
 
 function moodOf(phase: VoicePhase, verdict: VoiceVerdict | null): OrbMood {
@@ -295,7 +305,7 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onContinue, a
               </Button>
             )}
 
-            {(isAnswering || phase === "heard") && (
+            {isAnswering && (
               <Button variant="quiet" className="ml-auto @max-md:px-1" onClick={() => session.send({ type: "TYPE_INSTEAD" })}>
                 Type instead
               </Button>

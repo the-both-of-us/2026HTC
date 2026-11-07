@@ -5,7 +5,7 @@ import { createSpeechPlayer } from "./speechPlayer";
 import type { FetchGrant, ListenDeps, SocketLike, SttGrant, VoiceAdapters } from "./types";
 
 /** Asks our server for a token. Any failure just means voice is off for now. */
-export function grantFetcher(body: { attemptId: string } | { skillTitle: string }): FetchGrant {
+export function grantFetcher(body: { attemptId: string } | { mapId: string; nodeId: string }): FetchGrant {
   return async () => {
     const response = await fetch("/api/voice/stt-token", {
       method: "POST",

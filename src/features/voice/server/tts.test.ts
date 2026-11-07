@@ -4,6 +4,7 @@ import {
   geminiProvider,
   ProviderError,
   providersFromEnv,
+  sharedProviders,
   speakWithFailover,
   type FetchLike,
   type TtsProvider,
@@ -146,5 +147,29 @@ describe("providersFromEnv", () => {
     const env = { ELEVENLABS_API_KEY: "k", ELEVENLABS_VOICE_ID: "v", GEMINI_API_KEY: "g" } as unknown as NodeJS.ProcessEnv;
     expect(providersFromEnv(env).map((p) => p.name)).toEqual(["ElevenLabs", "Gemini"]);
     expect(providersFromEnv({ GEMINI_API_KEY: "g" } as unknown as NodeJS.ProcessEnv).map((p) => p.name)).toEqual(["Gemini"]);
+  });
+});
+
+describe("sharedProviders", () => {
+  it("keeps one provider across requests, so a refused model is only tried once", async () => {
+    const fetchFn = vi.fn(async (url: string) =>
+      String(url).includes("/v1/text-to-speech/") ? new Response("{}", { status: 422 }) : audioResponse(),
+    );
+    vi.stubGlobal("fetch", fetchFn);
+    try {
+      const env = { ELEVENLABS_API_KEY: "shared-test", ELEVENLABS_VOICE_ID: "v" } as unknown as NodeJS.ProcessEnv;
+      await sharedProviders(env)[0].speak("First request", signal);
+      expect(fetchFn).toHaveBeenCalledTimes(2);
+      await sharedProviders(env)[0].speak("Second request", signal);
+      expect(fetchFn).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("follows a change of settings", () => {
+    const first = sharedProviders({ GEMINI_API_KEY: "a" } as unknown as NodeJS.ProcessEnv);
+    expect(sharedProviders({ GEMINI_API_KEY: "a" } as unknown as NodeJS.ProcessEnv)).toBe(first);
+    expect(sharedProviders({ GEMINI_API_KEY: "b" } as unknown as NodeJS.ProcessEnv)).not.toBe(first);
   });
 });

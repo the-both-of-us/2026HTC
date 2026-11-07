@@ -28,6 +28,19 @@ import {
 
 export type InputMethod = "voice" | "typed";
 
+/** A second tap this soon is one double-click, not a decision to skip ahead. */
+export const DOUBLE_TAP_MS = 350;
+
+/**
+ * How long an answer can stay in "checking" with no reply. The follow-up route may run for
+ * 60 s while the grader retries, and giving up sooner could tell a learner their answer
+ * failed while it is still passing, so this waits just past that.
+ */
+export const SUBMIT_TIMEOUT_MS = 65_000;
+
+/** Each of these can move the main button under the pointer. */
+const TAPS: ReadonlySet<VoiceEvent["type"]> = new Set(["PRIMARY", "REPLAY", "SAY_MORE", "RETRY_VOICE"]);
+
 export type VoiceCallbacks = {
   /** Return the verdict to show it here, or nothing if the parent takes over. Throw if sending failed. */
   onAnswer(text: string, inputMethod: InputMethod): Promise<VoiceVerdict | void> | VoiceVerdict | void;
@@ -51,6 +64,8 @@ type Initial = {
   transcript?: Transcript;
   /** Feeds the orb from the start. Only the preview's frozen states use this. */
   meter?: AudioMeter;
+  /** The clock, for tests. */
+  now?: () => number;
 };
 
 export class VoiceSession {
@@ -63,6 +78,11 @@ export class VoiceSession {
   private readonly listener: Listener;
   private callbacks: VoiceCallbacks;
   private submitted = 0;
+  /** Which listening take is current, so a slow finish from an older one can't move the phase. */
+  private take = 0;
+  private disposed = false;
+  private lastTapAt = Number.NEGATIVE_INFINITY;
+  private readonly now: () => number;
   private readonly pinnedMeter: AudioMeter | null;
 
   constructor(
@@ -74,6 +94,7 @@ export class VoiceSession {
     this.state = initial.state ?? INITIAL_VOICE_STATE;
     this.transcript = initial.transcript ?? EMPTY_TRANSCRIPT;
     this.pinnedMeter = initial.meter ?? null;
+    this.now = initial.now ?? Date.now;
     this.micLive = this.pinnedMeter !== null;
     this.snapshot = this.buildSnapshot();
     this.listener = new Listener(adapters.listen, {
@@ -113,12 +134,16 @@ export class VoiceSession {
   }
 
   send(event: VoiceEvent): void {
+    if (this.disposed || this.isSecondTap(event)) return;
     // Every tap goes through here, so this is where the browser's audio gets unlocked.
     if (event.type === "PRIMARY" || event.type === "REPLAY" || event.type === "SAY_MORE") this.unlock();
     const result = transition(this.state, event);
     this.state = result.state;
     this.publish();
     for (const effect of result.effects) this.run(effect);
+    // Handling a tap can block the page for a moment, and a second click then waits in line.
+    // So the gap counts from when this one finished, not from when it started.
+    if (TAPS.has(event.type)) this.lastTapAt = this.now();
   }
 
   /** The learner changed the text. It now counts as typed, and this exact text is what is sent. */
@@ -127,11 +152,27 @@ export class VoiceSession {
     this.publish();
   }
 
-  /** Stops the mic, the socket and the voice. Safe to call more than once. */
+  /** Stops the mic, the socket and the voice. Nothing starts again until activate(). Safe to call more than once. */
   dispose(): void {
+    this.disposed = true;
+    this.take += 1;
+    this.submitted += 1;
     this.listener.abort();
     this.adapters.speech.stop();
     this.voiceActive = false;
+  }
+
+  /** The component mounted. React's Strict Mode disposes once and remounts, so this undoes dispose. */
+  activate(): void {
+    this.disposed = false;
+  }
+
+  private isSecondTap(event: VoiceEvent): boolean {
+    if (!TAPS.has(event.type)) return false;
+    const now = this.now();
+    const tooSoon = now - this.lastTapAt < DOUBLE_TAP_MS;
+    if (tooSoon) this.lastTapAt = now;
+    return tooSoon && event.type === "PRIMARY";
   }
 
   private unlock(): void {
@@ -159,6 +200,7 @@ export class VoiceSession {
         this.listener.prepare();
         return;
       case "open-mic":
+        this.take += 1;
         this.transcript = startTake(this.transcript);
         this.micLive = false;
         void this.listener.start();
@@ -168,6 +210,7 @@ export class VoiceSession {
         void this.finishTurn();
         return;
       case "abort-listen":
+        this.take += 1;
         this.listener.abort();
         return;
       case "chime":
@@ -200,7 +243,9 @@ export class VoiceSession {
   }
 
   private async finishTurn(): Promise<void> {
+    const take = this.take;
     await this.listener.finish();
+    if (take !== this.take) return;
     this.transcript = settle(this.transcript);
     this.send({ type: "TURN_CLOSED", hasText: fullText(this.transcript).trim().length > 0 });
   }
@@ -208,11 +253,18 @@ export class VoiceSession {
   private async submit(): Promise<void> {
     const attempt = ++this.submitted;
     const text = fullText(this.transcript).trim();
+    const giveUp = setTimeout(() => {
+      if (attempt !== this.submitted) return;
+      this.submitted += 1;
+      this.send({ type: "SUBMIT_FAILED" });
+    }, SUBMIT_TIMEOUT_MS);
     try {
       const verdict = await this.callbacks.onAnswer(text, inputMethodOf(this.transcript));
       if (attempt === this.submitted && verdict) this.send({ type: "VERDICT", verdict });
     } catch {
       if (attempt === this.submitted) this.send({ type: "SUBMIT_FAILED" });
+    } finally {
+      clearTimeout(giveUp);
     }
   }
 

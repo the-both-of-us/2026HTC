@@ -28,17 +28,27 @@ export const openBrowserMic: OpenMic = async (onChunk) => {
     throw new MicError("unsupported");
   }
 
-  const audio = audioContext();
-  const source = audio.createMediaStreamSource(stream);
-  const analyser = createAnalyser(audio);
-  source.connect(analyser);
+  let source: MediaStreamAudioSourceNode | null = null;
+  let analyser: AnalyserNode;
+  let recorder: MediaRecorder;
+  try {
+    const audio = audioContext();
+    source = audio.createMediaStreamSource(stream);
+    analyser = createAnalyser(audio);
+    source.connect(analyser);
+    recorder = new MediaRecorder(stream, { mimeType });
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) onChunk(event.data);
+    };
+    recorder.start(CHUNK_MS);
+  } catch {
+    // The browser already gave us the mic, so its light stays on until these tracks stop.
+    source?.disconnect();
+    for (const track of stream.getTracks()) track.stop();
+    throw new MicError("unsupported");
+  }
 
-  const recorder = new MediaRecorder(stream, { mimeType });
-  recorder.ondataavailable = (event) => {
-    if (event.data.size > 0) onChunk(event.data);
-  };
-  recorder.start(CHUNK_MS);
-
+  const connected = source;
   let released = false;
   const handle: MicHandle = {
     meter: analyserMeter(analyser),
@@ -49,7 +59,7 @@ export const openBrowserMic: OpenMic = async (onChunk) => {
       if (released) return;
       released = true;
       if (recorder.state !== "inactive") recorder.stop();
-      source.disconnect();
+      connected.disconnect();
       for (const track of stream.getTracks()) track.stop();
     },
   };

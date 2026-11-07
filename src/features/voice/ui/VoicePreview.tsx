@@ -100,6 +100,7 @@ function MockPreview({ pinName, bare }: { pinName: string | null; bare: boolean 
           await new Promise((resolve) => setTimeout(resolve, 1400));
           return PASSED;
         }}
+        onContinue={() => window.location.reload()}
         onTypeInstead={() => {}}
       />
       {!bare && (
@@ -143,6 +144,7 @@ function RealPreview() {
           if (!response.ok) throw new Error("not sent");
           return (await response.json()) as VoiceVerdict;
         }}
+        onContinue={() => window.location.reload()}
         onTypeInstead={setTyped}
       />
       {typed !== null && <p className="text-sm text-ink-soft">onTypeInstead was called with: “{typed}”</p>}

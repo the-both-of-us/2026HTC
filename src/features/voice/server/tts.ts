@@ -199,3 +199,22 @@ export function providersFromEnv(env: NodeJS.ProcessEnv = process.env): TtsProvi
   }
   return providers;
 }
+
+let shared: { config: string; providers: TtsProvider[] } | null = null;
+
+/**
+ * The same providers for every request, so a model ElevenLabs refused once isn't asked for
+ * again on each line, which would make the learner wait for a failed call first.
+ */
+export function sharedProviders(env: NodeJS.ProcessEnv = process.env): TtsProvider[] {
+  const config = JSON.stringify([
+    env.ELEVENLABS_API_KEY,
+    env.ELEVENLABS_VOICE_ID,
+    env.ELEVENLABS_MODEL_ID,
+    env.ELEVENLABS_API_BASE,
+    env.GEMINI_API_KEY,
+    env.GEMINI_API_BASE,
+  ]);
+  if (shared?.config !== config) shared = { config, providers: providersFromEnv(env) };
+  return shared.providers;
+}

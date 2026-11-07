@@ -1,7 +1,7 @@
 /** A whole interview in Node, with fake adapters. Each test is one thing a learner could live through. */
 import { describe, expect, it, vi } from "vitest";
 import { SILENT_METER, MicError, type ListenDeps, type SocketLike, type SpeechHandlers, type VoiceAdapters } from "./adapters/types";
-import { VoiceSession, type VoiceCallbacks } from "./session";
+import { DOUBLE_TAP_MS, SUBMIT_TIMEOUT_MS, VoiceSession, type VoiceCallbacks } from "./session";
 
 class FakeSocket implements SocketLike {
   readyState = 0;
@@ -35,7 +35,7 @@ class FakeSocket implements SocketLike {
   }
 }
 
-function build(over: { callbacks?: Partial<VoiceCallbacks>; listen?: Partial<ListenDeps> } = {}) {
+function build(over: { callbacks?: Partial<VoiceCallbacks>; listen?: Partial<ListenDeps>; now?: () => number } = {}) {
   let speech: SpeechHandlers | null = null;
   const sockets: FakeSocket[] = [];
   const log: string[] = [];
@@ -69,7 +69,9 @@ function build(over: { callbacks?: Partial<VoiceCallbacks>; listen?: Partial<Lis
   };
   const onAnswer = vi.fn(over.callbacks?.onAnswer ?? (async () => ({ passed: true, feedback: "Good." })));
   const onTypeInstead = vi.fn(over.callbacks?.onTypeInstead ?? (() => {}));
-  const session = new VoiceSession(adapters, { onAnswer, onTypeInstead });
+  // Unless a test is about double-clicks, every tap is a separate, deliberate one.
+  let clock = 0;
+  const session = new VoiceSession(adapters, { onAnswer, onTypeInstead }, { now: over.now ?? (() => (clock += 1_000)) });
   return {
     session,
     log,
@@ -246,6 +248,167 @@ describe("sliding to typing, with words kept", () => {
   });
 });
 
+describe("a double-click is one tap", () => {
+  function withClock() {
+    const clock = { at: 0 };
+    return { clock, t: build({ now: () => clock.at }) };
+  }
+
+  it("on Hear the question: the question still plays, and no mic opens", () => {
+    const { clock, t } = withClock();
+    t.session.send({ type: "PRIMARY" });
+    clock.at = DOUBLE_TAP_MS - 1;
+    t.session.send({ type: "PRIMARY" });
+    expect(t.phase()).toBe("thinking");
+    expect(t.log).not.toContain("mic-open");
+    expect(t.log).not.toContain("stop");
+  });
+
+  it("on Start talking: it stays listening, not nothing heard", async () => {
+    const { clock, t } = withClock();
+    t.session.send({ type: "PRIMARY" });
+    t.speech().onPlaying();
+    t.speech().onEnded();
+    clock.at = 5_000;
+    t.session.send({ type: "PRIMARY" });
+    clock.at = 5_100;
+    t.session.send({ type: "PRIMARY" });
+    await settle();
+    expect(t.phase()).toBe("listening");
+    expect(t.session.getSnapshot().state.closing).toBe(false);
+  });
+
+  it("on Say more: the second click doesn't land on Done", async () => {
+    const { clock, t } = withClock();
+    t.session.send({ type: "PRIMARY" });
+    t.speech().onPlaying();
+    t.speech().onEnded();
+    clock.at = 1_000;
+    t.session.send({ type: "PRIMARY" });
+    await settle();
+    t.socket().open();
+    t.socket().turn("EndOfTurn", 0, "words");
+    clock.at = 2_000;
+    t.session.send({ type: "PRIMARY" });
+    await vi.waitFor(() => expect(t.phase()).toBe("heard"), { timeout: 3000 });
+    clock.at = 9_000;
+    t.session.send({ type: "SAY_MORE" });
+    clock.at = 9_100;
+    t.session.send({ type: "PRIMARY" });
+    expect(t.session.getSnapshot().state.closing).toBe(false);
+  });
+
+  it("counts the gap from when the first tap finished, because a busy page delays the second", () => {
+    const clock = { at: 0 };
+    const t = build({
+      now: () => clock.at,
+      listen: {},
+    });
+    const play = t.session["adapters"].speech.play;
+    t.session["adapters"].speech.play = (kind, handlers) => {
+      clock.at = 500;
+      play(kind, handlers);
+    };
+    t.session.send({ type: "PRIMARY" });
+    clock.at = 600;
+    t.session.send({ type: "PRIMARY" });
+    expect(t.phase()).toBe("thinking");
+  });
+
+  it("a later tap still counts", () => {
+    const { clock, t } = withClock();
+    t.session.send({ type: "PRIMARY" });
+    clock.at = DOUBLE_TAP_MS;
+    t.session.send({ type: "PRIMARY" });
+    expect(t.phase()).toBe("listening");
+  });
+});
+
+describe("tapping quickly through a slow finish", () => {
+  it("Done, Type instead, Use voice, Start talking: the old finish can't touch the new take", async () => {
+    const t = build();
+    await reachListening(t);
+    t.socket().turn("EndOfTurn", 0, "First take.");
+    t.session.send({ type: "PRIMARY" });
+    t.session.send({ type: "TYPE_INSTEAD" });
+    t.session.send({ type: "RETRY_VOICE" });
+    t.session.send({ type: "PRIMARY" });
+    await settle();
+    t.socket().open();
+    const second = t.socket();
+    t.socket().turn("Update", 0, "second");
+
+    await new Promise((resolve) => setTimeout(resolve, 2_300));
+    expect(t.phase()).toBe("listening");
+    expect(t.session.getSnapshot().state.notice).toBeNull();
+    expect(second.readyState).toBe(1);
+    expect(t.session.getSnapshot().text).toBe("First take. second");
+  });
+});
+
+describe("when an answer gets no reply", () => {
+  async function reachHeard(t: ReturnType<typeof build>) {
+    await reachListening(t);
+    t.socket().turn("EndOfTurn", 0, "keep me");
+    t.session.send({ type: "PRIMARY" });
+    await vi.waitFor(() => expect(t.phase()).toBe("heard"), { timeout: 3000 });
+  }
+
+  it("goes back to review with the words, instead of trapping the learner", async () => {
+    const t = build({ callbacks: { onAnswer: () => new Promise(() => {}) } });
+    await reachHeard(t);
+    vi.useFakeTimers();
+    try {
+      t.session.send({ type: "SUBMIT" });
+      await vi.advanceTimersByTimeAsync(SUBMIT_TIMEOUT_MS - 1);
+      expect(t.phase()).toBe("checking");
+      await vi.advanceTimersByTimeAsync(1);
+      expect(t.phase()).toBe("heard");
+      expect(t.session.getSnapshot().state.notice).toBe("send-failed");
+      expect(t.session.getSnapshot().text).toBe("keep me");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("waits longer than the follow-up route can run, so a slow grade isn't called a failure", () => {
+    expect(SUBMIT_TIMEOUT_MS).toBeGreaterThan(60_000);
+  });
+
+  it("ignores a verdict that arrives after giving up", async () => {
+    const replies: ((verdict: { passed: boolean; feedback: string }) => void)[] = [];
+    const t = build({ callbacks: { onAnswer: () => new Promise((resolve) => replies.push(resolve)) } });
+    await reachHeard(t);
+    vi.useFakeTimers();
+    try {
+      t.session.send({ type: "SUBMIT" });
+      await vi.advanceTimersByTimeAsync(SUBMIT_TIMEOUT_MS);
+      t.session.send({ type: "SUBMIT" });
+      replies[0]({ passed: true, feedback: "Too late." });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(t.phase()).toBe("checking");
+      replies[1]({ passed: true, feedback: "The real one." });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(t.session.getSnapshot().state.verdict?.feedback).toBe("The real one.");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not time out once the parent has taken over", async () => {
+    const t = build({ callbacks: { onAnswer: async () => undefined } });
+    await reachHeard(t);
+    vi.useFakeTimers();
+    try {
+      t.session.send({ type: "SUBMIT" });
+      await vi.advanceTimersByTimeAsync(SUBMIT_TIMEOUT_MS * 2);
+      expect(t.phase()).toBe("checking");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe("cleaning up", () => {
   it("dispose releases the mic and stops the voice", async () => {
     const t = build();
@@ -253,5 +416,37 @@ describe("cleaning up", () => {
     t.session.dispose();
     expect(t.log).toContain("mic-release");
     expect(t.log).toContain("stop");
+  });
+
+  it("stays silent if the verdict arrives after leaving the page", async () => {
+    let reply: (verdict: { passed: boolean; feedback: string }) => void = () => {};
+    const t = build({ callbacks: { onAnswer: () => new Promise((resolve) => (reply = resolve)) } });
+    await reachListening(t);
+    t.socket().turn("EndOfTurn", 0, "words");
+    t.session.send({ type: "PRIMARY" });
+    await vi.waitFor(() => expect(t.phase()).toBe("heard"), { timeout: 3000 });
+    t.session.send({ type: "SUBMIT" });
+    t.session.dispose();
+    reply({ passed: true, feedback: "Spoken after leaving." });
+    await settle();
+    expect(t.log).not.toContain("play:feedback");
+  });
+
+  it("still works after Strict Mode's mount, dispose, mount", () => {
+    const t = build();
+    t.session.activate();
+    t.session.dispose();
+    t.session.activate();
+    t.session.send({ type: "PRIMARY" });
+    expect(t.phase()).toBe("thinking");
+    expect(t.log).toContain("play:question");
+  });
+
+  it("starts nothing new once disposed", () => {
+    const t = build();
+    t.session.dispose();
+    t.session.send({ type: "PRIMARY" });
+    expect(t.phase()).toBe("ready");
+    expect(t.log).not.toContain("play:question");
   });
 });

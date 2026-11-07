@@ -18,6 +18,8 @@ The spoken follow-up question. OryxLearn asks it out loud, the learner answers o
 
 The browser connects to Deepgram directly, so there's no audio server to run. It uses a 30 second token from `POST /api/voice/stt-token`. The real key never leaves our server, and an open socket survives the token expiring.
 
+A token is only minted for someone with something to say right now: an existing cookie, plus either an attempt of theirs that is waiting on a follow-up, or a skill on their own map for dictation. A Deepgram token can also spend on Deepgram's other speech APIs and can't be narrowed, so **put the key in a dedicated Deepgram project holding only the demo credit**. That is what actually caps the cost if a learner pulls their own token out of the browser.
+
 ## Why these providers
 
 - **Deepgram Flux (ears).** It's built for conversation: it reports turns, not just words, and lets a button end a turn on demand. A pause doesn't lose anything.
@@ -50,15 +52,21 @@ We send audio as binary frames, plus two control messages:
 - **The text shown is the text sent.** The grader checks exact quotes, so `fullText` in `transcript.ts` is the one source for both. Editing it marks the answer as `typed`.
 - **Keyterms are safe to expose.** The socket URL is visible in the browser, so terms come only from the skill title and the learner's own explanation, never from checkpoints.
 - **No open mic.** The room is loud, so the mic only opens on a tap or Space. Tapping while the voice talks fades it out and opens the mic.
+- **A double-click is one tap.** A second tap on the main button within 350 ms is ignored, so it can't cancel the question or end a turn that has just started.
+- **One take at a time.** A tap can stop a take while another step is still waiting, like a permission prompt or the end of a turn. Each take has a number in `listener.ts`, so when that wait ends, the old take cleans up its own mic and leaves the new one alone.
 - **Never an error screen.** Every failure below moves to typing with the words kept, and the question is always on screen as text.
 
 | Failure | Sentence shown |
 |---|---|
-| Token fails, or no key (503) | Voice answers aren't available right now |
+| Token fails, or no key (503) | Voice answers aren't available right now. If the token was already known to have failed, the browser never asks for the mic |
 | Socket closes or errors | The connection dropped, your words are still here |
-| 8 s of mic level with no words | Voice stopped picking up your words |
+| 8 s of talking with no words | Voice stopped picking up your words |
 | Spoken question fails | The spoken question isn't available right now |
 | Mic blocked | Microphone access is off |
+
+**The 8 s check in a loud room.** The first second of listening measures the room. After that, only a level 3 times the room's (about 10 dB) counts as talking, a gap of 1.5 s starts the count over, and any new word does too. Those numbers are reasoned, not measured in a real room.
+
+**A hung answer.** If `onAnswer` hasn't replied after 65 s, the review screen comes back with the words kept. The follow-up route can run for 60 s while the grader retries, and giving up sooner could report a failure on an answer that is still passing.
 
 ## Where things are
 
@@ -69,6 +77,7 @@ We send audio as binary frames, plus two control messages:
 | `flux.ts`, `captions.ts`, `watchdog.ts` | Protocol, caption timing, the 8 s check. Pure |
 | `listener.ts` | One turn: token, mic, socket, Done |
 | `session.ts` | Runs the machine through the adapters. No React |
+| `dictation.ts` | One recording at a time for `useDictation`. No React |
 | `adapters/` | The real browser audio, and the preview's pretend audio |
 | `server/` | Token minting, providers and failover, rate limits |
 | `ui/` | `VoiceInterview`, `Orb`, `useVoiceInterview`, `useDictation` |
@@ -84,12 +93,13 @@ import { VoiceInterview, useDictation } from "@/features/voice/client";
   question={attempt.followUp.question}
   onAnswer={async (text, inputMethod) => {
     const result = await sendAnswer(text, inputMethod); // throw if it fails, and they can retry
-    return { passed: result.passed, feedback: result.feedback }; // or return nothing to take over
+    return { passed: result.passed, feedback: result.feedback };
   }}
+  onContinue={() => goToMap()} // required when a verdict can come back. Without one, return nothing and take over.
   onTypeInstead={(partialText) => showTextForm(partialText)}
 />
 
-const dictation = useDictation({ skillTitle, onText: (text) => append(text) });
+const dictation = useDictation({ mapId, nodeId, onText: (text) => append(text) });
 // dictation.start(), dictation.stop(), dictation.finalText, dictation.interimText
 ```
 

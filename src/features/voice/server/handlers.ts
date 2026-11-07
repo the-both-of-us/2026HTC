@@ -4,19 +4,23 @@
  */
 import { getSkillMap } from "@/features/skill-map";
 import { AttemptError, getOwnAttempt } from "@/features/teachback";
-import type { Attempt } from "@/shared/types";
+import type { Attempt, SkillMap } from "@/shared/types";
 import { buildFluxUrl, extractKeyterms } from "../flux";
 import { allowRate } from "./rateLimit";
-import { providersFromEnv, speakWithFailover, type FetchLike, type TtsProvider } from "./tts";
+import { sharedProviders, speakWithFailover, type FetchLike, type TtsProvider } from "./tts";
 
 const NOT_SET_UP = "Voice isn't available right now, so please type your answer.";
 const TOO_MANY = "That's a lot of voice requests in a short time. Please type your answer, or try again in a few minutes.";
 const NOT_ALLOWED = "This request has to come from the OryxLearn page.";
 const NOTHING_TO_SAY = "There is nothing to read aloud for this attempt yet.";
+const NO_LEARNER = "Open the skill first, then try voice again.";
+const NOT_WAITING = "This attempt isn't waiting for a spoken answer.";
+const NO_SKILL = "This skill isn't on one of your maps.";
 
 const SPEAK_RULE = { limit: 12, windowMs: 10 * 60_000 };
-const GRANT_RULE = { limit: 30, windowMs: 10 * 60_000 };
-const GRANT_RULE_PER_ADDRESS = { limit: 90, windowMs: 10 * 60_000 };
+const GRANT_RULE = { limit: 20, windowMs: 10 * 60_000 };
+/** A demo room shares one address. Each spoken answer uses about two tokens. */
+const GRANT_RULE_PER_ADDRESS = { limit: 40, windowMs: 10 * 60_000 };
 
 /** Questions are a sentence or two. This stops a surprise long text from spending the credits. */
 const MAX_SPOKEN_CHARACTERS = 1_200;
@@ -49,7 +53,7 @@ type SpeakDeps = {
 
 /** GET /api/voice/speak?attemptId=...&say=question|feedback */
 export async function handleSpeak(request: Request, userId: string, deps: SpeakDeps = {}): Promise<Response> {
-  const providers = deps.providers ?? providersFromEnv();
+  const providers = deps.providers ?? sharedProviders();
   const loadAttempt = deps.loadAttempt ?? getOwnAttempt;
   if (providers.length === 0) return sentence(NOT_SET_UP, 503);
 
@@ -84,32 +88,36 @@ type GrantDeps = {
   env?: NodeJS.ProcessEnv;
   fetchFn?: FetchLike;
   loadAttempt?: (userId: string, attemptId: string) => Promise<Attempt>;
-  loadTitle?: (mapId: string, nodeId: string) => Promise<string | null>;
+  loadMap?: (mapId: string) => Promise<SkillMap | null>;
 };
 
 /**
- * POST /api/voice/stt-token with { attemptId } or, for dictation, { skillTitle }.
+ * POST /api/voice/stt-token with { attemptId } or, for dictation, { mapId, nodeId }.
  * Mints a 30 second Deepgram token, and builds the socket URL here so the browser
  * never chooses the model or the keyterms.
+ *
+ * A Deepgram token can also spend credit on its other speech APIs, and it can't be narrowed.
+ * So one is only minted for a learner with an answer or explanation to give right now, and
+ * userId is null for a caller with no cookie: this route must never create an identity.
  */
-export async function handleSttToken(request: Request, userId: string, deps: GrantDeps = {}): Promise<Response> {
+export async function handleSttToken(request: Request, userId: string | null, deps: GrantDeps = {}): Promise<Response> {
   const env = deps.env ?? process.env;
   const apiKey = env.DEEPGRAM_API_KEY;
   if (!apiKey) return sentence(NOT_SET_UP, 503);
   if (!isSameOrigin(request)) return sentence(NOT_ALLOWED, 403);
+  if (!userId) return sentence(NO_LEARNER, 401);
+  if (!allowRate(`grant:${userId}`, GRANT_RULE)) return sentence(TOO_MANY, 429);
 
-  const address = clientAddress(request);
-  if (!allowRate(`grant:${userId}`, GRANT_RULE) || !allowRate(`grant-ip:${address}`, GRANT_RULE_PER_ADDRESS)) {
-    return sentence(TOO_MANY, 429);
-  }
-
-  const body = (await request.json().catch(() => null)) as { attemptId?: unknown; skillTitle?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as GrantBody | null;
   let keyterms: string[];
   try {
     keyterms = await keytermsFor(userId, body, deps);
   } catch (error) {
     return attemptFailure(error);
   }
+
+  // Counted only once we would really spend, so junk requests can't lock out a room sharing one address.
+  if (!allowRate(`grant-ip:${clientAddress(request)}`, GRANT_RULE_PER_ADDRESS)) return sentence(TOO_MANY, 429);
 
   const httpBase = env.DEEPGRAM_API_BASE || "https://api.deepgram.com";
   const fetchFn = deps.fetchFn ?? fetch;
@@ -136,28 +144,34 @@ export async function handleSttToken(request: Request, userId: string, deps: Gra
   }
 }
 
-async function keytermsFor(
-  userId: string,
-  body: { attemptId?: unknown; skillTitle?: unknown } | null,
-  deps: GrantDeps,
-): Promise<string[]> {
+type GrantBody = { attemptId?: unknown; mapId?: unknown; nodeId?: unknown };
+
+/** Also the permission check: it throws unless this learner has something to say right now. */
+async function keytermsFor(userId: string, body: GrantBody | null, deps: GrantDeps): Promise<string[]> {
+  const loadMap = deps.loadMap ?? getSkillMap;
+
   if (typeof body?.attemptId === "string") {
     const loadAttempt = deps.loadAttempt ?? getOwnAttempt;
     const attempt = await loadAttempt(userId, body.attemptId);
-    const loadTitle = deps.loadTitle ?? skillTitleOf;
-    return extractKeyterms((await loadTitle(attempt.mapId, attempt.nodeId)) ?? "", attempt.explanation);
+    if (attempt.status !== "needs-followup") throw new AttemptError(NOT_WAITING, 409);
+    const map = await loadMap(attempt.mapId);
+    const title = map?.nodes.find((node) => node.id === attempt.nodeId)?.title ?? "";
+    return extractKeyterms(title, attempt.explanation);
   }
-  return extractKeyterms(typeof body?.skillTitle === "string" ? body.skillTitle : "", "");
-}
 
-async function skillTitleOf(mapId: string, nodeId: string): Promise<string | null> {
-  const map = await getSkillMap(mapId);
-  return map?.nodes.find((node) => node.id === nodeId)?.title ?? null;
+  if (typeof body?.mapId === "string" && typeof body.nodeId === "string") {
+    const map = await loadMap(body.mapId);
+    const node = map?.ownerId === userId ? map.nodes.find((candidate) => candidate.id === body.nodeId) : undefined;
+    if (!node) throw new AttemptError(NO_SKILL, 404);
+    return extractKeyterms(node.title, "");
+  }
+
+  throw new AttemptError(NO_SKILL, 400);
 }
 
 /**
  * The token route needs no login, so a page on another site must not be able to use it.
- * A script can fake this header, which is why the rate limits and short token life exist too.
+ * A script can fake this header, which is why the other checks and rate limits exist too.
  */
 export function isSameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");

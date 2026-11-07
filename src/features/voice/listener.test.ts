@@ -11,6 +11,7 @@ import type { FallbackReason } from "./machine";
 import { applyTurn, EMPTY_TRANSCRIPT, finalText, fullText, settle, type Transcript } from "./transcript";
 
 let fake: FakeProviders;
+const TAIL_WAIT = 20;
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -203,11 +204,13 @@ describe("failures", () => {
   it("reports silence from the service while the mic is hearing speech", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     try {
+      let reads = 0;
       const t = setup({ silent: true }, {
         openMic: async () => ({
           meter: {
             read(frame) {
-              frame.level = 0.5;
+              // A second of quiet room, then someone talking.
+              frame.level = reads++ < 4 ? 0.02 : 0.5;
             },
           },
           flush: () => {},
@@ -215,11 +218,43 @@ describe("failures", () => {
         }),
       });
       await t.listener.start();
-      await vi.advanceTimersByTimeAsync(8_250);
+      await vi.advanceTimersByTimeAsync(9_250);
       expect(t.failures).toEqual(["no-transcript"]);
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("does not ask for the microphone when the token is already known to have failed", async () => {
+    const openMic = vi.fn<ListenDeps["openMic"]>();
+    const t = setup({}, {
+      fetchGrant: async () => {
+        throw new Error("503");
+      },
+      openMic,
+    });
+    t.listener.prepare();
+    await wait(1);
+    await t.listener.start();
+    expect(t.failures).toEqual(["token"]);
+    expect(openMic).not.toHaveBeenCalled();
+  });
+
+  it("tries for a new token the next time, after one failed", async () => {
+    let fails = 1;
+    const fetchGrant = vi.fn(async () => {
+      if (fails-- > 0) throw new Error("503");
+      return { token: "fake-jwt-token", wsUrl: `ws://127.0.0.1:${fake.port}/v2/listen` };
+    });
+    const t = setup({ script: "back again", framesPerWord: 1 }, { fetchGrant });
+    t.listener.prepare();
+    await wait(1);
+    await t.listener.start();
+    expect(t.failures).toEqual(["token"]);
+    await t.listener.start();
+    await until(() => t.text().includes("back"));
+    expect(t.failures).toEqual(["token"]);
+    t.listener.abort();
   });
 });
 
@@ -241,6 +276,149 @@ describe("cleaning up", () => {
     await t.listener.finish();
     await t.listener.start();
     await until(() => fake.logs.length === 2);
+    t.listener.abort();
+  });
+});
+
+describe("tapping quickly", () => {
+  function controlledMics() {
+    const log: string[] = [];
+    const chunks: ((chunk: ArrayBuffer) => void)[] = [];
+    const resolvers: ((handle: MicHandle) => void)[] = [];
+    const handle = (name: string): MicHandle => ({ meter: SILENT_METER, flush: () => {}, release: () => log.push(`release:${name}`) });
+    const openMic: ListenDeps["openMic"] = (onChunk) => {
+      chunks.push(onChunk as (chunk: ArrayBuffer) => void);
+      return new Promise((resolve) => resolvers.push(resolve));
+    };
+    return { log, chunks, resolvers, handle, openMic };
+  }
+
+  it("a prompt answered after a restart releases the old mic and opens one socket", async () => {
+    const mics = controlledMics();
+    const sockets: SocketLike[] = [];
+    const t = setup({ script: "hello", framesPerWord: 1 }, {
+      openMic: mics.openMic,
+      createSocket: (url, protocols) => {
+        const socket = new WebSocket(url, protocols) as unknown as SocketLike;
+        sockets.push(socket);
+        return socket;
+      },
+    });
+    void t.listener.start();
+    t.listener.abort();
+    void t.listener.start();
+    mics.resolvers[0](mics.handle("A"));
+    mics.resolvers[1](mics.handle("B"));
+    await wait(20);
+    expect(mics.log).toEqual(["release:A"]);
+    expect(sockets).toHaveLength(1);
+    t.listener.abort();
+    expect(mics.log).toEqual(["release:A", "release:B"]);
+  });
+
+  it("audio from the abandoned mic never joins the new take", async () => {
+    const mics = controlledMics();
+    const t = setup({ silent: true }, { openMic: mics.openMic });
+    void t.listener.start();
+    t.listener.abort();
+    void t.listener.start();
+    mics.chunks[0](new Uint8Array([0xaa]).buffer);
+    mics.chunks[1](new Uint8Array([0x1a]).buffer);
+    mics.resolvers[0](mics.handle("A"));
+    mics.resolvers[1](mics.handle("B"));
+    await until(() => fake.logs.at(-1)?.firstAudioByte !== null && fake.logs.at(-1)?.firstAudioByte !== undefined);
+    expect(fake.logs.at(-1)!.firstAudioByte).toBe(0x1a);
+    t.listener.abort();
+  });
+
+  it("a mic that opens after the only take was stopped is released", async () => {
+    const mics = controlledMics();
+    const t = setup({}, { openMic: mics.openMic });
+    void t.listener.start();
+    t.listener.abort();
+    mics.resolvers[0](mics.handle("A"));
+    await wait(5);
+    expect(mics.log).toEqual(["release:A"]);
+  });
+
+  it("a stale finish leaves the new take running", async () => {
+    const t = setup({ script: "one two three", framesPerWord: 1 });
+    await t.listener.start();
+    await until(() => t.text().includes("one"));
+    const staleFinish = t.listener.finish();
+    t.listener.abort();
+    await t.listener.start();
+    await until(() => fake.logs.length === 2 && (fake.logs[1].audioFrames ?? 0) > 0);
+    await staleFinish;
+    await wait(TAIL_WAIT);
+    expect(t.failures).toEqual([]);
+    const framesBefore = fake.logs[1].audioFrames;
+    await wait(40);
+    expect(fake.logs[1].audioFrames).toBeGreaterThan(framesBefore);
+    expect(fake.logs[1].textFrames).toEqual([]);
+    t.listener.abort();
+  });
+
+  it("runs one watchdog at a time", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    try {
+      const t = setup({ silent: true });
+      await t.listener.start();
+      expect(vi.getTimerCount()).toBeGreaterThan(0);
+      const running = vi.getTimerCount();
+      t.listener.abort();
+      await t.listener.start();
+      expect(vi.getTimerCount()).toBe(running);
+      t.listener.abort();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("a slow permission prompt", () => {
+  it("gets a new token when the prefetched one is nearly dead by the time the mic opens", async () => {
+    const realNow = Date.now;
+    let skew = 0;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => realNow() + skew);
+    try {
+      let minted = 0;
+      const tokens: string[] = [];
+      let answerPrompt: (handle: MicHandle) => void = () => {};
+      const t = setup({ script: "", silent: true }, {
+        fetchGrant: async () => ({ token: `token-${++minted}`, wsUrl: `ws://127.0.0.1:${fake.port}/v2/listen` }),
+        openMic: () => new Promise((resolve) => (answerPrompt = resolve)),
+        createSocket: (url, protocols) => {
+          tokens.push(protocols[1]);
+          return new WebSocket(url, protocols) as unknown as SocketLike;
+        },
+      });
+      t.listener.prepare();
+      skew = 15_000;
+      const started = t.listener.start();
+      skew = 30_000;
+      answerPrompt({ meter: SILENT_METER, flush: () => {}, release: () => {} });
+      await started;
+      expect(tokens).toEqual(["token-2"]);
+      t.listener.abort();
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("keeps the prefetched token when it is still good", async () => {
+    let minted = 0;
+    const tokens: string[] = [];
+    const t = setup({ silent: true }, {
+      fetchGrant: async () => ({ token: `token-${++minted}`, wsUrl: `ws://127.0.0.1:${fake.port}/v2/listen` }),
+      createSocket: (url, protocols) => {
+        tokens.push(protocols[1]);
+        return new WebSocket(url, protocols) as unknown as SocketLike;
+      },
+    });
+    t.listener.prepare();
+    await t.listener.start();
+    expect(tokens).toEqual(["token-1"]);
     t.listener.abort();
   });
 });
