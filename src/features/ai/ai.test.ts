@@ -8,6 +8,7 @@ vi.mock("@vercel/oidc", () => ({ getVercelOidcToken: vi.fn() }));
 const CEREBRAS = "https://api.cerebras.ai/v1/chat/completions";
 const GROQ = "https://api.groq.com/openai/v1/chat/completions";
 const GATEWAY = "https://ai-gateway.vercel.sh/v1/chat/completions";
+const GEMINI = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 const schema = z.object({ answer: z.number() });
 const base = { prompt: "What is 6 times 7?", label: "test" };
@@ -140,6 +141,56 @@ describe("fallback order", () => {
     await chatText(base);
 
     expect(console.info).toHaveBeenCalledWith(expect.stringMatching(/test: served by cerebras in \d+ms/));
+  });
+});
+
+describe("preferredRoute", () => {
+  beforeEach(() => {
+    vi.stubEnv("GEMINI_API_KEY", "gemini-key");
+  });
+
+  it("tries the preferred route first", async () => {
+    const fetchMock = mockFetch(reply('{"answer":42}'));
+
+    await expect(chatJSON({ ...base, schema, preferredRoute: "gemini" })).resolves.toEqual({ answer: 42 });
+    expect(urls(fetchMock)).toEqual([GEMINI]);
+  });
+
+  it("works for chatText too", async () => {
+    const fetchMock = mockFetch(reply("hello"));
+
+    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
+    expect(urls(fetchMock)).toEqual([GEMINI]);
+  });
+
+  it("falls through to the normal order when it is rate limited", async () => {
+    const fetchMock = mockFetch(failure(429), reply("hello"));
+
+    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
+    expect(urls(fetchMock)).toEqual([GEMINI, CEREBRAS]);
+  });
+
+  it("falls through on a 400, so a wrong model name there can't break the feature", async () => {
+    const fetchMock = mockFetch(failure(400), reply("hello"));
+
+    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
+    expect(urls(fetchMock)).toEqual([GEMINI, CEREBRAS]);
+  });
+
+  it("is skipped when it has no key", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    const fetchMock = mockFetch(reply("hello"));
+
+    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
+    expect(urls(fetchMock)).toEqual([CEREBRAS]);
+  });
+
+  it("without one, Cerebras still goes first", async () => {
+    const fetchMock = mockFetch(reply("hello"));
+
+    await chatText(base);
+
+    expect(urls(fetchMock)).toEqual([CEREBRAS]);
   });
 });
 

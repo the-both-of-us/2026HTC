@@ -7,8 +7,10 @@ import { getVercelOidcToken } from "@vercel/oidc";
  * Gemini sits behind the others because grading needs speed: it was measured at
  * 4.7 to 13.2 s against under 1 s on Cerebras. Bedrock is the last resort.
  */
+export type RouteName = "cerebras" | "groq" | "gateway" | "gemini" | "bedrock";
+
 export type Route = {
-  name: string;
+  name: RouteName;
   baseUrl: string;
   model: string;
   /** Whether to ask this provider for its JSON mode on chatJSON calls. */

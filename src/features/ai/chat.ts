@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ROUTES, type Route } from "./routes";
+import { ROUTES, type Route, type RouteName } from "./routes";
 
 const DEFAULT_MAX_TOKENS = 4000;
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -25,13 +25,15 @@ export type ChatOptions = {
   timeoutMs?: number;
   /** A short name for this kind of call, used in the logs. */
   label: string;
+  /** Try this provider first, then the normal order. If it can't answer, the call still can. */
+  preferredRoute?: RouteName;
 };
 
 export type ChatJsonOptions<T> = ChatOptions & { schema: z.ZodType<T> };
 
 /** Asks for plain text. */
 export async function chatText(options: ChatOptions): Promise<string> {
-  return tryEachRoute(options.label, (route, token) => sendRequest(route, token, options, false));
+  return tryEachRoute(options, (route, token) => sendRequest(route, token, options, false));
 }
 
 /**
@@ -60,20 +62,20 @@ export async function chatJSON<T>(options: ChatJsonOptions<T>): Promise<T> {
 
   const startedAt = Date.now();
   try {
-    return await tryEachRoute(options.label, askOneRoute);
+    return await tryEachRoute(options, askOneRoute);
   } catch (error) {
     // A provider that hung will not recover in time, and the learner is waiting.
     if (Date.now() - startedAt > SECOND_GO_WITHIN_MS) throw error;
-    return tryEachRoute(options.label, askOneRoute);
+    return tryEachRoute(options, askOneRoute);
   }
 }
 
 /** Runs `attempt` on each available provider in order, until one succeeds. */
 async function tryEachRoute<T>(
-  label: string,
+  { label, preferredRoute }: ChatOptions,
   attempt: (route: Route, token: string) => Promise<T>,
 ): Promise<T> {
-  for (const route of ROUTES) {
+  for (const route of routesInOrder(preferredRoute)) {
     const token = await route.getToken();
     if (!token) continue;
 
@@ -89,6 +91,11 @@ async function tryEachRoute<T>(
 
   console.error(`[ai] ${label}: no route could answer`);
   throw new AiUnavailableError();
+}
+
+function routesInOrder(preferred?: RouteName): Route[] {
+  const first = ROUTES.filter((route) => route.name === preferred);
+  return [...first, ...ROUTES.filter((route) => route.name !== preferred)];
 }
 
 /** Sends one request to one provider and returns the model's reply text. */
