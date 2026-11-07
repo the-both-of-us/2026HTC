@@ -1,0 +1,559 @@
+{
+  "sampleId": "data-analyst-grid",
+  "generatedAt": "2026-11-07T23:46:27.035Z",
+  "lessons": {
+    "relational-database-basics": {
+      "title": "Relational database basics",
+      "lesson": {
+        "idea": [
+          "Think of a relational database like a well‑organized filing cabinet. Each drawer holds a sheet of information about one kind of thing – customers, products, or events. The sheets are called rows, and the columns are the headings such as name, date, or price. By keeping everything in clear, separate tables, you can find exactly what you need without digging through a jumble of mixed data.",
+          "Every table needs a way to tell each row apart. That is the primary key – a unique identifier that never repeats. Imagine giving each sheet a distinct barcode; no two sheets can share the same code, so you always know which one you are looking at. The database uses this key to retrieve, update, or delete a specific row quickly and safely.",
+          "When you need to connect information from two tables, you use a foreign key. This is like writing the barcode of one sheet on another sheet to show they belong together. For example, a reading record can store the sensor's barcode to link it back to the sensor’s details. Splitting data into related tables is called normalization, and it prevents the same piece of information from being written over and over, saving space and reducing mistakes.",
+          "When you ask the database for data, you write a query. If the query mentions a column that does not exist – perhaps a typo or a column that was never created – the database will stop and tell you it cannot resolve that name. This safety check protects you from getting wrong or incomplete results."
+        ],
+        "example": {
+          "intro": "Below is a short example that shows a primary key, a foreign key, and a normalized design. The `Sensors` table stores each sensor once, while the `Readings` table stores many measurements that reference a sensor by its identifier.",
+          "code": "CREATE TABLE Sensors (\n    sensor_id INTEGER PRIMARY KEY,\n    location TEXT NOT NULL\n);\n\nCREATE TABLE Readings (\n    reading_id INTEGER PRIMARY KEY,\n    sensor_id INTEGER,\n    value REAL,\n    timestamp DATETIME,\n    FOREIGN KEY (sensor_id) REFERENCES Sensors(sensor_id)\n);\n\nSELECT s.location, r.value, r.timestamp\nFROM Readings r\nJOIN Sensors s ON r.sensor_id = s.sensor_id\nWHERE r.timestamp >= '2023-01-01';",
+          "after": "The first statement creates the `Sensors` table and defines `sensor_id` as the primary key, guaranteeing each sensor has a unique code. The second statement creates `Readings`, gives it its own primary key `reading_id`, and adds a foreign key `sensor_id` that points to the `Sensors` primary key. The final query joins the two tables on that foreign key, letting you see where each measurement came from. If you tried to select a column like `s.latitute` (misspelled), the database would raise an error because that column does not exist."
+        },
+        "mistakes": [
+          {
+            "mistake": "Leaving a table without a primary key lets duplicate rows slip in unnoticed.",
+            "fix": "Add a column marked as PRIMARY KEY so every row gets a unique value."
+          },
+          {
+            "mistake": "Typing a column name incorrectly in a SELECT statement causes the query to fail.",
+            "fix": "Double‑check the spelling of column names or use an IDE that auto‑completes them."
+          },
+          {
+            "mistake": "Storing the same sensor information in every reading row creates redundancy and makes updates hard.",
+            "fix": "Separate sensor details into their own `Sensors` table and reference them with a foreign key."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What role does a primary key play in a relational table?",
+            "answer": "It provides a unique identifier for each row, ensuring no two rows share the same key."
+          },
+          {
+            "question": "Why does a query error out when you reference a column that does not exist?",
+            "answer": "Because the database cannot resolve the name, indicating a typo or missing column."
+          }
+        ]
+      }
+    },
+    "python-basics": {
+      "title": "Python basics",
+      "lesson": {
+        "idea": [
+          "Welcome to Python! When managing modern power grids, data analysts process thousands of sensor signals every second. Python is one of the most popular tools for this work because its syntax is clean and readable. Think of writing a Python script like writing an organized recipe. Each step tells the computer how to clean, transform, or analyze your grid data. Before building complex analytics, you need to understand four basic building blocks: how Python handles data labels, how it structures commands using visual alignment, how it loads extra toolkits, and how it displays messages while running.",
+          "First, let us talk about storing information. In Python, you store values inside named containers called variables. Some programming languages force you to declare what kind of data—like a whole number, a decimal, or text—a container will hold forever. Python is much more flexible. It uses dynamic typing, which means a variable's data type can automatically shift while your program runs. You might start a variable with text from a sensor log file, convert it into a floating-point decimal for arithmetic, and store the result back into the same variable name without any errors.",
+          "Second, Python uses horizontal space to understand how your code is organized. In many other languages, programmers write curly brackets to show where a decision or loop begins and ends. Python does not use brackets for this purpose. Instead, it relies on indentation, which means adding spaces at the beginning of a line. When lines of code share the same indent level, Python groups them into a single block. Because spacing defines code structure, keeping your alignment consistent is essential; irregular spacing will cause Python to stop execution and report a formatting error.",
+          "Finally, Python comes with helpful pre-packaged tools and a simple way to communicate with you. The built-in toolkit is vast, but you often need extra capabilities like advanced math functions or date formatting. You load these extra feature sets by using an `import` statement at the start of your script. Once your code processes grid measurements, you will want to verify the results. The standard `print()` function takes whatever text or variable value you supply and outputs it to standard output, giving you immediate visual feedback on your data operations inside your console window."
+        ],
+        "example": {
+          "intro": "Let us look at a practical grid monitoring script. In this scenario, we read a voltage measurement from a substation log. The reading arrives as text, so we convert it to a decimal number, check if it exceeds safe operational thresholds, use an external mathematical module to round the surplus value up, and display an alert.",
+          "code": "import math\n\nsensor_value = \"124.8\"\nsensor_value = float(sensor_value)\n\nthreshold = 120.0\n\nif sensor_value > threshold:\n    excess_voltage = sensor_value - threshold\n    rounded_excess = math.ceil(excess_voltage)\n    print(f\"Alert: Voltage exceeded limit by {rounded_excess} volts!\")",
+          "after": "This script highlights all four fundamentals. At the very top, `import math` brings in helper functions for advanced mathematical calculations. Next, `sensor_value` is assigned a text string `\"124.8\"` and then converted into a float on the next line. This reassignment showcases dynamic typing, as the data type shifts smoothly at runtime. The `if` statement introduces a condition. Notice how the three lines beneath it are indented by four spaces; this visual alignment tells Python that those commands should run only when the voltage exceeds the threshold limit. Finally, `math.ceil()` calculates the smallest integer greater than or equal to our decimal difference, and the `print()` function writes the warning message directly to your console screen."
+        },
+        "mistakes": [
+          {
+            "mistake": "Mixing spaces and tab characters or using mismatched space counts on lines within the same block.",
+            "fix": "Configure your code editor to insert four spaces for every indent level so your spacing stays perfectly uniform."
+          },
+          {
+            "mistake": "Assuming a variable will always hold its original data type throughout your script.",
+            "fix": "Keep track of data types when performing operations, and explicitly convert values when changing text into numbers."
+          },
+          {
+            "mistake": "Calling external functions from an add-on library before bringing that library into your program.",
+            "fix": "Place all required `import` commands at the very top of your script so the necessary tools are ready before you call them."
+          }
+        ],
+        "checks": [
+          {
+            "question": "Why does Python raise a formatting syntax error if your line spacing is inconsistent within a block of code?",
+            "answer": "Python relies on matching indentation to identify which lines belong together in a code block, so uneven spacing breaks the structural layout."
+          },
+          {
+            "question": "What does the standard `print()` function do when you pass a message to it?",
+            "answer": "It writes the message text to standard output, making the result visible inside your terminal or console display."
+          }
+        ]
+      }
+    },
+    "time-series-fundamentals": {
+      "title": "Time-series fundamentals",
+      "lesson": {
+        "idea": [
+          "Imagine tracking your daily heartbeat or watching how much electricity a neighborhood uses throughout the day. When you record measurements repeatedly over time, you build a time series—a sequence of data points arranged in chronological order. If these readings arrive at perfectly consistent spacing, such as every five minutes or every hour, you have a regular time series. This predictable rhythm makes it much easier to detect trends, spot unusual spikes, and forecast future demand.",
+          "In the real world, data streams rarely run perfectly forever. Sensors lose power, networks drop connections, or maintenance takes systems offline, leaving blank spaces where readings should be. When timestamps are missing, you must perform imputation, which means filling in those empty spots using reasonable estimates like linear interpolation or carrying forward recent values. Another common hurdle is Daylight Saving Time. When clocks jump forward in spring, an hour disappears; when they fall back in autumn, an hour repeats. Without adjusting your timestamps to standard time zone formats, these time shifts create artificial gaps or duplicated records.",
+          "Finally, analysts often need to look at data through different lenses. The level of detail in your timestamps is called granularity. Highly detailed data, like five-minute readings, shows quick fluctuations. However, for long-term planning, you might prefer hourly or daily views. Changing from detailed steps to larger blocks requires aggregation, a process where you combine fine-grained values across each time window by summing them up or taking their average."
+        ],
+        "example": {
+          "intro": "Suppose you are analyzing five-minute power grid readings. Some timestamps are missing, and you need to clean the sequence and aggregate the data into hourly average load figures using pandas.",
+          "code": "import pandas as pd\n\n# Create sample load data with a missing observation\ntimestamps = pd.date_range(\"2024-01-01 00:00\", periods=4, freq=\"15min\")\ndf = pd.DataFrame({\"load_mw\": [120.0, 122.0, None, 128.0]}, index=timestamps)\n\n# 1. Fill missing readings using linear interpolation (imputation)\ndf[\"load_mw\"] = df[\"load_mw\"].interpolate(method=\"linear\")\n\n# 2. Aggregate to hourly granularity by taking the average load\nhourly_df = df.resample(\"1h\").mean()\nprint(hourly_df)",
+          "after": "In this example, we start with time-indexed load values that contain a missing entry. First, `interpolate()` performs imputation to calculate a sensible replacement for the empty slot based on surrounding values. Next, `resample('1h').mean()` changes the granularity from 15-minute intervals to 1-hour blocks, combining the short-term readings into a single average value for that hour."
+        },
+        "mistakes": [
+          {
+            "mistake": "Assuming a dataset is complete just because the rows are sorted in chronological order.",
+            "fix": "Always build a complete datetime index over your expected time range to reveal hidden gaps in your sequence before running analysis."
+          },
+          {
+            "mistake": "Ignoring time zone offsets and Daylight Saving Time when storing local clock readings.",
+            "fix": "Convert timestamps to Universal Coordinated Time (`UTC`) or attach explicit time zone metadata to handle missing or repeated clock hours automatically."
+          },
+          {
+            "mistake": "Using the wrong aggregation operation, like summing rate metrics or averaging cumulative totals.",
+            "fix": "Match your aggregation method to the measurement type: use `sum()` for cumulative amounts and `mean()` for continuous rates over an interval."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What makes a time series regular, and why must missing timestamps be resolved before analyzing it?",
+            "answer": "A time series is regular when observations occur at uniform, equally spaced time intervals. Missing timestamps break this predictable grid, creating gaps that must be imputed to prevent inaccurate trend calculations."
+          },
+          {
+            "question": "How does aggregating data to a broader granularity change a sequence of short-interval readings?",
+            "answer": "Aggregating converts fine-grained data into larger time windows, combining multiple short-interval values into single summary figures using operations like averaging or summing."
+          }
+        ]
+      }
+    },
+    "sql-queries": {
+      "title": "SQL queries",
+      "lesson": {
+        "idea": [
+          "Imagine a giant digital filing cabinet storing every power line reading, generator output, and blackout record from an electrical grid. To get answers from this stored information, you use SQL, which stands for Structured Query Language. A SQL query is simply a written question asking a database to find, filter, and present specific information. Database records live inside tables structured into columns and rows. Columns define the categories of information like spreadsheet headers, while rows hold individual entries.",
+          "When you write a query, your choice of columns listed right after the `SELECT` keyword dictates exactly which details show up in your final report. If you only request timestamps and output values, the database leaves everything else out. Before summarizing or calculating totals across your data, you usually want to narrow down which entries to analyze. The `WHERE` clause filters out unwanted rows upfront. It tests every record, discarding any row that fails your criteria before any math or grouping takes place.",
+          "Once your query selects and filters the right information, you can decide how to present it. The `ORDER BY` clause sorts your result set in ascending or descending sequence. Sorting changes how the data displays on your screen, but it never alters how the information is permanently stored in the database. Finally, when queries grow complex—especially when joining tables that happen to share identical header names—you can use aliases. An alias gives a table or column a short nickname, making your code easier to read and clarifying exactly which column you mean."
+        ],
+        "example": {
+          "intro": "Suppose you want to inspect recent power generation records from two separate database tables: one listing facility names and one logging hourly output. Both tables contain a column named `plant_id`. We can use aliases to join them cleanly, filter for high generation levels, and display the results in order.",
+          "code": "SELECT \n    p.plant_name AS facility,\n    g.output_mw AS megawatts,\n    g.reading_time AS recorded_at\nFROM generation_logs AS g\nJOIN power_plants AS p \n    ON g.plant_id = p.plant_id\nWHERE g.output_mw > 500\nORDER BY g.output_mw DESC;",
+          "after": "In this example, the `SELECT` clause chooses three specific columns to display and uses `AS` to give them friendly header names in the output. The `JOIN` combines the log table with the plants table using short aliases `g` and `p`, which prevents confusion over the shared `plant_id` column name. The `WHERE` clause excludes any readings equal to or below 500 megawatts before returning the data. Finally, `ORDER BY` arranges the results so the highest output readings appear first."
+        },
+        "mistakes": [
+          {
+            "mistake": "Assuming that the `WHERE` clause filters data after summary calculations or groupings have already been completed.",
+            "fix": "Place `WHERE` conditions upfront to discard unwanted rows before any calculations or aggregations take place."
+          },
+          {
+            "mistake": "Worrying that applying an `ORDER BY` clause will permanently reorder or rewrite the raw data inside the database table.",
+            "fix": "Remember that `ORDER BY` only modifies the visual presentation of your output without changing the stored underlying records."
+          },
+          {
+            "mistake": "Omitting table aliases when joining tables that contain identical column names, leading to ambiguity errors.",
+            "fix": "Assign short table nicknames with aliases and prefix matching column names using dot notation, such as `table_alias.column_name`."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What determines which specific columns appear in the output of a SQL query?",
+            "answer": "The list of column names specified immediately after the `SELECT` keyword determines which columns are included in the query result."
+          },
+          {
+            "question": "How does the `WHERE` clause affect the rows included in your query results?",
+            "answer": "The `WHERE` clause evaluates each row and removes any records that fail to meet your filter criteria before any aggregation occurs."
+          }
+        ]
+      }
+    },
+    "sql-joins": {
+      "title": "SQL joins",
+      "lesson": {
+        "idea": [
+          "A join is a way to line up rows from two tables so you can see related information together. Think of it like matching two lists of puzzle pieces: each piece has a shape that fits only the matching piece from the other list. When the shapes (keys) line up, you can glue them together and read data from both tables at once.",
+          "An `INNER JOIN` only keeps the pairs that actually match. If a row in the first table has no partner in the second, it disappears from the result. By contrast, a `LEFT JOIN` holds onto every row from the left‑hand table, even if there is no matching row on the right; missing values are shown as `NULL`. This is useful when you want a complete picture of the primary data and just add extra details when they exist.",
+          "For a join to work, the columns you compare must be compatible – the same data type, like both being dates or both being numbers. If you try to join a text column to a numeric column, the database will raise an error because it cannot compare the two. Also, you must tell the database which columns to compare; forgetting the `ON` clause makes the database combine every row with every other row, producing a huge Cartesian product that rarely makes sense."
+        ],
+        "example": {
+          "intro": "Suppose you have an `hourly` table that records a measurement once each hour and a `five_minute` table that records the same measurement every five minutes. To build a report that shows the hourly value together with the closest five‑minute value, you can use a `LEFT JOIN` because you want to keep every hourly record even if a five‑minute entry is missing.",
+          "code": "SELECT h.timestamp,\n       h.value AS hourly_value,\n       f.value AS five_minute_value\nFROM hourly h\nLEFT JOIN five_minute f\n  ON h.timestamp = f.timestamp\nWHERE h.timestamp BETWEEN '2023-01-01' AND '2023-01-02';",
+          "after": "The query returns one row for each hour in the chosen date range. If a matching five‑minute record exists, its value appears in the `five_minute_value` column; otherwise that column shows `NULL`. This demonstrates how a `LEFT JOIN` preserves all rows from the left table while optionally adding data from the right table."
+        },
+        "mistakes": [
+          {
+            "mistake": "Leaving out the ON clause or using a condition that does not reference both tables.",
+            "fix": "Always include an ON clause that links a column from the left table to a column from the right table."
+          },
+          {
+            "mistake": "Joining columns that have different data types, such as an integer key to a text key.",
+            "fix": "Make sure the joined columns share the same type, or explicitly cast one side to match the other."
+          },
+          {
+            "mistake": "Assuming a `LEFT JOIN` will filter out rows without matches.",
+            "fix": "Remember that a `LEFT JOIN` keeps every row from the left side; use an `INNER JOIN` if you only want rows that have matches."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What does an `INNER JOIN` do with rows that lack a matching key in the other table?",
+            "answer": "It removes those rows, returning only the rows where both tables have a matching key."
+          },
+          {
+            "question": "What is the result when a join is written without an ON clause?",
+            "answer": "The query creates a Cartesian product, pairing each row of one table with every row of the other."
+          }
+        ]
+      }
+    },
+    "pandas-data-manipulation": {
+      "title": "Pandas data manipulation",
+      "lesson": {
+        "idea": [
+          "Imagine an electronic spreadsheet built directly into your programming tools. In Python, the primary library for handling structured table-like data is called Pandas. Its central data structure is the `DataFrame`. A `DataFrame` organizes data into columns and rows, complete with clear names for your columns and index labels for your rows. Because every column has a distinct text name, selecting a single variable—such as electrical grid power output or substation IDs—is as simple as placing that column name inside square brackets after your table name.",
+          "When you need to select specific rows from your dataset, Pandas provides a dedicated tool called the `.loc` accessor. This method allows you to pull out rows based on their explicit labels. A key feature of label-based slicing with `.loc` is that both the starting label and the ending label are included in the output, which differs from standard Python list indexing. When you need to transform your data beyond basic math, you can use `.apply`. This method runs a custom Python function over every row or column in your table, making it easy to clean values or create new metrics.",
+          "Data in grid operations rarely lives in a single source. Operating logs might sit in one table while device locations sit in another. You can combine these sources by merging tables on shared key columns, like a unique transformer identification code. Merging aligns rows across both datasets based on matching keys. If a key appears in one table but is missing from the other, Pandas keeps the grid structure intact and fills the missing data cells with `NaN`, which stands for Not a Number."
+        ],
+        "example": {
+          "intro": "Let's walk through a grid operations scenario. We have a table of hourly power readings from solar stations and a second table with regional details. We will slice rows by label, classify output levels with a function, and merge the two tables together.",
+          "code": "import pandas as pd\n\n# Create power readings and location metadata\nreadings = pd.DataFrame({\n    'station_id': ['S1', 'S2', 'S3'],\n    'megawatts': [120, 450, 80]\n}, index=['hour_1', 'hour_2', 'hour_3'])\n\ninfo = pd.DataFrame({\n    'station_id': ['S1', 'S2', 'S4'],\n    'region': ['North', 'South', 'West']\n})\n\n# 1. Select rows by label range using .loc\npeak_hours = readings.loc['hour_1':'hour_2']\n\n# 2. Apply a custom function across a column\ndef classify(mw):\n    return 'High' if mw > 100 else 'Normal'\n\nreadings['status'] = readings['megawatts'].apply(classify)\n\n# 3. Merge tables on matching key column\ncombined = pd.merge(readings, info, on='station_id', how='left')",
+          "after": "This workflow shows the key Pandas building blocks in practice. First, calling `.loc['hour_1':'hour_2']` picks rows using their label range, keeping both `hour_1` and `hour_2` in the final table. Next, `.apply()` sends each numeric value in the `megawatts` column to our custom `classify` logic, creating a brand new column named `status`. Finally, `pd.merge()` links our readings to the metadata table by matching values in `station_id`. Because station `S3` has no corresponding entry in the metadata table, its `region` value is automatically set to `NaN`."
+        },
+        "mistakes": [
+          {
+            "mistake": "Expecting `.loc` label slices to leave out the final row label, like standard Python numerical slices do.",
+            "fix": "Remember that label-based slicing with `.loc` includes both the starting and ending labels in your output."
+          },
+          {
+            "mistake": "Using `.apply()` to perform simple arithmetic calculations on an entire column.",
+            "fix": "Use built-in vectorized operators like `readings['megawatts'] * 1000` for basic math, keeping `.apply()` for complex multi-step functions."
+          },
+          {
+            "mistake": "Assuming unmatched rows across merged tables will automatically disappear from your dataset.",
+            "fix": "Check your merge options and expect missing key matches to yield `NaN` values, which you can inspect or handle afterwards."
+          }
+        ],
+        "checks": [
+          {
+            "question": "Why does slicing rows with the `.loc` accessor include the final label in the slice range?",
+            "answer": "The `.loc` accessor operates on explicitly named labels rather than offset positions, so including the endpoint keeps range boundaries predictable and complete for human-labeled indices."
+          },
+          {
+            "question": "What happens during a Pandas table merge when a key in one table does not match any key in the other?",
+            "answer": "Pandas aligns all available records on the specified key and assigns `NaN` values to the missing data fields from the unmatched table."
+          }
+        ]
+      }
+    },
+    "data-cleaning-time-series": {
+      "title": "Time-series data cleaning",
+      "lesson": {
+        "idea": [
+          "Imagine watching a digital clock tick every minute. Time-series data is simply a collection of observations recorded in a strict chronological order at set intervals. In power grid operations, smart meters record electricity flow every few minutes or hours. Because energy planning depends on continuous trends, keeping this sequence clean is essential for accurate forecasting and safe operations.",
+          "However, raw sensor records are rarely pristine. Hardware glitches and network drops create missing timestamps, leaving gaps in your timeline. You discover these gaps by constructing an expected sequence of times and comparing it against your actual data. To fix missing points without breaking the flow, analysts use interpolation. Interpolation is a math technique that estimates a missing value by calculating a smooth bridge between neighboring readings.",
+          "Another frequent issue stems from faulty hardware. A misbehaving meter might record a sudden power spike that is physically impossible, such as a single home drawing enough electricity to light up a whole stadium. If left untouched, these extreme spikes—known as outliers—will distort your average usage figures and skew forecasting models. Analysts filter out or replace these faulty numbers to protect their analysis.",
+          "Clocks themselves can also trip up your data. Daylight saving adjustments shift local time forward by an hour in spring and backward in autumn. Spring leaves a missing hour, while autumn creates duplicate timestamps for the hour that repeats. To avoid confusion, grid analysts convert local times into Coordinated Universal Time (`UTC`), a single standard clock that never shifts for daylight saving."
+        ],
+        "example": {
+          "intro": "Let us walk through a practical script using Python and the `pandas` data library. Suppose we have hourly meter readings with a missing timestamp, an extreme meter error, and local timestamps affected by daylight saving time.",
+          "code": "import pandas as pd\nimport numpy as np\n\nraw_data = {\n    \"timestamp\": [\"2023-11-05 01:00\", \"2023-11-05 01:00\", \"2023-11-05 03:00\"],\n    \"kw_load\": [150.0, 9999.0, 170.0]\n}\ndf = pd.DataFrame(raw_data)\n\n# 1. Parse timestamps into UTC to handle duplicate hours\ndf[\"timestamp\"] = pd.to_datetime(df[\"timestamp\"]).dt.tz_localize(\"US/Eastern\", ambiguous=\"infer\").dt.tz_convert(\"UTC\")\n\n# 2. Remove physical meter error outliers above threshold\ndf.loc[df[\"kw_load\"] > 5000, \"kw_load\"] = np.nan\n\n# 3. Sort, deduplicate, reindex timeline, and interpolate gaps\ndf = df.drop_duplicates(subset=[\"timestamp\"]).set_index(\"timestamp\")\nfull_idx = pd.date_range(start=df.index.min(), end=df.index.max(), freq=\"h\")\ndf = df.reindex(full_idx)\ndf[\"kw_load\"] = df[\"kw_load\"].interpolate(method=\"linear\")",
+          "after": "In this example, we start by turning string dates into timezone-aware datetimes. Converting them to `UTC` handles the repeated fall hour without collapsing distinct events into identical labels. Next, we replace the impossible meter reading of `9999.0` kilowatts with a missing value marker (`np.nan`). We then drop duplicate timestamps and build a complete hourly sequence using `reindex()`. Finally, we apply `interpolate()` to calculate realistic values for the missing readings based on nearby valid points."
+        },
+        "mistakes": [
+          {
+            "mistake": "Overlooking daylight saving clock changes when aggregating hourly data.",
+            "fix": "Convert timestamps to `UTC` with `tz_convert()` early in your cleanup pipeline so spring skips and autumn duplicate hours are correctly aligned."
+          },
+          {
+            "mistake": "Filling missing power readings with zero.",
+            "fix": "Apply linear estimation using `interpolate()` to project reasonable readings between surrounding valid data points instead of introducing artificial drops."
+          },
+          {
+            "mistake": "Allowing extreme meter error spikes to remain in the dataset during analysis.",
+            "fix": "Define upper and lower physical limits to flag faulty spikes and replace them with missing markers before performing summary calculations."
+          }
+        ],
+        "checks": [
+          {
+            "question": "How do analysts identify missing timestamps within a time-series dataset?",
+            "answer": "They create a complete grid of expected regular intervals over the time range and compare it against the actual timestamps to spot missing gaps."
+          },
+          {
+            "question": "Why is linear interpolation preferred over filling missing sensor values with zeroes?",
+            "answer": "Zeroes create fake drop-offs that warp summary statistics, whereas linear interpolation estimates realistic numbers from neighboring valid readings to maintain smooth trends."
+          }
+        ]
+      }
+    },
+    "load-forecast-evaluation": {
+      "title": "Load forecast evaluation",
+      "lesson": {
+        "idea": [
+          "Load forecast evaluation is the process of checking how well a predicted electricity demand matches what actually happened. It matters because operators need reliable numbers to keep the grid stable and avoid costly over‑ or under‑production. Think of it like checking a weather forecast: if you know it’s usually off by a few degrees, you can plan for that uncertainty.",
+          "One common way to measure accuracy is to compute the average of the absolute differences between the forecast and the real load. This metric, often called mean absolute error, tells you on average how many megawatts you missed by, without caring whether you were high or low. If the errors tend to be mostly positive or mostly negative, you have a bias – the model consistently leans one way. In addition, because electricity demand follows daily and yearly cycles, errors can get bigger during peak seasons like summer afternoons, so spotting seasonal patterns helps you understand when the model struggles most.",
+          "To get trustworthy numbers, you must line up the forecast and actual data by the exact same timestamps. If the two series are offset by even one hour, you end up comparing a morning forecast to an evening reality, and the error metrics become meaningless. Aligning timestamps is like making sure two puzzle pieces fit before you start counting how many pieces are missing."
+        ],
+        "example": {
+          "intro": "Below is a short Python snippet that shows how to align timestamps, compute the average absolute error, and look for a systematic bias in a set of hourly load forecasts.",
+          "code": "import pandas as pd\n\n# Simulated data – a week of hourly forecasts and actual loads\nforecast = pd.Series([50, 55, 53, 60, 70, 65, 55],\n                     index=pd.date_range('2023-01-01 00:00', periods=7, freq='H'))\nactual = pd.Series([48, 57, 52, 58, 72, 63, 56],\n                   index=pd.date_range('2023-01-01 00:00', periods=7, freq='H'))\n\n# Align the two series on the same timestamps\naligned = pd.concat([forecast, actual], axis=1, keys=['forecast', 'actual']).dropna()\n\n# Compute mean absolute error\nmae = (aligned['forecast'] - aligned['actual']).abs().mean()\n\n# Compute average signed error to detect bias\nbias = (aligned['forecast'] - aligned['actual']).mean()\n\nprint(f\"Mean absolute error: {mae:.2f} MW\")\nprint(f\"Average signed error (bias): {bias:.2f} MW\")",
+          "after": "The example first creates two `Series` objects that represent forecast and actual load values with matching hourly timestamps. It then uses `concat` to join them on the timestamp index, discarding any rows where one side is missing. The absolute differences are averaged to produce the mean absolute error, giving a clear picture of the typical size of the mistake. The signed average tells you whether the model tends to over‑predict (positive bias) or under‑predict (negative bias). Running the code prints both numbers, showing how the two metrics together reveal both overall accuracy and systematic leaning."
+        },
+        "mistakes": [
+          {
+            "mistake": "Averaging the raw differences without taking the absolute value hides the true size of errors.",
+            "fix": "Apply the `abs()` function to each difference before computing the mean."
+          },
+          {
+            "mistake": "Looking only at the average absolute error can mask a consistent over‑ or under‑prediction.",
+            "fix": "Also calculate the average signed difference; a non‑zero value indicates bias."
+          },
+          {
+            "mistake": "Comparing forecasts and actuals that have mismatched timestamps leads to distorted error numbers.",
+            "fix": "Merge the two series on their timestamp index and drop any rows where one side is missing before calculating metrics."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What does the mean absolute error tell you about a load forecast?",
+            "answer": "It tells the average magnitude of the forecast mistakes, ignoring whether they are above or below the actual load."
+          },
+          {
+            "question": "Why is it important to align timestamps before computing error metrics?",
+            "answer": "Because mismatched timestamps compare values from different times, which produces misleading error values."
+          }
+        ]
+      }
+    },
+    "grid-supply-demand-basics": {
+      "title": "Grid supply-demand basics",
+      "lesson": {
+        "idea": [
+          "Imagine a bathtub where water flowing in from a faucet represents electricity generated by power plants, and water flowing out through the drain represents the electricity used by homes and businesses. For the water level (or grid frequency) to stay steady, the flow in must equal the flow out at every moment. If more water comes in than leaves, the level rises; if more leaves than comes in, the level falls. In the electric grid the same principle applies: supply and demand have to be balanced instant by instant, otherwise the system frequency shifts away from its safe range.",
+          "When people turn on a light or a factory ramps up production, the demand on the grid changes. Generators sense these changes because the grid frequency acts like a tiny alarm bell: a slightly higher frequency tells them there is excess power, while a lower frequency signals a shortage. Modern plants automatically adjust their output up or down to keep the frequency steady, much like a thermostat changes heating or cooling to maintain a set temperature.",
+          "The wires that move electricity across a country are not limitless highways. Each transmission line has a capacity, and when many plants try to push power through the same line, it can become congested. When a line is full, operators must reroute power or ask certain plants to produce less, and they plan these moves ahead of time. Regions called balancing authorities coordinate schedules of generators and loads so that, day after day, the grid remains reliable and safe."
+        ],
+        "example": {
+          "intro": "Consider a small regional grid that has two power plants, Plant A and Plant B, and a total demand of 100 megawatts (MW). Plant A can quickly change its output, while Plant B is slower but cheaper to run. The grid operator forecasts that at 2 p.m. the demand will rise to 110 MW. To keep the balance, the operator asks Plant A to increase its output by 10 MW, because Plant B cannot respond fast enough. This adjustment keeps the supply equal to the new demand, preventing the frequency from dropping.",
+          "code": null,
+          "after": "The scenario shows three important ideas. First, the operator matches generation to the predicted load, so supply equals demand at the moment the demand changes. Second, the fast‑responding plant changes its output because the grid frequency would have signaled a shortage otherwise. Third, the operator considers transmission limits and plant capabilities when deciding which plant should adjust, ensuring that the power can flow without overloading any line."
+        },
+        "mistakes": [
+          {
+            "mistake": "Assuming the grid can tolerate a short‑term mismatch between supply and demand.",
+            "fix": "Recognize that even brief imbalances cause frequency deviations, so generators must react quickly to keep the system stable."
+          },
+          {
+            "mistake": "Ignoring the capacity limits of transmission lines when scheduling generators.",
+            "fix": "Check line ratings and anticipate congestion, then adjust dispatch plans or reroute power to avoid overloads."
+          },
+          {
+            "mistake": "Relying only on real‑time adjustments and not planning ahead for expected load changes.",
+            "fix": "Use forecasts to schedule resources in advance, allowing balancing authorities to maintain reliability."
+          }
+        ],
+        "checks": [
+          {
+            "question": "Why must electricity supply equal demand at every instant on the grid?",
+            "answer": "Because any imbalance changes the grid frequency, which can lead to instability or equipment damage."
+          },
+          {
+            "question": "What role do transmission constraints play in dispatch decisions?",
+            "answer": "They limit how much power can flow on a line, so operators must adjust generation or reroute power to avoid congestion."
+          }
+        ]
+      }
+    },
+    "documentation-and-reproducibility": {
+      "title": "Documentation and reproducibility",
+      "lesson": {
+        "idea": [
+          "Imagine you need to share a data recipe with a colleague.  Just like a cooking recipe lists the ingredients and the steps, a good data document tells where the raw tables live, what each calculation does, and how the final number is defined.  This lets anyone follow the same path and get the same result, without guessing.",
+          "When you write down each transformation – for example, filtering rows, joining tables, or aggregating values – you are giving a map of the journey.  Anyone reading the map can reconstruct the metric, check each turn, and understand why the numbers look the way they do.  Think of it as a travel itinerary where every stop is clearly noted.",
+          "Keeping versions of your script is like saving different drafts of a story.  Each time you change a calculation, you add a new version tag or commit it to version control.  That way you can trace who changed what, why it was changed, and you can roll back to a previous draft if a mistake appears later.",
+          "A clear definition of the metric – what it measures, the units, the time frame, and any assumptions – prevents analysts from interpreting the same number in different ways.  It’s the difference between everyone measuring “average downtime” in hours versus minutes, for example, and it removes ambiguity from reports."
+        ],
+        "example": {
+          "intro": "Below is a short SQL script that calculates the average daily downtime for each plant in March 2024.  The comments illustrate how you can embed source references, step explanations, and version information directly in the code.",
+          "code": "-- Version: 2024-04-01 v1.0\n-- Metric: Average Daily Downtime (hours)\n-- Source tables: dbo.plant_events, dbo.calendar\n\nSELECT\n    p.plant_id,\n    AVG(CASE WHEN e.event_type = 'downtime' THEN e.duration_hours END) AS avg_daily_downtime\nFROM dbo.plant_events AS e\nJOIN dbo.calendar AS c ON e.event_date = c.calendar_date\nWHERE c.month = 3 AND c.year = 2024\nGROUP BY p.plant_id;",
+          "after": "The header comment tells a future reader which tables were consulted, the exact metric being produced, and the version of the script.  Inside the query, each clause is self‑explanatory: the `JOIN` links events to a calendar to filter by month, the `CASE` isolates only downtime rows, and the `AVG` aggregates the duration per plant.  With these notes, anyone can locate the source data, repeat the steps, and compare results across versions."
+        },
+        "mistakes": [
+          {
+            "mistake": "Leaving out the table names or date range in the script header.",
+            "fix": "Add a comment at the top that lists each source table and the time period the data covers."
+          },
+          {
+            "mistake": "Skipping comments for intermediate calculations like filters or joins.",
+            "fix": "Write a brief comment before each major clause to explain its purpose, such as \"filter to March 2024\" or \"join events to calendar\"."
+          },
+          {
+            "mistake": "Overwriting the file without indicating the new version.",
+            "fix": "Include a version line (e.g., `Version: 2024-04-01 v1.1`) and keep older versions in a repository or separate file."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What two pieces of information should you always record at the start of a data script?",
+            "answer": "A reference to the source tables (including dates) and a concise definition of the metric being calculated."
+          },
+          {
+            "question": "How do you make it easy to revert to an earlier calculation if a mistake is found?",
+            "answer": "By tagging each script with a version number or timestamp and preserving previous versions in version control."
+          }
+        ]
+      }
+    },
+    "weather-data-integration": {
+      "title": "Weather data integration",
+      "lesson": {
+        "idea": [
+          "When you bring weather information into a load‑prediction model, you first think of the data as a friend who lives far away. You ask a weather service for a forecast, just like you might call a friend for the latest news. The service replies in a format called JSON, which looks a bit like a nested list of labeled boxes. You need to open those boxes, pick out the numbers you care about – usually temperature and wind speed – and turn them into clean numbers you can feed into your analysis.",
+          "Why temperature and wind? Think of a hot day when people turn on air‑conditioners, or a windy afternoon when a wind farm generates extra electricity. Those two measurements often move up and down together with the amount of power used, so they become useful explanatory variables – the pieces of information that help explain why the load changes.",
+          "Sometimes the weather feed has gaps, like a missing hour because a sensor was offline. Just as you might ask a neighbor what the temperature was across the street, you can fill those gaps by borrowing data from nearby stations. This process is called imputation, and it prevents holes that would otherwise confuse the model.",
+          "Finally, the timestamps of the weather data must line up with the timestamps of the load data. Imagine you are matching two playlists: each song has to start at the same beat. Aligning the times ensures that the temperature you pair with a given hour of electricity use really happened at that same moment."
+        ],
+        "example": {
+          "intro": "Below is a short Python snippet that reads a weather forecast from an API, extracts temperature and wind speed, fills any missing values with the average of nearby stations, and aligns the result to a load‑data index.",
+          "code": "import requests\nimport pandas as pd\n\n# 1. Pull JSON from a weather endpoint\response = requests.get('https://api.example.com/forecast?city=XYZ')\nweather_json = response.json()\n\n# 2. Build a DataFrame with the fields we need\ndf = pd.json_normalize(weather_json['hourly'])\ndf = df[['dt', 'temp', 'wind_speed']]\n\ndf['dt'] = pd.to_datetime(df['dt'], unit='s')\ndf.set_index('dt', inplace=True)\n\n# 3. Simple imputation: replace missing values with the mean of the column\ndf = df.fillna(df.mean())\n\n# 4. Suppose we already have a load series called load_series with the same hourly index\n# Align the two series so they share the same timestamps\nfeatures = df.reindex(load_series.index).ffill()\n\n# Now `features` contains temperature and wind_speed ready for modeling",
+          "after": "The code demonstrates each checkpoint: it fetches JSON (`requests.get`), parses out `temp` and `wind_speed`, uses `fillna` to impute missing values (a stand‑in for borrowing nearby stations), and finally reindexes the weather frame to match the load series timestamps, ensuring proper time alignment."
+        },
+        "mistakes": [
+          {
+            "mistake": "Skipping the step that converts the epoch time (`dt`) into a proper datetime object.",
+            "fix": "Always run `pd.to_datetime` on the raw timestamps before setting the index."
+          },
+          {
+            "mistake": "Using forward fill (`ffill`) on the raw JSON without first handling missing values.",
+            "fix": "Impute missing temperature or wind entries first, then align the series."
+          },
+          {
+            "mistake": "Assuming the API always returns temperature in Celsius and wind speed in meters per second.",
+            "fix": "Check the API documentation and, if needed, convert units to the ones your model expects."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What two weather variables are most commonly used to explain load variations?",
+            "answer": "Temperature and wind speed."
+          },
+          {
+            "question": "Why must weather timestamps be aligned with load timestamps before modeling?",
+            "answer": "To ensure that each weather observation corresponds to the exact period of electricity use, avoiding mismatched features."
+          }
+        ]
+      }
+    },
+    "power-bi-dashboard-development": {
+      "title": "Power BI dashboard development",
+      "lesson": {
+        "idea": [
+          "Power BI lets grid operators and planners watch the electricity system on a single screen that updates itself. Each visual tile – a chart, map, or card – shows the latest numbers as soon as the data source changes. Think of it like a digital weather board that refreshes the temperature and rain forecast every few minutes without you having to click anything.",
+          "Behind every tile is a data model that links tables together. If you have a table of power plants and another table of hourly generation, a relationship tells Power BI how a row in one table matches a row in the other. This is like matching Lego blocks: the right studs must fit, otherwise the model builds a shaky tower and totals will be wrong.",
+          "To turn raw numbers into the figures you need, Power BI uses DAX, a language for creating measures. A measure is a formula that runs on the fly – for example, adding up megawatts for the current day. It works like a cooking recipe: the ingredients (columns) are combined in a specific order, and a small mistake in the steps can change the flavor of the result.",
+          "When the report is ready, you publish the dashboard to a workspace. Publishing shares the collection of tiles with the people you invite, and it automatically gives them view permission. This step is similar to posting a photo album online – once you upload it, anyone you share the link with can see the pictures, but only you can edit them."
+        ],
+        "example": {
+          "intro": "Suppose you have two simple tables: `Plants` with columns PlantID and Name, and `Generation` with PlantID, Date, and MW. You create a one‑to‑many relationship from Plants.PlantID to Generation.PlantID, then add a DAX measure to show today’s total megawatts.",
+          "code": "TotalGeneration = \nCALCULATE(\n    SUM(Generation[MW]),\n    FILTER(\n        Generation,\n        Generation[Date] = MAX(Generation[Date])\n    )\n)",
+          "after": "The measure `TotalGeneration` adds up the MW column only for rows whose Date matches the latest date in the table. When the underlying data is refreshed, the visual tile that displays `TotalGeneration` automatically updates, showing the most recent total. Because the relationship links each generation record to the correct plant, the sum reflects the true output of all plants combined."
+        },
+        "mistakes": [
+          {
+            "mistake": "Creating a relationship with the wrong direction or cardinality.",
+            "fix": "Set the relationship from the lookup (one) side to the fact (many) side, and keep the direction single unless you need bi‑directional filtering."
+          },
+          {
+            "mistake": "Writing a DAX measure that uses the wrong aggregation function, like `AVERAGE` instead of `SUM`.",
+            "fix": "Choose the aggregation that matches the business question; for total megawatts use `SUM`."
+          },
+          {
+            "mistake": "Publishing a dashboard without adding the intended users to the workspace.",
+            "fix": "Add the required users or groups to the workspace before publishing so they receive view permission automatically."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What happens to a Power BI visual tile when the underlying dataset gets new rows?",
+            "answer": "The tile refreshes automatically to show the updated data."
+          },
+          {
+            "question": "Why can an incorrect relationship cause a wrong total in a measure?",
+            "answer": "Because the relationship decides which rows are linked, and a wrong link aggregates unrelated rows, leading to inflated or missing values."
+          }
+        ]
+      }
+    },
+    "clear-technical-writing": {
+      "title": "Clear technical writing",
+      "lesson": {
+        "idea": [
+          "When you write for people who aren't analysts, imagine you are describing how to bake a cake to a friend who has never cooked. You would choose simple words, avoid cooking jargon like \"mise en place\", and focus on clear steps. The same principle works for data reports: replace technical terms with everyday language or explain them right away. This makes your findings accessible, keeps the audience engaged, and reduces the chance that important insights get lost in translation. A report that reads like a friendly conversation is far more likely to be acted upon.",
+          "Think of headings as road signs that guide a driver through an unfamiliar city. Each sign tells you where you are and where you’re headed next, so you don’t get lost. In a written document, clear headings do the same job: they split the content into logical sections, let readers skim for the part they need, and provide a visual map of the argument. By using consistent levels—like main heading, sub‑heading, and sub‑sub‑heading—you create a hierarchy that the reader can follow without effort. A well‑structured report lets a busy manager find the key takeaway in seconds.",
+          "Bullet points are like a grocery list: each line represents one item you need to remember, and the list prevents you from forgetting anything. When you describe a process, breaking it into individual bullets isolates each action, making it easier to scan and follow. Avoid long paragraphs that cram many steps together; instead, place each step on its own line with a short, active verb. This style not only clarifies the sequence but also highlights any dependencies between steps. Readers can tick off each bullet mentally, reinforcing comprehension.",
+          "Acronyms are convenient shortcuts, but to someone outside your field they can be as opaque as a foreign language. The safest approach is to spell out the full term the first time you use it, then place the abbreviation in parentheses—for example, \"Operational Excellence Index (OEI)\". After that first introduction, you can freely use the short form. This practice eliminates ambiguity, builds trust with the audience, and ensures that later references are instantly understood. Think of it like introducing a new nickname: you explain who the person is before everyone starts using the nickname."
+        ],
+        "example": {
+          "intro": "Imagine you are preparing an executive summary for the operations team about yesterday’s peak‑load event. The following short passage demonstrates the principles of plain language, headings, bullet points, and acronym definition.\n\nExecutive Summary\nThe grid experienced its highest load of 12,300 MW on Tuesday, a 4% increase over the previous week. This rise was driven mainly by unusually warm weather in the north‑east region. Key actions:\n- Verify forecast assumptions for temperature spikes.\n- Increase reserve generation by 500 MW.\n- Communicate the change to the demand‑response team.\nThe Operational Reliability Index (ORI) stayed above its target of 95%.",
+          "code": null,
+          "after": "The excerpt follows the guidelines discussed earlier. The title \"Executive Summary\" acts as a top‑level heading, giving the reader an immediate sense of purpose. Plain language replaces technical jargon; for example, \"peak‑load event\" is used instead of \"maximum instantaneous demand\". Each action is listed as a bullet point, isolating steps so the reader can quickly see what needs to be done. The acronym ORI is defined on first use, ensuring that later references are clear to all stakeholders. Together, these choices make the report easy to read, navigate, and act upon."
+        },
+        "mistakes": [
+          {
+            "mistake": "Using technical terms without any explanation.",
+            "fix": "Introduce the term in simple language first, then give a brief definition or an everyday example."
+          },
+          {
+            "mistake": "Packing several ideas into one long paragraph.",
+            "fix": "Break the content into separate sections, each with a clear heading that signals the topic."
+          },
+          {
+            "mistake": "Leaving acronyms undefined the first time they appear.",
+            "fix": "Write the full phrase followed by the acronym in parentheses on first occurrence, then use the short form thereafter."
+          }
+        ],
+        "checks": [
+          {
+            "question": "Why is plain language essential when your audience includes non‑analysts?",
+            "answer": "It prevents confusion and ensures the insights are understood and acted upon."
+          },
+          {
+            "question": "How should you introduce an acronym in a report?",
+            "answer": "Write the full term first, place the abbreviation in parentheses, then use the acronym alone afterward."
+          }
+        ]
+      }
+    },
+    "scada-data-overview": {
+      "title": "SCADA data overview",
+      "lesson": {
+        "idea": [
+          "SCADA (Supervisory Control and Data Acquisition) systems act like the nervous system of a power grid or water plant. They constantly pull numbers from sensors, meters and switches spread across the field, turning raw voltages or flow rates into readable values that operators can see on a screen. Think of it like a live traffic map that updates every few seconds, letting you know exactly how many cars are on each road right now.",
+          "Each measurement in SCADA is given a tag – a short label that tells you what the number means and where it came from. By agreeing on a clear naming rule, everyone knows that a tag called `PUMP01_FLOW` refers to the flow reading of pump 1, and that a similar tag `PUMP01_SPEED` is its speed. If people start naming tags differently, the system can’t find the right data, just as a library would lose a book if the catalog used many spellings for the same title.",
+          "The historian is the long‑term memory that stores every SCADA reading. It lets analysts pull past values, like opening a time‑machine to see how temperature changed during a storm a week ago. However, the numbers do not always appear instantly; network hiccups or processing delays create data latency. That lag means a “real‑time” dashboard may actually be showing values that are a few seconds or minutes old, which can mislead decisions if the delay isn’t recognized."
+        ],
+        "example": {
+          "intro": "Imagine you need the last 60 minutes of pressure readings from a valve tag called `VALVE02_PRESSURE` stored in the historian. The following short script shows how to request the data and plot it.",
+          "code": "import pandas as pd\nfrom scada_api import HistorianClient\n\nclient = HistorianClient(base_url='https://historian.example.com')\n\n# Define the tag and the time window\ntag = 'VALVE02_PRESSURE'\nend = pd.Timestamp.now(tz='UTC')\nstart = end - pd.Timedelta(hours=1)\n\n# Retrieve the time‑series data\ndf = client.get_tag_data(tag, start=start, end=end)\n\n# Simple line plot\ndf.plot(title='Valve 2 Pressure – Last Hour')\nplt.xlabel('Time')\nplt.ylabel('Pressure (psi)')\nplt.show()",
+          "after": "The script demonstrates three key points: first, the historian client fetches historic values for a specific tag; second, the start and end timestamps create a one‑hour window, handling any time‑zone offsets; third, the resulting DataFrame can be visualized directly, turning raw numbers into an operational insight."
+        },
+        "mistakes": [
+          {
+            "mistake": "Writing tag names with different spellings or abbreviations across the team.",
+            "fix": "Pick a naming standard (e.g., DEVICE01_MEAS) and enforce it in documentation and scripts."
+          },
+          {
+            "mistake": "Assuming the values returned are truly current without checking timestamps.",
+            "fix": "Always inspect the timestamp column and compare it to the current time to see if there is a lag."
+          },
+          {
+            "mistake": "Querying the historian without specifying the time zone, leading to mixed‑up times.",
+            "fix": "Include the time‑zone in both the query parameters and any date‑time conversions, or convert everything to UTC."
+          }
+        ],
+        "checks": [
+          {
+            "question": "Why is a consistent tag naming convention important for SCADA data retrieval?",
+            "answer": "It ensures that queries reference the exact same identifier, preventing lookup failures and confusion."
+          },
+          {
+            "question": "What impact does data latency have on a real‑time operational dashboard?",
+            "answer": "Latency means the displayed values may be delayed, so decisions based on them could be outdated if the delay isn’t accounted for."
+          }
+        ]
+      }
+    }
+  }
+}

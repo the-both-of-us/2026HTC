@@ -1,0 +1,557 @@
+{
+  "sampleId": "junior-backend",
+  "generatedAt": "2026-11-07T23:47:54.631Z",
+  "lessons": {
+    "programming-basics": {
+      "title": "Programming fundamentals",
+      "lesson": {
+        "idea": [
+          "Imagine you have a set of labeled jars on a kitchen shelf. Each jar holds a value, like a number or a piece of text, and the label lets you find it later. In programming, those jars are called variables. You can put something into a variable, read it whenever you need, and change it as the program runs. Because the label is unique, the computer knows exactly which value you mean each time you refer to that variable. This simple idea lets a program store data such as a user's name, the total number of requests, or a flag that indicates whether a task succeeded.",
+          "Now think of a recipe that tells you which steps to follow depending on the ingredients you have. Control flow statements work like those recipe directions. An `if` statement checks a condition and decides which block of code to run, much like deciding whether to add salt based on taste. A `for` loop repeats a set of actions a known number of times, similar to stirring a pot exactly ten times. A `while` loop continues as long as a condition remains true, like keeping a soup on low heat until it thickens. These tools let a program choose paths, repeat work, and stop when the goal is reached.",
+          "Functions are like small kitchen appliances that perform a specific job whenever you need it. You give a function some inputs, called parameters, and it can give you back a result, called a return value. By putting reusable logic inside a function, you avoid writing the same code over and over. Scope is the area where a variable or a function name is visible. Think of a kitchen counter where you place a tool; anyone working at that counter can use it, but someone in a different room cannot. Proper scoping prevents accidental name clashes and keeps each part of the program tidy."
+        ],
+        "example": {
+          "intro": "Let’s count how many numbers in a list are both even and greater than ten. The code shows variables, an if statement, a for loop, a function, and how scope keeps the count variable separate from the loop index.",
+          "code": "def is_even_and_gt_ten(num):\n    # Returns True if num is even and larger than 10\n    return num % 2 == 0 and num > 10\n\nnumbers = [5, 12, 14, 9, 22, 7]\ncount = 0\nfor n in numbers:\n    if is_even_and_gt_ten(n):\n        count += 1\nprint('Total:', count)",
+          "after": "The function `is_even_and_gt_ten` encapsulates the test, so the loop body stays clear. The variable `count` lives outside the loop, so its final value is available after the loop finishes. The loop variable `n` only exists inside the `for` block, showing how scope limits its visibility."
+        },
+        "mistakes": [
+          {
+            "mistake": "Reusing the same variable name for different purposes inside a function.",
+            "fix": "Give each variable a distinct, descriptive name or limit its use to a smaller scope."
+          },
+          {
+            "mistake": "Forgetting to call a function after defining it, assuming it runs automatically.",
+            "fix": "Add a call like `result = my_function(arguments)` wherever you need the result."
+          },
+          {
+            "mistake": "Writing an `if` condition that never becomes true, so the block never executes.",
+            "fix": "Test the condition with sample data or use a debugger to ensure the logic matches your intent."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What is the purpose of a variable’s scope in a program?",
+            "answer": "Scope defines where the variable can be accessed, preventing unwanted interactions and name clashes."
+          },
+          {
+            "question": "How does a function improve code reuse?",
+            "answer": "It packages logic in one place, allowing you to call it multiple times with different inputs instead of rewriting the same code."
+          }
+        ]
+      }
+    },
+    "git-basics": {
+      "title": "Git version control",
+      "lesson": {
+        "idea": [
+          "Imagine you are writing a book with a team. If everyone edits the main draft at the same time, someone might accidentally delete a paragraph while fixing a typo. Version control systems solve this problem. Git acts like a smart timeline for your software project. It records every saved point, called a commit, so you can track who changed what, when, and why.",
+          "When you want to build a new feature or fix a bug, you do not edit the primary line of code directly. This central line is usually called the `main` branch. Instead, you create a branch. A branch is an isolated workspace. It copies the current state of your project and lets you record independent commits without touching the stable `main` codebase. Your teammates can keep working on `main` without seeing your work until you are ready.",
+          "Once your feature is complete and tested, you combine your changes back into `main`. This process is called merging. Merging integrates the commit history from your branch into another branch, preserving a complete record of how the project evolved. Before merging on a team project, developers usually open a pull request. A pull request displays your proposed commits to teammates. This gives reviewers a space to leave comments, suggest improvements, and test the code before it is integrated.",
+          "Sometimes, two developers edit the exact same line of a file in different branches. When Git tries to merge these branches, it cannot automatically decide which version to keep. This situation is called a merge conflict. Git pauses the merge and highlights the conflicting lines. As a developer, you resolve the conflict by reviewing both edits, selecting the correct code, and saving the final file."
+        ],
+        "example": {
+          "intro": "Here is a typical command sequence where a developer creates a feature branch, saves a commit, pushes the branch, and merges it back into `main`.",
+          "code": "# Switch to main and get the latest changes\ngit checkout main\ngit pull origin main\n\n# Create and switch to a new feature branch\ngit checkout -b feature-login\n\n# Stage changes and save a commit\ngit add login.js\ngit commit -m \"Add user login function\"\n\n# Push the branch to the remote server\ngit push origin feature-login\n\n# Merge the feature branch into main after code review\ngit checkout main\ngit merge feature-login",
+          "after": "Let's break down what happened in this command sequence. First, we made sure our local `main` branch was up to date. Then, we ran `git checkout -b feature-login` to create a new branch and switch to it. This gave us a safe area to experiment.\n\nNext, after writing our code, we staged `login.js` using `git add` and saved our changes with `git commit`. This commit created a checkpoint on our feature branch while leaving `main` untouched.\n\nAfter pushing the branch to the remote repository with `git push origin feature-login`, we opened a pull request online. Reviewers could inspect the changes and discuss the implementation. Once approved, we switched back to `main` using `git checkout main` and integrated the work using `git merge feature-login`. Git incorporated our commit history directly into `main`."
+        },
+        "mistakes": [
+          {
+            "mistake": "Committing experimental code directly onto the `main` branch while working on a new feature.",
+            "fix": "Always create a dedicated feature branch using `git checkout -b` before starting work to keep stable code separate from work in progress."
+          },
+          {
+            "mistake": "Panicking and deleting files when Git reports a merge conflict.",
+            "fix": "Open the conflicting file, inspect the marker tags like `<<<<<<<` and `>>>>>>>`, edit the code to keep the desired changes, and finish the merge with a new commit."
+          },
+          {
+            "mistake": "Merging code into the primary branch without creating a pull request for review.",
+            "fix": "Push your feature branch and open a pull request so team members can review your changes and provide feedback before merging."
+          }
+        ],
+        "checks": [
+          {
+            "question": "Why do developers work on a separate branch instead of making commits directly on `main`?",
+            "answer": "A branch isolates your work so you can make independent commits and test new features without risking errors on the stable `main` branch."
+          },
+          {
+            "question": "What causes a merge conflict in Git?",
+            "answer": "A merge conflict occurs when concurrent edits modify the exact same part of a file in different ways, leaving Git unable to choose a single version automatically."
+          }
+        ]
+      }
+    },
+    "javascript-basics": {
+      "title": "JavaScript fundamentals",
+      "lesson": {
+        "idea": [
+          "JavaScript is the language that powers Node.js, so every backend developer needs a solid grasp of its core ideas. The first building block is how we store values. When we write `const` before a name, we create a container that cannot be emptied and filled again – think of a sealed jar that you can look inside but never replace its contents. Using `let` is like an open jar; you can pour something out and later pour a new value in. Both `const` and `let` respect block scope, meaning they only exist inside the curly braces where they are declared.",
+          "Another key idea is that many operations in JavaScript happen later, without stopping the rest of the code. Functions marked with `async` automatically give back a `Promise`, which is like a ticket promising a result at some future time. While the promise is pending, JavaScript keeps running other tasks. The hidden engine called the `event loop` watches a queue of callbacks and only runs them after the current stack of function calls is empty. Imagine ordering a pizza: you place the order, the kitchen works on it while you continue talking, and when the pizza is ready the delivery person calls you back – that call is the callback the event loop finally executes.",
+          "Objects in JavaScript are linked together through a chain called the `prototype`. When you ask an object for a property it does not own, JavaScript walks up this chain to see if a parent object knows it. This is similar to a family tree where a child inherits traits from its parents. If you look for a skill that is not listed on the child, you automatically check the parent, then the grandparent, and so on. Understanding this inheritance model lets you share behavior without copying code, and it explains why some properties appear even though you never defined them directly on the object."
+        ],
+        "example": {
+          "intro": "Let’s see these ideas in a tiny script. We will define a constant configuration object, a mutable counter, an async function that pretends to fetch a number after a short delay, and a small object that inherits a greeting method from its prototype. The script will call the async function, wait for the result, update the counter, and finally display a message that uses the inherited method.",
+          "code": "const config = { timeout: 100 };\nlet counter = 0;\n\nasync function fetchNumber() {\n  return new Promise((resolve) => {\n    setTimeout(() => resolve(42), config.timeout);\n  });\n}\n\nconst proto = {\n  greet() {\n    return `Hello, the number is ${this.number}`;\n  }\n};\n\nconst child = Object.create(proto);\nchild.number = null;\n\n(async () => {\n  const result = await fetchNumber();\n  child.number = result;\n  counter += result;\n  console.log(child.greet());\n  console.log('Counter is', counter);\n})();",
+          "after": "The code shows that the `const` object never changes – trying to assign a new value would throw an error, while the `let` variable `counter` can be updated after the promise resolves. The `async` declaration makes `fetchNumber` return a `Promise`, and the `await` keyword pauses execution of that function until the timer callback runs, illustrating how the `event loop` handles the `setTimeout` after the current stack clears. Finally, the call to `child.greet()` works because `greet` lives on the prototype, demonstrating inheritance."
+        },
+        "mistakes": [
+          {
+            "mistake": "Reassigning a variable that was declared with `const`.",
+            "fix": "Use `let` for values you intend to change, and keep `const` for values that stay the same."
+          },
+          {
+            "mistake": "Calling an `async` function without `await` or a `.then` handler, which leaves you with an unresolved `Promise`.",
+            "fix": "Either `await` the function inside another async function or attach a `.then` callback to handle the result."
+          },
+          {
+            "mistake": "Assuming a property found on an object is stored directly on that object, ignoring the prototype chain.",
+            "fix": "Remember that missing properties are looked up on the object's prototype; use `Object.hasOwnProperty` to check where a property originates."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What is the main difference between a variable declared with `const` and one declared with `let`?",
+            "answer": "`const` creates a binding that cannot be reassigned, while `let` allows the variable to be assigned a new value later."
+          },
+          {
+            "question": "What does an `async` function return, and how does the event loop handle its completion?",
+            "answer": "It returns a `Promise`, and when that promise resolves the event loop runs the continuation callbacks after the current call stack is empty."
+          }
+        ]
+      }
+    },
+    "http-fundamentals": {
+      "title": "HTTP fundamentals",
+      "lesson": {
+        "idea": [
+          "When your browser requests a web page or an app fetches information from a server, they communicate using HTTP (Hypertext Transfer Protocol). Think of HTTP like a standardized mail service for digital devices. The client sends a request letter, and the remote server sends back a response package. Understanding how these request messages and response packages work is fundamental to backend web development.",
+          "Every HTTP request relies on an action word called a method or verb. When you want to view information without modifying anything on the server, you issue a `GET` request. For instance, reading a blog post uses `GET`. When you submit a form to generate a brand-new user account or publish a post, you send a `POST` request instead, which instructs the server to store a new resource. Some HTTP methods are idempotent, meaning sending the identical request multiple times produces the exact same state on the server. For example, a `PUT` request updates a resource to a specific state, so repeating that exact update leaves the server in that same final state.",
+          "When the server answers, it includes an HTTP status code—a three-digit number summarizing the result. A `200` status code signals that the operation succeeded, whereas a `404` status code indicates that the server could not find the requested item. Along with status codes, responses carry metadata headers. A `Cache-Control` header can include settings like `max-age`, which informs the browser how many seconds it may store and reuse the response locally before asking the server for fresh data."
+        ],
+        "example": {
+          "intro": "Consider an API for managing articles on a website. Here is a short Express route handler demonstrating different HTTP methods, status codes, and caching headers.",
+          "code": "app.get('/articles/42', (req, res) => {\n  res.setHeader('Cache-Control', 'max-age=3600');\n  res.status(200).json({ id: 42, title: 'HTTP Basics' });\n});\n\napp.put('/articles/42', (req, res) => {\n  res.status(200).json({ id: 42, title: 'HTTP Basics Updated' });\n});\n\napp.get('/articles/999', (req, res) => {\n  res.status(404).json({ error: 'Article not found' });\n});",
+          "after": "This code handles three server scenarios. The first `GET` route retrieves article 42 without changing server data and sends a `200` status code. It sets a `Cache-Control` header with `max-age=3600`, telling the browser to cache this response for one hour (3,600 seconds). The `PUT` route allows updating article 42; calling it repeatedly with identical data results in the exact same resource state, showing its idempotent behavior. Finally, requesting article 999 triggers the third handler, which returns a `404` status code to signal that the target resource is missing."
+        },
+        "mistakes": [
+          {
+            "mistake": "Using a `GET` request to create or alter data in a database.",
+            "fix": "Use a `POST` request to create new items, keeping `GET` requests strictly side-effect free."
+          },
+          {
+            "mistake": "Returning a `200` status code even when an error occurs, putting error text in the response body.",
+            "fix": "Always return an appropriate error status code like `404` so client applications can correctly handle failures."
+          },
+          {
+            "mistake": "Assuming `POST` and `PUT` are identical because both can send body data.",
+            "fix": "Use `PUT` for idempotent updates where re-sending the request leads to the exact same outcome, and `POST` for non-idempotent operations like creating new entries."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What happens when you send a `PUT` request multiple times with the exact same payload?",
+            "answer": "Because `PUT` is idempotent, the server ends up in the exact same state after multiple identical requests as it would after just one."
+          },
+          {
+            "question": "How does a `Cache-Control` header with a `max-age` directive affect browser behavior?",
+            "answer": "It tells the browser how many seconds it can save and reuse the response content locally before it must request fresh data from the server."
+          }
+        ]
+      }
+    },
+    "rest-api-design": {
+      "title": "REST API design",
+      "lesson": {
+        "idea": [
+          "When you design a web service, think of the data you expose as a collection of things, like books or appointments. Each collection gets a name that is a noun, for example `/appointments`. The actions you want to perform—reading, creating, updating, deleting—are expressed by the HTTP method you attach to that noun, such as `GET`, `POST`, `PUT`, or `DELETE`. This keeps the URL clean and tells the client exactly what kind of operation is happening without mixing verbs into the path.",
+          "A URL can contain two kinds of extra information. The first is a segment that points to a single item, like `/appointments/42`. That is called a path parameter and it tells the server which exact resource you want to see or change. The second kind is a set of key‑value pairs after a question mark, like `?date=2024-01-01&page=2`. Those are query parameters, and they let you narrow down a list or split it into pages without changing the meaning of the path itself.",
+          "Every response you send back should carry a status code that matches what happened. A code of `201` means the server successfully created something new, while `200` means a normal successful request. Along with the code, you usually include the new object or a link to it. Finally, the service must be stateless: each request carries all the information the server needs to understand it, so the server never relies on a hidden session or past actions to decide what to do."
+        ],
+        "example": {
+          "intro": "Below is a tiny Flask application that defines an endpoint for adding a new appointment. It shows how to name the resource, use the correct HTTP verb, return the proper status code, and keep the request independent of any stored session data.",
+          "code": "from flask import Flask, request, jsonify, abort\n\napp = Flask(__name__)\n\nappointments = []  # in‑memory list acting as a simple store\n\n@app.route('/appointments', methods=['POST'])\ndef create_appointment():\n    data = request.get_json()\n    if not data or 'title' not in data:\n        abort(400)  # Bad Request if required fields are missing\n    new_id = len(appointments) + 1\n    appointment = {'id': new_id, 'title': data['title']}\n    appointments.append(appointment)\n    response = jsonify(appointment)\n    response.status_code = 201  # Created\n    return response\n\nif __name__ == '__main__':\n    app.run(debug=True)",
+          "after": "The snippet creates a `POST` endpoint at `/appointments`. It reads the JSON body, checks for a required field, adds the new record to an in‑memory list, and replies with a `201` status together with the created object. Because the function does not look at any previous requests, it demonstrates the stateless principle."
+        },
+        "mistakes": [
+          {
+            "mistake": "Including verbs like `create` in the URL, such as `/createAppointment`.",
+            "fix": "Rename the path to a noun only (e.g., `/appointments`) and let the HTTP method (`POST`) convey the action."
+          },
+          {
+            "mistake": "Using a path segment for optional filters, like `/appointments/active`.",
+            "fix": "Move optional criteria into query parameters, for example `/appointments?status=active`."
+          },
+          {
+            "mistake": "Returning a `200` code after creating a new record.",
+            "fix": "Return `201` to clearly signal that a new resource was created."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What part of a URL should be a noun and what part tells the server what to do?",
+            "answer": "The path uses nouns for resources, while the HTTP method (GET, POST, etc.) indicates the action."
+          },
+          {
+            "question": "Which status code tells the client that a new item was successfully created?",
+            "answer": "`201`."
+          }
+        ]
+      }
+    },
+    "postgresql-db": {
+      "title": "PostgreSQL database",
+      "lesson": {
+        "idea": [
+          "PostgreSQL is a relational database, which means it stores information in tables. Think of a table like a spreadsheet: each row holds a single record and each column holds one kind of data about that record, such as a date or an amount.",
+          "Every table needs a primary key. This key is a column (or a set of columns) whose value is unique for each row, so the database can tell any two rows apart. It works like a social security number for a table row.",
+          "When two tables are related, a foreign key links them. A foreign key is a column in one table that must match a primary key value in another table, guaranteeing that references stay valid. This is similar to how a city name on a mailing label must match a city in the official city list.",
+          "SQL statements are run inside a transaction. A transaction groups several changes together so they either all succeed (commit) or all fail (rollback). Imagine writing several lines on a draft document: you either keep the whole draft or discard it, never ending up with half‑finished changes."
+        ],
+        "example": {
+          "intro": "Below is a simple scenario with two tables: `invoices` that stores each invoice, and `payments` that records payments made toward those invoices. The example shows how to define primary and foreign keys, insert data, and use a transaction to either keep or discard the changes.",
+          "code": "CREATE TABLE invoices (\n    id SERIAL PRIMARY KEY,\n    client_name TEXT NOT NULL,\n    total NUMERIC(10,2) NOT NULL\n);\n\nCREATE TABLE payments (\n    id SERIAL PRIMARY KEY,\n    invoice_id INT NOT NULL,\n    paid_amount NUMERIC(10,2) NOT NULL,\n    FOREIGN KEY (invoice_id) REFERENCES invoices(id)\n);\n\nBEGIN;\nINSERT INTO invoices (client_name, total) VALUES ('Acme Corp', 1500.00);\nINSERT INTO payments (invoice_id, paid_amount) VALUES (1, 500.00);\nCOMMIT;",
+          "after": "The first `CREATE TABLE` statement builds `invoices` with an `id` column that auto‑increments and serves as the primary key. The second table, `payments`, also has its own primary key `id` and a foreign key `invoice_id` that must match an existing `id` in `invoices`. The `BEGIN` starts a transaction, the two `INSERT` commands add a new invoice and a related payment, and `COMMIT` makes those rows permanent. If something went wrong after the `BEGIN`, a `ROLLBACK` could be issued instead, removing both inserts."
+        },
+        "mistakes": [
+          {
+            "mistake": "Leaving out a primary key, which makes rows indistinguishable and hurts performance.",
+            "fix": "Add a `PRIMARY KEY` column (often `SERIAL` or `BIGSERIAL`) when you create the table."
+          },
+          {
+            "mistake": "Defining a foreign key that references a non‑existent column or table, leading to errors on insert.",
+            "fix": "Ensure the referenced table and column exist and are declared as a primary key or have a unique constraint."
+          },
+          {
+            "mistake": "Running several statements without wrapping them in a transaction, so a failure leaves the database partially updated.",
+            "fix": "Start a transaction with `BEGIN`, then `COMMIT` when all statements succeed, or `ROLLBACK` if any step fails."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What purpose does a primary key serve in a PostgreSQL table?",
+            "answer": "It uniquely identifies each row, ensuring no two rows share the same key value."
+          },
+          {
+            "question": "What happens to all changes in a transaction if you issue a ROLLBACK?",
+            "answer": "All modifications made during that transaction are undone, leaving the database as it was before the transaction started."
+          }
+        ]
+      }
+    },
+    "sql-queries": {
+      "title": "SQL query writing",
+      "lesson": {
+        "idea": [
+          "When you work with a database, the most common task is to ask it for just the right pieces of information. A well‑written query can pull together data from many tables, sum up numbers, and show you only the rows you care about. Think of a query like a request to a librarian: you tell them what you need, and they bring back a curated set of books instead of the whole shelf. In the backend world, you often need to combine invoices, payments, and customer records to produce reports, so mastering the basic building blocks of SQL helps you turn raw tables into meaningful insights.",
+          "Joining tables is like matching two lists of items that share a common identifier. Imagine you have a list of left shoes and a list of right shoes, each labeled with a pair number. An `INNER JOIN` would give you only the complete pairs where both a left and a right shoe exist. A `LEFT JOIN` keeps every left shoe, even if its matching right shoe is missing; the missing side appears as `NULL`. This lets you see which invoices have no associated payment records.",
+          "After you have the rows you need, you often want to summarize them. `GROUP BY` is the tool that buckets rows according to one or more columns, like placing all orders from the same customer together in one box. Once rows are grouped, you can calculate totals, counts, or averages for each box. If you then need to keep only the boxes that meet a certain condition—say, customers whose total unpaid amount exceeds $500—you use `HAVING`. Unlike `WHERE`, which removes rows before grouping, `HAVING` works on the grouped results."
+        ],
+        "example": {
+          "intro": "Consider two tables: `invoices(id, customer_id, amount)` and `payments(id, invoice_id, paid_amount)`. We want to list each customer, the total amount they were billed, the total amount they have paid, and only keep customers where the total paid is less than the total billed. The query below uses an `INNER JOIN` to link payments to invoices, a `LEFT JOIN` to keep invoices that have no payments, groups by customer, and finally applies a `HAVING` clause to filter the result.",
+          "code": "SELECT c.id AS customer_id,\n       SUM(i.amount) AS total_invoiced,\n       COALESCE(SUM(p.paid_amount),0) AS total_paid\nFROM customers c\nLEFT JOIN invoices i ON c.id = i.customer_id\nLEFT JOIN payments p ON i.id = p.invoice_id\nGROUP BY c.id\nHAVING SUM(i.amount) > COALESCE(SUM(p.paid_amount),0);",
+          "after": "The query first joins the `customers` table to `invoices` with a `LEFT JOIN`, guaranteeing that every customer appears even if they have no invoices. A second `LEFT JOIN` brings in any payments, leaving `NULL` where none exist. The `GROUP BY` collapses all rows for each customer, allowing `SUM` to total the amounts. `COALESCE` changes a `NULL` sum into zero so that the comparison works. Finally, the `HAVING` clause discards customers whose payments equal or exceed their invoices, leaving only those who still owe money."
+        },
+        "mistakes": [
+          {
+            "mistake": "Using `WHERE` to filter on an aggregate result, like `WHERE SUM(amount) > 1000`.",
+            "fix": "Move that condition to a `HAVING` clause after the `GROUP BY`."
+          },
+          {
+            "mistake": "Leaving out a non‑aggregated column from the `GROUP BY` list, which causes a syntax error in most SQL dialects.",
+            "fix": "Include every selected column that isn’t wrapped in an aggregate function inside the `GROUP BY` clause."
+          },
+          {
+            "mistake": "Assuming a `LEFT JOIN` removes rows that have no matching right‑hand side record.",
+            "fix": "Remember that a `LEFT JOIN` keeps all left‑side rows and fills missing right‑side fields with `NULL`."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What does an `INNER JOIN` return compared to a `LEFT JOIN`?",
+            "answer": "`INNER JOIN` returns only rows where the join keys match in both tables, while `LEFT JOIN` returns all rows from the left table and puts `NULL` for columns from the right table when there is no match."
+          },
+          {
+            "question": "Why would you place a condition in a `HAVING` clause instead of a `WHERE` clause?",
+            "answer": "Because `HAVING` filters after aggregation, allowing you to test aggregate values like SUM or COUNT, whereas `WHERE` filters rows before they are grouped."
+          }
+        ]
+      }
+    },
+    "database-indexing": {
+      "title": "Database indexing",
+      "lesson": {
+        "idea": [
+          "Think of a database index like the alphabetical tabs in a huge phone book. Instead of flipping through every page to find a name, you jump straight to the tab that matches the first letters. The index holds the values of a chosen column in a sorted structure, so the system can quickly locate the exact spot where the needed rows start. This sorted list is usually kept in a tree shape that the database can walk down efficiently.",
+          "When a query asks for rows that match a condition on an indexed column, the database uses that tree to hop directly to the matching entries, skipping the rest of the table. Because it doesn't have to read each row, the time it takes to return the results drops dramatically, especially when the table holds many millions of rows. In other words, reading becomes much faster, just like finding a word in a dictionary versus scanning every page of a novel.",
+          "There is a trade‑off, though. Every time a row is added or changed, the database must also update the index, which adds extra work to write operations. If you forget to create an index on a column that is often searched, the engine falls back to scanning the whole table—a full table scan—that gets slower as the data grows. So the art of indexing is balancing faster reads against a modest slowdown on writes."
+        ],
+        "example": {
+          "intro": "Imagine a `users` table that stores a unique `email` for each person and we frequently need to look up a user by that email address.",
+          "code": "CREATE INDEX idx_users_email ON users(email);\n\nSELECT * FROM users WHERE email = 'alice@example.com';",
+          "after": "The `CREATE INDEX` command builds a sorted list of all email values, allowing the database to jump directly to the matching row when the `SELECT` runs. Without the index, the engine would read every row to compare the email column, which is much slower as the table gets larger. After the index exists, the query planner chooses the index path, and the lookup completes in a fraction of the original time."
+        },
+        "mistakes": [
+          {
+            "mistake": "Adding an index on a column that is rarely used in search conditions or joins.",
+            "fix": "Only index columns that appear often in `WHERE`, `JOIN`, or `ORDER BY` clauses."
+          },
+          {
+            "mistake": "Creating many indexes on the same table without measuring their benefit.",
+            "fix": "Limit indexes to those that show clear performance gains, because each extra index adds overhead on inserts and updates."
+          },
+          {
+            "mistake": "Assuming that any index will automatically speed up every query involving that column.",
+            "fix": "Inspect the query plan; an index helps only when the planner can use it for the specific query pattern."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What does a database index store to make lookups fast?",
+            "answer": "It keeps the column values in a sorted structure, typically a B‑tree, so the engine can quickly navigate to the needed rows."
+          },
+          {
+            "question": "Why can missing an index make a query slower as the table grows?",
+            "answer": "Because the database must scan each row, and the work grows linearly with the number of rows when no index is present."
+          }
+        ]
+      }
+    },
+    "automated-testing": {
+      "title": "Automated testing",
+      "lesson": {
+        "idea": [
+          "Automated testing gives you confidence that each change you make works as intended. When a test suite passes, you know the most obvious bugs are caught before the code reaches production. It also helps teams spot regressions—situations where a new feature unintentionally breaks existing behavior—early, saving time and reducing the chance of bad releases. Because tests are automated, they run the same way every time, removing human error from the verification process. This reliability lets developers refactor code with less fear. It also creates documentation of expected behavior. Overall, testing becomes a safety net for the project.",
+          "A unit test focuses on a tiny piece of code, usually a single function, and checks that it returns the correct result for a given input. Think of it like tasting one spoonful of soup to see if the seasoning is right before serving the whole pot. The test isolates the function from the rest of the program, so any failure points directly to that piece. By writing many small, focused tests, you build a collection that together verifies the whole system's behavior.",
+          "A test runner is a tool that discovers all test files, runs them, and reports which ones passed or failed. It is similar to a teacher grading every student's quiz at once. When a test fails, the runner usually stops the build so developers notice the problem immediately. Mocks act as pretend versions of real services such as a database or an HTTP endpoint. They let the test run quickly and predictably, just as an actor can stand in for a real person on a stage.",
+          "Code coverage tells you which lines of your program were exercised while the test suite ran. A high percentage suggests most logic is tested, but you still need to look at the uncovered parts to decide if they are truly unreachable or simply missed. Tools that report coverage mark each line in a colour‑coded view, making it easy to spot gaps. By adding tests for the dark spots, you gradually reduce the risk of hidden bugs."
+        ],
+        "example": {
+          "intro": "Suppose we have a small function that asks a web service for a user's profile and returns the name. We'll write a test that checks the function returns the right name without really calling the network.",
+          "code": "import unittest\nfrom unittest.mock import patch\n\ndef get_user_name(user_id):\n    import requests\n    response = requests.get(f\"https://api.example.com/users/{user_id}\")\n    return response.json()[\"name\"]\n\nclass TestGetUserName(unittest.TestCase):\n    @patch('requests.get')\n    def test_returns_correct_name(self, mock_get):\n        mock_get.return_value.json.return_value = {\"name\": \"Alice\"}\n        name = get_user_name(42)\n        self.assertEqual(name, \"Alice\")\n\nif __name__ == '__main__':\n    unittest.main()",
+          "after": "The test uses `patch` to replace the `requests.get` call with a mock object. When the function under test invokes `requests.get`, the mock returns a fabricated response whose `json` method yields a dictionary containing the name \"Alice\". The test then calls `get_user_name(42)` and asserts that the returned value equals \"Alice\" using `assertEqual`. Because the network call never leaves the test process, the test runs instantly and deterministically. Running the file with `unittest` executes the single test, and the runner reports success if the assertion holds."
+        },
+        "mistakes": [
+          {
+            "mistake": "Writing tests that directly call a real database or external API.",
+            "fix": "Replace those calls with mocks or test doubles so the test runs quickly and deterministically."
+          },
+          {
+            "mistake": "Asserting on internal variables instead of the function's observable result.",
+            "fix": "Check the returned value or external effect that callers rely on, not private implementation details."
+          },
+          {
+            "mistake": "Ignoring the test runner's exit status and allowing the build to continue after failures.",
+            "fix": "Configure your CI pipeline to abort when the runner reports any failed test."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What is the main purpose of a mock in a unit test?",
+            "answer": "To stand in for an external component so the test can run without real network or database calls."
+          },
+          {
+            "question": "Why do we look at code coverage after running tests?",
+            "answer": "It shows which parts of the code were exercised, helping us find logic that still lacks tests."
+          }
+        ]
+      }
+    },
+    "logging-debugging": {
+      "title": "Logging and debugging",
+      "lesson": {
+        "idea": [
+          "Logging is like keeping a diary for your program. Every time something important happens—like a user logging in, a file being read, or an error occurring—you write a short note. Each note, called a log entry, should contain three things: when it happened (the timestamp), how serious it is (the severity level such as INFO, WARN, or ERROR), and what actually happened (the message). The timestamp lets you know the order of events, the severity tells you whether you need to investigate, and the message describes the event in plain language so you can understand it later.",
+          "When you write log entries as plain text, they are hard for tools to read automatically. Structured logs solve this by using a format like JSON, which is a kind of data container that machines can parse easily. In a JSON log you have named fields—`time`, `level`, `message`, and so on—so a script can filter all ERROR entries, count how many WARN messages appeared, or pull out specific values without guessing where they appear in a line of text. This makes monitoring and alerting far more reliable.",
+          "Sometimes things go wrong and an exception is raised. A stack trace is the list of function calls that led to the exception; it is like a breadcrumb trail that shows exactly where the program stumbled. In a distributed system, many services may handle the same request, each writing its own logs. A correlation ID is a unique string that travels with the request across all services. By including the same correlation ID in every log entry, you can stitch together the pieces from different services and see the complete journey of a single request, making it much easier to pinpoint the source of an error.",
+          "Putting these ideas together—timestamps, severity levels, structured JSON, stack traces, and correlation IDs—creates a logging system that is both human‑readable and machine‑friendly. Such a system lets you quickly scan logs for problems, automate alerts, and trace issues across multiple services, which is essential for keeping a backend application reliable and maintainable."
+        ],
+        "example": {
+          "intro": "The following Python snippet shows a minimal logger that writes JSON‑formatted entries, adds a correlation ID to each request, and automatically includes a stack trace when an exception occurs. Running the code will produce two INFO lines and one ERROR line with a full trace, demonstrating the key parts of a good logging strategy.",
+          "code": "import logging, json, uuid\n\ndef setup_logger():\n    logger = logging.getLogger('app')\n    handler = logging.StreamHandler()\n    formatter = logging.Formatter('{\"time\":\"%(asctime)s\",\"level\":\"%(levelname)s\",\"corr\":\"%(corr_id)s\",\"msg\":%(message)s}')\n    handler.setFormatter(formatter)\n    logger.addHandler(handler)\n    logger.setLevel(logging.INFO)\n    return logger\n\nlogger = setup_logger()\n\ndef process(data):\n    corr_id = str(uuid.uuid4())\n    extra = {'corr_id': corr_id}\n    logger.info('Start processing', extra=extra)\n    try:\n        result = 1 / data['value']\n        logger.info(f'Result is {result}', extra=extra)\n    except Exception as e:\n        logger.exception('Error during processing', extra=extra)\n\nprocess({'value': 0})",
+          "after": "When you run the code, the first line logs the start of processing with a unique correlation ID. The division by zero triggers an exception, so the `logger.exception` call writes an ERROR entry that includes the full stack trace, showing that the failure happened inside `process`. Because every log line contains the same `corr` field, you can filter the log output to see all events related to that single request, even if other services were writing to the same log file."
+        },
+        "mistakes": [
+          {
+            "mistake": "Leaving out the timestamp makes it impossible to know the order of events.",
+            "fix": "Configure your logger to automatically add `asctime` or a similar time field to every entry."
+          },
+          {
+            "mistake": "Logging only plain text prevents automated tools from parsing important details.",
+            "fix": "Switch to a structured format like JSON and include named fields for level, message, and any custom data."
+          },
+          {
+            "mistake": "Reusing the same logger instance without attaching a per‑request correlation ID mixes up logs from different requests.",
+            "fix": "Generate a fresh correlation ID at the start of each request and pass it as part of the extra context for every log call."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What three parts should every log entry contain?",
+            "answer": "A timestamp, a severity level, and a descriptive message."
+          },
+          {
+            "question": "How does a correlation ID help when multiple services are involved?",
+            "answer": "It lets you match log lines from different services that belong to the same request, making the overall flow traceable."
+          }
+        ]
+      }
+    },
+    "authentication-and-validation": {
+      "title": "Authentication and input validation",
+      "lesson": {
+        "idea": [
+          "Authentication is the process of confirming that a user is who they claim to be. In a web service this usually means checking a username and password, an API key, or a third‑party login token against a stored record. Think of it like a security guard at a building who checks an ID badge before letting someone inside; without that check, anyone could walk in and cause trouble. The guard looks up the badge in a visitor list – similarly, the server looks up credentials in its user database to decide whether to grant access.",
+          "When the user has successfully proved their identity, the server often hands back a token such as a `JWT`. A `JWT` (JSON Web Token) is a small package that contains user information, called claims, and is cryptographically signed. The client stores this token and presents it on each subsequent request. The server then validates the token’s signature and expiration, much like a hotel key card that is checked at every door to ensure it still works and belongs to the current guest.",
+          "Even after a user is authenticated, the data they send must be checked for proper shape and type. Input validation looks at each field – for example, ensuring an email field contains a valid email address and a price field is a positive number. If the data does not match the expected format, the server should reject it, typically by responding with a `400` status code (Bad Request). This step prevents malformed or malicious data from reaching the core business logic, much like a mailroom sorter that discards junk before it reaches the desks."
+        ],
+        "example": {
+          "intro": "Below is a tiny Express server that shows both authentication with a `JWT` and input validation for a simple POST endpoint. The middleware first checks the token, then validates the incoming JSON body before the handler runs.",
+          "code": "const express = require('express');\nconst jwt = require('jsonwebtoken');\nconst Joi = require('joi');\n\nconst app = express();\napp.use(express.json());\n\n// Authentication middleware\nfunction authenticate(req, res, next) {\n  const authHeader = req.headers['authorization'];\n  const token = authHeader && authHeader.split(' ')[1];\n  if (!token) return res.sendStatus(401); // no token\n  try {\n    req.user = jwt.verify(token, 'secretKey');\n    next();\n  } catch {\n    return res.sendStatus(403); // invalid token\n  }\n}\n\n// Validation schema\nconst payloadSchema = Joi.object({\n  email: Joi.string().email().required(),\n  amount: Joi.number().positive().required()\n});\n\napp.post('/pay', authenticate, (req, res) => {\n  const { error } = payloadSchema.validate(req.body);\n  if (error) return res.status(400).send(error.details[0].message);\n  // Business logic would go here\n  res.send('Payment accepted');\n});\n\napp.listen(3000);\n",
+          "after": "The `authenticate` function extracts the bearer token, verifies it with the secret key, and attaches the decoded user to `req`. If verification fails, a 401 (Unauthorized) or 403 (Forbidden) is sent. After authentication passes, the route handler uses a `Joi` schema to validate the incoming JSON. If any field is missing or malformed, the server returns a `400` response with a helpful error message, preventing bad data from reaching the core payment logic."
+        },
+        "mistakes": [
+          {
+            "mistake": "Storing passwords in plain text.",
+            "fix": "Always hash passwords with a strong algorithm like bcrypt before saving them."
+          },
+          {
+            "mistake": "Skipping token expiration checks.",
+            "fix": "Validate the `exp` claim in the `JWT` and reject expired tokens."
+          },
+          {
+            "mistake": "Validating only after business logic runs.",
+            "fix": "Run input validation at the start of each request and return a `400` if it fails."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What HTTP status code should a server return when input validation fails?",
+            "answer": "400"
+          },
+          {
+            "question": "Which token type is commonly used to carry user claims and is checked on each request?",
+            "answer": "JWT"
+          }
+        ]
+      }
+    },
+    "nodejs-typescript": {
+      "title": "Node.js with TypeScript",
+      "lesson": {
+        "idea": [
+          "When you write a backend service in TypeScript, you get a safety net called static typing. It means you tell the compiler what kind of data each variable should hold, and the compiler will warn you if you try to put the wrong kind of value there. Think of it like labeling your drawers: you put socks in the \"socks\" drawer and the label stops you from accidentally placing a hammer there.",
+          "The TypeScript compiler, often run with the command `tsc`, reads your `.ts` files and produces plain JavaScript files that Node.js can run. This process is called transpiling, because the code is transformed from one language version to another while keeping the same behavior. The generated `.js` files do not contain any TypeScript‑specific syntax, so they work with any normal Node runtime.",
+          "Node.js itself runs on a single operating‑system thread, but it handles many I/O operations at the same time using an event‑driven model. Imagine a single chef in a kitchen who keeps a list of orders; while the oven is baking, the chef can prep the next dish. In Node, the event loop watches for completed I/O events (like reading a file) and then calls the corresponding callback, keeping the program responsive without needing many threads.",
+          "Modules in a TypeScript project use the modern `import`/`export` syntax. When you write `import { readFile } from \"fs/promises\";`, the TypeScript compiler keeps the same statement in the output JavaScript. At runtime, Node resolves the module path and loads the code, so the same import statement works both while you write the code and when the program finally runs."
+        ],
+        "example": {
+          "intro": "Below is a tiny TypeScript module that defines a function to read a text file asynchronously and returns the character count. The function uses the built‑in `fs/promises` module, which already returns promises, making the code clean and easy to follow.",
+          "code": "import { readFile } from \"fs/promises\";\n\nexport async function countChars(path: string): Promise<number> {\n  const data = await readFile(path, { encoding: \"utf8\" });\n  return data.length;\n}\n\n// Example usage (would be in another file)\n// import { countChars } from \"./counter\";\n// countChars(\"sample.txt\").then(len => console.log(`File length: ${len}`));",
+          "after": "The snippet shows three important ideas. First, the function signature `countChars(path: string): Promise<number>` tells the compiler that the argument must be a string and the result will be a promise resolving to a number. Second, the `await` keyword pauses the function until `readFile` completes, but it does not block the Node event loop; other work can continue while the file is being read. Third, the `export` keyword makes the function available to other modules, and the `import` at the top shows how Node resolves the module at runtime."
+        },
+        "mistakes": [
+          {
+            "mistake": "Writing `let data: any = readFile(...);` and forgetting to `await` the promise.",
+            "fix": "Declare the variable with the expected type and use `await` to get the actual file contents before accessing its properties."
+          },
+          {
+            "mistake": "Using `require(\"fs/promises\")` instead of the `import` syntax in a TypeScript file.",
+            "fix": "Replace `require` with an `import` statement, which the compiler understands and preserves in the emitted JavaScript."
+          },
+          {
+            "mistake": "Neglecting to enable `esModuleInterop` or `moduleResolution` in `tsconfig.json`, leading to import errors at runtime.",
+            "fix": "Add the appropriate flags in `tsconfig.json` so the compiled code matches Node's module resolution strategy."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What does the TypeScript compiler do before Node runs your code?",
+            "answer": "It transpiles the .ts files into plain JavaScript files that Node can execute."
+          },
+          {
+            "question": "How does Node handle many I/O operations without using multiple threads?",
+            "answer": "It uses a single‑threaded event loop that watches for completed I/O events and invokes callbacks when they are ready."
+          }
+        ]
+      }
+    },
+    "database-transactions": {
+      "title": "Database transactions",
+      "lesson": {
+        "idea": [
+          "When a backend service updates more than one table, it really wants all the changes to succeed together. Imagine a shopping cart where you subtract items from inventory and add an order record. If one step succeeds but the other fails, the database ends up in an inconsistent state. A transaction makes those related updates behave as a single unit, so either every change is saved or none of them are.",
+          "A transaction starts with a command that tells the database to temporarily hold all subsequent statements. While the transaction is open, the database does not permanently write the changes. If every statement runs without error, you finish with a commit, which tells the system to make all the held‑back changes permanent. If something goes wrong, you issue a rollback, and the database undoes everything that happened inside the transaction, returning to the original state.",
+          "Different transactions can run at the same time, so databases offer isolation levels to decide how they see each other’s work. A higher isolation level hides uncommitted changes from other sessions, preventing problems like dirty reads—situations where a query sees data that might later be rolled back. After a successful commit, the changes become visible to everyone according to the chosen isolation level."
+        ],
+        "example": {
+          "intro": "Consider a simple money transfer between two accounts. The business rule says that money must be deducted from the sender and added to the receiver as a single operation; otherwise the accounts would be out of balance. The code below uses a transaction to guarantee that both updates either succeed together or are completely undone if an error occurs.",
+          "code": "BEGIN;\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\n-- Suppose the second update fails because the target account does not exist\nIF @@ERROR <> 0 THEN\n    ROLLBACK;\nELSE\n    COMMIT;\nEND IF;",
+          "after": "The snippet shows the four essential steps. First, `BEGIN` opens the transaction. Next, two `UPDATE` statements adjust the balances. The conditional check looks for any error; if an error is detected, `ROLLBACK` undoes both updates, leaving the balances unchanged. If no error occurs, `COMMIT` finalizes the changes, making the new balances visible to other sessions. This demonstrates how a transaction protects the integrity of related data."
+        },
+        "mistakes": [
+          {
+            "mistake": "Starting to modify data without first opening a transaction.",
+            "fix": "Always issue a `BEGIN` (or equivalent) before the first statement that must be grouped."
+          },
+          {
+            "mistake": "Forgetting to call `ROLLBACK` when an error occurs, leaving the transaction open.",
+            "fix": "Add error‑handling logic that issues a `ROLLBACK` as soon as any statement fails."
+          },
+          {
+            "mistake": "Using the default isolation level and unintentionally reading uncommitted data from other transactions.",
+            "fix": "Select an appropriate isolation level, such as `READ COMMITTED`, to avoid dirty reads."
+          }
+        ],
+        "checks": [
+          {
+            "question": "What is the effect of committing a transaction?",
+            "answer": "It makes all the changes made inside the transaction permanent and visible to other sessions."
+          },
+          {
+            "question": "Why are isolation levels important in a multi‑user database?",
+            "answer": "They control whether one session can see the uncommitted changes of another, preventing problems like dirty reads."
+          }
+        ]
+      }
+    },
+    "database-migrations": {
+      "title": "Database migrations",
+      "lesson": {
+        "idea": [
+          "A database migration is a tiny script that tells the database how to change its structure, one step at a time. Think of it like adding a new room to a house: you don't rebuild the whole house, you just build the new room and connect it to the existing walls. In the same way, a migration might create a new table, add a column, or change a data type. The word *schema* simply means the layout of all tables, columns, indexes, and other objects in the database. By keeping each change small, you can test it, repeat it, and understand exactly what happened.",
+          "Migrations are applied in a fixed order, just like following a recipe where you add ingredients step by step. Each time you run the migration tool, it looks at a special table called the *schema history table* that logs every migration that has already been executed. The tool then runs only the migrations that are newer, skipping the ones that are already recorded. This prevents accidental duplicate runs that could cause errors, such as trying to create a table that already exists.",
+          "Every migration should also include a *rollback* or *down* section. This is the safety net that lets you undo the change if something goes wrong, like discovering the new room has a leak and you need to restore the original house. A rollback step does the opposite of the forward step: it drops a table that was added, or removes a column that was introduced. Having a reliable rollback makes it much easier to recover from mistakes without losing data."
+        ],
+        "example": {
+          "intro": "Suppose a simple blog starts with a table for posts, and later you decide to store the date each post was published. The migration script below shows how to add that column and how to reverse the change.",
+          "code": "BEGIN;\n-- Add a new column\nALTER TABLE posts ADD COLUMN published_at TIMESTAMP;\n-- Record the change in the history table\nINSERT INTO schema_migrations (version, description) VALUES (20231107, 'add published_at to posts');\nCOMMIT;\n\n-- Down migration (rollback)\nBEGIN;\nALTER TABLE posts DROP COLUMN published_at;\nDELETE FROM schema_migrations WHERE version = 20231107;\nCOMMIT;",
+          "after": "The code first starts a transaction, then adds the `published_at` column to the `posts` table. It records the migration in the `schema_migrations` table so the tool knows it has been run. The down part shows the reverse: removing the column and deleting the record, which would be executed if the migration needed to be undone."
+        },
+        "mistakes": [
+          {
+            "mistake": "Writing a migration without a corresponding down step.",
+            "fix": "Always add a reverse operation that undoes the change, so you can roll back safely."
+          },
+          {
+            "mistake": "Changing a migration file after it has already been applied to a database.",
+            "fix": "Create a new migration for any further modifications instead of editing the old one."
+          },
+          {
+            "mistake": "Running migrations manually out of the recorded order.",
+            "fix": "Let the migration tool execute them; it will check the history table and apply only the pending scripts in the correct sequence."
+          }
+        ],
+        "checks": [
+          {
+            "question": "How does the system know not to run the same migration twice?",
+            "answer": "It stores each executed migration in the schema history table and skips any that are already recorded."
+          },
+          {
+            "question": "What should a migration contain to allow safe reversal of its changes?",
+            "answer": "A down or rollback step that performs the opposite actions of the forward migration."
+          }
+        ]
+      }
+    }
+  }
+}

@@ -8,6 +8,8 @@
 /src/app/api/programs/            @VVarrior1
 /src/features/streaks/            @VVarrior1
 /src/app/api/streak/              @VVarrior1
+/src/features/lessons/            @VVarrior1
+/src/app/api/lessons/             @VVarrior1
 /src/features/flashcards/         @MirzaHB
 /src/features/quiz/               @MirzaHB
 /src/features/courses/            @MirzaHB

@@ -1,0 +1,46 @@
+"use client";
+
+import { useId, useState, type ReactNode } from "react";
+import { tabId, Tabs } from "@/shared/ui";
+
+export type StudyTab = { id: string; label: string; content: ReactNode };
+
+/**
+ * Read, Flashcards and Quiz for one skill. Every panel stays mounted and is only hidden,
+ * so switching tabs keeps your place in a deck or a quiz.
+ */
+export function StudyTabs({ tabs }: { tabs: StudyTab[] }) {
+  const [selected, setSelected] = useState(tabs[0]?.id ?? "");
+  const idPrefix = useId();
+  const panelId = `${idPrefix}-panel`;
+
+  return (
+    <section className="flex flex-col gap-4 border-t border-rule pt-5">
+      <Tabs
+        label="Study this skill"
+        items={tabs}
+        value={selected}
+        onChange={setSelected}
+        idPrefix={idPrefix}
+        panelId={panelId}
+        className="border-b border-rule"
+      />
+      {tabs.map((tab) => {
+        const active = tab.id === selected;
+        return (
+          <div
+            key={tab.id}
+            role={active ? "tabpanel" : undefined}
+            id={active ? panelId : undefined}
+            aria-labelledby={active ? tabId(idPrefix, tab.id) : undefined}
+            hidden={!active}
+            // The Flashcards and Quiz parts draw their own top rule, which a tab does not need.
+            className="[&>section]:border-t-0 [&>section]:pt-0"
+          >
+            {tab.content}
+          </div>
+        );
+      })}
+    </section>
+  );
+}

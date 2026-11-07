@@ -1,6 +1,7 @@
 import { deleteCircleData } from "@/features/circles";
 import { isPublished, unpublishCourse } from "@/features/courses";
 import { deleteGridSolves } from "@/features/grid";
+import { deleteLessonsForMaps } from "@/features/lessons";
 import { deleteUserData as deleteNetworkProfile } from "@/features/network";
 import { deleteProgramsByOwner } from "@/features/programs";
 import { deleteProofsByOwner } from "@/features/proof";
@@ -62,6 +63,8 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
   // Before the maps, so no circle points at a map that is gone.
   const { memberships } = await deleteCircleData(userId);
   await deleteProgramsByOwner(userId);
+  // Lessons written for these maps go too. They hold no answers, but they came from your maps.
+  await deleteLessonsForMaps(maps.map((map) => map.id));
   await Promise.all(maps.map((map) => deleteSkillMap(map.id)));
 
   return {

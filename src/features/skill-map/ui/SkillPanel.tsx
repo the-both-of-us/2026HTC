@@ -1,4 +1,5 @@
 import { FlashcardsTab } from "@/features/flashcards/client";
+import { LessonTab } from "@/features/lessons/client";
 import { ShareProofButton } from "@/features/proof/client";
 import { QuizTab } from "@/features/quiz/client";
 import { assignFormats, FormatBadge, TeachBackPanel } from "@/features/teachback/client";
@@ -7,8 +8,17 @@ import { BadgeCheck, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
 import type { Citation, NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
-import { Badge, Button, InlineText, NODE_STATE_LABELS, ReadAloudButton, StateMark } from "@/shared/ui";
+import {
+  Badge,
+  Button,
+  InlineText,
+  NODE_STATE_LABELS,
+  prefersReducedMotion,
+  ReadAloudButton,
+  StateMark,
+} from "@/shared/ui";
 import { JobAsksTag } from "./SkillNodeView";
+import { StudyTabs } from "./StudyTabs";
 
 /** What just changed, shown under the verdict after a skill is proven. */
 export type ProvenNotice = { nodeId: string; unlockedIds: string[] };
@@ -54,6 +64,7 @@ export function SkillPanel({
   const panelRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
+  const teachRef = useRef<HTMLElement>(null);
   const state = states[skill.id] ?? "locked";
   // A proof can land while another skill is open. The notice then belongs to that other skill.
   const ownNotice = notice?.nodeId === skill.id ? notice : null;
@@ -66,6 +77,32 @@ export function SkillPanel({
   // These tabs are typed for a full SkillNode, but only show its title and citation. Their
   // routes load the checkpoints on the server, so the browser never needs them.
   const studySkill = { ...skill, checkpoints: [] };
+  const canProve = state !== "locked" && isOwner;
+
+  // "Prove it" at the end of the lesson: down to the teach-back, with the cursor in its box if it has one.
+  function goToTeachBack() {
+    teachRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    teachRef.current?.querySelector("textarea")?.focus({ preventScroll: true });
+  }
+
+  // Read comes first, so you can learn a skill before you prove it. Anyone may read ahead.
+  const study = (
+    <StudyTabs
+      tabs={[
+        {
+          id: "read",
+          label: "Read",
+          content: <LessonTab mapId={mapId} skill={skill} onReady={canProve ? goToTeachBack : undefined} />,
+        },
+        ...(state === "locked"
+          ? []
+          : [
+              { id: "flashcards", label: "Flashcards", content: <FlashcardsTab mapId={mapId} skill={studySkill} /> },
+              { id: "quiz", label: "Quiz", content: <QuizTab mapId={mapId} skill={studySkill} /> },
+            ]),
+      ]}
+    />
+  );
 
   // Opening a skill moves focus here, so keyboard and screen reader users land on it.
   useEffect(() => {
@@ -196,6 +233,7 @@ export function SkillPanel({
                 </section>
               )}
 
+              {study}
             </>
           )}
 
@@ -210,8 +248,8 @@ export function SkillPanel({
             </p>
           )}
 
-          {state !== "locked" && isOwner && (
-            <section className="border-t border-rule pt-5">
+          {canProve && (
+            <section ref={teachRef} className="scroll-mt-4 border-t border-rule pt-5">
               <TeachBackPanel
                 key={skill.id}
                 mapId={mapId}
@@ -226,12 +264,8 @@ export function SkillPanel({
             </section>
           )}
 
-          {state !== "locked" && (
-            <>
-              <FlashcardsTab mapId={mapId} skill={studySkill} />
-              <QuizTab mapId={mapId} skill={studySkill} />
-            </>
-          )}
+          {/* Just proven: the verdict stays on top, and studying moves below it. */}
+          {ownNotice && study}
         </div>
       </section>
     </>

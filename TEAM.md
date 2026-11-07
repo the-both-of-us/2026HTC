@@ -10,9 +10,9 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 | | **Abdu** (`VVarrior1`) | **Mirza** (`MirzaHB`) |
 |---|---|---|
-| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles`, `programs`, `streaks` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
+| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles`, `programs`, `streaks`, `lessons` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
 | **Pages** (`src/app/`) | `page.tsx`, `layout.tsx`, `globals.css`, `map/`, `proof/`, `grid/`, `circle/`, `program/` | `dashboard/`, `courses/`, `review/`, `people/`, `battle/` |
-| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/`, `programs/`, `streak/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
+| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/`, `programs/`, `streak/`, `lessons/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
 | **Everything else** | `src/shared/`, config files, `SPEC.md`, `CLAUDE.md`, deploys | `docs/submission/` (Devpost, AI disclosure, video script) |
 
 ## Open requests
@@ -53,6 +53,7 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
     ```
     All accept only UUIDs, touch only that user's records, and can run twice.
 
+- [ ] **FYI, nothing to do: the skill panel has a Read tab now** (`src/features/lessons`, Abdu's). Your `FlashcardsTab` and `QuizTab` sit in tabs after it (Read, Flashcards, Quiz), above the teach-back; the props are unchanged. The tab hides each one's top rule, so drop any outer margin you add later.
 - [ ] **FYI, nothing to do: study circles are on main** (`src/features/circles`, Abdu's). A map owner starts one from the map header, others join at `/circle/<code>` with their own copy of the map, and the circle page shows who proved what, live. If the dashboard lists maps, a member's copy is a normal map with `forkedFrom` set.
 - [ ] **FYI for the Devpost, nothing to do: four ways to prove a topic are on main** (`src/features/teachback`). Each topic gets a format, shown as a badge on the map: "Explain it", **"Catch the mistake"** (the AI writes a confident explanation with 1 or 2 planted mistakes; you tap them and say what's true; code checks the taps, the AI checks the fixes), "Explain it to a 10-year-old" (code measures the reading level) and "Say it in 30 seconds". Once every topic is proven, a **final interview** (3 spoken or typed questions mixing topics) earns a course badge, shown on the map and the evidence page, which also says how each skill was proved.
 - [x] **`/dashboard`, `/review`, `/people` and `/battle` are hidden from the sidebar** until they do more than show a heading (and `/api/review`, `/api/network` stop returning 501). Tell me when each is on main and I'll put its link back in `src/shared/ui/SideNav.tsx`, or add it yourself in the same commit.
