@@ -28,7 +28,8 @@ type LoadState =
   | { status: "ready"; map: PublicSkillMap; proven: Record<string, string>; isOwner: boolean };
 
 /** The whole map screen: loads the map, then shows it. */
-export function MapScreen({ mapId }: { mapId: string }) {
+/** voiceReady comes from the server, which checked that its voice key works. */
+export function MapScreen({ mapId, voiceReady = false }: { mapId: string; voiceReady?: boolean }) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -79,7 +80,7 @@ export function MapScreen({ mapId }: { mapId: string }) {
     );
   }
 
-  return <LoadedMap map={load.map} initialProven={load.proven} isOwner={load.isOwner} />;
+  return <LoadedMap map={load.map} initialProven={load.proven} isOwner={load.isOwner} voiceReady={voiceReady} />;
 }
 
 /** A calm centred card for a screen with nothing to show yet. */
@@ -143,10 +144,12 @@ function LoadedMap({
   map,
   initialProven,
   isOwner,
+  voiceReady,
 }: {
   map: PublicSkillMap;
   initialProven: Record<string, string>;
   isOwner: boolean;
+  voiceReady: boolean;
 }) {
   const [proven, setProven] = useState(initialProven);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -306,6 +309,7 @@ function LoadedMap({
               sourceKind={map.sourceKind}
               notice={notice}
               isOwner={isOwner}
+              voiceReady={voiceReady}
               onSelect={selectSkill}
               onProven={handleProven}
               onClose={closePanel}

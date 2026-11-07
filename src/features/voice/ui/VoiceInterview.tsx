@@ -17,6 +17,8 @@ export type VoiceInterviewProps = {
   question: string;
   /** Called whenever the interview moves to typing, with whatever has been heard. */
   onTypeInstead: (partialText: string) => void;
+  /** Called once, when the learner starts answering: the microphone opens, or they type a first letter. */
+  onBegin?: () => void;
   /** For the preview only. */
   adapters?: VoiceAdapters;
   /** For the preview only. */
@@ -112,7 +114,7 @@ function announcementFor(state: VoiceState, heardText: string): string {
   }
 }
 
-function Interview({ attemptId, question, onAnswer, onTypeInstead, onContinue, adapters, initial }: VoiceInterviewProps) {
+function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onContinue, adapters, initial }: VoiceInterviewProps) {
   const { session, snapshot } = useVoiceInterview({ attemptId, onAnswer, onTypeInstead, adapters, initial });
   const { state, finalText, interimText, text, micLive } = snapshot;
   const { phase, closing, reason, notice, verdict } = state;
@@ -149,6 +151,14 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onContinue, a
       controlsRef.current?.querySelector("button")?.focus({ preventScroll: true });
     }
   }, [phase, isAnswering]);
+
+  // Tell the parent once when answering begins, for the evidence page's "began after" time.
+  const began = useRef(false);
+  useEffect(() => {
+    if (began.current || !(phase === "listening" || (phase === "type-instead" && text))) return;
+    began.current = true;
+    onBegin?.();
+  }, [phase, text, onBegin]);
 
   // Long answers keep the newest words in view.
   useLayoutEffect(() => {

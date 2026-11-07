@@ -22,6 +22,8 @@ type SkillPanelProps = {
   notice: ProvenNotice | null;
   /** Only the map's owner can attempt its skills. */
   isOwner: boolean;
+  /** The server checked its voice key works, so voice answers can be offered. */
+  voiceReady: boolean;
   onSelect: (nodeId: string) => void;
   onProven: (nodeId: string) => void;
   onClose: () => void;
@@ -38,6 +40,7 @@ export function SkillPanel({
   sourceKind,
   notice,
   isOwner,
+  voiceReady,
   onSelect,
   onProven,
   onClose,
@@ -197,6 +200,7 @@ export function SkillPanel({
                 mapId={mapId}
                 node={skill}
                 state={state}
+                voiceReady={voiceReady}
                 onProven={onProven}
                 nextStep={nextStep}
                 evidenceAction={provenCount > 0 && <ShareProofButton mapId={mapId} provenCount={provenCount} />}

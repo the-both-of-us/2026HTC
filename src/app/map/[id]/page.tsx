@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { canReadMap } from "@/app/api/maps/[id]/access";
 import { getSkillMap } from "@/features/skill-map";
 import { MapScreen, MapScreenLoading } from "@/features/skill-map/client";
+import { isVoiceReady } from "@/features/voice";
 import { readUserId } from "@/shared/identity";
 import { buttonClasses, PageShell } from "@/shared/ui";
 
@@ -26,8 +27,10 @@ async function MapFromRoute({ params }: MapPageProps) {
   // error under Cache Components unless the page is marked as request-time first.
   await connection();
   const { id } = await params;
-  if (await isPrivateToSomeoneElse(id)) return <PrivateMapNotice />;
-  return <MapScreen mapId={id} />;
+  // Voice controls only appear once the server knows its voice key works.
+  const [isPrivate, voiceReady] = await Promise.all([isPrivateToSomeoneElse(id), isVoiceReady()]);
+  if (isPrivate) return <PrivateMapNotice />;
+  return <MapScreen mapId={id} voiceReady={voiceReady} />;
 }
 
 /**
