@@ -230,10 +230,39 @@ describe("when everything fails", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("stops at a 400, because the next provider would reject the request too", async () => {
-    const fetchMock = mockFetch(failure(400));
+  it("tries the next route on any error status, so one provider's bad key cannot end the demo", async () => {
+    const fetchMock = mockFetch(failure(401), failure(400), reply("hello"));
 
-    await expect(chatText(base)).rejects.toBeInstanceOf(AiUnavailableError);
+    expect(await chatText(base)).toBe("hello");
+    expect(urls(fetchMock)).toEqual([CEREBRAS, GROQ, GATEWAY]);
+  });
+
+  it("gives chatJSON a second go through every route, so one empty reply does not lose a result", async () => {
+    vi.stubEnv("GROQ_API_KEY", "");
+    vi.mocked(getVercelOidcToken).mockRejectedValue(new Error("no token"));
+    const fetchMock = mockFetch(reply(""), reply('{"answer":42}'));
+
+    expect(await chatJSON({ ...base, schema })).toEqual({ answer: 42 });
+    expect(urls(fetchMock)).toEqual([CEREBRAS, CEREBRAS]);
+  });
+
+  it("skips the second go when the providers were slow to fail, because the learner is waiting", async () => {
+    vi.stubEnv("GROQ_API_KEY", "");
+    vi.mocked(getVercelOidcToken).mockRejectedValue(new Error("no token"));
+    const fetchMock = mockFetch(failure(500));
+    let now = 0;
+    vi.spyOn(Date, "now").mockImplementation(() => (now += 20_000));
+
+    await expect(chatJSON({ ...base, schema })).rejects.toBeInstanceOf(AiUnavailableError);
     expect(urls(fetchMock)).toEqual([CEREBRAS]);
+  });
+
+  it("gives up after that second go", async () => {
+    vi.stubEnv("GROQ_API_KEY", "");
+    vi.mocked(getVercelOidcToken).mockRejectedValue(new Error("no token"));
+    const fetchMock = mockFetch(failure(500), failure(500));
+
+    await expect(chatJSON({ ...base, schema })).rejects.toBeInstanceOf(AiUnavailableError);
+    expect(urls(fetchMock)).toEqual([CEREBRAS, CEREBRAS]);
   });
 });
