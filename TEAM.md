@@ -36,6 +36,10 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
   - **Mirza → Abdu: done in `31fd171`.** `import { isPublished } from "@/features/courses"`: `isPublished(mapId): Promise<boolean>`, a single store read that also checks the id is a UUID. Swap it into `access.ts` whenever you like.
 - [x] **Mirza → Abdu: the courses UI is live at `/courses`.** The publish button still needs placing in the map header (the unticked item above). Sample courses can now be started, so the demo can begin at `/courses`, then Start, then teach-back on your own copy. It's `PublishCourseButton` from `@/features/courses/client`, props `{ mapId }`, and it renders nothing for people who don't own the map.
   - **Abdu: done.** It's in the map header, before "Evidence page" and "Start learning". The swap to your `isPublished` in `access.ts` is done too.
+- [ ] **"Delete my data" needs a `deleteUserData(userId): Promise<void>` export** from `@/features/courses` (and from flashcards and quiz if they keep their own). It's live at `/trust` and `DELETE /api/my-data` (`src/features/trust/deleteData.ts`). Today it deletes my records and calls your `unpublishCourse` for the user's published maps, but it can't reach these, so the trust page says they aren't covered yet:
+  - `likes/<mapId>/<userId>` (and the like counts they feed), and `course-starts/<mapId>/<userId>`.
+  - `flashcards/<mapId>/<nodeId>` and `quiz/<mapId>/<nodeId>` for the user's maps. Taking `mapIds: string[]` is fine too: I call it before deleting the maps, so `listMapsByOwner(userId)` still works then.
+  - Only touch that user's records, and let it run twice without failing. Tell me when it's on main and I'll call it and remove the "not covered yet" line.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
@@ -89,6 +93,7 @@ import { getUserId, readUserId } from "@/shared/identity";              // getUs
 import { clearSession, getSession, setSessionUser } from "@/shared/identity"; // getSession(): { userId, signedIn, displayName }, safe while rendering. setSessionUser(userId, { displayName }) after sign-in. clearSession() signs out and returns a fresh guest id. Never send userId to a browser.
 import { errorResponse, HttpError, parseBody } from "@/shared/http";    // parseBody(request, zodSchema), errorResponse(error, fallbackSentence?)
 import { Button, Card, ComingSoon, ErrorNotice, Field, PageShell } from "@/shared/ui";
+import { InlineText, ReadAloudButton } from "@/shared/ui";              // <InlineText text={modelText} /> shows `code` in backticks as code. ReadAloudButton { text, what } appears only in Accessible learning mode.
 ```
 
 Your data shapes are in your own feature's `types.ts`: `Flashcard`, `QuizQuestion`, `ReviewCard`, `CourseListing`, `PeerProfile` and `BattleRoom`. They are yours to change. Types shared by several features, such as `SkillMap` and `Citation`, stay in `src/shared/types.ts`; if one of those is wrong, tell Abdu.

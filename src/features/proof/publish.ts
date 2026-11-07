@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { listGridSolves } from "@/features/grid";
 import { deriveNodeStates, getSkillMap, isEnergyRelated } from "@/features/skill-map";
 import { getAttempt, getProgress } from "@/features/teachback";
-import { getDoc, putDoc } from "@/shared/store";
+import { deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
 import type { Attempt, SkillMap } from "@/shared/types";
 import { hashSnapshot, sealFor } from "./hash";
 import { buildSnapshot } from "./snapshot";
@@ -89,6 +89,25 @@ export async function revokeProof(ownerId: string, proofId: string): Promise<Rev
   };
   await putDoc(proofKey(record.id), revoked);
   return revoked;
+}
+
+/**
+ * For "Delete my data": every page this person published is withdrawn first, so it stops
+ * showing their words straight away, and then removed with its index entry. Returns how many.
+ */
+export async function deleteProofsByOwner(ownerId: string): Promise<number> {
+  const records = await listDocs<ProofRecord>("proofs/");
+  const own = records.filter((record) => record.ownerId === ownerId);
+
+  await Promise.all(own.map((record) => revokeProof(ownerId, record.id)));
+  await Promise.all(
+    own.map(async (record) => {
+      await deleteDoc(proofKey(record.id));
+      // The index entry goes only if it points at this page.
+      if ((await getProofIdForMap(record.mapId)) === record.id) await deleteDoc(indexKey(record.mapId));
+    }),
+  );
+  return own.length;
 }
 
 /** Returns the record, or null. The id comes from a URL, so it must look like one of ours. */

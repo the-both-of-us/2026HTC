@@ -3,6 +3,7 @@ import "server-only";
 export {
   answerFollowUp,
   AttemptError,
+  deleteLearnerData,
   getAttempt,
   getOwnAttempt,
   getProgress,

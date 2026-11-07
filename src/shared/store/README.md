@@ -8,6 +8,7 @@ import { getDoc, putDoc, listDocs, deleteDoc } from "@/shared/store";
 await putDoc(`maps/${map.id}`, map);
 const map = await getDoc<SkillMap>(`maps/${id}`); // null if missing
 const maps = await listDocs<SkillMap>("maps/");   // the documents, not their keys
+const keys = await listKeys("progress/");         // just the keys
 await deleteDoc(`maps/${id}`);
 ```
 

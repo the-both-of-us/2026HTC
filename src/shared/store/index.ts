@@ -30,6 +30,11 @@ export async function claimDoc(key: string, value: unknown): Promise<boolean> {
   return driver().create(key, JSON.stringify(value));
 }
 
+/** Returns every key that starts with the prefix, for when the key itself says whose a document is. */
+export async function listKeys(prefix: string): Promise<string[]> {
+  return driver().listKeys(prefix);
+}
+
 /** Returns every document whose key starts with the prefix. */
 export async function listDocs<T>(prefix: string): Promise<T[]> {
   const keys = await driver().listKeys(prefix);

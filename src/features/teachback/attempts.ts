@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
 import { HttpError } from "@/shared/http";
-import { claimDoc, deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
+import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
 import {
   PASS_SCORE,
   type Attempt,
@@ -188,6 +188,23 @@ export async function getProgressView(userId: string, mapId: string): Promise<Pr
     proven: progress?.proven ?? {},
     states: deriveNodeStates(map, progress),
   };
+}
+
+/**
+ * For "Delete my data": removes every attempt this person made, with its answer claim,
+ * and every skill they proved. Returns how many attempts and proven skills went.
+ */
+export async function deleteLearnerData(userId: string): Promise<{ attempts: number; provenSkills: number }> {
+  // "attempts/" also holds answer claims, which have no ownerId, so the filter skips them.
+  const attempts = (await listDocs<Attempt>("attempts/")).filter((attempt) => attempt.ownerId === userId);
+  // Progress keys are progress/<mapId>/<ownerId>/<nodeId>, so the key says whose it is.
+  const progressKeys = (await listKeys("progress/")).filter((key) => key.split("/")[2] === userId);
+
+  await Promise.all([
+    ...attempts.flatMap((attempt) => [deleteDoc(`attempts/${attempt.id}`), deleteDoc(answerClaimKey(attempt.id))]),
+    ...progressKeys.map((key) => deleteDoc(key)),
+  ]);
+  return { attempts: attempts.length, provenSkills: progressKeys.length };
 }
 
 /** An attempt as its own learner sees it. See toLearnerView. */

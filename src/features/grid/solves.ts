@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { HttpError } from "@/shared/http";
 import { checkServerValue, signServerValue } from "@/shared/identity";
-import { listDocs, putDoc } from "@/shared/store";
+import { deleteDoc, listDocs, listKeys, putDoc } from "@/shared/store";
 import { answerText, buildExercises, checkChoice, checkNumber, type Figure } from "./exercises";
 import { isReportOld } from "./live";
 import type { GridReading, GridSnapshot } from "./types";
@@ -85,4 +85,11 @@ export async function recordSolve(userId: string, input: SolveInput, now: number
 export async function listGridSolves(userId: string): Promise<GridSolve[]> {
   const solves = await listDocs<GridSolve>(`grid-solves/${userId}/`);
   return solves.sort((a, b) => a.solvedAt.localeCompare(b.solvedAt));
+}
+
+/** For "Delete my data": removes every answer this user saved. Returns how many. */
+export async function deleteGridSolves(userId: string): Promise<number> {
+  const keys = await listKeys(`grid-solves/${userId}/`);
+  await Promise.all(keys.map((key) => deleteDoc(key)));
+  return keys.length;
 }
