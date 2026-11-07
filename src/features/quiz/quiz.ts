@@ -1,4 +1,5 @@
 import { chatJSON } from "@/features/ai";
+import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -28,17 +29,30 @@ const NOT_FOUND = "We could not find that skill. Check the link, or open the map
 /** Generation in progress, by store key, so two quick clicks cost one model call. */
 const inFlight = new Map<string, Promise<QuizQuestion[]>>();
 
-/** The key is built only from ids that exist, never from raw input. */
-async function findNode(mapId: string, nodeId: string): Promise<Found> {
+/** The owner may always read a map. Anyone else only once it is published as a course. */
+async function mayRead(map: SkillMap, viewerId: string): Promise<boolean> {
+  if (viewerId !== "" && map.ownerId === viewerId) return true;
+  return isPublished(map.id);
+}
+
+/**
+ * The key is built only from ids that exist, never from raw input, and only once the
+ * viewer may read the map. A private map someone else owns gets the same 404 as a
+ * missing one, so nobody can tell it exists.
+ */
+async function findNode(mapId: string, nodeId: string, viewerId: string): Promise<Found> {
   const map = await getSkillMap(mapId);
   const node = map?.nodes.find((candidate) => candidate.id === nodeId);
-  if (!map || !node) throw new QuizError(NOT_FOUND, 404);
+  if (!map || !node || !(await mayRead(map, viewerId))) throw new QuizError(NOT_FOUND, 404);
   return { map, node, key: `quiz/${map.id}/${node.id}` };
 }
 
-/** The saved quiz for a skill, or null if none has been made yet. Never calls the model. */
-export async function getSavedQuiz(mapId: string, nodeId: string): Promise<QuizQuestion[] | null> {
-  const { key } = await findNode(mapId, nodeId);
+/**
+ * The saved quiz for a skill, or null if none has been made yet. Never calls the model.
+ * Throws a 404 QuizError for an unknown map or node, or a map the viewer may not read.
+ */
+export async function getSavedQuiz(mapId: string, nodeId: string, viewerId: string): Promise<QuizQuestion[] | null> {
+  const { key } = await findNode(mapId, nodeId, viewerId);
   const saved = await getDoc<SavedQuiz>(key);
   return saved?.items ?? null;
 }
@@ -48,19 +62,24 @@ export type CreateOptions = {
   random?: RandomSource;
 };
 
-/** The saved quiz, or a new one made with a single model call and then saved. */
+/** The saved quiz, or a new one made with a single model call and then saved. Same 404s as getSavedQuiz. */
 export async function getOrCreateQuiz(
   mapId: string,
   nodeId: string,
+  viewerId: string,
   options: CreateOptions = {},
 ): Promise<QuizQuestion[]> {
-  const found = await findNode(mapId, nodeId);
+  // Every caller is checked here, before it can join a generation already in flight,
+  // so nobody can wait on the owner's private generation and receive its questions.
+  const found = await findNode(mapId, nodeId, viewerId);
 
   // No await between this check and the set below, so concurrent callers share one promise.
   const pending = inFlight.get(found.key);
   if (pending) return pending;
 
-  const work = loadOrGenerate(found, options).finally(() => inFlight.delete(found.key));
+  const work = loadOrGenerate(found, options).finally(() => {
+    if (inFlight.get(found.key) === work) inFlight.delete(found.key);
+  });
   inFlight.set(found.key, work);
   return work;
 }

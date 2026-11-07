@@ -1,4 +1,5 @@
 import { chatJSON } from "@/features/ai";
+import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -30,10 +31,26 @@ type SavedDeck = { items: Flashcard[]; createdAt: string };
  */
 const inFlight = new Map<string, Promise<Flashcard[]>>();
 
-/** The map and node, checked to exist. Only then is a store key built from them. */
-async function resolveNode(mapId: string, nodeId: string): Promise<{ map: SkillMap; node: SkillNode; key: string }> {
+const MAP_NOT_FOUND = "We could not find that map. Check the link, or build a new one.";
+
+/** The owner may always read a map. Anyone else only once it is published as a course. */
+async function mayRead(map: SkillMap, viewerId: string): Promise<boolean> {
+  if (viewerId !== "" && map.ownerId === viewerId) return true;
+  return isPublished(map.id);
+}
+
+/**
+ * The map and node, checked to exist and to be readable by this viewer. Only then is a
+ * store key built from them. A private map someone else owns gets the same 404 as a
+ * missing one, so nobody can tell it exists.
+ */
+async function resolveNode(
+  mapId: string,
+  nodeId: string,
+  viewerId: string,
+): Promise<{ map: SkillMap; node: SkillNode; key: string }> {
   const map = await getSkillMap(mapId);
-  if (!map) throw new FlashcardsError("We could not find that map. Check the link, or build a new one.", 404);
+  if (!map || !(await mayRead(map, viewerId))) throw new FlashcardsError(MAP_NOT_FOUND, 404);
   const node = map.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new FlashcardsError("We could not find that skill on this map.", 404);
   return { map, node, key: `flashcards/${map.id}/${node.id}` };
@@ -46,16 +63,22 @@ async function readSaved(key: string): Promise<Flashcard[] | null> {
 
 /**
  * The saved cards for a skill, or null if none have been made yet. A store read
- * only: it never calls the model. Throws a 404 FlashcardsError for an unknown map or node.
+ * only: it never calls the model. Throws a 404 FlashcardsError for an unknown map or
+ * node, or a map the viewer may not read (private and not theirs).
  */
-export async function getSavedFlashcards(mapId: string, nodeId: string): Promise<Flashcard[] | null> {
-  const { key } = await resolveNode(mapId, nodeId);
+export async function getSavedFlashcards(mapId: string, nodeId: string, viewerId: string): Promise<Flashcard[] | null> {
+  const { key } = await resolveNode(mapId, nodeId, viewerId);
   return readSaved(key);
 }
 
-/** The saved cards, or new ones from one model call, saved before they are returned. */
-export async function getOrCreateFlashcards(mapId: string, nodeId: string): Promise<Flashcard[]> {
-  const { map, node, key } = await resolveNode(mapId, nodeId);
+/**
+ * The saved cards, or new ones from one model call, saved before they are returned.
+ * Same 404s as getSavedFlashcards.
+ */
+export async function getOrCreateFlashcards(mapId: string, nodeId: string, viewerId: string): Promise<Flashcard[]> {
+  // Every caller is checked here, before it can join a generation already in flight,
+  // so nobody can wait on the owner's private generation and receive its cards.
+  const { map, node, key } = await resolveNode(mapId, nodeId, viewerId);
 
   // Checked and set with no await in between, so a second caller always finds the first.
   const pending = inFlight.get(key);

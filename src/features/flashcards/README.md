@@ -8,10 +8,14 @@ Writes 6 to 8 flashcards for one skill on a map, saves them, and shows them one 
 
 ## How cards are made
 
-1. `getOrCreateFlashcards(mapId, nodeId)` loads the map with `getSkillMap` and finds the node. An unknown map or node is a 404 `FlashcardsError`, before any model call. Only then is the store key built.
+1. `getOrCreateFlashcards(mapId, nodeId, viewerId)` loads the map with `getSkillMap`, checks the viewer may read it (see below) and finds the node. An unknown map or node is a 404 `FlashcardsError`, before any model call. Only then is the store key built.
 2. Saved cards are returned as they are. Otherwise one `chatJSON` call (label `flashcards`, 2000 tokens, 15 seconds a request) writes them from the map title and the node's title, why and checkpoints. The prompt asks for every checkpoint to be tested by at least one card.
 3. `validateDeck` checks the reply in code. It trims and collapses whitespace, and drops empty cards, repeated questions (ignoring case, spacing and trailing punctuation, so `C++` and `C#` stay different) and cards over the limits: 200 characters for the front and 500 for the back (the prompt asks for 160 and 400). It keeps at most 10. Fewer than 4 left is a 502 `FlashcardsError`, and nothing is saved.
 4. Code sets every `id` (a random UUID), `mapId` and `nodeId`. The model never writes citations: a card carries the node's citation only when `citation.verified` is true, otherwise null.
+
+## Who may read
+
+A map's owner may always read and make its cards. Anyone else may only once the map is published as a course (`isPublished` from `@/features/courses`). A private map someone else owns gets exactly the same 404 and sentence as a missing map, so nobody can tell it exists. The check runs for every caller before any store key is built, any store read or any model call, and before a request can join a generation already in flight, so a stranger can't wait on the owner's generation and receive its cards.
 
 ## The skill text is data
 
@@ -33,9 +37,9 @@ The AI allows about 5 requests a minute, so:
 | `GET /api/flashcards?mapId=&nodeId=` | `{items}` with the saved cards, or `{items: null}`. Never calls the model. |
 | `POST /api/flashcards` `{mapId, nodeId}` | `{items}`, made now or already saved |
 
-Errors are `{error: "a sentence for people"}` with a 400, 404, 500, 502 or 503. Nothing here stores or sends `ownerId`.
+Both routes pass the viewer from `getUserId()`. Errors are `{error: "a sentence for people"}` with a 400, 404, 500, 502 or 503. Nothing here stores or sends `ownerId`.
 
-For the review feature: `getSavedFlashcards(mapId, nodeId)` from `@/features/flashcards` returns `Flashcard[] | null` and never calls the model. It throws a 404 `FlashcardsError` for an unknown map or node.
+For the review feature: `getSavedFlashcards(mapId, nodeId, viewerId)` from `@/features/flashcards` returns `Flashcard[] | null` and never calls the model. It throws a 404 `FlashcardsError` for an unknown map or node, or a private map the viewer does not own.
 
 ## Keyboard
 
@@ -57,4 +61,4 @@ Every action also has a visible button: **Show answer** or **Show question**, **
 
 ## Tests
 
-`npm test -- flashcards` mocks the model. It covers validation, the prompt's tags, saving and reuse, one call for concurrent requests, the 45 second deadline, unknown maps and nodes, the HTTP errors and parsing (`http.test.ts`), the client's error sentences (`ui/api.test.ts`) and the deck's key handling.
+`npm test -- flashcards` mocks the model. It covers validation, the prompt's tags, saving and reuse, one call for concurrent requests, the 45 second deadline, unknown maps and nodes, who may read a private or published map (including that a stranger can't join the owner's in-flight generation), the HTTP errors and parsing (`http.test.ts`), the client's error sentences (`ui/api.test.ts`) and the deck's key handling.
