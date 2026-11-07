@@ -109,11 +109,22 @@ describe("reading maps", () => {
   it("returns null for an id that is not one of ours, without touching the store", async () => {
     expect(await getSkillMap("../../etc/passwd")).toBeNull();
   });
-  it("never publishes the owner's id or the source text", () => {
+  it("never publishes the owner's id, the source text or the answer key", () => {
     const map = buildSkillMap(GOOD_REPLY, POSTING, "posting", "secret-owner");
-    const text = JSON.stringify(toPublicMap(map));
+    const publicMap = toPublicMap(map);
+    const text = JSON.stringify(publicMap);
     expect(text).not.toContain("secret-owner");
     expect(text).not.toContain("sourceText");
-    expect(toPublicMap(map).nodes).toEqual(map.nodes);
+    expect(text).not.toContain('"checkpoints"');
+    for (const checkpoint of map.nodes.flatMap((node) => node.checkpoints)) {
+      expect(text).not.toContain(checkpoint);
+    }
+    expect(publicMap.nodes.map((node) => node.checkpointCount)).toEqual(map.nodes.map((node) => node.checkpoints.length));
+  });
+  it("says whether the posting is energy related, without sharing the posting", () => {
+    const energy = { ...buildSkillMap(GOOD_REPLY, POSTING, "posting", "o"), sourceText: "Analyst for a wind farm operator" };
+    const other = { ...energy, sourceText: "Analyst for a retail bank" };
+    expect(toPublicMap(energy).energyRelated).toBe(true);
+    expect(toPublicMap(other).energyRelated).toBe(false);
   });
 });

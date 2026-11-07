@@ -24,7 +24,7 @@ A quote counts as verified only if code finds it in the posting, ignoring case, 
 
 ## Reading a map
 
-Anyone with the id can read a map through `GET /api/maps/[id]`, which returns `toPublicMap(map)`. **Never send a full `SkillMap` to a browser:** `ownerId` is the owner's identity cookie value, so publishing it would let a reader act as them.
+Anyone with the id can read a map through `GET /api/maps/[id]`, which returns `toPublicMap(map)`. **Never send a full `SkillMap` to a browser:** `ownerId` is the owner's identity cookie value, so publishing it would let a reader act as them, and checkpoints are the answer key, so a reader gets only `checkpointCount`.
 
 ## The demo cache
 

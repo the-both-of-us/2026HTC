@@ -1,12 +1,12 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import clsx from "clsx";
 import type { CSSProperties } from "react";
-import type { NodeState, SkillNode } from "@/shared/types";
+import type { NodeState, PublicSkillNode } from "@/shared/types";
 import { NODE_STATE_LABELS, StateMark } from "@/shared/ui";
 import { NODE_HEIGHT, NODE_WIDTH } from "./layout";
 
 export type SkillNodeData = {
-  skill: SkillNode;
+  skill: PublicSkillNode;
   state: NodeState;
   layer: number;
   selected: boolean;

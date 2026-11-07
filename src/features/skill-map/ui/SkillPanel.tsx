@@ -3,7 +3,7 @@ import { QuizTab } from "@/features/quiz/client";
 import { TeachBackPanel } from "@/features/teachback/client";
 import clsx from "clsx";
 import { useEffect, useRef } from "react";
-import type { Citation, NodeState, SkillNode, SourceKind } from "@/shared/types";
+import type { Citation, NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { Badge, Button, StateMark } from "@/shared/ui";
 import { JobTab } from "./SkillNodeView";
 
@@ -12,8 +12,8 @@ export type ProvenNotice = { nodeId: string; unlockedIds: string[] };
 
 type SkillPanelProps = {
   mapId: string;
-  skills: SkillNode[];
-  skill: SkillNode;
+  skills: PublicSkillNode[];
+  skill: PublicSkillNode;
   states: Record<string, NodeState>;
   sourceKind: SourceKind;
   notice: ProvenNotice | null;
@@ -43,6 +43,9 @@ export function SkillPanel({
   const titleOf = (id: string) => skills.find((other) => other.id === id)?.title ?? id;
   const dependants = skills.filter((other) => other.prerequisites.includes(skill.id));
   const allProven = skills.every((other) => states[other.id] === "proven");
+  // These tabs are typed for a full SkillNode, but only show its title and citation. Their
+  // routes load the checkpoints on the server, so the browser never needs them.
+  const studySkill = { ...skill, checkpoints: [] };
 
   // Opening a skill moves focus here, so keyboard and screen reader users land on it.
   useEffect(() => {
@@ -146,8 +149,8 @@ export function SkillPanel({
 
           {state !== "locked" && (
             <>
-              <FlashcardsTab mapId={mapId} skill={skill} />
-              <QuizTab mapId={mapId} skill={skill} />
+              <FlashcardsTab mapId={mapId} skill={studySkill} />
+              <QuizTab mapId={mapId} skill={studySkill} />
             </>
           )}
 

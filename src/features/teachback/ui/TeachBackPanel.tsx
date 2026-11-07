@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Attempt, NodeState, SkillNode } from "@/shared/types";
+import type { Attempt, NodeState, PublicSkillNode } from "@/shared/types";
 import { ErrorNotice, Spinner } from "@/shared/ui";
 import { fetchProvenAttempt, submitExplanation, submitFollowUp } from "./api";
 import { AttemptResult } from "./AttemptResult";
@@ -13,7 +13,7 @@ import { useIntegrity } from "./useIntegrity";
 
 export type TeachBackPanelProps = {
   mapId: string;
-  node: SkillNode;
+  node: PublicSkillNode;
   state: NodeState;
   /** Called once, when this panel's learner proves the skill. */
   onProven: (nodeId: string) => void;
@@ -47,7 +47,7 @@ function Panel({ mapId, node, state, onProven, missingPrerequisites }: TeachBack
   function showResult(next: Attempt) {
     shouldFocusResult.current = true;
     setAttempt(next);
-    setAnnouncement(resultAnnouncement(next, node.title, node.checkpoints.length));
+    setAnnouncement(resultAnnouncement(next, node.title, node.checkpointCount));
     if (next.status === "proven") onProven(node.id);
   }
 
@@ -110,7 +110,7 @@ function Panel({ mapId, node, state, onProven, missingPrerequisites }: TeachBack
         <AttemptResult
           attempt={attempt}
           skillTitle={node.title}
-          checkpointTotal={node.checkpoints.length}
+          checkpointTotal={node.checkpointCount}
           headingRef={resultHeading}
         />
       )}
@@ -129,7 +129,7 @@ function Panel({ mapId, node, state, onProven, missingPrerequisites }: TeachBack
         <ExplainForm
           nodeId={node.id}
           skillTitle={node.title}
-          checkpointCount={node.checkpoints.length}
+          checkpointCount={node.checkpointCount}
           text={text}
           onTextChange={setText}
           integrity={integrity}
@@ -144,7 +144,7 @@ function Panel({ mapId, node, state, onProven, missingPrerequisites }: TeachBack
 }
 
 /** Loads and shows the attempt that proved this skill. */
-function ProvenSummary({ mapId, node }: { mapId: string; node: SkillNode }) {
+function ProvenSummary({ mapId, node }: { mapId: string; node: PublicSkillNode }) {
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [failed, setFailed] = useState(false);
   const [loadCount, setLoadCount] = useState(0);
@@ -167,7 +167,7 @@ function ProvenSummary({ mapId, node }: { mapId: string; node: SkillNode }) {
       <AttemptResult
         attempt={attempt}
         skillTitle={node.title}
-        checkpointTotal={node.checkpoints.length}
+        checkpointTotal={node.checkpointCount}
         headingRef={heading}
       />
     );

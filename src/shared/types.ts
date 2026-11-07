@@ -29,6 +29,12 @@ export type SkillNode = {
   checkpoints: string[];
 };
 
+/**
+ * A skill as a browser gets it. Checkpoints are the answer key, so readers get how many
+ * there are and never their text. Learners see them only in their own graded attempts.
+ */
+export type PublicSkillNode = Omit<SkillNode, "checkpoints"> & { checkpointCount: number };
+
 export type SkillMap = {
   id: string;
   ownerId: string;

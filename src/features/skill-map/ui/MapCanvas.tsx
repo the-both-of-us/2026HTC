@@ -10,7 +10,7 @@ import {
 import "@xyflow/react/dist/base.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import type { NodeState, SkillNode } from "@/shared/types";
+import type { NodeState, PublicSkillNode } from "@/shared/types";
 import { Button } from "@/shared/ui";
 import "./map.css";
 import { layoutGraph, NODE_HEIGHT, NODE_WIDTH } from "./layout";
@@ -31,7 +31,7 @@ const ARIA_LABELS = {
 };
 
 type MapCanvasProps = {
-  skills: SkillNode[];
+  skills: PublicSkillNode[];
   states: Record<string, NodeState>;
   selectedId: string | null;
   reveal: boolean;

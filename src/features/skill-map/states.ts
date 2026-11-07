@@ -6,7 +6,7 @@ import type { MapProgress, NodeState, SkillNode } from "@/shared/types";
  * are proven, and locked until then.
  */
 export function deriveNodeStates(
-  map: { nodes: SkillNode[] },
+  map: { nodes: Pick<SkillNode, "id" | "prerequisites">[] },
   progress: Pick<MapProgress, "proven"> | null,
 ): Record<string, NodeState> {
   const proven = progress?.proven ?? {};

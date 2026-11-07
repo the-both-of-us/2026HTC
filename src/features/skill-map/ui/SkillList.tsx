@@ -1,4 +1,4 @@
-import type { NodeState, SkillNode } from "@/shared/types";
+import type { NodeState, PublicSkillNode } from "@/shared/types";
 import { StateMark } from "@/shared/ui";
 import { JobTab } from "./SkillNodeView";
 
@@ -9,7 +9,7 @@ const GROUPS: { state: NodeState; heading: string; empty: string }[] = [
 ];
 
 type SkillListProps = {
-  skills: SkillNode[];
+  skills: PublicSkillNode[];
   states: Record<string, NodeState>;
   selectedId: string | null;
   onSelect: (nodeId: string) => void;
