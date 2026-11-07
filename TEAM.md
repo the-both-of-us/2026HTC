@@ -62,6 +62,8 @@ npm run dev
 
 Features import each other only through `index.ts` (server code) or `client.ts` (client components). Lint enforces this.
 
+**Scripts run with `tsx` need one flag.** The `ai` and `skill-map` index files `import "server-only"`, which throws outside Next.js. So run scripts as `npx tsx --conditions=react-server scripts/x.ts`, or `npm run cache-samples` for the sample maps. Next.js and vitest need nothing extra.
+
 **What Mirza can use from Abdu's code:**
 
 ```ts
