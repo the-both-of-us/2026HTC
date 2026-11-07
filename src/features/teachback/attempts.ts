@@ -88,8 +88,16 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   return attempt;
 }
 
+/** How the follow-up was answered. The browser reports it, like the explanation's integrity signals. */
+export type AnswerDetails = { inputMethod?: "typed" | "voice"; startedAfterMs?: number };
+
 /** Grades the follow-up answer. Passing it is what proves the node and unlocks the next ones. */
-export async function answerFollowUp(userId: string, attemptId: string, answer: string): Promise<Attempt> {
+export async function answerFollowUp(
+  userId: string,
+  attemptId: string,
+  answer: string,
+  details: AnswerDetails = {},
+): Promise<Attempt> {
   const attempt = await getOwnAttempt(userId, attemptId);
   if (attempt.status !== "needs-followup" || !attempt.followUp) {
     throw new AttemptError("This attempt is already finished. Start the skill again to retry.", 409);
@@ -116,6 +124,11 @@ export async function answerFollowUp(userId: string, attemptId: string, answer: 
         answer: trimmedAnswer,
         passed: result.passed,
         feedback: result.passed ? result.feedback : NOT_PASSED_FEEDBACK,
+        // Left out when unknown, so a record never claims more than the browser said.
+        ...(details.inputMethod && { inputMethod: details.inputMethod }),
+        ...(details.startedAfterMs !== undefined && {
+          startedAfterMs: Math.round(Math.min(details.startedAfterMs, MAX_ACTIVE_MS)),
+        }),
       },
       status: result.passed ? "proven" : "not-yet",
       ...(attempt.timing && { timing: { ...attempt.timing, followUpMs } }),

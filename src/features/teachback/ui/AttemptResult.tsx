@@ -237,6 +237,7 @@ function FollowUpRecord({ attempt }: { attempt: Attempt }) {
     <section className="flex flex-col gap-2">
       <h4 className="font-medium">
         {followUp.passed ? "Follow-up question, passed" : "Follow-up question, not passed"}
+        {followUp.inputMethod === "voice" && <span className="font-normal text-ink-soft"> · answered aloud</span>}
       </h4>
       <p>{followUp.question}</p>
       <p className="border-l-2 border-control-edge pl-3 text-ink-soft">{followUp.answer}</p>

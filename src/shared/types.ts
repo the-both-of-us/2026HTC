@@ -80,6 +80,10 @@ export type FollowUp = {
   answer: string | null;
   passed: boolean | null;
   feedback: string | null;
+  /** How the answer was given, as the browser reported it. Missing on answers saved before Nov 7. */
+  inputMethod?: "typed" | "voice";
+  /** Milliseconds from the question appearing to the learner starting to answer. Missing when not known. */
+  startedAfterMs?: number;
 };
 
 export type AttemptStatus = "needs-followup" | "proven" | "not-yet";

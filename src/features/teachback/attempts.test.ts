@@ -133,6 +133,21 @@ describe("status transitions", () => {
     expect(view.states).toEqual({ first: "proven", second: "available" });
   });
 
+  it("saves how the follow-up was answered, and leaves it out when the page didn't say", async () => {
+    const spoken = await reachFollowUp();
+    modelJudges(true);
+    const finished = await answerFollowUp(OWNER, spoken.id, "It stays.", { inputMethod: "voice", startedAfterMs: 8_400.6 });
+    expect(finished.followUp).toMatchObject({ inputMethod: "voice", startedAfterMs: 8_401 });
+    expect((await getAttempt(spoken.id))?.followUp?.inputMethod).toBe("voice");
+
+    // "second" unlocked when "first" was proven. A page that sends only the answer still works.
+    const plain = await reachFollowUp("second");
+    modelJudges(true);
+    const old = await answerFollowUp(OWNER, plain.id, "It stays.");
+    expect(old.followUp).not.toHaveProperty("inputMethod");
+    expect(old.followUp).not.toHaveProperty("startedAfterMs");
+  });
+
   it("2 of 3 checkpoints reaches the follow-up", async () => {
     const node = { ...makeNode("first", []), checkpoints: ["One fact", "Two fact", "Three fact"] };
     await putDoc(`maps/${mapId}`, { ...(await getDoc(`maps/${mapId}`) as SkillMap), nodes: [node] });

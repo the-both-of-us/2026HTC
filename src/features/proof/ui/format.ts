@@ -39,6 +39,18 @@ export function integrityLines(signals: IntegritySignals): {
   };
 }
 
+/**
+ * How the follow-up was answered, e.g. "Answered aloud, 9 s after the question appeared".
+ * Null for records saved before this was recorded, so the page says nothing rather than guess.
+ */
+export function followUpMethodLine(followUp: ProofSkill["followUp"]): string | null {
+  if (!followUp.inputMethod) return null;
+  const method = followUp.inputMethod === "voice" ? "Answered aloud" : "Typed";
+  if (followUp.startedAfterMs === undefined) return method;
+  const wait = formatDuration(followUp.startedAfterMs);
+  return wait ? `${method}, began ${wait} after the question appeared` : `${method}, began right after the question appeared`;
+}
+
 export function metCount(skill: ProofSkill): number {
   return skill.checkpoints.filter((result) => result.met).length;
 }

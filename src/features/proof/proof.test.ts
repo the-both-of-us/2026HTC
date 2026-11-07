@@ -240,6 +240,23 @@ describe("the fingerprint", () => {
     expect(hashSnapshot(snapshot)).toMatch(/^[0-9a-f]{64}$/);
   });
 
+  it("leaves out how the follow-up was answered when that wasn't recorded, so older records still match", () => {
+    const old = snapshotFor(map, attempt).skills[0].followUp;
+    expect(Object.keys(old).sort()).toEqual(["answer", "feedback", "question"]);
+  });
+
+  it("covers how the follow-up was answered once it is recorded", () => {
+    const spoken = makeAttempt(map, "joins", {
+      followUp: { ...attempt.followUp!, inputMethod: "voice", startedAfterMs: 9_000 },
+    });
+    const snapshot = snapshotFor(map, spoken);
+    expect(snapshot.skills[0].followUp).toMatchObject({ inputMethod: "voice", startedAfterMs: 9_000 });
+
+    const hash = hashSnapshot(snapshot);
+    snapshot.skills[0].followUp.inputMethod = "typed";
+    expect(checkSnapshot(snapshot, hash).hashMatches).toBe(false);
+  });
+
   it("survives being stored and read back as JSON", () => {
     const snapshot = snapshotFor(map, attempt);
     expect(hashSnapshot(JSON.parse(JSON.stringify(snapshot)))).toBe(hashSnapshot(snapshot));

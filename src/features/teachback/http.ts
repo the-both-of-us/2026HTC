@@ -12,4 +12,9 @@ export const newAttemptBody = z.object({
   }),
 });
 
-export const followUpBody = z.object({ answer: z.string() });
+/** inputMethod and startedAfterMs are optional, so an older page that sends only the answer still works. */
+export const followUpBody = z.object({
+  answer: z.string(),
+  inputMethod: z.enum(["typed", "voice"]).optional(),
+  startedAfterMs: z.number().min(0).optional(),
+});

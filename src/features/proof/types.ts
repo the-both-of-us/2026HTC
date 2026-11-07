@@ -26,7 +26,17 @@ export type ProofSkill = {
   factualErrors: string[];
   /** Quotes the AI offered that code rejected, because they were not in the person's text. */
   rejectedQuotes: number;
-  followUp: { question: string; answer: string; feedback: string };
+  /**
+   * inputMethod and startedAfterMs are only present when they were recorded. Records
+   * published before they existed don't have the keys, so their fingerprints still match.
+   */
+  followUp: {
+    question: string;
+    answer: string;
+    feedback: string;
+    inputMethod?: "typed" | "voice";
+    startedAfterMs?: number;
+  };
   integrity: IntegritySignals;
   source: ProofSource;
   attemptedAt: string;

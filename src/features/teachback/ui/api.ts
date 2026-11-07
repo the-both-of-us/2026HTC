@@ -51,8 +51,11 @@ export function submitExplanation(input: {
   return postJson("/api/attempts", input);
 }
 
-export function submitFollowUp(attemptId: string, answer: string): Promise<ApiResult> {
-  return postJson(`/api/attempts/${encodeURIComponent(attemptId)}/followup`, { answer });
+/** How the answer was given. startedAfterMs is left out when the page doesn't know it. */
+export type AnswerDetails = { inputMethod: "typed" | "voice"; startedAfterMs?: number };
+
+export function submitFollowUp(attemptId: string, answer: string, details: AnswerDetails): Promise<ApiResult> {
+  return postJson(`/api/attempts/${encodeURIComponent(attemptId)}/followup`, { answer, ...details });
 }
 
 /** One attempt as the server has it now, for when a reply went missing. */

@@ -2,7 +2,7 @@ import { Circle, CircleCheck, Clock, ClipboardCheck, ClipboardPaste, Keyboard, M
 import type { ReactNode } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import type { ProofSkill } from "../types";
-import { formatDateTime, highlightSegments, integrityLines, plural, scoreLine, sourceName } from "./format";
+import { followUpMethodLine, formatDateTime, highlightSegments, integrityLines, plural, scoreLine, sourceName } from "./format";
 
 /** One proven skill: what they wrote, what was found in it, and how it was tested. */
 export function SkillEvidence({ skill }: { skill: ProofSkill }) {
@@ -60,6 +60,7 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
           <p className="text-sm text-ink-soft">Written after they submitted, from their own words. It had to be passed.</p>
           <p className="mt-3 font-semibold">{skill.followUp.question}</p>
           <p className="mt-3 border-l-2 border-control-edge pl-3.5 whitespace-pre-wrap">{skill.followUp.answer}</p>
+          <FollowUpMethod followUp={skill.followUp} />
           {skill.followUp.feedback && (
             <p className="mt-3 flex items-start gap-2 text-sm text-ink-soft">
               <CircleCheck size={18} aria-hidden="true" className="mt-px shrink-0 text-proven" />
@@ -159,6 +160,17 @@ function Signals({ skill }: { skill: ProofSkill }) {
       <Signal icon={<Clock size={16} />}>{lines.active}</Signal>
       <Signal icon={<WholeWord size={16} />}>{lines.words}</Signal>
     </ul>
+  );
+}
+
+function FollowUpMethod({ followUp }: { followUp: ProofSkill["followUp"] }) {
+  const line = followUpMethodLine(followUp);
+  if (!line) return null;
+  return (
+    <p className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
+      <span aria-hidden="true">{followUp.inputMethod === "voice" ? <Mic size={16} /> : <Keyboard size={16} />}</span>
+      {line}
+    </p>
   );
 }
 

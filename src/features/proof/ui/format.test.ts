@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateTime, formatDuration, highlightSegments, integrityLines, roleLead, sourceName } from "./format";
+import { followUpMethodLine, formatDateTime, formatDuration, highlightSegments, integrityLines, roleLead, sourceName } from "./format";
 
 describe("highlightSegments", () => {
   const text = "An inner join keeps matches. A left join keeps every left row.";
@@ -60,6 +60,18 @@ describe("words on the page", () => {
       active: "Active time not recorded",
       words: "90 words",
     });
+  });
+
+  it("says how the follow-up was answered, and nothing for older records", () => {
+    const base = { question: "Q", answer: "A", feedback: "F" };
+    expect(followUpMethodLine(base)).toBeNull();
+    expect(followUpMethodLine({ ...base, inputMethod: "voice", startedAfterMs: 9_200 })).toBe(
+      "Answered aloud, began 9 s after the question appeared",
+    );
+    expect(followUpMethodLine({ ...base, inputMethod: "typed" })).toBe("Typed");
+    expect(followUpMethodLine({ ...base, inputMethod: "typed", startedAfterMs: 200 })).toBe(
+      "Typed, began right after the question appeared",
+    );
   });
 
   it("gives the same date in every time zone", () => {

@@ -20,8 +20,7 @@ export async function POST(request: Request) {
     const feedback = "That's the right idea. This is sample feedback from the voice preview, not a real grade.";
     await putDoc(`attempts/${attempt.id}`, {
       ...attempt,
-      followUp: { ...attempt.followUp, answer: body.answer ?? "", passed: true, feedback },
-      integrity: { ...attempt.integrity, inputMethod: body.inputMethod ?? "voice" },
+      followUp: { ...attempt.followUp, answer: body.answer ?? "", passed: true, feedback, inputMethod: body.inputMethod ?? "voice" },
       status: "proven",
     } satisfies Attempt);
     return Response.json({ passed: true, feedback });

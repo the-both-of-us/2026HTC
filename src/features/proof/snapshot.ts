@@ -92,14 +92,22 @@ function toProofSkill(node: SkillNode, attempt: Attempt, sourceKind: SourceKind)
     })),
     factualErrors: attempt.grade.misconceptions,
     rejectedQuotes: attempt.grade.rejectedQuotes,
-    followUp: {
-      question: attempt.followUp?.question ?? "",
-      answer: attempt.followUp?.answer ?? "",
-      feedback: attempt.followUp?.feedback ?? "",
-    },
+    followUp: toProofFollowUp(attempt),
     integrity: { ...attempt.integrity },
     source: toProofSource(node, sourceKind),
     attemptedAt: attempt.createdAt,
+  };
+}
+
+/** Keys for unknown values are left out, not set to null, so older records hash as before. */
+function toProofFollowUp(attempt: Attempt): ProofSkill["followUp"] {
+  const followUp = attempt.followUp;
+  return {
+    question: followUp?.question ?? "",
+    answer: followUp?.answer ?? "",
+    feedback: followUp?.feedback ?? "",
+    ...(followUp?.inputMethod && { inputMethod: followUp.inputMethod }),
+    ...(followUp?.startedAfterMs !== undefined && { startedAfterMs: followUp.startedAfterMs }),
   };
 }
 
