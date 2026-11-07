@@ -1,0 +1,206 @@
+{
+  "sampleId": "data-analyst-grid",
+  "generatedAt": "2026-11-07T18:47:16.560Z",
+  "output": {
+    "title": "Data Analyst, Grid Operations",
+    "subtitle": "Calgary, AB",
+    "nodes": [
+      {
+        "id": "relational-database-concepts",
+        "title": "Relational database concepts",
+        "why": "Understanding tables and relationships is needed to query and model the historian and outage data sources.",
+        "prerequisites": [],
+        "fromSource": false,
+        "quote": null,
+        "checkpoints": [
+          "A primary key uniquely identifies each row in a table.",
+          "Foreign keys enforce referential integrity between tables.",
+          "Normalization reduces redundancy by separating data into related tables."
+        ]
+      },
+      {
+        "id": "programming-fundamentals",
+        "title": "Programming fundamentals",
+        "why": "Basic coding concepts are required to manipulate data with Python and pandas scripts.",
+        "prerequisites": [],
+        "fromSource": false,
+        "quote": null,
+        "checkpoints": [
+          "Variables store data values that can be read and modified during execution.",
+          "Control flow statements like loops and conditionals determine which code runs.",
+          "Functions encapsulate reusable logic and can return results to callers."
+        ]
+      },
+      {
+        "id": "statistics-fundamentals",
+        "title": "Statistics fundamentals",
+        "why": "Statistical concepts such as error metrics and seasonality are used to evaluate forecast performance.",
+        "prerequisites": [],
+        "fromSource": false,
+        "quote": null,
+        "checkpoints": [
+          "Mean absolute error averages absolute differences between predicted and observed values.",
+          "Seasonality refers to regular, periodic fluctuations in a time series.",
+          "Standard deviation measures spread of data around the mean."
+        ]
+      },
+      {
+        "id": "sql-queries",
+        "title": "SQL queries",
+        "why": "The analyst must retrieve and combine load, generation, and outage records from database tables.",
+        "prerequisites": [
+          "relational-database-concepts"
+        ],
+        "fromSource": true,
+        "quote": "Write SQL queries against our historian",
+        "checkpoints": [
+          "An INNER JOIN returns rows only when matching keys exist in both tables.",
+          "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+          "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+          "Using indexes on join columns speeds up query execution by reducing row scans."
+        ]
+      },
+      {
+        "id": "python-pandas",
+        "title": "Python pandas",
+        "why": "Python with pandas is used to clean, transform, and analyze time‑series data for reporting.",
+        "prerequisites": [
+          "programming-fundamentals"
+        ],
+        "fromSource": true,
+        "quote": "working knowledge of Python with pandas",
+        "checkpoints": [
+          "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+          "The .groupby method groups rows by column values and applies aggregate functions.",
+          ".fillna replaces missing values with specified constants or methods like forward fill.",
+          "Vectorized operations on DataFrames execute without explicit Python loops, improving performance."
+        ]
+      },
+      {
+        "id": "time-series-data-cleaning",
+        "title": "Time‑series data cleaning",
+        "why": "Cleaned data ensures accurate load and outage analysis despite gaps, meter errors, and clock changes.",
+        "prerequisites": [
+          "python-pandas"
+        ],
+        "fromSource": true,
+        "quote": "Clean time-series data: find gaps",
+        "checkpoints": [
+          "Interpolation can fill missing timestamps by estimating values between known points.",
+          "Detecting meter errors often involves flagging spikes that exceed typical variance thresholds.",
+          "Adjusting timestamps for daylight saving requires shifting affected records by one hour.",
+          "Resampling converts five‑minute data to hourly aggregates by applying functions like mean."
+        ]
+      },
+      {
+        "id": "power-bi-dashboard-development",
+        "title": "Power BI dashboard development",
+        "why": "Dashboards deliver real‑time insights to operators and planners in an accessible visual format.",
+        "prerequisites": [
+          "sql-queries"
+        ],
+        "fromSource": true,
+        "quote": "Build and maintain Power BI dashboards",
+        "checkpoints": [
+          "Power BI visuals update automatically when underlying query results change.",
+          "Data slicers let users filter all visualizations on a report page simultaneously.",
+          "Publishing a dashboard creates a shared link that respects row‑level security settings.",
+          "Drill‑through actions enable users to navigate from summary to detailed data."
+        ]
+      },
+      {
+        "id": "load-forecast-evaluation",
+        "title": "Load forecast evaluation",
+        "why": "Comparing forecasted and actual load identifies mismatches that must be explained to stakeholders.",
+        "prerequisites": [
+          "statistics-fundamentals",
+          "python-pandas"
+        ],
+        "fromSource": true,
+        "quote": "Compare forecast load with actual load",
+        "checkpoints": [
+          "Calculating MAE subtracts forecast from actual, takes absolute value, then averages across periods.",
+          "Large forecast errors often coincide with sudden weather changes affecting demand.",
+          "Correlation analysis can reveal systematic bias where forecasts consistently overpredict.",
+          "Visualizing forecast vs actual with a line chart highlights deviation patterns over time."
+        ]
+      },
+      {
+        "id": "metric-documentation",
+        "title": "Metric documentation",
+        "why": "Clear documentation lets other analysts reproduce calculations and understand metric definitions.",
+        "prerequisites": [
+          "technical-writing"
+        ],
+        "fromSource": true,
+        "quote": "Document every metric so another analyst",
+        "checkpoints": [
+          "A metric definition must list source tables, calculation steps, and aggregation level.",
+          "Version control of documentation allows tracking changes and reverting to prior metric logic.",
+          "Including example input and output helps readers validate the metric implementation.",
+          "Using consistent naming conventions avoids confusion between similarly named metrics."
+        ]
+      },
+      {
+        "id": "power-grid-supply-demand",
+        "title": "Power‑grid supply‑demand",
+        "why": "Understanding how generation and load are balanced informs analysis of grid performance and outages.",
+        "prerequisites": [],
+        "fromSource": true,
+        "quote": "supply and demand are balanced on a power grid",
+        "checkpoints": [
+          "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+          "Dispatch decisions prioritize low‑cost generation sources while respecting transmission constraints.",
+          "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+          "Reserve capacity is held to handle unexpected outages or demand spikes."
+        ]
+      },
+      {
+        "id": "technical-writing",
+        "title": "Technical writing",
+        "why": "Clear, non‑technical explanations are required for metrics, reports, and documentation meant for non‑analysts.",
+        "prerequisites": [],
+        "fromSource": true,
+        "quote": "Clear writing for people who are not analysts",
+        "checkpoints": [
+          "Plain language replaces jargon with common terms to improve reader comprehension.",
+          "Structured documents use headings, lists, and tables to organize information logically.",
+          "Consistent tense and active voice make explanations clearer and more direct.",
+          "Providing a summary at the beginning gives readers a quick overview of content."
+        ]
+      },
+      {
+        "id": "scada-data-handling",
+        "title": "SCADA data handling",
+        "why": "SCADA data provides high‑frequency operational measurements useful for detailed grid analysis.",
+        "prerequisites": [
+          "sql-queries"
+        ],
+        "fromSource": true,
+        "quote": "experience with SCADA data",
+        "checkpoints": [
+          "SCADA tags represent real‑time measurements identified by unique point IDs.",
+          "Historian tables store timestamped SCADA values, often at one‑second intervals.",
+          "Data extraction queries must filter by tag ID and time range to retrieve relevant records.",
+          "Aggregating high‑frequency SCADA data to hourly intervals reduces storage and improves analysis speed."
+        ]
+      },
+      {
+        "id": "weather-data-analysis",
+        "title": "Weather data analysis",
+        "why": "Weather variables help explain load variations and improve forecasting accuracy.",
+        "prerequisites": [
+          "python-pandas"
+        ],
+        "fromSource": true,
+        "quote": "experience with SCADA data or weather data",
+        "checkpoints": [
+          "Temperature and wind speed forecasts can be merged with load data using timestamp joins.",
+          "Correlating precipitation with demand helps explain deviations during extreme weather events.",
+          "Normalizing weather variables removes unit differences before regression modeling.",
+          "Visualizing weather trends alongside load highlights potential causal relationships."
+        ]
+      }
+    ]
+  }
+}

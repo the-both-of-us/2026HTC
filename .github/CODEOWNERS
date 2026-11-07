@@ -1,0 +1,21 @@
+# Who owns what. See TEAM.md.
+*                                 @VVarrior1
+/src/features/flashcards/         @MirzaHB
+/src/features/quiz/               @MirzaHB
+/src/features/courses/            @MirzaHB
+/src/features/network/            @MirzaHB
+/src/features/dashboard/          @MirzaHB
+/src/features/review/             @MirzaHB
+/src/features/battle/             @MirzaHB
+/src/app/dashboard/               @MirzaHB
+/src/app/courses/                 @MirzaHB
+/src/app/review/                  @MirzaHB
+/src/app/people/                  @MirzaHB
+/src/app/battle/                  @MirzaHB
+/src/app/api/flashcards/          @MirzaHB
+/src/app/api/quiz/                @MirzaHB
+/src/app/api/courses/             @MirzaHB
+/src/app/api/network/             @MirzaHB
+/src/app/api/review/              @MirzaHB
+/src/app/api/battle/              @MirzaHB
+/docs/submission/                 @MirzaHB

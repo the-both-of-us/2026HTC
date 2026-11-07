@@ -1,0 +1,221 @@
+{
+  "sampleId": "junior-backend",
+  "generatedAt": "2026-11-07T18:45:37.861Z",
+  "output": {
+    "title": "Junior Backend Developer",
+    "subtitle": "Calgary, AB (hybrid)",
+    "nodes": [
+      {
+        "id": "programming-basics",
+        "title": "Programming basics",
+        "why": "Understanding basic programming constructs enables writing any backend code.",
+        "prerequisites": [],
+        "fromSource": false,
+        "quote": null,
+        "checkpoints": [
+          "Variables store values of a specific data type and can be reassigned within their scope.",
+          "Control flow statements like if/else decide which block of code executes based on a condition.",
+          "Loops such as for and while repeat execution until a termination condition becomes false."
+        ]
+      },
+      {
+        "id": "web-basics",
+        "title": "Web basics",
+        "why": "Knowing how client‑server communication works underpins building HTTP services.",
+        "prerequisites": [],
+        "fromSource": false,
+        "quote": null,
+        "checkpoints": [
+          "A client sends an HTTP request to a server, which returns a response containing status and data.",
+          "Stateless request-response model means each request is independent and does not rely on previous ones.",
+          "Web browsers interpret HTML, CSS, and JavaScript to render user interfaces."
+        ]
+      },
+      {
+        "id": "git-workflow",
+        "title": "Git workflow",
+        "why": "Git workflow lets you manage code changes, collaborate via branches and pull requests.",
+        "prerequisites": [
+          "programming-basics"
+        ],
+        "fromSource": true,
+        "quote": "Comfort with Git, including branches",
+        "checkpoints": [
+          "A branch creates an independent line of development, allowing changes without affecting main.",
+          "Pull requests submit a branch’s changes for review before merging into the target branch.",
+          "Merging combines commit histories and can create a merge commit when histories diverge."
+        ]
+      },
+      {
+        "id": "http-fundamentals",
+        "title": "HTTP fundamentals",
+        "why": "HTTP fundamentals are required to design correct REST endpoints and handle status codes.",
+        "prerequisites": [
+          "web-basics"
+        ],
+        "fromSource": true,
+        "quote": "working understanding of HTTP: methods",
+        "checkpoints": [
+          "GET requests retrieve resources without a request body, while POST sends data to create resources.",
+          "HTTP status code 404 indicates the server cannot find the requested resource.",
+          "Cache‑Control: max‑age directive tells browsers how long a response may be cached."
+        ]
+      },
+      {
+        "id": "typescript",
+        "title": "TypeScript",
+        "why": "TypeScript provides type safety for the Node.js codebase used in the APIs.",
+        "prerequisites": [
+          "programming-basics"
+        ],
+        "fromSource": true,
+        "quote": "in TypeScript on Node.js",
+        "checkpoints": [
+          "TypeScript adds static type annotations that are checked at compile time before emitting JavaScript.",
+          "Interface definitions declare object shapes, enabling compile‑time verification of property existence.",
+          "The tsc compiler reports type errors such as assigning a string to a number variable."
+        ]
+      },
+      {
+        "id": "nodejs-runtime",
+        "title": "Node.js runtime",
+        "why": "Node.js runtime executes the TypeScript‑compiled JavaScript that powers the service.",
+        "prerequisites": [
+          "programming-basics",
+          "typescript"
+        ],
+        "fromSource": true,
+        "quote": "on Node.js",
+        "checkpoints": [
+          "Node.js uses an event‑driven, non‑blocking I/O model to handle many concurrent connections.",
+          "The require function loads CommonJS modules synchronously from the file system.",
+          "process.env provides access to environment variables at runtime."
+        ]
+      },
+      {
+        "id": "rest-api-development",
+        "title": "REST API development",
+        "why": "REST API development creates the endpoints that external clients will call.",
+        "prerequisites": [
+          "nodejs-runtime",
+          "http-fundamentals",
+          "typescript"
+        ],
+        "fromSource": true,
+        "quote": "Build and test REST API endpoints",
+        "checkpoints": [
+          "REST endpoints map HTTP methods to CRUD operations on resources.",
+          "Path parameters are extracted from the URL and passed to handler functions.",
+          "Returning a 201 status code signals that a new resource was successfully created."
+        ]
+      },
+      {
+        "id": "automated-testing",
+        "title": "Automated testing",
+        "why": "Automated testing ensures each code change stays correct and catches regressions.",
+        "prerequisites": [
+          "nodejs-runtime",
+          "rest-api-development"
+        ],
+        "fromSource": true,
+        "quote": "Write automated tests with every change",
+        "checkpoints": [
+          "Unit tests isolate a single function and assert expected output given specific inputs.",
+          "Test runners detect failing assertions and report the file and line of the failure.",
+          "Running tests in CI ensures code changes do not break existing functionality."
+        ]
+      },
+      {
+        "id": "sql-basics",
+        "title": "SQL basics",
+        "why": "SQL basics allow writing queries that retrieve and aggregate data from PostgreSQL.",
+        "prerequisites": [
+          "programming-basics"
+        ],
+        "fromSource": true,
+        "quote": "Basic SQL, including joins",
+        "checkpoints": [
+          "INNER JOIN returns rows with matching keys in both tables, excluding non‑matches.",
+          "GROUP BY aggregates rows sharing a column value, enabling SUM, COUNT, AVG calculations.",
+          "WHERE filters rows before GROUP BY, affecting which data is aggregated."
+        ]
+      },
+      {
+        "id": "postgresql-schema",
+        "title": "PostgreSQL schema",
+        "why": "PostgreSQL schema design defines the tables storing invoices and payments.",
+        "prerequisites": [
+          "sql-basics"
+        ],
+        "fromSource": true,
+        "quote": "Design PostgreSQL tables",
+        "checkpoints": [
+          "Primary keys uniquely identify rows and are indexed automatically by PostgreSQL.",
+          "Foreign key constraints enforce referential integrity between related tables.",
+          "Migrations record incremental schema changes, allowing versioned upgrades and rollbacks."
+        ]
+      },
+      {
+        "id": "database-indexing",
+        "title": "Database indexing",
+        "why": "Database indexing improves query performance when data volume grows.",
+        "prerequisites": [
+          "postgresql-schema"
+        ],
+        "fromSource": true,
+        "quote": "add indexes when queries slow down",
+        "checkpoints": [
+          "Creating an index on a column speeds up SELECT queries using that column in WHERE clauses.",
+          "Indexes increase write latency because each INSERT must also update the index structures.",
+          "A composite index on (a, b) can be used for queries filtering by a and b together."
+        ]
+      },
+      {
+        "id": "database-transactions",
+        "title": "Database transactions",
+        "why": "Transactions guarantee that invoices and their payments are saved atomically.",
+        "prerequisites": [
+          "postgresql-schema"
+        ],
+        "fromSource": true,
+        "quote": "Use transactions so that an invoice",
+        "checkpoints": [
+          "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+          "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+          "Isolation levels control visibility of intermediate transaction data to other concurrent sessions."
+        ]
+      },
+      {
+        "id": "auth-and-validation",
+        "title": "Auth and validation",
+        "why": "Authentication and validation protect customer data and prevent malformed input.",
+        "prerequisites": [
+          "rest-api-development",
+          "postgresql-schema"
+        ],
+        "fromSource": true,
+        "quote": "Handle authentication and input validation",
+        "checkpoints": [
+          "Input validation rejects data that does not match expected type or format before processing.",
+          "Authentication verifies a user’s identity, often by checking tokens or session cookies.",
+          "Storing passwords with bcrypt hashes protects them from being recovered if the database leaks."
+        ]
+      },
+      {
+        "id": "log-debugging",
+        "title": "Log debugging",
+        "why": "Log debugging helps locate production errors quickly.",
+        "prerequisites": [
+          "nodejs-runtime"
+        ],
+        "fromSource": true,
+        "quote": "Review logs to trace production errors",
+        "checkpoints": [
+          "Log entries typically include timestamps, severity levels, and contextual messages.",
+          "Filtering logs by error level isolates entries that indicate failures.",
+          "Stack traces in error logs pinpoint the function call sequence leading to an exception."
+        ]
+      }
+    ]
+  }
+}

@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Hackathon local
+.DS_Store
+*.pdf
+.vercel
+.env*
+!.env.example
+playwright-report/
+test-results/
+scratch/
