@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
-import { CoursesScreen } from "@/features/courses";
+import { Suspense } from "react";
+import { CourseScreen, CourseScreenLoading } from "@/features/courses/client";
 
 export const metadata: Metadata = { title: "Course" };
 
-// When this screen becomes real, read `params` behind <Suspense>, as src/app/map/[id]/page.tsx does.
-export default function Page() {
-  return <CoursesScreen />;
+type CoursePageProps = { params: Promise<{ id: string }> };
+
+/** The id is only known at request time, so reading it waits behind Suspense. */
+export default function CoursePage({ params }: CoursePageProps) {
+  return (
+    <Suspense fallback={<CourseScreenLoading />}>
+      <CourseFromRoute params={params} />
+    </Suspense>
+  );
+}
+
+async function CourseFromRoute({ params }: CoursePageProps) {
+  const { id } = await params;
+  return <CourseScreen mapId={id} />;
 }

@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { FormEvent, Ref } from "react";
 import { useState } from "react";
 import { Button, ErrorNotice, Field, Textarea } from "@/shared/ui";
 import { PendingNote } from "./PendingNote";
@@ -9,6 +9,8 @@ type FollowUpFormProps = {
   pending: boolean;
   requestError: string | null;
   onSubmit: (answer: string) => void;
+  /** Lets the panel bring this form into view when the question arrives. */
+  formRef: Ref<HTMLFormElement>;
 };
 
 /** The one live question about the learner's own words. Passing it is required. */
@@ -18,6 +20,7 @@ export function FollowUpForm({
   pending,
   requestError,
   onSubmit,
+  formRef,
 }: FollowUpFormProps) {
   const [answer, setAnswer] = useState("");
   const [empty, setEmpty] = useState(false);
@@ -36,11 +39,12 @@ export function FollowUpForm({
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       noValidate
-      className="flex flex-col gap-4 rounded-sheet border-[3px] border-available bg-sheet p-4"
+      className="flex scroll-mt-4 flex-col gap-4 rounded-sheet border border-accent bg-available-surface p-4 shadow-glow"
     >
-      <h3 id={questionId} className="text-xl font-semibold">
+      <h3 id={questionId} className="text-lg leading-snug font-medium">
         {question}
       </h3>
 
@@ -54,7 +58,6 @@ export function FollowUpForm({
           <Textarea
             {...control}
             aria-describedby={[questionId, control["aria-describedby"]].filter(Boolean).join(" ")}
-            ruled
             rows={4}
             value={answer}
             readOnly={pending}

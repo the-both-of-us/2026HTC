@@ -3,6 +3,8 @@ import { ROUTES, type Route } from "./routes";
 
 const DEFAULT_MAX_TOKENS = 4000;
 const DEFAULT_TIMEOUT_MS = 30_000;
+/** chatJSON only goes round the providers again if they failed faster than this. */
+const SECOND_GO_WITHIN_MS = 15_000;
 
 /** Thrown when no provider could answer. The message is safe to show to a user. */
 export class AiUnavailableError extends Error {
@@ -12,15 +14,8 @@ export class AiUnavailableError extends Error {
   }
 }
 
-/** One provider failed. `reason` goes to the server log and never to callers. */
-class RouteFailure extends Error {
-  constructor(
-    readonly reason: string,
-    readonly tryNextRoute: boolean,
-  ) {
-    super(reason);
-  }
-}
+/** One provider failed. The message goes to the server log and never to callers. */
+class RouteFailure extends Error {}
 
 export type ChatOptions = {
   system?: string;
@@ -42,13 +37,15 @@ export async function chatText(options: ChatOptions): Promise<string> {
 /**
  * Asks for JSON and validates it. The schema's top level must be an object.
  * A bad reply gets one retry on the same provider, with the error appended to
- * the prompt. If that also fails, the next provider gets a turn.
+ * the prompt. If that also fails, the next provider gets a turn. If every provider
+ * fails quickly, the whole list gets one more go: this model returns an empty reply
+ * now and then, and a second try works.
  */
 export async function chatJSON<T>(options: ChatJsonOptions<T>): Promise<T> {
   const { schema } = options;
   const system = [options.system, jsonInstructions(schema)].filter(Boolean).join("\n\n");
 
-  return tryEachRoute(options.label, async (route, token) => {
+  const askOneRoute = async (route: Route, token: string): Promise<T> => {
     const firstReply = await sendRequest(route, token, { ...options, system }, true);
     const first = parseReply(firstReply, schema);
     if (first.ok) return first.value;
@@ -58,8 +55,17 @@ export async function chatJSON<T>(options: ChatJsonOptions<T>): Promise<T> {
     const second = parseReply(secondReply, schema);
     if (second.ok) return second.value;
 
-    throw new RouteFailure("invalid JSON twice", true);
-  });
+    throw new RouteFailure("invalid JSON twice");
+  };
+
+  const startedAt = Date.now();
+  try {
+    return await tryEachRoute(options.label, askOneRoute);
+  } catch (error) {
+    // A provider that hung will not recover in time, and the learner is waiting.
+    if (Date.now() - startedAt > SECOND_GO_WITHIN_MS) throw error;
+    return tryEachRoute(options.label, askOneRoute);
+  }
 }
 
 /** Runs `attempt` on each available provider in order, until one succeeds. */
@@ -77,9 +83,7 @@ async function tryEachRoute<T>(
       console.info(`[ai] ${label}: served by ${route.name} in ${Date.now() - startedAt}ms`);
       return result;
     } catch (error) {
-      const failure = toRouteFailure(error);
-      console.warn(`[ai] ${label}: ${route.name} failed after ${Date.now() - startedAt}ms: ${failure.reason}`);
-      if (!failure.tryNextRoute) break;
+      console.warn(`[ai] ${label}: ${route.name} failed after ${Date.now() - startedAt}ms: ${failureReason(error)}`);
     }
   }
 
@@ -112,27 +116,22 @@ async function sendRequest(
   });
 
   if (!response.ok) {
-    throw new RouteFailure(`HTTP ${response.status}`, shouldTryNextRoute(response.status));
+    throw new RouteFailure(`HTTP ${response.status}`);
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content;
   if (typeof content !== "string" || content.trim() === "") {
-    throw new RouteFailure("empty reply", true);
+    throw new RouteFailure("empty reply");
   }
   return content;
 }
 
-/** Out of credit (402), rate limited (429) or a server error (5xx). */
-function shouldTryNextRoute(status: number): boolean {
-  return status === 402 || status === 429 || status >= 500;
-}
-
-/** Anything that is not already a RouteFailure is a timeout or a network problem. */
-function toRouteFailure(error: unknown): RouteFailure {
-  if (error instanceof RouteFailure) return error;
+/** Anything that is not a RouteFailure is a timeout or a network problem. */
+function failureReason(error: unknown): string {
+  if (error instanceof RouteFailure) return error.message;
   const isTimeout = error instanceof Error && error.name === "TimeoutError";
-  return new RouteFailure(isTimeout ? "timeout" : "network error", true);
+  return isTimeout ? "timeout" : "network error";
 }
 
 function jsonInstructions(schema: z.ZodType): string {

@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import type { HTMLAttributes } from "react";
 
-/** A sheet of paper laid on the page: lighter than the background, with a plain edge. */
+/** A raised surface on the page: lighter than the background, with a quiet edge. */
 export function Card({
   className,
   children,
@@ -11,7 +11,7 @@ export function Card({
     <div
       {...rest}
       className={clsx(
-        "rounded-sheet border border-control-edge bg-sheet p-5 sm:p-6",
+        "rounded-sheet border border-rule-strong bg-sheet/90 p-5 shadow-panel sm:p-6",
         className,
       )}
     >

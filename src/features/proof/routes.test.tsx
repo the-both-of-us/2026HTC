@@ -61,7 +61,7 @@ async function seed() {
   };
   await putDoc(`maps/${map.id}`, map);
   await putDoc(`attempts/${attempt.id}`, attempt);
-  await putDoc(`progress/${map.id}/${OWNER}`, { mapId: map.id, ownerId: OWNER, proven: { joins: attempt.id }, updatedAt: "" });
+  await putDoc(`progress/${map.id}/${OWNER}/joins`, { nodeId: "joins", attemptId: attempt.id, provenAt: "2026-11-07T11:00:00.000Z" });
 }
 
 function post(displayName = "Maya Chen") {

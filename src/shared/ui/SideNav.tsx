@@ -15,14 +15,17 @@ const NAV_ITEMS = [
   { href: "/grid", label: "Grid", icon: Zap },
 ];
 
-/** Sidebar on large screens, a scrolling bottom bar on phones. */
+/** Sidebar on large screens, a floating pill of icons on phones. */
 export function SideNav() {
   const pathname = usePathname();
 
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 flex gap-1 overflow-x-auto border-t border-rule bg-sheet px-2 py-1.5 lg:static lg:flex-col lg:overflow-visible lg:border-t-0 lg:bg-transparent lg:p-3"
+      className={clsx(
+        "fixed inset-x-3 bottom-3 z-40 flex justify-between gap-0.5 rounded-full border border-rule-strong bg-raised/95 p-1.5 shadow-panel backdrop-blur",
+        "lg:static lg:flex-col lg:justify-start lg:gap-1 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-3 lg:shadow-none lg:backdrop-blur-none",
+      )}
     >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -32,14 +35,15 @@ export function SideNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={clsx(
-              "flex min-h-11 shrink-0 items-center gap-2.5 rounded-control border px-3 text-sm font-medium",
+              "flex min-h-11 min-w-11 items-center justify-center gap-2.5 rounded-full border text-sm font-medium transition-control",
+              "lg:justify-start lg:rounded-control lg:px-3",
               active
-                ? "border-forest/40 bg-forest/15 text-ink"
-                : "border-transparent text-ink-soft hover:bg-rule hover:text-ink",
+                ? "border-transparent bg-accent text-on-dark shadow-glow lg:border-accent/45 lg:bg-accent/15 lg:text-ink lg:shadow-none"
+                : "border-transparent text-ink-soft hover:bg-rule-strong/60 hover:text-ink",
             )}
           >
-            <Icon aria-hidden="true" size={18} />
-            {label}
+            <Icon aria-hidden="true" size={18} className={clsx(active && "lg:text-accent-bright")} />
+            <span className="sr-only lg:not-sr-only">{label}</span>
           </Link>
         );
       })}

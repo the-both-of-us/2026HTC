@@ -1,5 +1,6 @@
 import { Circle, CircleCheck, Clock, ClipboardCheck, ClipboardPaste, Keyboard, Mic, WholeWord } from "lucide-react";
 import type { ReactNode } from "react";
+import { PASS_SCORE } from "@/shared/types";
 import type { ProofSkill } from "../types";
 import { formatDateTime, highlightSegments, integrityLines, plural, scoreLine, sourceName } from "./format";
 
@@ -35,7 +36,7 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
         </Section>
 
         <Section title="Checkpoints">
-          <p className="mb-3 text-sm text-ink-soft">{scoreLine(skill)} A pass needs 70, plus the follow-up.</p>
+          <p className="mb-3 text-sm text-ink-soft">{scoreLine(skill)} A pass needs {PASS_SCORE}, plus the follow-up.</p>
           <Checkpoints skill={skill} />
           {skill.factualErrors.length > 0 && (
             <div className="mt-4">

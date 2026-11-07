@@ -1,5 +1,6 @@
-import { errorResponse, getOwnAttempt, toLearnerView } from "@/features/teachback";
+import { getOwnAttempt, toLearnerView } from "@/features/teachback";
 import { getUserId } from "@/shared/identity";
+import { errorResponse } from "@/shared/http";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

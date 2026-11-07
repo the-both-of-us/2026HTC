@@ -11,7 +11,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generateFollowUp, gradeExplanation, gradeFollowUp, quoteIsInText } from "../src/features/teachback";
+import { generateFollowUp, gradeExplanation, gradeFollowUp, isUsableQuote } from "../src/features/teachback";
 import { quotesInReply, startFetchTap, type TappedCall } from "../src/features/teachback/eval/fetchTap";
 import { summarize, type EvalCase, type ModelCall, type RunRecord } from "../src/features/teachback/eval/metrics";
 import { runPlantedQuotes } from "../src/features/teachback/eval/plantedQuotes";
@@ -67,7 +67,7 @@ async function gradeOnce(evalCase: EvalCase, node: SkillNode, run: number, tap: 
       misconceptions: grade.misconceptions,
       quotesReturned: quotes.length,
       rejectedQuotes: grade.rejectedQuotes,
-      rejected: quotes.filter((quote) => !quoteIsInText(quote, evalCase.text)),
+      rejected: quotes.filter((quote) => !isUsableQuote(quote, evalCase.text)),
       calls: calls.map(withoutReply),
       error: null,
     };

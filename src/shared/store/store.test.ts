@@ -1,12 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { deleteDoc, getDoc, listDocs, putDoc, putDocIfAbsent } from "./index";
+import { claimDoc, deleteDoc, getDoc, listDocs, putDoc } from "./index";
 
-// An empty token selects the in-memory driver, so these tests run offline.
+// With neither of these set, the in-memory driver is used, so these tests run offline.
 beforeEach(() => {
+  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
 });
 
 describe("store (in-memory driver)", () => {
+  it("lets exactly one of several callers claim a key, and again once it is deleted", async () => {
+    const key = `test/claim-${Math.random()}`;
+
+    const results = await Promise.all([1, 2, 3, 4].map((n) => claimDoc(key, { n })));
+    expect(results.filter(Boolean)).toHaveLength(1);
+
+    await deleteDoc(key);
+    expect(await claimDoc(key, { n: 5 })).toBe(true);
+  });
+
   it("returns null for a missing key", async () => {
     expect(await getDoc("test/missing")).toBeNull();
   });
@@ -24,12 +35,6 @@ describe("store (in-memory driver)", () => {
     const doc = await getDoc<{ n: number }>("test/copy");
     doc!.n = 99;
     expect(await getDoc("test/copy")).toEqual({ n: 1 });
-  });
-
-  it("lets only one caller claim a key, and leaves the first value alone", async () => {
-    const results = await Promise.all([1, 2, 3].map((n) => putDocIfAbsent("test/claim", { n })));
-    expect(results).toEqual([true, false, false]);
-    expect(await getDoc("test/claim")).toEqual({ n: 1 });
   });
 
   it("lists only the documents under a prefix", async () => {

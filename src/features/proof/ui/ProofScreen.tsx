@@ -1,6 +1,8 @@
-import { CircleSlash, FileQuestion } from "lucide-react";
+import { ArrowLeft, CircleSlash, FileQuestion } from "lucide-react";
 import { headers } from "next/headers";
+import Link from "next/link";
 import type { ReactNode } from "react";
+import { readUserId } from "@/shared/identity";
 import { getProof } from "../publish";
 import type { ProofRecord } from "../types";
 import { formatDateTime } from "./format";
@@ -33,9 +35,12 @@ export async function ProofScreen({ id }: { id: string }) {
     );
   }
 
+  const backLink = (await readUserId()) === record.ownerId && <BackToMap mapId={record.mapId} />;
+
   if (record.state === "revoked") {
     return (
       <ProofFrame>
+        {backLink}
         <Notice icon={<CircleSlash size={28} aria-hidden="true" />} title="This record was withdrawn">
           Its owner took it down on {formatDateTime(record.revokedAt)}, and the public copy has been removed. Any copy
           you hold is no longer backed by this page.
@@ -46,6 +51,7 @@ export async function ProofScreen({ id }: { id: string }) {
 
   return (
     <ProofFrame>
+      {backLink}
       <ProofDocument snapshot={record.snapshot} hash={record.hash} url={await pageUrl(id)} />
     </ProofFrame>
   );
@@ -57,6 +63,19 @@ async function pageUrl(id: string): Promise<string> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   return `${protocol}://${host}/proof/${id}`;
+}
+
+/** Only the person who published the page gets this, so a visitor is never sent to a private map. */
+function BackToMap({ mapId }: { mapId: string }) {
+  return (
+    <Link
+      href={`/map/${mapId}`}
+      className="mb-4 flex min-h-11 w-fit items-center gap-2 text-ink-soft transition-control hover:text-ink print:hidden"
+    >
+      <ArrowLeft aria-hidden="true" size={17} />
+      Back to your map
+    </Link>
+  );
 }
 
 function Notice({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {

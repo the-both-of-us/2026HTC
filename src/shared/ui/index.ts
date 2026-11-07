@@ -5,6 +5,7 @@ export { ComingSoon } from "./ComingSoon";
 export { ErrorNotice } from "./ErrorNotice";
 export { Field, Textarea } from "./Field";
 export type { FieldControlProps } from "./Field";
+export { LogoMark } from "./LogoMark";
 export { PageShell } from "./PageShell";
 export { Spinner } from "./Spinner";
 export { NODE_STATE_LABELS, StateMark } from "./StateMark";

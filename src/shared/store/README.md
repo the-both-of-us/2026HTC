@@ -11,10 +11,16 @@ const maps = await listDocs<SkillMap>("maps/");   // the documents, not their ke
 await deleteDoc(`maps/${id}`);
 ```
 
-- **Driver:** Vercel Blob (private) when `BLOB_READ_WRITE_TOKEN` is set, otherwise an in-memory `Map`. The in-memory data is gone when the process restarts.
-- **Fresh reads:** `getDoc` passes `useCache: false`, which skips the CDN, so a read straight after a write sees the new value.
+- **Driver:** chosen from the environment, in this order:
+  1. `S3_BUCKET` set: Amazon S3, using the default AWS credentials (the task role on AWS) and `AWS_REGION`.
+  2. `BLOB_READ_WRITE_TOKEN` set: Vercel Blob (private).
+  3. Neither: an in-memory `Map`, gone when the process restarts.
+- **Fresh reads:** a read straight after a write sees the new value. S3 is strongly consistent, and the Blob driver passes `useCache: false`, which skips the CDN.
+- **S3 permissions:** the role needs `s3:ListBucket` as well as get, put and delete. Without it, S3 reports a missing key as AccessDenied instead of NoSuchKey, so `getDoc` throws instead of returning null.
 - **Keys** are stored as given, so use `/` to group documents and list them by prefix. `listDocs` reads each document with its own request, so keep prefixes narrow. Build keys from ids the server made, not from raw user input.
-- **Blob failures throw** the `@vercel/blob` error. Route handlers should catch it and show a human sentence.
-- There are no transactions: two writers to one key means the last write wins.
+- **Storage failures throw** the driver's own error. Route handlers should catch it and show a human sentence.
+- There are no transactions: two writers to one key means the last write wins. To let exactly one caller through, use `claimDoc(key, value)`, which returns false if the key is taken.
 
-Tests: `npm test -- store` (offline, in-memory driver).
+Each driver is one file (`memory.ts`, `blob.ts`, `s3.ts`) implementing `driver.ts`.
+
+Tests: `npm test -- store`. They run offline: the S3 test mocks the AWS SDK.

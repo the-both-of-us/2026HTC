@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { CircleAlert } from "lucide-react";
 import { Button } from "./Button";
 
 type ErrorNoticeProps = {
@@ -20,11 +21,14 @@ export function ErrorNotice({
     <div
       role="alert"
       className={clsx(
-        "flex flex-col items-start gap-3 rounded-control border-2 border-danger bg-danger-surface p-4 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col items-start gap-3 rounded-control border border-danger/70 bg-danger-surface p-4 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
-      <p className="text-base text-ink">{message}</p>
+      <p className="flex items-start gap-2.5 text-base text-ink">
+        <CircleAlert aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-danger" />
+        {message}
+      </p>
       {onRetry && (
         <Button variant="secondary" onClick={onRetry} className="shrink-0">
           {retryLabel}

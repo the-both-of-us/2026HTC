@@ -1,5 +1,5 @@
 import { createHash, createHmac } from "node:crypto";
-import { computeScore, quoteIsInText } from "@/features/teachback";
+import { computeScore, isUsableQuote } from "@/features/teachback";
 import type { ProofCheckResult, ProofSnapshot } from "./types";
 
 /**
@@ -48,7 +48,7 @@ export function checkSnapshot(snapshot: ProofSnapshot, storedHash: string, store
     const met = skill.checkpoints.filter((result) => result.met);
     quotes.total += met.length;
     quotes.verified += met.filter(
-      (result) => result.quote !== null && quoteIsInText(result.quote, skill.explanation),
+      (result) => result.quote !== null && isUsableQuote(result.quote, skill.explanation),
     ).length;
 
     const expected = computeScore(met.length, skill.checkpoints.length, skill.factualErrors.length);

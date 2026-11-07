@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveNodeStates } from "@/features/skill-map";
-import { getDoc, putDoc } from "@/shared/store";
-import type { Attempt, MapProgress, SkillMap, SkillNode } from "@/shared/types";
+import { deleteDoc, getDoc, putDoc } from "@/shared/store";
+import type { Attempt, SkillMap, SkillNode } from "@/shared/types";
 import { canonicalJson, checkSnapshot, hashSnapshot, sealFor } from "./hash";
 import {
   cleanDisplayName,
@@ -75,9 +75,13 @@ async function seedProvenMap(): Promise<{ map: SkillMap; attempt: Attempt }> {
   const attempt = makeAttempt(map, "joins");
   await putDoc(`maps/${map.id}`, map);
   await putDoc(`attempts/${attempt.id}`, attempt);
-  const progress: MapProgress = { mapId: map.id, ownerId: OWNER, proven: { joins: attempt.id }, updatedAt: attempt.createdAt };
-  await putDoc(`progress/${map.id}/${OWNER}`, progress);
+  await markProven(map, "joins", attempt.id);
   return { map, attempt };
+}
+
+/** The store holds one progress document per proven node. */
+function markProven(map: SkillMap, nodeId: string, attemptId: string) {
+  return putDoc(`progress/${map.id}/${OWNER}/${nodeId}`, { nodeId, attemptId, provenAt: "2026-11-07T11:00:00.000Z" });
 }
 
 function snapshotFor(map: SkillMap, attempt: Attempt) {
@@ -278,7 +282,7 @@ describe("publishProof", () => {
   });
 
   it("refuses to publish with no proven skill", async () => {
-    await putDoc(`progress/${map.id}/${OWNER}`, { mapId: map.id, ownerId: OWNER, proven: {}, updatedAt: "" });
+    await deleteDoc(`progress/${map.id}/${OWNER}/joins`);
     await expect(publishProof(OWNER, map.id, "Maya")).rejects.toMatchObject({ status: 400 });
   });
 
@@ -288,7 +292,7 @@ describe("publishProof", () => {
   });
 
   it("does not count progress pointing at an attempt that is gone", async () => {
-    await putDoc(`progress/${map.id}/${OWNER}`, { mapId: map.id, ownerId: OWNER, proven: { joins: randomUUID() }, updatedAt: "" });
+    await markProven(map, "joins", randomUUID());
     await expect(publishProof(OWNER, map.id, "Maya")).rejects.toMatchObject({ status: 400 });
   });
 
@@ -297,12 +301,7 @@ describe("publishProof", () => {
 
     const second = makeAttempt(map, "windows");
     await putDoc(`attempts/${second.id}`, second);
-    await putDoc(`progress/${map.id}/${OWNER}`, {
-      mapId: map.id,
-      ownerId: OWNER,
-      proven: { joins: attempt.id, windows: second.id },
-      updatedAt: "",
-    });
+    await markProven(map, "windows", second.id);
 
     const updated = await publishProof(OWNER, map.id, "Maya Chen");
     expect(updated.id).toBe(first.id);

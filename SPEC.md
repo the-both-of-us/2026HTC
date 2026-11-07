@@ -27,7 +27,7 @@ Free-form "score this answer" gave a fluent, empty answer 55-85/100. This method
 - The model returns, for each checkpoint, an exact quote from the learner's text or null, plus a list of factual errors.
 - Code, not the model, verifies each quote appears in the learner's text after normalising case and whitespace. Unverified quotes count as not met.
 - Code computes: `score = max(0, round(met / total * 100) - 20 * errors)`.
-- Pass requires `score >= 70` and a passed follow-up.
+- Pass requires `score >= 65` and a passed follow-up. That means 3 of 4 checkpoints, or 2 of 3, with no factual errors.
 
 Checkpoints are generated per node when the map is created. That generation is untested, so `npm run eval` must measure it.
 

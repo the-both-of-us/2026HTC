@@ -30,7 +30,7 @@ const CORRECT_INFORMAL =
   "So inner join only gives you the rows that match in both tables, like customers who actually have orders. Left join gives you all the rows from the left table no matter what, so customers with no orders still show up, but their order columns are just NULL. You line them up with the ON part, like customers.id = orders.customer_id.";
 
 const cases = [
-  { name: "correct informal", expected: "at least 70", text: CORRECT_INFORMAL },
+  { name: "correct informal", expected: "at least 65", text: CORRECT_INFORMAL },
   {
     name: "fluent empty",
     expected: "at most 30",

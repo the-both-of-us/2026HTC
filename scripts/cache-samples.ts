@@ -11,8 +11,8 @@ import { SAMPLE_POSTINGS } from "../src/shared/samplePostings";
 
 process.loadEnvFile(".env.local");
 
-/** The gateway's free tier allows about 5 calls a minute, and one sample can use 2. */
-const PAUSE_BETWEEN_CALLS_MS = 30_000;
+/** Cerebras has no trouble with this. The gateway's free tier allows about 5 calls a minute. */
+const PAUSE_BETWEEN_CALLS_MS = process.env.CEREBRAS_API_KEY ? 1_000 : 30_000;
 const FIXTURES_DIR = join("src", "features", "skill-map", "fixtures");
 
 async function main() {

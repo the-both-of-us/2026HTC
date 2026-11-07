@@ -1,5 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import clsx from "clsx";
+import { Briefcase, Lock } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { NodeState, PublicSkillNode } from "@/shared/types";
 import { NODE_STATE_LABELS, StateMark } from "@/shared/ui";
@@ -10,7 +11,7 @@ export type SkillNodeData = {
   state: NodeState;
   layer: number;
   selected: boolean;
-  /** Plays the column-by-column entrance. */
+  /** Plays the row-by-row entrance. */
   reveal: boolean;
   justProven: boolean;
   justUnlocked: boolean;
@@ -18,94 +19,76 @@ export type SkillNodeData = {
 
 export type SkillFlowNode = Node<SkillNodeData, "skill">;
 
-const STATE_CLASSES: Record<NodeState, string> = {
-  locked: "hatch-locked border-2 border-dashed border-locked text-ink-soft",
-  available: "bg-available-surface border-3 border-available text-ink",
-  proven: "bg-proven-surface border-2 border-proven text-on-proven",
+const CARD_CLASSES: Record<NodeState, string> = {
+  locked:
+    "border-dashed border-locked/70 bg-locked-surface text-ink/85 hover:border-ink-soft hover:text-ink",
+  available:
+    "border-accent bg-available-surface text-ink shadow-glow hover:border-accent-bright hover:shadow-glow-strong",
+  proven: "border-proven bg-proven-surface text-ink shadow-glow-green hover:shadow-[0_0_24px_rgb(91_170_122/0.45)]",
 };
 
-/** One skill on the map. Its shape and symbol say its state, so colour is never alone. */
+const HANDLE_COLOURS: Record<NodeState, string> = {
+  locked: "var(--color-locked)",
+  available: "var(--color-accent-bright)",
+  proven: "var(--color-proven)",
+};
+
+/** One skill on the map. Its edge, its status dot and its words all say its state. */
 export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
   const { skill, state, layer, selected, reveal, justProven, justUnlocked } = data;
 
   return (
-    // The handles sit on this outer box, which never moves. React Flow measures them
-    // once, so they must stay clear of the inner box's entrance animation.
-    <div style={{ width: NODE_WIDTH, height: NODE_HEIGHT }} className="relative">
-      <Handle type="target" position={Position.Left} isConnectable={false} />
+    // The handles sit on this outer box, which only ever fades. React Flow measures them
+    // once, so they must stay clear of the inner card's movement.
+    <div
+      style={
+        {
+          width: NODE_WIDTH,
+          height: NODE_HEIGHT,
+          "--reveal-layer": layer,
+          "--handle-colour": HANDLE_COLOURS[state],
+        } as CSSProperties
+      }
+      className={clsx("relative", reveal && "node-fade-in")}
+    >
+      <Handle type="target" position={Position.Top} isConnectable={false} />
       <div
-        style={{ "--reveal-layer": layer } as CSSProperties}
         className={clsx(
-          "relative flex size-full items-center gap-2.5 rounded-control px-2.5 transition-control",
-          STATE_CLASSES[state],
-          // A hard double ring in highlighter yellow: the map's "you are here".
-          selected && "shadow-[0_0_0_3px_var(--color-highlight),0_0_0_5px_var(--color-ink)]",
-          reveal && "skill-reveal",
-          justUnlocked && "skill-unlock",
+          "flex size-full flex-col justify-between rounded-sheet border-[1.5px] px-3 py-2.5 transition-control hover:-translate-y-0.5",
+          CARD_CLASSES[state],
+          selected && "ring-2 ring-ink ring-offset-2 ring-offset-paper",
+          reveal && "card-reveal",
+          justProven && "card-proven",
+          justUnlocked && "card-unlock",
         )}
       >
-        {skill.fromSource && <JobTab />}
-
-        <NodeMark state={state} landing={justProven} />
-
-        <div className="min-w-0 flex-1">
-          <p
-            className={clsx(
-              "line-clamp-2",
-              skill.fromSource
-                ? "font-display text-[1.0625rem] leading-5 font-semibold"
-                : "text-base leading-5 font-medium",
-            )}
-          >
+        <div className="flex items-start gap-2">
+          <StateMark
+            state={state}
+            size={state === "proven" ? 17 : 14}
+            className={clsx("shrink-0", state === "proven" ? "mt-[1px]" : "mt-[3px]", justProven && "mark-land")}
+          />
+          <p title={skill.title} className="line-clamp-2 min-w-0 flex-1 text-[0.9375rem] leading-[1.25] font-medium">
             {skill.title}
           </p>
-          <p className="mt-1 flex justify-between gap-2 text-sm leading-4">
-            <span className="font-semibold">{NODE_STATE_LABELS[state]}</span>
-            {!skill.fromSource && <span className="font-display italic">Foundation</span>}
-          </p>
+          {state === "locked" && <Lock aria-hidden="true" size={14} className="mt-[3px] shrink-0" />}
         </div>
+        <p className="flex items-center justify-between gap-2 text-[0.8125rem] leading-none">
+          <span>{NODE_STATE_LABELS[state]}</span>
+          {skill.fromSource && <JobAsksTag />}
+        </p>
       </div>
-      <Handle type="source" position={Position.Right} isConnectable={false} />
+      <Handle type="source" position={Position.Bottom} isConnectable={false} />
     </div>
   );
 }
 
-/** The tab on top of a skill the posting asks for. Foundations have none. */
-export function JobTab({ inline = false }: { inline?: boolean }) {
+/** A small tag on a skill the posting asks for by name. Foundations have none. */
+export function JobAsksTag() {
   return (
-    <span
-      className={clsx(
-        "inline-flex items-center gap-1 rounded-t-control border border-contour bg-sheet px-1.5 text-sm leading-[1.1875rem] font-semibold text-contour",
-        inline ? "rounded-b-control" : "absolute -top-[1.3125rem] left-2 border-b-0",
-      )}
-    >
-      <FlagIcon />
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber/45 bg-amber/10 px-1.5 py-0.5 text-xs leading-none font-medium text-amber">
+      <Briefcase aria-hidden="true" size={11} />
       Job asks
-    </span>
-  );
-}
-
-function FlagIcon() {
-  return (
-    <svg width={11} height={12} viewBox="0 0 11 12" aria-hidden="true">
-      <path d="M1.5 0v12" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2.2 1h8l-2.4 2.5L10.2 6h-8z" fill="currentColor" />
-    </svg>
-  );
-}
-
-function NodeMark({ state, landing }: { state: NodeState; landing: boolean }) {
-  if (state !== "proven") return <StateMark state={state} size={28} className="shrink-0" />;
-
-  // On the dark fill, the proven symbol sits on a pale disc, like a stamped seal.
-  return (
-    <span
-      className={clsx(
-        "flex size-9 shrink-0 items-center justify-center rounded-full bg-sheet",
-        landing && "stamp-land",
-      )}
-    >
-      <StateMark state="proven" size={23} />
     </span>
   );
 }

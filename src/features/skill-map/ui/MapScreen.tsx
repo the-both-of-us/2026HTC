@@ -1,29 +1,30 @@
 "use client";
 
+import { PublishCourseButton } from "@/features/courses/client";
 import { LiveGridCard } from "@/features/grid/client";
 import { ShareProofButton } from "@/features/proof/client";
 import clsx from "clsx";
+import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { NodeState } from "@/shared/types";
-import { Button, buttonClasses, ErrorNotice, PageShell, Spinner, StateMark } from "@/shared/ui";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
+import { Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import { deriveNodeStates } from "../states";
 import type { PublicSkillMap } from "../storage";
 import { MapCanvas } from "./MapCanvas";
 import { fetchMapWithProgress, fetchProven } from "./mapApi";
 import { SkillList } from "./SkillList";
 import { SkillPanel, type ProvenNotice } from "./SkillPanel";
-import { JobTab } from "./SkillNodeView";
 
 const PHONE_SCREEN = "(max-width: 640px)";
-/** Long enough for the entrance to finish on a map of about ten columns. */
-const REVEAL_MS = 3000;
+/** Long enough for the entrance to finish on a map of about eight rows. */
+const REVEAL_MS = 1800;
 
 type LoadState =
   | { status: "loading" }
   | { status: "missing" }
   | { status: "failed" }
-  | { status: "ready"; map: PublicSkillMap; proven: Record<string, string> };
+  | { status: "ready"; map: PublicSkillMap; proven: Record<string, string>; isOwner: boolean };
 
 /** The whole map screen: loads the map, then shows it. */
 export function MapScreen({ mapId }: { mapId: string }) {
@@ -37,7 +38,7 @@ export function MapScreen({ mapId }: { mapId: string }) {
         setLoad(
           result.kind === "missing"
             ? { status: "missing" }
-            : { status: "ready", map: result.map, proven: result.proven },
+            : { status: "ready", map: result.map, proven: result.proven, isOwner: result.isOwner },
         );
       })
       .catch(() => {
@@ -50,45 +51,89 @@ export function MapScreen({ mapId }: { mapId: string }) {
 
   if (load.status === "missing") {
     return (
-      <PageShell width="reading">
-        <h1 className="text-3xl font-medium">This map is not here</h1>
-        <p className="mt-3 text-lg">
+      <StateCard icon={<Compass aria-hidden="true" size={24} />} title="This map is not here">
+        <p className="text-ink-soft">
           The link may be incomplete, or the map may have been deleted. You can build a new one
           from a job posting.
         </p>
-        <Link href="/" className={`${buttonClasses("primary")} mt-6 self-start`}>
+        <Link href="/" className={buttonClasses("primary")}>
           Build a new map
         </Link>
-      </PageShell>
+      </StateCard>
     );
   }
 
   if (load.status === "failed") {
     return (
-      <PageShell width="reading">
-        <h1 className="mb-4 text-3xl font-medium">Your skill map</h1>
+      <StateCard icon={<Network aria-hidden="true" size={24} />} title="Your skill map">
         <ErrorNotice
+          className="w-full text-left"
           message="The map could not be loaded. Your progress is saved, so try again."
           onRetry={() => {
             setLoad({ status: "loading" });
             setAttempt((count) => count + 1);
           }}
         />
-      </PageShell>
+      </StateCard>
     );
   }
 
-  return <LoadedMap map={load.map} initialProven={load.proven} />;
+  return <LoadedMap map={load.map} initialProven={load.proven} isOwner={load.isOwner} />;
 }
 
-/** Shown while the map loads, and by the route while it resolves. */
-export function MapScreenLoading() {
+/** A calm centred card for a screen with nothing to show yet. */
+function StateCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
     <PageShell width="reading">
-      <p role="status" className="flex items-center gap-3 text-lg">
-        <Spinner size={22} />
-        Loading your skill map.
-      </p>
+      <div className="my-auto flex flex-col items-center gap-4 rounded-sheet border border-rule-strong bg-sheet/90 px-6 py-12 text-center shadow-panel">
+        <span className="flex size-13 items-center justify-center rounded-control border border-accent/40 bg-accent/10 text-accent-bright">
+          {icon}
+        </span>
+        <h1 className="text-2xl font-medium">{title}</h1>
+        {children}
+      </div>
+    </PageShell>
+  );
+}
+
+/** How many ghost cards sit in each row of the loading picture. */
+const GHOST_ROWS = [2, 4, 3, 1];
+
+/** Shown while the map loads, and by the route while it resolves: a ghost of the map to come. */
+export function MapScreenLoading() {
+  return (
+    <PageShell width="full">
+      <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
+        <div aria-hidden="true" className="flex items-center gap-4 border-b border-rule px-4 py-4 sm:px-6">
+          <div className="animate-placeholder size-13 rounded-sheet bg-raised" />
+          <div className="flex flex-col gap-2.5">
+            <div className="animate-placeholder h-5 w-56 max-w-full rounded-full bg-raised" />
+            <div className="animate-placeholder h-2 w-40 rounded-full bg-raised" />
+          </div>
+        </div>
+        <div className="dotted-canvas relative flex min-h-[70dvh] flex-1 flex-col items-center justify-center gap-10 overflow-hidden px-4 lg:min-h-0">
+          <div aria-hidden="true" className="flex flex-col items-center gap-10">
+            {GHOST_ROWS.map((count, row) => (
+              <div key={row} className="flex gap-4">
+                {Array.from({ length: count }, (_, index) => (
+                  <div
+                    key={index}
+                    style={{ "--placeholder-delay": `${row * 0.18}s` } as CSSProperties}
+                    className="animate-placeholder h-14 w-20 rounded-sheet border-[1.5px] border-dashed border-control-edge/70 bg-raised/70 sm:w-44"
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+          <p
+            role="status"
+            className="absolute bottom-6 flex items-center gap-2.5 rounded-full border border-rule-strong bg-sheet/95 px-4 py-2 text-ink-soft"
+          >
+            <Spinner size={16} />
+            Loading your skill map.
+          </p>
+        </div>
+      </div>
     </PageShell>
   );
 }
@@ -96,14 +141,16 @@ export function MapScreenLoading() {
 function LoadedMap({
   map,
   initialProven,
+  isOwner,
 }: {
   map: PublicSkillMap;
   initialProven: Record<string, string>;
+  isOwner: boolean;
 }) {
   const [proven, setProven] = useState(initialProven);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // This component only mounts in the browser, after the fetch, so matchMedia is safe.
-  const [view, setView] = useState<"map" | "list">(() =>
+  const [view, setView] = useState<View>(() =>
     window.matchMedia(PHONE_SCREEN).matches ? "list" : "map",
   );
   const [playReveal, setPlayReveal] = useState(true);
@@ -119,6 +166,7 @@ function LoadedMap({
   const states = useMemo(() => deriveNodeStates(map, { proven }), [map, proven]);
   const provenCount = map.nodes.filter((node) => states[node.id] === "proven").length;
   const selected = map.nodes.find((node) => node.id === selectedId) ?? null;
+  const nextSkill = map.nodes.find((node) => states[node.id] === "available") ?? null;
 
   const selectSkill = useCallback((nodeId: string) => {
     setSelectedId(nodeId);
@@ -141,7 +189,7 @@ function LoadedMap({
   // Escape closes the panel, but not while typing: that could lose someone's answer.
   useEffect(() => {
     if (!selectedId) return;
-    function handleKeyDown(event: KeyboardEvent) {
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
       const target = event.target as HTMLElement;
       if (event.key === "Escape" && !target.closest("textarea, input")) closePanel();
     }
@@ -169,77 +217,70 @@ function LoadedMap({
 
   return (
     <PageShell width="full">
-      <header className="flex flex-col gap-3 px-4 pb-3 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8 lg:px-10">
-        <div className="min-w-0">
-          <h1 className="text-[2rem] leading-[1.12] font-medium lg:text-3xl">{map.title}</h1>
-          {map.subtitle && <p className="mt-1 text-lg text-ink-soft">{map.subtitle}</p>}
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <Progress proven={provenCount} total={map.nodes.length} states={states} />
-          <ShareProofButton mapId={map.id} provenCount={provenCount} />
-          <div role="group" aria-label="How to show the skills" className="flex gap-1.5">
-            <Button
-              variant="subtle"
-              size="sm"
-              aria-pressed={view === "map"}
-              onClick={() => setView("map")}
-            >
-              Map
-            </Button>
-            <Button
-              variant="subtle"
-              size="sm"
-              aria-pressed={view === "list"}
-              onClick={() => setView("list")}
-            >
-              List
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="relative flex min-h-[70dvh] flex-1 flex-col px-4 pb-4 sm:px-6 lg:min-h-[max(26rem,calc(100dvh-11rem))] lg:px-10">
-        <div className="relative flex flex-1 flex-col">
-          {view === "map" ? (
-            <figure className="flex flex-1 flex-col border border-ink bg-sheet p-1.5">
-              <div className="flex flex-1 flex-col border border-ink">
-                <div className="relative flex-1">
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-0 bg-[url(/contours.svg)] bg-cover bg-center opacity-40"
-                  />
-                  <div className="absolute inset-0">
-                    <MapCanvas
-                      skills={map.nodes}
-                      states={states}
-                      selectedId={selectedId}
-                      reveal={playReveal}
-                      justProvenId={notice?.nodeId ?? null}
-                      justUnlockedIds={notice?.unlockedIds ?? []}
-                      onSelect={selectSkill}
-                    />
-                  </div>
-                </div>
-                <Legend />
+      <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
+        <header className="flex flex-col gap-3 border-b border-rule px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex min-w-0 items-center gap-4">
+            <TopicBadge title={map.title} />
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-3">
+                <h1 className="truncate text-xl leading-tight font-medium sm:text-2xl" title={map.title}>
+                  {map.title}
+                </h1>
+                {map.subtitle && (
+                  <p className="hidden truncate text-sm text-ink-soft md:block">{map.subtitle}</p>
+                )}
               </div>
-            </figure>
-          ) : (
-            <div
-              className={clsx(
-                "pt-2 lg:absolute lg:inset-0 lg:overflow-y-auto",
-                selected && "lg:pr-[31.5rem]",
+              <Progress proven={provenCount} total={map.nodes.length} />
+            </div>
+          </div>
+          {isOwner && (
+            <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+              <PublishCourseButton mapId={map.id} />
+              {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
+              {nextSkill && (
+                <Button onClick={() => selectSkill(nextSkill.id)} className="grow sm:grow-0">
+                  <Sparkles aria-hidden="true" size={17} />
+                  {provenCount === 0 ? "Start learning" : "Next skill"}
+                </Button>
               )}
-            >
-              <div className="max-w-3xl">
-                <SkillList
+            </div>
+          )}
+        </header>
+
+        <ViewTabs view={view} onChange={setView} />
+
+        <div className="relative flex min-h-[60dvh] flex-1 lg:min-h-0">
+          <div
+            id="skills-view"
+            role="tabpanel"
+            aria-labelledby={`tab-${view}`}
+            className="relative min-w-0 flex-1"
+          >
+            {view === "map" ? (
+              <div className="absolute inset-0">
+                <MapCanvas
                   skills={map.nodes}
                   states={states}
                   selectedId={selectedId}
+                  reveal={playReveal}
+                  justProvenId={notice?.nodeId ?? null}
+                  justUnlockedIds={notice?.unlockedIds ?? []}
                   onSelect={selectSkill}
                 />
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="px-4 pt-5 sm:px-6 lg:absolute lg:inset-0 lg:overflow-y-auto">
+                <div className="mx-auto max-w-3xl">
+                  <SkillList
+                    skills={map.nodes}
+                    states={states}
+                    selectedId={selectedId}
+                    onSelect={selectSkill}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
 
           {selected && (
             <SkillPanel
@@ -249,6 +290,7 @@ function LoadedMap({
               states={states}
               sourceKind={map.sourceKind}
               notice={notice}
+              isOwner={isOwner}
               onSelect={selectSkill}
               onProven={handleProven}
               onClose={closePanel}
@@ -262,57 +304,92 @@ function LoadedMap({
   );
 }
 
-/** "3 of 12 proven", with one map symbol per skill as a tally. */
-function Progress({
-  proven,
-  total,
-  states,
-}: {
-  proven: number;
-  total: number;
-  states: Record<string, NodeState>;
-}) {
-  const rank: Record<NodeState, number> = { proven: 0, available: 1, locked: 2 };
-  const tally = Object.values(states).sort((a, b) => rank[a] - rank[b]);
+/** A tile with the map's initials: "Data Analyst, Grid" becomes "DA". */
+function TopicBadge({ title }: { title: string }) {
+  const initials = title
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
 
   return (
-    <div className="flex flex-col gap-1">
-      <p role="status" className="font-display text-xl font-semibold">
-        {proven} of {total} proven
-      </p>
-      <div aria-hidden="true" className="flex max-w-80 flex-wrap gap-0.5">
-        {tally.map((state, index) => (
-          <StateMark key={index} state={state} size={14} />
-        ))}
+    <span
+      aria-hidden="true"
+      className="flex size-13 shrink-0 items-center justify-center rounded-sheet border border-amber/50 bg-amber/10 text-lg font-semibold text-ink shadow-[0_0_18px_rgb(210_156_68/0.18)]"
+    >
+      {initials}
+    </span>
+  );
+}
+
+function Progress({ proven, total }: { proven: number; total: number }) {
+  const percent = total === 0 ? 0 : (proven / total) * 100;
+
+  return (
+    <div className="mt-2 flex items-center gap-3">
+      <div aria-hidden="true" className="h-1.5 w-32 overflow-hidden rounded-full bg-rule-strong sm:w-48">
+        <div className="progress-fill h-full rounded-full bg-proven" style={{ width: `${percent}%` }} />
       </div>
+      <p role="status" className="text-sm text-ink-soft tabular-nums">
+        <span aria-hidden="true">
+          {proven}/{total} proven
+        </span>
+        <span className="sr-only">
+          {proven} of {total} skills proven
+        </span>
+      </p>
     </div>
   );
 }
 
-/** Like a map sheet's margin: how to read its symbols. */
-function Legend() {
+type View = "map" | "list";
+
+const TABS: { view: View; label: string; icon: typeof Network }[] = [
+  { view: "map", label: "Knowledge Map", icon: Network },
+  { view: "list", label: "All Skills", icon: BookOpen },
+];
+
+/** Tabs follow the usual keyboard pattern: Tab enters them, arrow keys move between them. */
+function ViewTabs({ view, onChange }: { view: View; onChange: (view: View) => void }) {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const next: View = view === "map" ? "list" : "map";
+    onChange(next);
+    listRef.current?.querySelector<HTMLElement>(`#tab-${next}`)?.focus();
+  }
+
   return (
-    <figcaption className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-ink bg-sheet px-3 py-2 text-sm">
-      <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <li className="inline-flex items-center gap-1.5">
-          <StateMark state="proven" size={16} />
-          Proven
-        </li>
-        <li className="inline-flex items-center gap-1.5">
-          <StateMark state="available" size={16} />
-          Available
-        </li>
-        <li className="inline-flex items-center gap-1.5">
-          <StateMark state="locked" size={16} />
-          Locked
-        </li>
-        <li className="inline-flex items-center gap-1.5">
-          <JobTab inline />
-          The posting asks for it
-        </li>
-        <li className="font-display italic">Foundation: leads to a skill the posting asks for</li>
-      </ul>
-      <p className="hidden font-display italic xl:block">Open any available skill to explain it.</p>
-    </figcaption>
+    <div
+      ref={listRef}
+      role="tablist"
+      aria-label="How to show the skills"
+      onKeyDown={handleKeyDown}
+      className="flex gap-1 border-b border-rule px-2 sm:px-4"
+    >
+      {TABS.map(({ view: tab, label, icon: Icon }) => (
+        <button
+          key={tab}
+          id={`tab-${tab}`}
+          type="button"
+          role="tab"
+          aria-selected={view === tab}
+          aria-controls="skills-view"
+          tabIndex={view === tab ? 0 : -1}
+          onClick={() => onChange(tab)}
+          className={clsx(
+            "-mb-px flex min-h-11 cursor-pointer items-center gap-2 border-b-2 px-3.5 text-[0.9375rem] transition-control focus-visible:-outline-offset-2",
+            view === tab
+              ? "border-accent bg-accent/8 font-medium text-ink"
+              : "border-transparent text-ink-soft hover:text-ink",
+          )}
+        >
+          <Icon aria-hidden="true" size={16} />
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }

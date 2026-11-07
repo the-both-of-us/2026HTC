@@ -1,4 +1,4 @@
-import { quoteIsInText } from "@/features/teachback";
+import { isUsableQuote } from "@/features/teachback";
 import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode } from "@/shared/types";
 import type { ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
@@ -54,7 +54,7 @@ export function attemptProvesNode(attempt: Attempt, map: SkillMap, node: SkillNo
   if (attempt.grade.score < PASS_SCORE) return false;
 
   return attempt.grade.checkpoints.every(
-    (result) => !result.met || (result.quote !== null && quoteIsInText(result.quote, attempt.explanation)),
+    (result) => !result.met || (result.quote !== null && isUsableQuote(result.quote, attempt.explanation)),
   );
 }
 

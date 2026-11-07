@@ -14,13 +14,13 @@ const states = deriveNodeStates(map, progress);                          // { no
 
 1. **Check the input** (`build.ts`): 80 to 12,000 characters, or a `SkillMapError` with a sentence for the user.
 2. **Get model output**: saved output if the text is exactly a sample posting (`fixtures/`), otherwise one model call (`prompt.ts`). The posting sits between `<posting>` tags, and the model is told to treat it as data and ignore any instructions inside.
-3. **Validate in code** (`validate.ts`), whatever the model said: clean ids, no repeats, 3 or 4 checkpoints, at most 14 nodes (requirements are kept over foundations), no broken links, no loops, at least one root, and every quote checked against the posting.
+3. **Validate in code** (`validate.ts`), whatever the model said: clean ids, no repeats, 3 or 4 checkpoints (the prompt asks for 4), at most 14 nodes (requirements are kept over foundations), no broken links, no loops, at least one root, and every quote checked against the posting.
 4. **Reject junk** (`build.ts`): if the model says it is not a posting, or there are under 5 nodes, or no quote checked out, the user gets a 422 with a sentence.
 5. **Save** to `maps/<id>` in the store.
 
 ## Citations
 
-A quote counts as verified only if code finds it in the posting, ignoring case, whitespace, curly quotes and long dash styles. An unverified citation has `verified: false` and an empty `quote`, so the UI has nothing false to show. Foundations have `citation: null`.
+A quote counts as verified only if code finds it in the posting (`@/shared/quote`), ignoring case, whitespace, curly quotes and long dash styles. An unverified citation has `verified: false` and an empty `quote`, so the UI has nothing false to show. Foundations have `citation: null`.
 
 ## Reading a map
 
@@ -37,6 +37,6 @@ npx tsx scripts/cache-samples.ts --force   # all of them again
 
 The script does not save a reply with an unverified citation, so run it again if it says so. `fixtures.test.ts` fails if a sample's text changes without new output being saved.
 
-**Read the checkpoints after regenerating.** Code can check quotes but not facts, and this model sometimes states a wrong one with confidence. A wrong checkpoint marks a truthful learner down.
+**Read the checkpoints after regenerating.** Code can check quotes but not facts, and this model sometimes states a wrong one with confidence, more often in trades and healthcare than in software. A wrong checkpoint marks a truthful learner down. That's why the prompt asks for 4 per node: a learner can miss one and still reach 70, and the follow-up then probes the one they missed.
 
 Tests: `npm test -- skill-map`. They make no model calls.

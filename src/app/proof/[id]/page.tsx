@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { getProof, ProofLoading, ProofScreen } from "@/features/proof";
 
@@ -6,6 +7,9 @@ type ProofPageProps = { params: Promise<{ id: string }> };
 
 /** Public, but not for search engines: the page is shared by link. */
 export async function generateMetadata({ params }: ProofPageProps): Promise<Metadata> {
+  // This page is live data, so it must never be prerendered. Without this, the storage
+  // client's use of the clock is an error under Cache Components.
+  await connection();
   const { id } = await params;
   const robots = { index: false, follow: false };
 
@@ -30,6 +34,7 @@ export default function ProofPage({ params }: ProofPageProps) {
 }
 
 async function ProofFromRoute({ params }: ProofPageProps) {
+  await connection();
   const { id } = await params;
   return <ProofScreen id={id} />;
 }

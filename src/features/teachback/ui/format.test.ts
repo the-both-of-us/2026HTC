@@ -7,7 +7,6 @@ import {
   integritySentence,
   nextStepSentence,
   scoreBreakdown,
-  titleFromId,
   verdictTitle,
   wordCountMessage,
 } from "./format";
@@ -77,13 +76,13 @@ describe("verdict and next step", () => {
     const missing = attempt({ grade: grade(2, 4, ["wrong"]) });
     expect(verdictTitle(missing)).toBe("Not yet. 2 checkpoints to add.");
     expect(nextStepSentence(missing)).toBe(
-      "To reach 70, add the 2 missed checkpoints and correct 1 factual error. Your text is kept below for editing.",
+      "To reach 65, add the 2 missed checkpoints and correct 1 factual error. Your text is kept below for editing.",
     );
   });
 
   it("points at the error when every checkpoint was met", () => {
     const allMet = attempt({ grade: grade(3, 3, ["wrong", "wrong", "wrong"]) });
-    expect(verdictTitle(allMet)).toBe("Not yet. One thing to correct.");
+    expect(verdictTitle(allMet)).toBe("Not yet. 3 things to correct.");
     expect(nextStepSentence(allMet)).toContain("correct 3 factual errors");
   });
 
@@ -117,8 +116,4 @@ describe("integrity wording", () => {
       integritySentence({ pasted: false, activeMs: 60_000, wordCount: 1, inputMethod: "voice" }),
     ).toBe("Spoken, 1 word, 1 minute of active speaking and typing, nothing pasted.");
   });
-});
-
-it("makes a readable title from a node id", () => {
-  expect(titleFromId("sql-joins")).toBe("Sql joins");
 });

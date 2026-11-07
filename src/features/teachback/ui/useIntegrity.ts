@@ -1,56 +1,64 @@
-import { useRef } from "react";
+import { useState } from "react";
 import type { IntegritySignals } from "@/shared/types";
 import { countWords } from "../learnerText";
 
 /** A pause longer than this does not count as active typing. */
 const LONGEST_ACTIVE_GAP_MS = 5_000;
 
+/** Kept with the learner's draft, so reloading the page does not wipe the record of a paste. */
+export type SavedIntegrity = { pasted: boolean; usedVoice: boolean; activeMs: number };
+
 /**
  * Records how an explanation was written: pasted or not, active time, typed or spoken.
  * These are signals shown on the evidence page, never a judgement.
  */
-export function useIntegrity() {
-  const pasted = useRef(false);
-  const usedVoice = useRef(false);
-  const activeMs = useRef(0);
-  const lastKeystrokeAt = useRef<number | null>(null);
+function createIntegrity(saved?: SavedIntegrity) {
+  let pasted = saved?.pasted ?? false;
+  let usedVoice = saved?.usedVoice ?? false;
+  let activeMs = saved?.activeMs ?? 0;
+  let lastKeystrokeAt: number | null = null;
 
-  function recordTyping() {
-    const now = Date.now();
-    if (lastKeystrokeAt.current !== null) {
-      const gap = now - lastKeystrokeAt.current;
-      if (gap <= LONGEST_ACTIVE_GAP_MS) activeMs.current += gap;
-    }
-    lastKeystrokeAt.current = now;
-  }
+  return {
+    recordTyping() {
+      const now = Date.now();
+      if (lastKeystrokeAt !== null) {
+        const gap = now - lastKeystrokeAt;
+        if (gap <= LONGEST_ACTIVE_GAP_MS) activeMs += gap;
+      }
+      lastKeystrokeAt = now;
+    },
 
-  function recordPaste() {
-    pasted.current = true;
-  }
+    recordPaste() {
+      pasted = true;
+    },
 
-  function recordSpeaking(durationMs: number) {
-    usedVoice.current = true;
-    activeMs.current += durationMs;
-  }
+    recordSpeaking(durationMs: number) {
+      usedVoice = true;
+      activeMs += durationMs;
+    },
 
-  /** Emptying the box means starting fresh, so earlier signals no longer describe the text. */
-  function reset() {
-    pasted.current = false;
-    usedVoice.current = false;
-    activeMs.current = 0;
-    lastKeystrokeAt.current = null;
-  }
+    /** Emptying the box means starting fresh, so earlier signals no longer describe the text. */
+    reset() {
+      pasted = false;
+      usedVoice = false;
+      activeMs = 0;
+      lastKeystrokeAt = null;
+    },
 
-  function signalsFor(text: string): IntegritySignals {
-    return {
-      pasted: pasted.current,
-      activeMs: activeMs.current,
-      wordCount: countWords(text),
-      inputMethod: usedVoice.current ? "voice" : "typed",
-    };
-  }
+    signalsFor(text: string): IntegritySignals {
+      return { pasted, activeMs, wordCount: countWords(text), inputMethod: usedVoice ? "voice" : "typed" };
+    },
 
-  return { recordTyping, recordPaste, recordSpeaking, reset, signalsFor };
+    toSave(): SavedIntegrity {
+      return { pasted, usedVoice, activeMs };
+    },
+  };
 }
 
-export type Integrity = ReturnType<typeof useIntegrity>;
+export type Integrity = ReturnType<typeof createIntegrity>;
+
+/** One tracker for the life of the panel. */
+export function useIntegrity(saved?: SavedIntegrity): Integrity {
+  const [integrity] = useState(() => createIntegrity(saved));
+  return integrity;
+}

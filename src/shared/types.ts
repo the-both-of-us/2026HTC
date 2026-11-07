@@ -46,6 +46,8 @@ export type SkillMap = {
   sourceText: string;
   nodes: SkillNode[];
   createdAt: string;
+  /** Set on a copy: the id of the map it was started from. */
+  forkedFrom?: string;
 };
 
 export type IntegritySignals = {
@@ -105,69 +107,8 @@ export type MapProgress = {
 
 export type NodeState = "locked" | "available" | "proven";
 
-export const PASS_SCORE = 70;
-
-/* ---------- Study tools, owned by Person B. Stored per map and node. ---------- */
-
-export type Flashcard = {
-  id: string;
-  mapId: string;
-  nodeId: string;
-  front: string;
-  back: string;
-  citation: Citation | null;
-};
-
-export type QuizQuestion = {
-  id: string;
-  mapId: string;
-  nodeId: string;
-  prompt: string;
-  options: string[];
-  answerIndex: number;
-  /** Why the right answer is right. Shown after answering. */
-  explanation: string;
-  citation: Citation | null;
-};
-
-/** Spaced repetition state for one user and one flashcard. */
-export type ReviewCard = {
-  cardId: string;
-  ownerId: string;
-  mapId: string;
-  nodeId: string;
-  intervalDays: number;
-  ease: number;
-  repetitions: number;
-  dueAt: string;
-};
-
-/** A map someone chose to share in the public directory. */
-export type PublicCourse = {
-  mapId: string;
-  title: string;
-  subtitle: string;
-  authorName: string;
-  /** Ids of users who liked it, so a like can't be counted twice. */
-  likedBy: string[];
-  publishedAt: string;
-};
-
-/** A user's proven skills, used for matching. Demo profiles must say so on screen. */
-export type PeerProfile = {
-  ownerId: string;
-  displayName: string;
-  city: string;
-  provenSkills: string[];
-  isDemoProfile: boolean;
-};
-
-export type BattleRoom = {
-  code: string;
-  mapId: string;
-  nodeId: string;
-  questionIds: string[];
-  players: { id: string; name: string; score: number; answered: number }[];
-  status: "waiting" | "playing" | "finished";
-  createdAt: string;
-};
+/**
+ * 65, not 70: a node with 3 checkpoints scores 67 with 2 met, and that must pass.
+ * No other reachable score falls between 65 and 70, so nothing else changes.
+ */
+export const PASS_SCORE = 65;

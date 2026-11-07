@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ExternalLink, Link2, Share2, X } from "lucide-react";
+import { BadgeCheck, Check, ExternalLink, Link2, Share2, X } from "lucide-react";
 import { useId, useRef, useState, type FormEvent } from "react";
 import { Button, ErrorNotice, Field, Spinner, buttonClasses } from "@/shared/ui";
 import type { OwnerProofView } from "../types";
@@ -18,6 +18,7 @@ export type ShareProofButtonProps = {
 export function ShareProofButton({ mapId, provenCount }: ShareProofButtonProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const titleId = useId();
   const [loading, setLoading] = useState(false);
   const [proof, setProof] = useState<OwnerProofView | null>(null);
   const [editing, setEditing] = useState(false);
@@ -84,18 +85,18 @@ export function ShareProofButton({ mapId, provenCount }: ShareProofButtonProps) 
 
   return (
     <>
-      <Button variant="primary" onClick={open}>
-        <Share2 size={18} aria-hidden="true" />
-        Share evidence
+      <Button variant="secondary" onClick={open}>
+        <BadgeCheck size={17} aria-hidden="true" />
+        Evidence page
       </Button>
 
       <dialog
         ref={dialogRef}
-        aria-labelledby="share-proof-title"
+        aria-labelledby={titleId}
         className="m-auto max-h-[90dvh] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-sheet border border-control-edge bg-sheet p-5 text-ink backdrop:bg-black/70 sm:p-6"
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 ref={headingRef} tabIndex={-1} id="share-proof-title" className="text-2xl font-bold">
+          <h2 ref={headingRef} tabIndex={-1} id={titleId} className="text-2xl font-medium">
             {live && !editing ? "Your evidence page is live" : "Share your evidence"}
           </h2>
           <button

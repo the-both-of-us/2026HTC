@@ -1,5 +1,5 @@
 {
-  "name": "scaffold",
+  "name": "oryxlearn",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,9 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "eval": "tsx scripts/eval-grading.ts"
+    "cache-samples": "tsx --conditions=react-server scripts/cache-samples.ts",
+    "eval": "tsx --conditions=react-server scripts/eval-grading.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1164.0",
     "@vercel/blob": "^2.8.2",
     "@vercel/oidc": "^4.0.7",
     "@xyflow/react": "^12.12.1",
@@ -21,6 +23,7 @@
     "qrcode.react": "^4.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
     "unpdf": "^2.1.0",
     "zod": "^4.6.7"
   },

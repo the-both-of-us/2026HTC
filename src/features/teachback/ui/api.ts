@@ -1,7 +1,9 @@
 /** Calls to the attempts API. Every failure becomes a sentence a person can act on. */
 import type { Attempt, IntegritySignals } from "@/shared/types";
 
-export type ApiResult = { ok: true; attempt: Attempt } | { ok: false; message: string };
+export type ApiResult =
+  | { ok: true; attempt: Attempt }
+  | { ok: false; message: string; status?: number };
 
 /** A little longer than the server's own 120 second limit, so its error arrives first. */
 const TIMEOUT_MS = 125_000;
@@ -25,7 +27,7 @@ async function requestAttempt(url: string, init: RequestInit): Promise<ApiResult
     const response = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
     const body = await response.json().catch(() => null);
     if (response.ok && body?.grade) return { ok: true, attempt: body as Attempt };
-    return { ok: false, message: failureMessage(body, COULD_NOT_CHECK) };
+    return { ok: false, message: failureMessage(body, COULD_NOT_CHECK), status: response.status };
   } catch (error) {
     const timedOut = error instanceof DOMException && error.name === "TimeoutError";
     return { ok: false, message: timedOut ? TOOK_TOO_LONG : COULD_NOT_CONNECT };
@@ -53,6 +55,11 @@ export function submitFollowUp(attemptId: string, answer: string): Promise<ApiRe
   return postJson(`/api/attempts/${encodeURIComponent(attemptId)}/followup`, { answer });
 }
 
+/** One attempt as the server has it now, for when a reply went missing. */
+export function fetchAttempt(attemptId: string): Promise<ApiResult> {
+  return requestAttempt(`/api/attempts/${encodeURIComponent(attemptId)}`, { method: "GET" });
+}
+
 /** The attempt that proved this skill, for a panel opened after the fact. */
 export async function fetchProvenAttempt(mapId: string, nodeId: string): Promise<ApiResult> {
   const notLoaded = { ok: false, message: "" } as const;
@@ -61,7 +68,7 @@ export async function fetchProvenAttempt(mapId: string, nodeId: string): Promise
     const progress = await response.json();
     const attemptId = progress?.proven?.[nodeId];
     if (typeof attemptId !== "string") return notLoaded;
-    return await requestAttempt(`/api/attempts/${encodeURIComponent(attemptId)}`, { method: "GET" });
+    return await fetchAttempt(attemptId);
   } catch {
     return notLoaded;
   }

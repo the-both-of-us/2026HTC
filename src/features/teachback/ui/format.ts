@@ -46,7 +46,8 @@ export function verdictTitle(attempt: Attempt): string {
 
   const missed = attempt.grade.checkpoints.length - metCount(attempt.grade);
   if (missed > 0) return `Not yet. ${plural(missed, "checkpoint")} to add.`;
-  return "Not yet. One thing to correct.";
+  const errors = attempt.grade.misconceptions.length;
+  return `Not yet. ${errors === 1 ? "One thing" : `${errors} things`} to correct.`;
 }
 
 /** One specific sentence on what happens next. */
@@ -93,10 +94,4 @@ export function integritySentence(integrity: IntegritySignals): string {
   const activity = integrity.inputMethod === "voice" ? "speaking and typing" : "typing";
   const paste = integrity.pasted ? "includes pasted text" : "nothing pasted";
   return `${method}, ${plural(integrity.wordCount, "word")}, ${formatDuration(integrity.activeMs)} of active ${activity}, ${paste}.`;
-}
-
-/** Fallback for a prerequisite with no title given: "sql-joins" becomes "Sql joins". */
-export function titleFromId(id: string): string {
-  const words = id.replace(/-/g, " ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
 }

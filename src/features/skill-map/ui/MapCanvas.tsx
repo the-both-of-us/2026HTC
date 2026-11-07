@@ -1,34 +1,55 @@
 "use client";
 
 import {
+  Background,
+  BackgroundVariant,
+  MiniMap,
   Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
   type NodeMouseHandler,
+  type Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/base.css";
+import { Maximize, Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import type { NodeState, PublicSkillNode } from "@/shared/types";
-import { Button } from "@/shared/ui";
+import { StateMark } from "@/shared/ui";
 import "./map.css";
 import { layoutGraph, NODE_HEIGHT, NODE_WIDTH } from "./layout";
 import { SkillEdge, type SkillFlowEdge } from "./SkillEdge";
-import { SkillNodeView, type SkillFlowNode } from "./SkillNodeView";
+import { JobAsksTag, SkillNodeView, type SkillFlowNode } from "./SkillNodeView";
 
-/** Width of the side panel on large screens, so the map can keep a node clear of it. */
-const PANEL_WIDTH = 480;
 const LARGE_SCREEN = "(min-width: 1024px)";
 const PHONE_SCREEN = "(max-width: 640px)";
 const PAN_MS = 400;
+
+/** Keeps the whole map clear of the legend and overview at the bottom and the zoom buttons on the left. */
+const FIT_VIEW = {
+  padding: { top: "28px", right: "28px", bottom: "118px", left: "68px" },
+  maxZoom: 1,
+} as const;
 
 const NODE_TYPES = { skill: SkillNodeView };
 const EDGE_TYPES = { skill: SkillEdge };
 
 const ARIA_LABELS = {
   "node.a11yDescription.default": "Press Enter to open this skill.",
+  "minimap.ariaLabel": "Overview of the whole map",
 };
+
+const MINIMAP_COLOURS: Record<NodeState, string> = {
+  locked: "#3a4356",
+  available: "#4b8fd4",
+  proven: "#5baa7a",
+};
+
+/** A movement should take no time for people who prefer reduced motion. */
+function motionMs(ms: number): number {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms;
+}
 
 type MapCanvasProps = {
   skills: PublicSkillNode[];
@@ -60,6 +81,8 @@ function Canvas({
   const flow = useReactFlow<SkillFlowNode, SkillFlowEdge>();
   const containerRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  /** Where the map was before opening a skill moved it, so closing can put it back. */
+  const viewBeforePan = useRef<Viewport | null>(null);
 
   // Where things go depends only on the map's structure, never on progress, so
   // proving a skill never moves anything.
@@ -134,36 +157,41 @@ function Canvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
-  // Keep the selected skill visible when the side panel covers the right of the map.
+  // Opening the side panel narrows the map, which can hide the selected skill, so pan to it.
+  // The effect runs after the panel is on screen, so clientWidth is already the new width.
   useEffect(() => {
     const container = containerRef.current;
-    if (!selectedId || !ready || !container) return;
+    if (!ready || !container) return;
+    if (!window.matchMedia(LARGE_SCREEN).matches) return;
+
+    if (!selectedId) {
+      if (viewBeforePan.current) flow.setViewport(viewBeforePan.current, { duration: motionMs(PAN_MS) });
+      viewBeforePan.current = null;
+      return;
+    }
+
     const placed = layout.nodes.find((candidate) => candidate.id === selectedId);
     if (!placed) return;
 
-    const isLarge = window.matchMedia(LARGE_SCREEN).matches;
-    if (!isLarge) return;
-
     const { x, y, zoom } = flow.getViewport();
     const left = placed.x * zoom + x;
-    const right = left + NODE_WIDTH * zoom;
     const top = placed.y * zoom + y;
-    const clearWidth = container.clientWidth - PANEL_WIDTH;
     const margin = 32;
     const isHidden =
-      right > clearWidth - margin ||
       left < margin ||
+      left + NODE_WIDTH * zoom > container.clientWidth - margin ||
       top < margin ||
       top + NODE_HEIGHT * zoom > container.clientHeight - margin;
     if (!isHidden) return;
 
-    // setCenter centres on the whole canvas; shifting it by half the panel centres
-    // the skill in the part the panel leaves clear.
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    flow.setCenter(
-      placed.x + NODE_WIDTH / 2 + PANEL_WIDTH / 2 / zoom,
-      placed.y + NODE_HEIGHT / 2,
-      { zoom, duration: reduceMotion ? 0 : PAN_MS },
+    viewBeforePan.current ??= { x, y, zoom };
+    flow.setViewport(
+      {
+        x: container.clientWidth / 2 - (placed.x + NODE_WIDTH / 2) * zoom,
+        y: container.clientHeight / 2 - (placed.y + NODE_HEIGHT / 2) * zoom,
+        zoom,
+      },
+      { duration: motionMs(PAN_MS) },
     );
   }, [selectedId, ready, layout, flow]);
 
@@ -181,7 +209,7 @@ function Canvas({
         onNodeClick={handleNodeClick}
         onInit={() => setReady(true)}
         fitView
-        fitViewOptions={{ padding: 0.07, maxZoom: 1.05 }}
+        fitViewOptions={FIT_VIEW}
         minZoom={0.35}
         maxZoom={1.5}
         nodesDraggable={false}
@@ -195,33 +223,89 @@ function Canvas({
         panActivationKeyCode={null}
         multiSelectionKeyCode={null}
         ariaLabelConfig={ARIA_LABELS}
+        attributionPosition="top-right"
       >
-        <Panel position="bottom-left" className="flex gap-1.5">
-          <Button
-            variant="subtle"
-            size="sm"
-            aria-label="Zoom out"
-            onClick={() => flow.zoomOut({ duration: 150 })}
+        <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} color="#27324a" />
+
+        <Panel
+          position="bottom-left"
+          className="flex flex-col divide-y divide-rule-strong rounded-control border border-rule-strong bg-raised/95 shadow-panel"
+        >
+          <ZoomButton label="Zoom in" onClick={() => flow.zoomIn({ duration: motionMs(150) })}>
+            <Plus aria-hidden="true" size={18} />
+          </ZoomButton>
+          <ZoomButton label="Zoom out" onClick={() => flow.zoomOut({ duration: motionMs(150) })}>
+            <Minus aria-hidden="true" size={18} />
+          </ZoomButton>
+          <ZoomButton
+            label="Show whole map"
+            onClick={() => flow.fitView({ ...FIT_VIEW, duration: motionMs(PAN_MS) })}
           >
-            <span aria-hidden="true">−</span>
-          </Button>
-          <Button
-            variant="subtle"
-            size="sm"
-            aria-label="Zoom in"
-            onClick={() => flow.zoomIn({ duration: 150 })}
-          >
-            <span aria-hidden="true">+</span>
-          </Button>
-          <Button
-            variant="subtle"
-            size="sm"
-            onClick={() => flow.fitView({ padding: 0.07, maxZoom: 1.05, duration: PAN_MS })}
-          >
-            Show whole map
-          </Button>
+            <Maximize aria-hidden="true" size={16} />
+          </ZoomButton>
         </Panel>
+
+        <Panel position="bottom-center" className="w-max max-w-[15.5rem] sm:max-w-none">
+          <Legend />
+        </Panel>
+
+        <MiniMap<SkillFlowNode>
+          position="bottom-right"
+          pannable
+          zoomable
+          style={{ width: 150, height: 96 }}
+          bgColor="#0c1018"
+          maskColor="rgb(7 10 16 / 0.72)"
+          maskStrokeColor="#2a3446"
+          nodeBorderRadius={18}
+          nodeColor={(node) => MINIMAP_COLOURS[node.data.state]}
+        />
       </ReactFlow>
     </div>
+  );
+}
+
+function ZoomButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="flex size-10 cursor-pointer items-center justify-center text-ink-soft transition-control first:rounded-t-control last:rounded-b-control hover:bg-rule-strong hover:text-ink focus-visible:-outline-offset-2"
+    >
+      {children}
+    </button>
+  );
+}
+
+/** How to read the map: each state's dot and name, and the tag for what the posting asks for. */
+function Legend() {
+  return (
+    <ul className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 rounded-full border border-rule-strong bg-sheet/95 px-4 py-1.5 text-sm text-ink-soft shadow-panel">
+      <li className="inline-flex items-center gap-1.5">
+        <StateMark state="proven" size={13} />
+        Proven
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <StateMark state="available" size={13} />
+        Available
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <StateMark state="locked" size={13} />
+        Locked
+      </li>
+      <li className="inline-flex">
+        <JobAsksTag />
+      </li>
+    </ul>
   );
 }

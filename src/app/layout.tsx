@@ -1,11 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Cormorant, Outfit } from "next/font/google";
 import "./globals.css";
 
 // No `weight` option: it loads as a variable font. Static weights of some Google
 // fonts fail on Vercel's builders even though local builds pass.
-const jakarta = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+});
+
+const cormorant = Cormorant({
+  variable: "--font-cormorant",
   subsets: ["latin"],
 });
 
@@ -24,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-CA" className={jakarta.variable}>
+    <html lang="en-CA" className={`${outfit.variable} ${cormorant.variable}`}>
       <body>{children}</body>
     </html>
   );

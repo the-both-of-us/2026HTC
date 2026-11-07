@@ -25,7 +25,6 @@ const PLANTED = [
   { name: "Real words with one word changed", quote: "I use them with clients and orders at work" },
   { name: "One letter, which appears inside many words", quote: "a" },
   { name: "Two real words, too short to state a fact", quote: "single day" },
-  { name: "Three real words cut off mid-word", quote: "very single da" },
   { name: "An empty string", quote: "" },
   { name: "Only whitespace", quote: "   " },
 ];

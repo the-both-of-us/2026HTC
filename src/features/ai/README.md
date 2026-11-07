@@ -25,9 +25,9 @@ const text = await chatText({ label: "summary", prompt: "..." });
 | 2 | Groq | `GROQ_API_KEY` is set | `openai/gpt-oss-120b` |
 | 3 | Vercel AI Gateway | an OIDC token exists (always on Vercel) | `openai/gpt-oss-120b` |
 
-- **A timeout, network error, 402, 429 or 5xx** moves on to the next route.
-- **Any other status (400, 401, 403, 404)** stops the chain, since it usually means our request or key is wrong.
-- **Bad JSON** gets one retry on the same route, with the error appended to the prompt. If that fails too, the next route gets a turn. So one `chatJSON` can make up to 6 requests, and `timeoutMs` applies to each one.
+- **Any failure** (a timeout, a network error or any error status, including 401) moves on to the next route. One provider's bad key or missing model should not end the demo.
+- **Bad JSON** gets one retry on the same route, with the error appended to the prompt. If that fails too, the next route gets a turn.
+- **If every route fails within 15 seconds**, `chatJSON` goes round them once more, because this model returns an empty reply now and then. It doesn't do this after a slow failure, since a provider that hung won't recover while the learner waits. `timeoutMs` applies to each request.
 
 `chatJSON` adds the schema to the system prompt for you, so a prompt doesn't need to describe the shape. Only Cerebras is asked for `response_format: json_object`.
 
@@ -36,7 +36,7 @@ const text = await chatText({ label: "summary", prompt: "..." });
 When no route can answer, both functions throw `AiUnavailableError`. Its message is safe to show to a user. Provider error text never reaches callers or the logs: the logs only record the route, the time taken and the reason, such as `HTTP 429`.
 
 ```
-[ai] grade: served by gateway in 812ms
+[ai] grade: served by cerebras in 812ms
 [ai] grade: cerebras failed after 30001ms: timeout
 ```
 

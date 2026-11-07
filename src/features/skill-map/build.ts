@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { chatJSON } from "@/features/ai";
+import { HttpError } from "@/shared/http";
 import type { SkillMap, SourceKind } from "@/shared/types";
 import { buildMapPrompt, MAP_SYSTEM_PROMPT, rawMapSchema, type RawSkillMap } from "./prompt";
 import { cleanText, validateNodes } from "./validate";
@@ -10,12 +11,9 @@ export const MAX_POSTING_LENGTH = 12_000;
 const MIN_USABLE_NODES = 5;
 
 /** A problem we can explain to the user. The message is safe to show them. */
-export class SkillMapError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
+export class SkillMapError extends HttpError {
+  constructor(message: string, status: number) {
+    super(message, status);
     this.name = "SkillMapError";
   }
 }

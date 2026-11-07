@@ -1,5 +1,6 @@
 import { CircleCheck, CircleMinus } from "lucide-react";
 import type { ReactNode } from "react";
+import { PASS_SCORE } from "@/shared/types";
 import type { ProofSnapshot } from "../types";
 import { DocumentActions } from "./DocumentActions";
 import { formatDateTime, plural, roleLead } from "./format";
@@ -179,7 +180,7 @@ const CHECK_STEPS: { by: "AI" | "Code"; title: string; detail: string }[] = [
   {
     by: "Code",
     title: "The score is computed",
-    detail: "Checkpoints met as a percentage, minus 20 for each factual error the AI listed. A pass needs 70.",
+    detail: `Checkpoints met as a percentage, minus 20 for each factual error the AI listed. A pass needs ${PASS_SCORE}.`,
   },
   {
     by: "AI",

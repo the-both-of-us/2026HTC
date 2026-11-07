@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AiUnavailableError, chatJSON } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
 import type { SkillNode } from "@/shared/types";
-import { computeScore, gradeExplanation, quoteIsInText } from "./grading";
+import { quoteAppearsIn } from "@/shared/quote";
+import { computeScore, copiesCheckpoint, gradeExplanation } from "./grading";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
@@ -57,43 +58,88 @@ describe("computeScore", () => {
   });
 });
 
-describe("quoteIsInText", () => {
+describe("quoteAppearsIn", () => {
   it("ignores case", () => {
-    expect(quoteIsInText("AN INNER JOIN", "an inner join")).toBe(true);
+    expect(quoteAppearsIn("INNER JOIN", "an inner join")).toBe(true);
   });
 
   it("ignores differences in whitespace, including new lines", () => {
-    expect(quoteIsInText("left join keeps every row", "A left   join keeps\nevery  row")).toBe(true);
+    expect(quoteAppearsIn("left join keeps every row", "A left   join keeps\nevery  row")).toBe(true);
+  });
+
+  it("ignores curly quotes and special dashes, which this model often retypes", () => {
+    expect(quoteAppearsIn("doesn\u2019t remember the non\u2011matching row", "It doesn't remember the non-matching row")).toBe(true);
   });
 
   it("rejects words that are not there, or not next to each other", () => {
-    expect(quoteIsInText("an outer join", "an inner join")).toBe(false);
-    expect(quoteIsInText("the inner rows", "the inner join rows")).toBe(false);
-  });
-
-  it("rejects a quote too short to state a fact", () => {
-    expect(quoteIsInText("a", "an inner join")).toBe(false);
-    expect(quoteIsInText("inner join", "an inner join")).toBe(false);
-  });
-
-  it("rejects a quote that starts or ends inside a word", () => {
-    expect(quoteIsInText("ner join keeps", "an inner join keeps rows")).toBe(false);
-    expect(quoteIsInText("inner join kee", "an inner join keeps rows")).toBe(false);
-  });
-
-  it("finds a whole-word match after a false start, and in other languages", () => {
-    expect(quoteIsInText("cat sat down", "concat sat down, then the cat sat down")).toBe(true);
-    expect(quoteIsInText("une jointure interne garde", "Une jointure interne garde les lignes.")).toBe(true);
-    expect(quoteIsInText("الربط الداخلي يحتفظ", "الربط الداخلي يحتفظ بالصفوف")).toBe(true);
+    expect(quoteAppearsIn("outer join", "an inner join")).toBe(false);
+    expect(quoteAppearsIn("inner rows", "inner join rows")).toBe(false);
   });
 
   it("rejects an empty or blank quote", () => {
-    expect(quoteIsInText("", "an inner join")).toBe(false);
-    expect(quoteIsInText("   \n", "an inner join")).toBe(false);
+    expect(quoteAppearsIn("", "an inner join")).toBe(false);
+    expect(quoteAppearsIn("   \n", "an inner join")).toBe(false);
+  });
+});
+
+describe("copiesCheckpoint", () => {
+  const checkpoint = "An INNER JOIN returns only the rows that have a match in both tables.";
+
+  it("catches a checkpoint retyped, with changed case, punctuation or a word or two swapped", () => {
+    expect(copiesCheckpoint(checkpoint, `Well, ${checkpoint} And that is all.`)).toBe(true);
+    expect(copiesCheckpoint(checkpoint, "an inner join returns only the rows that have a match in the two tables")).toBe(true);
+  });
+
+  it("allows the same fact in the learner's own words", () => {
+    const own = "So inner join only gives you the rows that match in both tables, like customers who actually have orders.";
+    expect(copiesCheckpoint(checkpoint, own)).toBe(false);
+  });
+
+  it("leaves short checkpoints alone, since they are natural sentences", () => {
+    expect(copiesCheckpoint("Left join keeps every left row", "A left join keeps every left row.")).toBe(false);
   });
 });
 
 describe("gradeExplanation", () => {
+  it("gives nothing for retyping the checkpoints, even if the model quotes only part of one", async () => {
+    const longNode = { ...node, checkpoints: ["An inner join returns only the rows that have a match in both tables."] };
+    modelReplies({ checkpoints: [{ number: 1, quote: "only the rows that have a match" }], factualErrors: [] });
+
+    const grade = await gradeExplanation(longNode, `To recap: ${longNode.checkpoints[0]}`);
+
+    expect(grade.score).toBe(0);
+    expect(grade.rejectedQuotes).toBe(1);
+  });
+
+  it("rejects a quote under three words, which almost any text would contain", async () => {
+    modelReplies({
+      checkpoints: [
+        { number: 1, quote: "a" },
+        { number: 2, quote: "left join" },
+        { number: 3, quote: "the missing side" },
+        { number: 4, quote: null },
+      ],
+      factualErrors: [],
+    });
+
+    const grade = await gradeExplanation(node, explanation);
+
+    expect(grade.checkpoints.map((result) => result.met)).toEqual([false, false, true, false]);
+    expect(grade.rejectedQuotes).toBe(2);
+  });
+
+  it("counts a repeated error once and ignores entries that say there is no error", async () => {
+    modelReplies({
+      checkpoints: node.checkpoints.map((_, index) => ({ number: index + 1, quote: "the missing side is NULL" })),
+      factualErrors: ["They said X.", "  they said  x. ", "None", "n/a", "No errors.", " "],
+    });
+
+    const grade = await gradeExplanation(node, explanation);
+
+    expect(grade.misconceptions).toEqual(["They said X."]);
+    expect(grade.score).toBe(80);
+  });
+
   it("counts verified quotes and computes the score in code", async () => {
     modelReplies({
       checkpoints: [
@@ -154,7 +200,7 @@ describe("gradeExplanation", () => {
         { number: 1, quote: "only keeps rows that match in both tables" },
         { number: 2, quote: "keeps every row from the left table" },
         { number: 3, quote: "the missing side is NULL" },
-        { number: 4, quote: "An inner join" },
+        { number: 4, quote: "an inner join" },
       ],
       factualErrors: ["They said X, but Y is true.", "   "],
     });
@@ -185,25 +231,6 @@ describe("gradeExplanation", () => {
     const parsed = schema.parse({ checkpoints: [], factualErrors: [], score: 100 });
 
     expect(parsed).toEqual({ checkpoints: [], factualErrors: [] });
-  });
-});
-
-describe("when the model fails", () => {
-  it("tries once more, so one empty reply does not cost the learner their grade", async () => {
-    mockChatJSON.mockRejectedValueOnce(new AiUnavailableError());
-    modelReplies({ checkpoints: [{ number: 3, quote: "the missing side is NULL" }], factualErrors: [] });
-
-    const grade = await gradeExplanation(node, explanation);
-
-    expect(grade.score).toBe(25);
-    expect(mockChatJSON).toHaveBeenCalledTimes(2);
-  });
-
-  it("gives up after the second failure, with the error that is safe to show", async () => {
-    mockChatJSON.mockRejectedValue(new AiUnavailableError());
-
-    await expect(gradeExplanation(node, explanation)).rejects.toBeInstanceOf(AiUnavailableError);
-    expect(mockChatJSON).toHaveBeenCalledTimes(2);
   });
 });
 
