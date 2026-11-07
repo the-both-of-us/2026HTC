@@ -108,6 +108,7 @@ describe("study circles", () => {
     const json = JSON.stringify(await getCircleView(code, null));
     expect(json).not.toContain(owner);
     expect(json).not.toContain(sam);
+    expect(json).not.toContain(map.id);
     expect(json).not.toContain("secret checkpoint");
     expect(json).not.toContain("createdBy");
   });

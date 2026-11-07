@@ -26,7 +26,8 @@ export type CircleActivity = { name: string; nodeId: string; nodeTitle: string; 
 export type CircleView = {
   code: string;
   title: string;
-  map: PublicSkillMap;
+  /** Only what the read-only map needs: no map id, so no one's copy can be found from here. */
+  map: Pick<PublicSkillMap, "nodes" | "sourceKind">;
   members: CircleMember[];
   feed: CircleActivity[];
   /** Initials of the members who proved each skill, for the map. */
@@ -172,7 +173,7 @@ export async function getCircleView(code: string, viewerId: string | null): Prom
   return {
     code,
     title: circle.title,
-    map: toPublicMap(source),
+    map: { nodes: toPublicMap(source).nodes, sourceKind: source.sourceKind },
     members: rows.map((row, index) => ({
       name: row.member.name,
       proved: proved[index].filter(({ nodeId }) => titles.has(nodeId)).length,

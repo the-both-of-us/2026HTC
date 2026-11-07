@@ -107,6 +107,10 @@ function LoadedCircle({ view, now, stale }: { view: CircleView; now: number; sta
               {view.members.length} {view.members.length === 1 ? "member" : "members"} · each on their own copy · prove it to
               your circle
             </p>
+            <p className="mt-1 truncate lg:hidden">
+              With {view.members.slice(0, 5).map((member) => member.name).join(", ")}
+              {view.members.length > 5 && ` and ${view.members.length - 5} more`}
+            </p>
           </header>
 
           {view.yourMapId ? (
