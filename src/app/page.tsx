@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { LiveLabourCard } from "@/features/labour";
 import { PostingForm } from "@/features/landing";
 import { PageShell } from "@/shared/ui";
 
@@ -11,6 +13,9 @@ export default function Home() {
           words, answer a follow-up, and share the proof.
         </p>
         <PostingForm />
+        <Suspense fallback={null}>
+          <LiveLabourCard />
+        </Suspense>
       </div>
     </PageShell>
   );

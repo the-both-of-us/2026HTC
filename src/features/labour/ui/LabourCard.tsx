@@ -17,11 +17,19 @@ export function LabourCard({ snapshot }: { snapshot: LabourSnapshot | null }) {
         ) : null}
       </p>
       <p className="mt-2 text-sm text-ink-soft">
-        Source:{" "}
+        Source: {snapshot.source.name}, seasonally adjusted, table{" "}
         <a className="underline" href={snapshot.source.url}>
-          {snapshot.source.name}
+          {snapshot.source.table}
         </a>
-        , seasonally adjusted{calgary ? "; Calgary is a three-month moving average" : ""}. Retrieved{" "}
+        {calgary ? (
+          <>
+            ; Calgary is a three-month moving average, table{" "}
+            <a className="underline" href={snapshot.calgarySource.url}>
+              {snapshot.calgarySource.table}
+            </a>
+          </>
+        ) : null}
+        . Retrieved{" "}
         {snapshot.retrievedAt.slice(0, 10)}
         {snapshot.stale ? " (last saved copy, Statistics Canada did not respond)" : ""}.
       </p>

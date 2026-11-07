@@ -1,3 +1,5 @@
+export type LabourSource = { name: string; table: string; url: string };
+
 export type LabourPoint = {
   label: string;
   /** Value as StatCan published it. */
@@ -22,7 +24,11 @@ export type LabourSnapshot = {
   /** Latest reference period of the headline series, e.g. "October 2026". */
   referencePeriod: string;
   wagePeriod: string | null;
-  source: { name: string; url: string };
+  /** The table behind the Canada and Alberta rates. */
+  source: LabourSource;
+  /** The Calgary rate comes from a different table, so a reader following the link can find it. */
+  calgarySource: LabourSource;
+  wageSource: LabourSource;
   retrievedAt: string;
   /** True when this is the last good copy because StatCan did not answer. */
   stale: boolean;

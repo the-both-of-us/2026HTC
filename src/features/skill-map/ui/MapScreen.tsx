@@ -1,5 +1,7 @@
 "use client";
 
+import { LiveGridCard } from "@/features/grid/client";
+import { ShareProofButton } from "@/features/proof/client";
 import clsx from "clsx";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -174,6 +176,7 @@ function LoadedMap({
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <Progress proven={provenCount} total={map.nodes.length} states={states} />
+          <ShareProofButton mapId={map.id} provenCount={provenCount} />
           <div role="group" aria-label="How to show the skills" className="flex gap-1.5">
             <Button
               variant="subtle"
@@ -195,7 +198,7 @@ function LoadedMap({
         </div>
       </header>
 
-      <div className="relative flex min-h-[70dvh] flex-1 flex-col px-4 pb-4 sm:px-6 lg:min-h-[26rem] lg:px-10">
+      <div className="relative flex min-h-[70dvh] flex-1 flex-col px-4 pb-4 sm:px-6 lg:min-h-[max(26rem,calc(100dvh-11rem))] lg:px-10">
         <div className="relative flex flex-1 flex-col">
           {view === "map" ? (
             <figure className="flex flex-1 flex-col border border-ink bg-sheet p-1.5">
@@ -253,6 +256,8 @@ function LoadedMap({
           )}
         </div>
       </div>
+
+      {map.energyRelated && <LiveGridCard className="mx-4 mb-4 sm:mx-6 lg:mx-10" />}
     </PageShell>
   );
 }

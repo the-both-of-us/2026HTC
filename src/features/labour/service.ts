@@ -2,10 +2,11 @@ import { monthName, parseLatest, quarterName, toPoint } from "./parse";
 import type { LabourSnapshot, WagePoint } from "./types";
 
 const WDS = "https://www150.statcan.gc.ca/t1/wds/rest/getDataFromVectorsAndLatestNPeriods";
-const SOURCE = {
+const statCanTable = (table: string) => ({
   name: "Statistics Canada",
-  url: "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1410028701",
-};
+  table,
+  url: `https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=${table.replaceAll("-", "")}`,
+});
 const TTL_MS = 6 * 60 * 60 * 1000;
 
 // Vectors checked against live StatCan responses on 2026-11-07.
@@ -16,12 +17,12 @@ const ALBERTA = 2064516;
 const CALGARY = 1643280342;
 // Table 14-10-0444-01: Calgary economic region, average offered hourly wage.
 const WAGES: { vectorId: number; occupation: string }[] = [
-  { vectorId: 1569895855, occupation: "All occupations" },
+  { vectorId: 1569895855, occupation: "Total, all occupations" },
   { vectorId: 1569896649, occupation: "Software engineers and designers" },
   { vectorId: 1569896651, occupation: "Software developers and programmers" },
   { vectorId: 1569896637, occupation: "Data scientists" },
-  { vectorId: 1569896769, occupation: "Registered nurses" },
-  { vectorId: 1569897167, occupation: "Electricians" },
+  { vectorId: 1569896769, occupation: "Registered nurses and registered psychiatric nurses" },
+  { vectorId: 1569897167, occupation: "Electricians (except industrial and power system)" },
 ];
 
 async function fetchLatest(vectorIds: number[]) {
@@ -64,7 +65,9 @@ export async function loadSnapshot(): Promise<LabourSnapshot | null> {
     wages,
     referencePeriod: monthName(alberta.period),
     wagePeriod: wages[0] ? quarterName(wages[0].period) : null,
-    source: SOURCE,
+    source: statCanTable("14-10-0287-01"),
+    calgarySource: statCanTable("14-10-0459-01"),
+    wageSource: statCanTable("14-10-0444-01"),
     retrievedAt: new Date().toISOString(),
     stale: false,
   };

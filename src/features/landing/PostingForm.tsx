@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { Badge, Button, ErrorNotice, Field, Textarea } from "@/shared/ui";
+import { SampleFromLink } from "./SampleFromLink";
 
 /** Anything shorter than this cannot be a whole job posting. */
 const MIN_POSTING_LENGTH = 80;
@@ -86,6 +87,9 @@ export function PostingForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      <Suspense fallback={null}>
+        <SampleFromLink onSample={setText} />
+      </Suspense>
       <Field
         id="posting"
         label="Job posting"
