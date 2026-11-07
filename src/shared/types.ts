@@ -3,7 +3,8 @@
  * and keep it plain data: everything here is stored as JSON.
  */
 
-export type SourceKind = "posting" | "pdf";
+/** "topic" means the learner only named a subject: there is no source, so its maps have no citations. */
+export type SourceKind = "posting" | "pdf" | "topic";
 
 /** Where a skill came from. `verified` is set by code, never by the model. */
 export type Citation = {

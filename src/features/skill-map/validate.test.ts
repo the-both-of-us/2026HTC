@@ -10,6 +10,8 @@ import {
   dedupeNodes,
   dropBadPrerequisites,
   ensureRoot,
+  PAGE_BREAK,
+  quoteOnPdfPage,
   toSlug,
   validateNodes,
 } from "./validate";
@@ -182,6 +184,34 @@ describe("quote checks", () => {
   });
   it("gives foundations no citation, even if the model wrote a quote", () => {
     expect(buildCitation(node("a", { quote: "Strong SQL" }), source, "posting")).toBeNull();
+  });
+
+  const pdf = ["Week 1. Tables and keys.", "Week 2. Strong SQL joins, including LEFT JOIN."].join(PAGE_BREAK);
+  it("verifies a PDF quote on the page the model named, and keeps that page", () => {
+    const citation = buildCitation(node("a", { fromSource: true, quote: "Strong SQL joins", page: 2 }), pdf, "pdf");
+    expect(citation).toEqual({ kind: "pdf", quote: "Strong SQL joins", page: 2, verified: true });
+  });
+  it("verifies a PDF quote that the page broke across lines, even mid-word", () => {
+    const page = "We use pandas to convert time zones to local tim\ne.";
+    expect(quoteOnPdfPage("convert time zones to local time", page)).toBe(true);
+    expect(quoteOnPdfPage("convert time zones to UTC", page)).toBe(false);
+    // Too short to trust without its spaces.
+    expect(quoteOnPdfPage("time", "a tim\ne")).toBe(false);
+  });
+  it("does not verify a PDF quote that is real but on another page", () => {
+    const citation = buildCitation(node("a", { fromSource: true, quote: "Strong SQL joins", page: 1 }), pdf, "pdf");
+    expect(citation).toEqual({ kind: "pdf", quote: "", verified: false });
+  });
+  it("does not verify a PDF quote with no page, or a page past the end", () => {
+    for (const page of [null, 0, 3]) {
+      const citation = buildCitation(node("a", { fromSource: true, quote: "Strong SQL joins", page }), pdf, "pdf");
+      expect(citation?.verified).toBe(false);
+    }
+  });
+  it("gives a topic no citation and no node from the source, whatever the model said", () => {
+    const [result] = validateNodes([node("a", { fromSource: true, quote: "Strong SQL" })], "SQL", "topic");
+    expect(result.citation).toBeNull();
+    expect(result.fromSource).toBe(false);
   });
 });
 

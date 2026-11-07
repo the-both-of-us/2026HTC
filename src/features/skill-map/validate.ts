@@ -14,6 +14,9 @@ export const MAX_CHECKPOINTS = 4;
 
 const MAX_SLUG_LENGTH = 60;
 
+/** A PDF map keeps its pages in one string, split by this, so each citation can be checked against its own page. */
+export const PAGE_BREAK = "\f";
+
 /** "Time-Series Cleaning!" becomes "time-series-cleaning". Empty if nothing is usable. */
 export function toSlug(text: string): string {
   return text
@@ -147,15 +150,39 @@ export function ensureRoot(nodes: RawNode[]): RawNode[] {
 
 /**
  * Foundations have no citation. A node from the source always has one, but its quote
- * is kept only if code found it in the source. Otherwise the UI can say it is unverified.
+ * is kept only if code found it in the source, or for a PDF on the page it names.
+ * Otherwise the UI can say it is unverified.
  */
 export function buildCitation(node: RawNode, source: string, kind: SourceKind): Citation | null {
-  if (!node.fromSource) return null;
+  // A topic has no source, so nothing in its map can be quoted.
+  if (!node.fromSource || kind === "topic") return null;
 
   const quote = node.quote?.trim() ?? "";
+  if (kind === "pdf") {
+    // The quote must be on the page the model named, not just somewhere in the PDF.
+    const page = node.page ?? 0;
+    const pageText = page >= 1 ? (source.split(PAGE_BREAK)[page - 1] ?? "") : "";
+    return quoteOnPdfPage(quote, pageText)
+      ? { kind, quote, page, verified: true }
+      : { kind, quote: "", verified: false };
+  }
   return quoteAppearsIn(quote, source)
     ? { kind, quote, verified: true }
     : { kind, quote: "", verified: false };
+}
+
+/** Below this many letters, a quote with its spaces removed could match by chance. */
+const MIN_SQUASHED_QUOTE = 12;
+
+/**
+ * PDF text breaks lines wherever the page did, even mid-word ("local tim" then "e."). So
+ * a PDF quote also counts if its characters appear in order with the spaces ignored.
+ */
+export function quoteOnPdfPage(quote: string, pageText: string): boolean {
+  if (quoteAppearsIn(quote, pageText)) return true;
+  const squash = (text: string) => normalizeForMatch(text).replace(/ /g, "");
+  const squashed = squash(quote);
+  return squashed.length >= MIN_SQUASHED_QUOTE && squash(pageText).includes(squashed);
 }
 
 /** Models like to write special hyphens and spaces, which some fonts draw badly. */
@@ -180,7 +207,8 @@ export function validateNodes(rawNodes: RawNode[], source: string, kind: SourceK
     title: cleanText(node.title),
     why: cleanText(node.why),
     prerequisites: node.prerequisites,
-    fromSource: node.fromSource,
+    // A topic has no source, so nothing in its map is "from the source".
+    fromSource: kind !== "topic" && node.fromSource,
     citation: buildCitation(node, source, kind),
     checkpoints: node.checkpoints.map(cleanText),
   }));

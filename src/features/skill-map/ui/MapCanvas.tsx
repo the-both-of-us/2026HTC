@@ -15,7 +15,7 @@ import "@xyflow/react/dist/base.css";
 import { Maximize, Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
-import type { NodeState, PublicSkillNode } from "@/shared/types";
+import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { StateMark } from "@/shared/ui";
 import "./map.css";
 import { layoutGraph, NODE_HEIGHT, NODE_WIDTH } from "./layout";
@@ -55,6 +55,7 @@ type MapCanvasProps = {
   skills: PublicSkillNode[];
   states: Record<string, NodeState>;
   selectedId: string | null;
+  sourceKind: SourceKind;
   reveal: boolean;
   justProvenId: string | null;
   justUnlockedIds: string[];
@@ -73,6 +74,7 @@ function Canvas({
   skills,
   states,
   selectedId,
+  sourceKind,
   reveal,
   justProvenId,
   justUnlockedIds,
@@ -246,7 +248,7 @@ function Canvas({
         </Panel>
 
         <Panel position="bottom-center" className="w-max max-w-[15.5rem] sm:max-w-none">
-          <Legend />
+          <Legend sourceKind={sourceKind} />
         </Panel>
 
         <MiniMap<SkillFlowNode>
@@ -287,8 +289,8 @@ function ZoomButton({
   );
 }
 
-/** How to read the map: each state's dot and name, and the tag for what the posting asks for. */
-function Legend() {
+/** How to read the map: each state's dot and name, and the tag for what the posting or PDF names. */
+function Legend({ sourceKind }: { sourceKind: SourceKind }) {
   return (
     <ul className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 rounded-full border border-rule-strong bg-sheet/95 px-4 py-1.5 text-sm text-ink-soft shadow-panel">
       <li className="inline-flex items-center gap-1.5">
@@ -303,9 +305,12 @@ function Legend() {
         <StateMark state="locked" size={13} />
         Locked
       </li>
-      <li className="inline-flex">
-        <JobAsksTag />
-      </li>
+      {/* A topic map has no source, so no skill carries the tag. */}
+      {sourceKind !== "topic" && (
+        <li className="inline-flex">
+          <JobAsksTag kind={sourceKind} />
+        </li>
+      )}
     </ul>
   );
 }

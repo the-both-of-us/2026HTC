@@ -27,7 +27,7 @@ type SkillPanelProps = {
   onClose: () => void;
 };
 
-const SOURCE_NAME: Record<SourceKind, string> = { posting: "posting", pdf: "PDF" };
+const SOURCE_NAME: Record<SourceKind, string> = { posting: "posting", pdf: "PDF", topic: "topic" };
 
 /** Everything about one skill: beside the map on large screens, a bottom sheet on phones. */
 export function SkillPanel({
@@ -121,9 +121,9 @@ export function SkillPanel({
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={state} />
                 {skill.fromSource ? (
-                  <JobAsksTag />
+                  <JobAsksTag kind={skill.citation?.kind} />
                 ) : (
-                  <Badge>Foundation</Badge>
+                  <Badge>{sourceKind === "topic" ? "AI-generated" : "Foundation"}</Badge>
                 )}
               </div>
             </div>
@@ -229,6 +229,15 @@ function CitationBlock({
 }) {
   const source = SOURCE_NAME[sourceKind];
 
+  if (sourceKind === "topic") {
+    return (
+      <p>
+        AI-generated from the topic you named. There is no source to check it against, so this
+        skill has no citation.
+      </p>
+    );
+  }
+
   if (citation?.verified) {
     return (
       <figure className="flex flex-col gap-2">
@@ -247,8 +256,9 @@ function CitationBlock({
   if (citation) {
     return (
       <p>
-        Not verified. OryxLearn could not find this wording in the {source}, so it is not shown as a
-        quote. Check the {source} yourself.
+        Not verified. OryxLearn could not find this wording{" "}
+        {sourceKind === "pdf" ? "on the page of the PDF the AI named" : `in the ${source}`}, so it is not
+        shown as a quote. Check the {source} yourself.
       </p>
     );
   }

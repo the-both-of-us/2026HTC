@@ -1,8 +1,8 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import clsx from "clsx";
-import { Briefcase, Lock } from "lucide-react";
+import { Briefcase, FileText, Lock } from "lucide-react";
 import type { CSSProperties } from "react";
-import type { NodeState, PublicSkillNode } from "@/shared/types";
+import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { NODE_STATE_LABELS, StateMark } from "@/shared/ui";
 import { NODE_HEIGHT, NODE_WIDTH } from "./layout";
 
@@ -75,7 +75,7 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
         </div>
         <p className="flex items-center justify-between gap-2 text-[0.8125rem] leading-none">
           <span>{NODE_STATE_LABELS[state]}</span>
-          {skill.fromSource && <JobAsksTag />}
+          {skill.fromSource && <JobAsksTag kind={skill.citation?.kind} />}
         </p>
       </div>
       <Handle type="source" position={Position.Bottom} isConnectable={false} />
@@ -83,12 +83,13 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
   );
 }
 
-/** A small tag on a skill the posting asks for by name. Foundations have none. */
-export function JobAsksTag() {
+/** A small tag on a skill the posting or PDF names. Foundations have none. */
+export function JobAsksTag({ kind }: { kind?: SourceKind }) {
+  const Icon = kind === "pdf" ? FileText : Briefcase;
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber/45 bg-amber/10 px-1.5 py-0.5 text-xs leading-none font-medium text-amber">
-      <Briefcase aria-hidden="true" size={11} />
-      Job asks
+      <Icon aria-hidden="true" size={11} />
+      {kind === "pdf" ? "In your PDF" : "Job asks"}
     </span>
   );
 }

@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { Lock } from "lucide-react";
-import type { NodeState, PublicSkillNode } from "@/shared/types";
+import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { StateMark } from "@/shared/ui";
 import { JobAsksTag } from "./SkillNodeView";
 
@@ -20,11 +20,14 @@ type SkillListProps = {
   skills: PublicSkillNode[];
   states: Record<string, NodeState>;
   selectedId: string | null;
+  sourceKind: SourceKind;
   onSelect: (nodeId: string) => void;
 };
 
 /** The same skills as the map, as plain lists. The default on phones, and for screen readers. */
-export function SkillList({ skills, states, selectedId, onSelect }: SkillListProps) {
+export function SkillList({ skills, states, selectedId, sourceKind, onSelect }: SkillListProps) {
+  // In a topic map every skill is AI-generated, so calling each one a foundation would mislead.
+  const fromTopic = sourceKind === "topic";
   const titleOf = (id: string) => skills.find((skill) => skill.id === id)?.title ?? id;
 
   return (
@@ -68,9 +71,9 @@ export function SkillList({ skills, states, selectedId, onSelect }: SkillListPro
                           </span>
                         </span>
                         {skill.fromSource ? (
-                          <JobAsksTag />
+                          <JobAsksTag kind={skill.citation?.kind} />
                         ) : (
-                          <span className="shrink-0 text-sm text-ink-soft">Foundation</span>
+                          !fromTopic && <span className="shrink-0 text-sm text-ink-soft">Foundation</span>
                         )}
                         {state === "locked" && (
                           <Lock aria-hidden="true" size={15} className="mt-1 shrink-0" />

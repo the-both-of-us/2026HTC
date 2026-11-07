@@ -9,7 +9,7 @@ import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
-import { Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import { deriveNodeStates } from "../states";
 import type { PublicSkillMap } from "../storage";
 import { MapCanvas } from "./MapCanvas";
@@ -55,7 +55,7 @@ export function MapScreen({ mapId }: { mapId: string }) {
       <StateCard icon={<Compass aria-hidden="true" size={24} />} title="This map is not here">
         <p className="text-ink-soft">
           The link may be incomplete, or the map may have been deleted. You can build a new one
-          from a job posting.
+          from a job posting, a PDF or a topic.
         </p>
         <Link href="/" className={buttonClasses("primary")}>
           Build a new map
@@ -231,6 +231,12 @@ function LoadedMap({
                   <p className="hidden truncate text-sm text-ink-soft md:block">{map.subtitle}</p>
                 )}
               </div>
+              {/* A topic has no source, so say plainly where the map came from. */}
+              {map.sourceKind === "topic" && (
+                <Badge tone="sample" className="mt-1 text-xs">
+                  AI-generated from a topic, with no citations
+                </Badge>
+              )}
               <Progress proven={provenCount} total={map.nodes.length} />
             </div>
           </div>
@@ -269,6 +275,7 @@ function LoadedMap({
                   skills={map.nodes}
                   states={states}
                   selectedId={selectedId}
+                  sourceKind={map.sourceKind}
                   reveal={playReveal}
                   justProvenId={notice?.nodeId ?? null}
                   justUnlockedIds={notice?.unlockedIds ?? []}
@@ -282,6 +289,7 @@ function LoadedMap({
                     skills={map.nodes}
                     states={states}
                     selectedId={selectedId}
+                    sourceKind={map.sourceKind}
                     onSelect={selectSkill}
                   />
                 </div>
