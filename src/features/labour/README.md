@@ -2,7 +2,7 @@
 
 **Owner:** Abdu. Live labour numbers from Statistics Canada's Web Data Service (no key).
 
-- `getLabourSnapshot()` returns unemployment (Canada, Alberta, Calgary CMA), Calgary offered wages for six occupations, reference period, source URL and retrieved-at. Cached about 6 hours in memory; falls back to the last good copy (`stale: true`); returns `null` if never fetched. Nothing is invented.
+- `getLabourSnapshot()` returns unemployment (Canada, Alberta, Calgary CMA), Calgary offered wages for six occupations, reference period, a source URL for each StatCan table used, and retrieved-at. Cached about 6 hours in memory; falls back to the last good copy (`stale: true`); returns `null` if never fetched. Nothing is invented.
 - `GET /api/labour` returns it (503 with `{ error }` when null).
 - `LabourCard` (presentational, server or client) and `LiveLabourCard` (async server component, wrap in `<Suspense>`).
 
