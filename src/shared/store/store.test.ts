@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteDoc, getDoc, listDocs, putDoc } from "./index";
 
-// An empty token selects the in-memory driver, so these tests run offline.
+// With neither of these set, the in-memory driver is used, so these tests run offline.
 beforeEach(() => {
+  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
 });
 
