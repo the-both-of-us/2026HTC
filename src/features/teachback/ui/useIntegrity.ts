@@ -6,20 +6,25 @@ import { countWords } from "../learnerText";
 const LONGEST_ACTIVE_GAP_MS = 5_000;
 
 /** Kept with the learner's draft, so reloading the page does not wipe the record of a paste. */
-export type SavedIntegrity = { pasted: boolean; usedVoice: boolean; activeMs: number };
+export type SavedIntegrity = { pasted: boolean; usedVoice: boolean; typed?: boolean; activeMs: number };
 
 /**
  * Records how an explanation was written: pasted or not, active time, typed or spoken.
  * These are signals shown on the evidence page, never a judgement.
+ *
+ * "voice" means every word came from speaking. Any typing, including fixing a misheard word,
+ * makes it "typed", the same rule the spoken follow-up uses. It never claims more than happened.
  */
-function createIntegrity(saved?: SavedIntegrity) {
+export function createIntegrity(saved?: SavedIntegrity) {
   let pasted = saved?.pasted ?? false;
   let usedVoice = saved?.usedVoice ?? false;
+  let typed = saved?.typed ?? false;
   let activeMs = saved?.activeMs ?? 0;
   let lastKeystrokeAt: number | null = null;
 
   return {
     recordTyping() {
+      typed = true;
       const now = Date.now();
       if (lastKeystrokeAt !== null) {
         const gap = now - lastKeystrokeAt;
@@ -41,16 +46,17 @@ function createIntegrity(saved?: SavedIntegrity) {
     reset() {
       pasted = false;
       usedVoice = false;
+      typed = false;
       activeMs = 0;
       lastKeystrokeAt = null;
     },
 
     signalsFor(text: string): IntegritySignals {
-      return { pasted, activeMs, wordCount: countWords(text), inputMethod: usedVoice ? "voice" : "typed" };
+      return { pasted, activeMs, wordCount: countWords(text), inputMethod: usedVoice && !typed ? "voice" : "typed" };
     },
 
     toSave(): SavedIntegrity {
-      return { pasted, usedVoice, activeMs };
+      return { pasted, usedVoice, typed, activeMs };
     },
   };
 }
