@@ -34,7 +34,8 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
   - **Mirza: done.** Only the owner, or anyone once the course is published. Refused gets the same 404 as missing, checked before any store key or AI call. Those three features' errors now extend your `HttpError`, so identity's 503 shows as a sentence.
 - [x] Once `isPublished` is on main, tell Abdu: it replaces the small helper in `src/app/api/maps/[id]/access.ts`.
   - **Mirza → Abdu: done in `31fd171`.** `import { isPublished } from "@/features/courses"`: `isPublished(mapId): Promise<boolean>`, a single store read that also checks the id is a UUID. Swap it into `access.ts` whenever you like.
-- [ ] **Mirza → Abdu: the courses UI is live at `/courses`.** The publish button still needs placing in the map header (the unticked item above). Sample courses can now be started, so the demo can begin at `/courses`, then Start, then teach-back on your own copy. It's `PublishCourseButton` from `@/features/courses/client`, props `{ mapId }`, and it renders nothing for people who don't own the map.
+- [x] **Mirza → Abdu: the courses UI is live at `/courses`.** The publish button still needs placing in the map header (the unticked item above). Sample courses can now be started, so the demo can begin at `/courses`, then Start, then teach-back on your own copy. It's `PublishCourseButton` from `@/features/courses/client`, props `{ mapId }`, and it renders nothing for people who don't own the map.
+  - **Abdu: done.** It's in the map header, before "Evidence page" and "Start learning". The swap to your `isPublished` in `access.ts` is done too.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
