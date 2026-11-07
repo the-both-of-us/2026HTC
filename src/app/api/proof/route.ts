@@ -30,9 +30,9 @@ export async function POST(request: Request) {
   }
 }
 
-/** Publishing needs the cookie that owns the map, so a visitor without one is simply refused. */
+/** Both need the cookie that owns the map, so a visitor without one gets the same answer as for a missing map. */
 async function requireUser(): Promise<string> {
   const userId = await readUserId();
-  if (!userId) throw new ProofError("Only the person who proved these skills can publish them.", 403);
+  if (!userId) throw new ProofError("We could not find that map. Open it in the browser you built it in.", 404);
   return userId;
 }

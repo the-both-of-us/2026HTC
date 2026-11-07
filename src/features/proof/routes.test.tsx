@@ -88,14 +88,15 @@ beforeEach(async () => {
 describe("the proof API", () => {
   it("refuses a visitor with no identity", async () => {
     mockUser.mockResolvedValue(null);
-    expect((await post()).status).toBe(403);
+    expect((await post()).status).toBe(404);
   });
 
   it("refuses someone else, with a sentence a person can read", async () => {
     mockUser.mockResolvedValue(randomUUID());
     const response = await post();
-    expect(response.status).toBe(403);
-    expect((await response.json()).error).toMatch(/Only the person/);
+    // Same answer as a missing map, so it doesn't show that the map exists.
+    expect(response.status).toBe(404);
+    expect((await response.json()).error).toMatch(/could not find that map/);
   });
 
   it("explains an unreadable request", async () => {

@@ -75,6 +75,8 @@ export function createSpeechPlayer(urlFor: (kind: SpeechKind) => string): Speech
     objectUrl = URL.createObjectURL(source);
     audio.src = objectUrl;
     const playing = audio.play();
+    // Stopping early rejects this promise, and that is expected, not an error.
+    playing.catch(() => {});
     await new Promise((resolve) => source.addEventListener("sourceopen", resolve, { once: true }));
     if (!isCurrent()) return;
 

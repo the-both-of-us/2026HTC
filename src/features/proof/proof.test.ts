@@ -359,7 +359,7 @@ describe("publishProof", () => {
   });
 
   it("refuses anyone but the owner", async () => {
-    await expect(publishProof("someone-else", map.id, "Mallory")).rejects.toMatchObject({ status: 403 });
+    await expect(publishProof("someone-else", map.id, "Mallory")).rejects.toMatchObject({ status: 404 });
     expect(await getDoc(`proof-index/${map.id}`)).toBeNull();
   });
 
@@ -442,7 +442,7 @@ describe("revokeProof", () => {
   });
 
   it("will not hand the owner's page to someone else", async () => {
-    await expect(getOwnProofForMap("someone-else", map.id)).rejects.toMatchObject({ status: 403 });
+    await expect(getOwnProofForMap("someone-else", map.id)).rejects.toMatchObject({ status: 404 });
   });
 });
 

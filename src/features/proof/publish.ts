@@ -153,8 +153,10 @@ export function cleanDisplayName(input: string): string {
 
 async function loadOwnMap(ownerId: string, mapId: string): Promise<SkillMap> {
   const map = await getSkillMap(mapId);
-  if (!map) throw new ProofError("We could not find that map. Check the link, or build a new one.", 404);
-  if (map.ownerId !== ownerId) throw new ProofError("Only the person who proved these skills can publish them.", 403);
+  // Someone else's map gets the same answer as a missing one, so it doesn't show that the map exists.
+  if (!map || map.ownerId !== ownerId) {
+    throw new ProofError("We could not find that map. Check the link, or build a new one.", 404);
+  }
   return map;
 }
 
