@@ -70,7 +70,8 @@ import { copySkillMap, listMapsByOwner } from "@/features/skill-map";   // copyS
 import { getProgress } from "@/features/teachback";                     // getProgress(mapId, ownerId)
 import { chatJSON, chatText, AiUnavailableError } from "@/features/ai"; // chatJSON({ prompt, schema, label })
 import { getDoc, putDoc, listDocs, deleteDoc } from "@/shared/store";   // keys like "flashcards/<mapId>/<nodeId>"
-import { getUserId } from "@/shared/identity";                          // anonymous user, in route handlers
+import { getUserId, readUserId } from "@/shared/identity";              // getUserId in route handlers, readUserId while rendering
+import { clearSession, getSession, setSessionUser } from "@/shared/identity"; // getSession(): { userId, signedIn, displayName }, safe while rendering. setSessionUser(userId, { displayName }) after sign-in. clearSession() signs out and returns a fresh guest id. Never send userId to a browser.
 import { errorResponse, HttpError, parseBody } from "@/shared/http";    // parseBody(request, zodSchema), errorResponse(error, fallbackSentence?)
 import { Button, Card, ComingSoon, ErrorNotice, Field, PageShell } from "@/shared/ui";
 ```
