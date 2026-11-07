@@ -70,7 +70,7 @@ function directionExercise(s: GridSnapshot): ChoiceExercise {
       `Generation minus load: ${mw(s.generation)} − ${mw(s.load)} = ${mw(gap)} MW.`,
       `AESO reports net interchange of ${mw(s.interchange)} MW, where a positive figure flows out of Alberta.`,
       ...(paths ? [`By path, in MW: ${paths}.`] : []),
-      `So right now Alberta is ${correct.toLowerCase()}.`,
+      `So in this reading Alberta is ${correct.toLowerCase()}.`,
     ],
     role: "System operator",
     why: "Alberta's ties to British Columbia, Montana and Saskatchewan let it sell to its neighbours or lean on them. Operators watch these flows around the clock, and analysts use them to explain what the market is doing.",
@@ -84,7 +84,7 @@ function windShareExercise(s: GridSnapshot): NumberExercise {
     id: "wind-share",
     kind: "number",
     title: "Wind's share",
-    prompt: "What percentage of Alberta's generation is coming from wind right now?",
+    prompt: "What percentage of Alberta's generation is coming from wind in this reading?",
     figures: [
       { label: "Wind output", value: `${mw(wind)} MW` },
       { label: "Net generation", value: `${mw(s.generation)} MW` },
@@ -148,7 +148,7 @@ function capacityFactorExercise(s: GridSnapshot): NumberExercise | null {
     id: "capacity-factor",
     kind: "number",
     title: "Renewable capacity factor",
-    prompt: "Across wind, solar and hydro together, what percentage of maximum capability is producing right now?",
+    prompt: "Across wind, solar and hydro together, what percentage of maximum capability is producing in this reading?",
     figures: RENEWABLE_FAMILIES.map((family) => ({
       label: FAMILY_LABELS[family],
       value: `${mw(outputOf(s, family))} of ${mw(capabilityOf(s, family))} MW`,
@@ -176,7 +176,7 @@ function netLoadExercise(s: GridSnapshot): NumberExercise {
     id: "net-load",
     kind: "number",
     title: "Net load",
-    prompt: "Net load is demand minus wind and solar. It is what every other source has to cover. What is it now?",
+    prompt: "Net load is demand minus wind and solar. It is what every other source has to cover. What is it in this reading?",
     figures: [
       { label: "Alberta load", value: `${mw(s.load)} MW` },
       { label: "Wind output", value: `${mw(wind)} MW` },

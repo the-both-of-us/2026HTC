@@ -70,7 +70,7 @@ export function UnitField({ snapshot }: { snapshot: GridSnapshot }) {
     <div className="flex flex-col gap-4">
       <p className="text-base">
         <strong className="font-semibold">{running}</strong> of {units.length} listed units are producing.
-        A square&apos;s size is its maximum capability, and the filled part is what it is producing now.
+        A square&apos;s size is its maximum capability, and the filled part is what it is producing in this reading.
       </p>
 
       <p className="min-h-11 rounded-control border border-rule px-3 py-2 text-sm text-ink-soft sm:min-h-0">
@@ -78,7 +78,7 @@ export function UnitField({ snapshot }: { snapshot: GridSnapshot }) {
           <span className="text-ink">{describeUnit(active)}</span>
         ) : (
           <>
-            Largest producer now: <span className="text-ink">{describeUnit(biggest)}</span>. Hover or tap a
+            Largest producer in this reading: <span className="text-ink">{describeUnit(biggest)}</span>. Hover or tap a
             square for any unit.
           </>
         )}
