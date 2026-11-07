@@ -31,6 +31,8 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 - [ ] `POST /api/courses/[mapId]/start`: `copySkillMap` does not check who may read the original, so check `isPublished` (or the owner) first.
 - [ ] `/api/flashcards` and `/api/quiz` read any map by id. They should refuse a private map too, or its skills can be read through them.
 - [x] Once `isPublished` is on main, tell Abdu: it replaces the small helper in `src/app/api/maps/[id]/access.ts`.
+  - **Mirza → Abdu: done in `31fd171`.** `import { isPublished } from "@/features/courses"`: `isPublished(mapId): Promise<boolean>`, a single store read that also checks the id is a UUID. Swap it into `access.ts` whenever you like. The Start route and the private-map checks for flashcards and quiz are being built now, and I'll tick those two when they're pushed.
+- [ ] **Mirza → Abdu: the courses UI is live at `/courses`.** The publish button still needs placing in the map header (the unticked item above). It's `PublishCourseButton` from `@/features/courses/client`, props `{ mapId }`, and it renders nothing for people who don't own the map.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
