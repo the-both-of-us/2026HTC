@@ -61,7 +61,9 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   const explanation = input.explanation.trim();
   checkExplanationLength(explanation);
 
+  const gradeStarted = performance.now();
   const grade = await gradeExplanation(node, explanation);
+  const gradeMs = Math.round(performance.now() - gradeStarted);
   const status = grade.score < PASS_SCORE ? "not-yet" : "needs-followup";
   const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade) : null;
 
@@ -80,6 +82,7 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
     followUp: question ? { question, answer: null, passed: null, feedback: null } : null,
     status,
     createdAt: new Date().toISOString(),
+    timing: { gradeMs, followUpMs: null },
   };
   await saveAttempt(attempt);
   return attempt;
@@ -102,7 +105,9 @@ export async function answerFollowUp(userId: string, attemptId: string, answer: 
   await claimAnswer(attempt.id);
   try {
     const trimmedAnswer = answer.trim();
+    const followUpStarted = performance.now();
     const result = await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer);
+    const followUpMs = Math.round(performance.now() - followUpStarted);
 
     const finished: Attempt = {
       ...attempt,
@@ -113,6 +118,7 @@ export async function answerFollowUp(userId: string, attemptId: string, answer: 
         feedback: result.passed ? result.feedback : NOT_PASSED_FEEDBACK,
       },
       status: result.passed ? "proven" : "not-yet",
+      ...(attempt.timing && { timing: { ...attempt.timing, followUpMs } }),
     };
 
     // Progress goes first. If saving the attempt then fails, the learner can simply
@@ -192,6 +198,7 @@ export function toLearnerView(attempt: Attempt): LearnerAttempt {
     followUp: attempt.followUp,
     status: attempt.status,
     createdAt: attempt.createdAt,
+    ...(attempt.timing && { timing: attempt.timing }),
   };
   if (attempt.status !== "needs-followup") return view;
 

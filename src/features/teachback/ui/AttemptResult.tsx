@@ -1,9 +1,9 @@
 import clsx from "clsx";
-import { Check, CircleDashed, MessageCircleQuestion } from "lucide-react";
+import { Check, CircleDashed, MessageCircleQuestion, Timer } from "lucide-react";
 import type { ReactNode, Ref } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import type { Attempt, CheckpointResult } from "@/shared/types";
-import { integritySentence, metCount, nextStepSentence, scoreBreakdown, verdictTitle } from "./format";
+import { integritySentence, metCount, nextStepSentence, scoreBreakdown, secondsText, verdictTitle } from "./format";
 
 type AttemptResultProps = {
   attempt: Attempt;
@@ -47,6 +47,7 @@ export function AttemptResult({
         {nextStep}
         {evidenceAction}
         <ScoreScale score={grade.score} breakdown={breakdown} />
+        <TimingChip attempt={attempt} />
         <CheckpointsAtAGlance attempt={attempt} total={checkpointTotal} />
         {attempt.followUp?.feedback && (
           <p>
@@ -94,6 +95,7 @@ export function AttemptResult({
         </div>
       </div>
       <ScoreScale score={grade.score} breakdown={breakdown} />
+      <TimingChip attempt={attempt} />
       <CheckpointBar attempt={attempt} total={checkpointTotal} />
       {children}
       <FollowUpRecord attempt={attempt} />
@@ -101,6 +103,23 @@ export function AttemptResult({
       <Misconceptions items={grade.misconceptions} />
       <IntegrityNote attempt={attempt} />
     </div>
+  );
+}
+
+/** The real time the server measured. Nothing shows for an attempt saved before it was measured. */
+function TimingChip({ attempt }: { attempt: Attempt }) {
+  if (!attempt.timing) return null;
+  const { gradeMs, followUpMs } = attempt.timing;
+
+  return (
+    <p
+      className="inline-flex items-center gap-1.5 self-start rounded-full border border-rule-strong bg-raised/60 px-2.5 py-1 text-sm text-ink-soft tabular-nums"
+      title="Measured on the server: the AI finding your exact words, then code checking each one and computing the score."
+    >
+      <Timer aria-hidden="true" size={14} />
+      Graded in {secondsText(gradeMs)}
+      {followUpMs !== null && <>, follow-up checked in {secondsText(followUpMs)}</>}
+    </p>
   );
 }
 

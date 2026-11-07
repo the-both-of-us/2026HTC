@@ -2,6 +2,7 @@ import { Sparkles } from "lucide-react";
 import { Suspense } from "react";
 import { LiveLabourCard } from "@/features/labour";
 import { PostingForm } from "@/features/landing";
+import { HowItWorksButton } from "@/features/landing/client";
 import { PageShell } from "@/shared/ui";
 
 export default function Home() {
@@ -20,6 +21,7 @@ export default function Home() {
             Paste a posting and OryxLearn lays out the skills it asks for. Explain each one in your
             own words, answer a follow-up, and share the proof.
           </p>
+          <HowItWorksButton className="self-start px-0!" />
         </PostingForm>
         <Suspense fallback={null}>
           <LiveLabourCard />

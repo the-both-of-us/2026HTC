@@ -7,6 +7,7 @@ import {
   integritySentence,
   nextStepSentence,
   scoreBreakdown,
+  secondsText,
   verdictTitle,
   wordCountMessage,
 } from "./format";
@@ -115,5 +116,13 @@ describe("integrity wording", () => {
     expect(
       integritySentence({ pasted: false, activeMs: 60_000, wordCount: 1, inputMethod: "voice" }),
     ).toBe("Spoken, 1 word, 1 minute of active speaking and typing, nothing pasted.");
+  });
+});
+
+describe("secondsText", () => {
+  it("shows a measured time to one decimal", () => {
+    expect(secondsText(534)).toBe("0.5 s");
+    expect(secondsText(1_260)).toBe("1.3 s");
+    expect(secondsText(0)).toBe("0.0 s");
   });
 });

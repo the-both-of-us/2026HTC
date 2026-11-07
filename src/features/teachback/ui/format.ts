@@ -14,6 +14,11 @@ export function wordCountMessage(words: number): string {
   return `${plural(words, "word")}. ${MIN_WORDS - words} more to reach the ${MIN_WORDS}-word minimum.`;
 }
 
+/** A time the server measured, to one decimal: 530 ms is "0.5 s". */
+export function secondsText(ms: number): string {
+  return `${(Math.max(ms, 0) / 1000).toFixed(1)} s`;
+}
+
 export function metCount(grade: Grade): number {
   return grade.checkpoints.filter((checkpoint) => checkpoint.met).length;
 }

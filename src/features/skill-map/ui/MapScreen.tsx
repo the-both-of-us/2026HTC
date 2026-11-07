@@ -2,6 +2,7 @@
 
 import { PublishCourseButton } from "@/features/courses/client";
 import { LiveGridCard, LiveGridStrip } from "@/features/grid/client";
+import { HowItWorksButton } from "@/features/landing/client";
 import { ShareProofButton } from "@/features/proof/client";
 import clsx from "clsx";
 import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
@@ -233,18 +234,21 @@ function LoadedMap({
               <Progress proven={provenCount} total={map.nodes.length} />
             </div>
           </div>
-          {isOwner && (
-            <div className="flex shrink-0 flex-wrap items-center gap-2.5">
-              <PublishCourseButton mapId={map.id} />
-              {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
-              {nextSkill && (
-                <Button onClick={() => selectSkill(nextSkill.id)} className="grow sm:grow-0">
-                  <Sparkles aria-hidden="true" size={17} />
-                  {provenCount === 0 ? "Start learning" : "Next skill"}
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+            <HowItWorksButton />
+            {isOwner && (
+              <>
+                <PublishCourseButton mapId={map.id} />
+                {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
+                {nextSkill && (
+                  <Button onClick={() => selectSkill(nextSkill.id)} className="grow sm:grow-0">
+                    <Sparkles aria-hidden="true" size={17} />
+                    {provenCount === 0 ? "Start learning" : "Next skill"}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </header>
 
         <div className="flex items-center justify-between border-b border-rule">

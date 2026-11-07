@@ -94,6 +94,11 @@ export type Attempt = {
   followUp: FollowUp | null;
   status: AttemptStatus;
   createdAt: string;
+  /**
+   * How long the server took, measured around each call, in ms. Grading covers the AI finding
+   * quotes plus code checking them and computing the score. Missing on attempts saved before Nov 7.
+   */
+  timing?: { gradeMs: number; followUpMs: number | null };
 };
 
 /** Progress for one user on one map. */

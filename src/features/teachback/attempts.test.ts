@@ -341,6 +341,19 @@ describe("what the server refuses", () => {
 });
 
 describe("what is stored and sent", () => {
+  it("measures grading and the follow-up on the server, and sends the times to the learner", async () => {
+    vi.spyOn(performance, "now").mockReturnValueOnce(1_000).mockReturnValueOnce(1_534.4);
+    const attempt = await reachFollowUp();
+    expect(attempt.timing).toEqual({ gradeMs: 534, followUpMs: null });
+    expect(toLearnerView(attempt).timing).toEqual({ gradeMs: 534, followUpMs: null });
+
+    vi.spyOn(performance, "now").mockReturnValueOnce(2_000).mockReturnValueOnce(2_401);
+    modelJudges(true);
+    const finished = await answerFollowUp(OWNER, attempt.id, "It stays, with NULLs on the right.");
+    expect(finished.timing).toEqual({ gradeMs: 534, followUpMs: 401 });
+    vi.restoreAllMocks();
+  });
+
   it("counts the words on the server, whatever the client claims", async () => {
     modelGrades("half");
     const claimed = { ...integrity, wordCount: 9999 };
