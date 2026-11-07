@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { Citation, Flashcard, SkillNode } from "@/shared/types";
+import type { Citation, SkillNode } from "@/shared/types";
+import type { Flashcard } from "./types";
 import { FlashcardsError } from "./errors";
 import type { RawDeck } from "./prompt";
 

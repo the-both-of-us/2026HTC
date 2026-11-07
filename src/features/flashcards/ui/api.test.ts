@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Flashcard } from "@/shared/types";
+import type { Flashcard } from "../types";
 import { createFlashcards, fetchSavedFlashcards } from "./api";
 
 const CARD: Flashcard = {

@@ -1,5 +1,5 @@
 /** Calls to the flashcards API. Every failure becomes a sentence a person can act on. */
-import type { Flashcard } from "@/shared/types";
+import type { Flashcard } from "../types";
 
 export type SavedResult = { ok: true; items: Flashcard[] | null } | { ok: false; message: string };
 export type CreateResult = { ok: true; items: Flashcard[] } | { ok: false; message: string };

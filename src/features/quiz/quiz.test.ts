@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AiUnavailableError, chatJSON } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
-import type { QuizQuestion, SkillMap, SkillNode } from "@/shared/types";
+import type { SkillMap, SkillNode } from "@/shared/types";
+import type { QuizQuestion } from "./types";
 import { GENERATION_DEADLINE_MS, getOrCreateQuiz, getSavedQuiz, REQUEST_TIMEOUT_MS } from "./quiz";
 import { QuizError, seededRandom } from "./validate";
 

@@ -1,5 +1,5 @@
 /** Calls to the quiz API. Every failure becomes a sentence a person can act on. */
-import type { QuizQuestion } from "@/shared/types";
+import type { QuizQuestion } from "../types";
 
 export type QuizResult = { ok: true; items: QuizQuestion[] | null } | { ok: false; message: string };
 

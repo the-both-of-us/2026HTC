@@ -3,7 +3,8 @@
 import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import type { Citation, QuizQuestion, SkillNode } from "@/shared/types";
+import type { Citation, SkillNode } from "@/shared/types";
+import type { QuizQuestion } from "../types";
 import { Button, ErrorNotice, Spinner } from "@/shared/ui";
 import { createQuiz, fetchSavedQuiz } from "./api";
 import {

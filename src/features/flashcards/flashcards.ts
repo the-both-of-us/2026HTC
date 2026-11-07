@@ -1,7 +1,8 @@
 import { chatJSON } from "@/features/ai";
 import { getSkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
-import type { Flashcard, SkillMap, SkillNode } from "@/shared/types";
+import type { SkillMap, SkillNode } from "@/shared/types";
+import type { Flashcard } from "./types";
 import { FlashcardsError } from "./errors";
 import { buildFlashcardsPrompt, FLASHCARDS_SYSTEM_PROMPT, rawDeckSchema } from "./prompt";
 import { validateDeck } from "./validate";

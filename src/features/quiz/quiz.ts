@@ -1,7 +1,8 @@
 import { chatJSON } from "@/features/ai";
 import { getSkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
-import type { QuizQuestion, SkillMap, SkillNode } from "@/shared/types";
+import type { SkillMap, SkillNode } from "@/shared/types";
+import type { QuizQuestion } from "./types";
 import { buildQuizPrompt, QUIZ_SYSTEM_PROMPT } from "./prompt";
 import { QuizError, rawQuizSchema, validateQuiz, type RandomSource } from "./validate";
 

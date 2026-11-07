@@ -67,7 +67,7 @@ import { getUserId } from "@/shared/identity";                          // anony
 import { Button, Card, ComingSoon, ErrorNotice, Field, PageShell } from "@/shared/ui";
 ```
 
-Data shapes such as `Flashcard`, `QuizQuestion`, `ReviewCard`, `PublicCourse`, `PeerProfile` and `BattleRoom` are in `src/shared/types.ts`. If one is wrong, tell Abdu. Types only your feature uses go in your own folder.
+Your data shapes are in your own feature's `types.ts`: `Flashcard`, `QuizQuestion`, `ReviewCard`, `CourseListing`, `PeerProfile` and `BattleRoom`. They are yours to change. Types shared by several features, such as `SkillMap` and `Citation`, stay in `src/shared/types.ts`; if one of those is wrong, tell Abdu.
 
 **What Abdu uses from Mirza's code (keep these names and props):**
 

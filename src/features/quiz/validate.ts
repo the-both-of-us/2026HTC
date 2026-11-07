@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import type { QuizQuestion, SkillNode } from "@/shared/types";
+import type { SkillNode } from "@/shared/types";
+import type { QuizQuestion } from "./types";
 
 /** A quiz error carries a sentence for people and the HTTP status to send with it. */
 export class QuizError extends Error {

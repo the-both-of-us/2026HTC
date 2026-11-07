@@ -3,7 +3,8 @@
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import type { Citation, Flashcard, SkillNode } from "@/shared/types";
+import type { Citation, SkillNode } from "@/shared/types";
+import type { Flashcard } from "../types";
 import { Button, buttonClasses, ErrorNotice, Spinner } from "@/shared/ui";
 import { createFlashcards, fetchSavedFlashcards } from "./api";
 import { cardCounter, deckActionForEvent, deckStep, START, type DeckAction } from "./deck";
