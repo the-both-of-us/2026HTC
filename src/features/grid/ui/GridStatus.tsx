@@ -2,9 +2,9 @@
 
 import clsx from "clsx";
 import { ExternalLink, TriangleAlert } from "lucide-react";
-import { useEffect, useState } from "react";
-import { isReportOld } from "../live";
+import { isReadingStale } from "../live";
 import { AESO_REPORT_URL, type GridReading, type GridSnapshot } from "../types";
+import { useNow } from "./useNow";
 
 function secondsAgo(iso: string, now: number): string {
   const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
@@ -33,22 +33,10 @@ type LiveReading = Extract<GridReading, { snapshot: GridSnapshot }>;
 
 /** Says exactly how fresh the numbers are, and where they came from. */
 export function GridStatus({ reading }: { reading: LiveReading }) {
-  // The clock starts after hydration, so the server and browser render the same first frame.
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    const tick = () => setNow(Date.now());
-    const first = setTimeout(tick, 0);
-    const timer = setInterval(tick, 1000);
-    return () => {
-      clearTimeout(first);
-      clearInterval(timer);
-    };
-  }, []);
-
+  const now = useNow(1000);
   const { snapshot } = reading;
   const fetchFailed = reading.status === "stale";
-  const reportOld = now !== null && isReportOld(snapshot, now);
-  const stale = fetchFailed || reportOld;
+  const stale = isReadingStale(reading, now);
 
   return (
     <div className="flex flex-col gap-3">

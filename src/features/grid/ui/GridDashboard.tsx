@@ -3,7 +3,7 @@
 import { ArrowDownLeft, ArrowUpRight, Minus } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card, ErrorNotice } from "@/shared/ui";
-import { changesBetween } from "../live";
+import { changesBetween, isReadingStale } from "../live";
 import { capabilityOf, mw, outputOf, percent, RENEWABLE_FAMILIES, signed } from "../metrics";
 import type { GridReading, GridSnapshot } from "../types";
 import { CapabilityChart } from "./CapabilityChart";
@@ -13,6 +13,7 @@ import { MixBarTall } from "./MixBar";
 import { ReadTheGrid } from "./ReadTheGrid";
 import { UnitField } from "./UnitField";
 import { useLiveGrid } from "./useLiveGrid";
+import { useNow } from "./useNow";
 
 /** A sentence written by code from the real figures. Old figures are told in the past tense. */
 function headline(snapshot: GridSnapshot, stale: boolean): string {
@@ -122,6 +123,7 @@ function Terms() {
 /** The live page. Everything here re-renders from the latest real reading. */
 export function GridDashboard({ initial }: { initial: GridReading }) {
   const { reading, previous, check } = useLiveGrid(initial);
+  const now = useNow(30_000);
 
   if (!reading || reading.status === "unavailable") {
     return (
@@ -141,7 +143,7 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
   }
 
   const { snapshot } = reading;
-  const stale = reading.status === "stale";
+  const stale = isReadingStale(reading, now);
 
   return (
     <div className="flex flex-col gap-12">
@@ -202,7 +204,7 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
         </Card>
       </Section>
 
-      <Section title="Capability and output by fuel" intro="Each track is how much a fuel group could produce. The filled part is what it is producing now.">
+      <Section title="Capability and output by fuel" intro={`Each track is how much a fuel group could produce. The filled part is what it ${stale ? "was producing at this reading" : "is producing now"}.`}>
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
           <Card>
             <CapabilityChart snapshot={snapshot} />

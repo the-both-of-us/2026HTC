@@ -8,6 +8,11 @@ export function isReportOld(snapshot: GridSnapshot, now: number): boolean {
   return now - new Date(snapshot.asOf).getTime() > REPORT_OLD_AFTER_MS;
 }
 
+/** Should this reading be told as old news? Its fetch failed, or AESO's report has stopped moving. */
+export function isReadingStale(reading: Extract<GridReading, { snapshot: GridSnapshot }>, now: number | null): boolean {
+  return reading.status === "stale" || (now !== null && isReportOld(reading.snapshot, now));
+}
+
 export type LiveState = {
   reading: GridReading | null;
   /** The reading before this one, once the report's time has moved on. */
@@ -22,6 +27,9 @@ export function applyReading(state: LiveState, next: GridReading): LiveState {
   if (next.status === "unavailable") {
     return held ? { ...state, reading: { ...held, status: "stale" } } : { ...state, reading: next };
   }
+  // Another server's cache or a saved copy can be older than what we show. Time only goes forward.
+  if (held && new Date(next.snapshot.asOf) < new Date(held.snapshot.asOf)) return state;
+
   const moved = held && held.snapshot.asOf !== next.snapshot.asOf;
   return { reading: next, previous: moved ? held.snapshot : state.previous };
 }

@@ -3,21 +3,25 @@
 import { ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
 import { Card, Spinner } from "@/shared/ui";
+import { isReadingStale } from "../live";
 import { mw } from "../metrics";
 import { AesoSourceLink } from "./GridStatus";
 import { MixBarThin } from "./MixBar";
 import { useLiveGrid } from "./useLiveGrid";
+import { useNow } from "./useNow";
 
 /** A live AESO reading for a skill map whose posting is energy related. */
 export function LiveGridCard({ className }: { className?: string }) {
   const { reading } = useLiveGrid(null);
+  const now = useNow(30_000);
+  const stale = reading && reading.status !== "unavailable" && isReadingStale(reading, now);
 
   return (
     <Card className={className}>
       <div className="flex flex-col gap-3">
         <h2 className="flex items-center gap-2 text-lg font-bold">
           <Zap size={18} aria-hidden="true" />
-          Alberta&apos;s grid, right now
+          {stale ? "Alberta's grid, last good reading" : "Alberta's grid, right now"}
         </h2>
 
         {!reading && (
@@ -41,7 +45,7 @@ export function LiveGridCard({ className }: { className?: string }) {
             </p>
             <MixBarThin snapshot={reading.snapshot} />
             <p className="text-sm text-ink-soft">
-              {reading.status === "stale" ? "Stale: last good reading from " : "As of "}
+              {stale ? "Stale: last good reading from " : "As of "}
               {reading.snapshot.asOfLabel} Alberta time.
             </p>
           </>

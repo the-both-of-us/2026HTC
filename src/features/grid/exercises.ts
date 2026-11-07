@@ -141,6 +141,9 @@ function capacityFactorExercise(s: GridSnapshot): NumberExercise | null {
   const answer = (output / capability) * 100;
   const parts = (read: typeof outputOf) =>
     RENEWABLE_FAMILIES.map((family) => mw(read(s, family))).join(" + ");
+  const windCapability = capabilityOf(s, "wind");
+  const windFigure =
+    windCapability > 0 ? ` In this reading, wind alone is at ${percent((outputOf(s, "wind") / windCapability) * 100)}.` : "";
   return {
     id: "capacity-factor",
     kind: "number",
@@ -160,8 +163,8 @@ function capacityFactorExercise(s: GridSnapshot): NumberExercise | null {
       `${mw(output)} ÷ ${mw(capability)} = ${percent(answer)}.`,
     ],
     role: "Field technician",
-    why: "A wind farm at 30% could be healthy on a calm day or faulty on a windy one. Technicians and asset managers compare a site with the fleet's current figure to tell which.",
-    caveat: "This is the fleet at one moment. A published capacity factor is usually measured over a year.",
+    why: `A wind farm at 30% could be healthy on a calm day or faulty on a windy one. To tell which, technicians compare a site with the wind fleet's current figure, not this combined one.${windFigure}`,
+    caveat: "This is one moment. A published capacity factor is usually measured over a year.",
   };
 }
 

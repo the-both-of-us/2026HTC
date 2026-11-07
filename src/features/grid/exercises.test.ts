@@ -194,3 +194,29 @@ describe("signed", () => {
     expect(signed(0)).toBe("0");
   });
 });
+
+describe("the capacity factor's reason", () => {
+  it("names a wind-only figure for comparing a wind farm, not the combined answer", () => {
+    const groups = [
+      { name: "Wind", family: "wind" as const, capability: 1000, output: 400, reserve: 0 },
+      { name: "Solar", family: "solar" as const, capability: 1000, output: 0, reserve: 0 },
+      { name: "Hydro", family: "hydro" as const, capability: 1000, output: 500, reserve: 0 },
+      { name: "Cogeneration", family: "gas" as const, capability: 1000, output: 900, reserve: 0 },
+    ];
+    const snapshot = {
+      asOf: "2026-11-07T13:16:00-06:00",
+      asOfLabel: "Nov 07, 2026 13:16",
+      load: 1800,
+      generation: 1800,
+      interchange: 0,
+      reserveRequired: null,
+      reserveDispatched: null,
+      capabilityTotal: 4000,
+      groups,
+      paths: [],
+      units: [],
+    };
+    const exercise = buildExercises(snapshot).find((item) => item.id === "capacity-factor");
+    expect(exercise?.why).toContain("wind alone is at 40.0%");
+  });
+});

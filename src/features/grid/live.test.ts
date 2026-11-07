@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyReading, changesBetween, isReportOld, markUnreachable } from "./live";
+import { applyReading, changesBetween, isReadingStale, isReportOld, markUnreachable } from "./live";
 import type { GridReading, GridSnapshot } from "./types";
 
 const base: GridSnapshot = {
@@ -40,6 +40,12 @@ describe("applyReading", () => {
     expect(applyReading(first, live(later)).previous).toEqual(base);
   });
 
+  it("ignores a reading older than the one it has", () => {
+    const current = applyReading({ reading: null, previous: null }, live(later));
+    expect(applyReading(current, live(base))).toEqual(current);
+    expect(applyReading(current, { status: "stale", snapshot: base, fetchedAt: "2026-11-07T19:16:30.000Z" })).toEqual(current);
+  });
+
   it("keeps the numbers it has and marks them stale when AESO goes away", () => {
     const first = applyReading({ reading: null, previous: null }, live(base));
     const after = applyReading(first, { status: "unavailable" });
@@ -71,6 +77,20 @@ describe("changesBetween", () => {
       { label: "Load", delta: 12 },
       { label: "Wind", delta: -10 },
     ]);
+  });
+});
+
+describe("isReadingStale", () => {
+  const reportTime = new Date(base.asOf).getTime();
+
+  it("is stale when the fetch failed, or when the report stopped moving", () => {
+    expect(isReadingStale({ status: "stale", snapshot: base, fetchedAt: "" }, reportTime)).toBe(true);
+    expect(isReadingStale({ status: "live", snapshot: base, fetchedAt: "" }, reportTime + 20 * 60 * 1000)).toBe(true);
+  });
+
+  it("is not stale for a live, recent report, or before the clock starts", () => {
+    expect(isReadingStale({ status: "live", snapshot: base, fetchedAt: "" }, reportTime)).toBe(false);
+    expect(isReadingStale({ status: "live", snapshot: base, fetchedAt: "" }, null)).toBe(false);
   });
 });
 

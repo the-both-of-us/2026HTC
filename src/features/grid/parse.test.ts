@@ -106,6 +106,7 @@ describe("parseCurrentSupplyDemand's tolerance", () => {
       <tr><th>generation</th></tr>
       <tr><td>group</td><td>mc</td><td>tng</td><td>dcr</td></tr>
       <tr><td>Energy Storage</td><td>270</td><td>-15</td><td>-</td></tr>
+      <tr><td>Cogeneration</td><td>10,000</td><td>9,265</td><td>-</td></tr>
     </table>`;
     const snapshot = parseCurrentSupplyDemand(html);
     expect(snapshot.load).toBe(9500);
@@ -131,6 +132,9 @@ describe("parseCurrentSupplyDemand's tolerance", () => {
     ["a non-numeric load", fixture.replace(/<TD>10718<\/TD>/g, "<TD>n/a</TD>")],
     ["no generation", fixture.replace(/Alberta Total Net Generation/g, "Something")],
     ["no interchange", fixture.replace(/Net Actual Interchange/g, "Something")],
+    ["a fuel with an unreadable output", fixture.replace(/(<TD>WIND<\/TD><TD>\d+<\/TD><TD>)\d+/i, "$1-")],
+    ["a fuel with an unreadable capability", fixture.replace(/(<TD>WIND<\/TD><TD>)\d+/i, "$1-")],
+    ["a fuel with a wrong output", fixture.replace(/(<TD>WIND<\/TD><TD>\d+<\/TD><TD>)\d+/i, "$10")],
   ])("rejects %s instead of guessing", (_name, html) => {
     expect(() => parseCurrentSupplyDemand(html)).toThrow(GridParseError);
   });

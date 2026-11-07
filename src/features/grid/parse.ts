@@ -110,7 +110,7 @@ const SUMMARY_LABELS = {
 /**
  * Parses AESO's Current Supply Demand HTML. It tolerates moved rows, changed case, commas and
  * missing optional figures, but throws GridParseError if a figure we can't do without is
- * absent. It never fills a gap with a guess.
+ * absent, or if the fuel rows don't add up to AESO's totals. It never fills a gap with a guess.
  */
 export function parseCurrentSupplyDemand(html: string): GridSnapshot {
   const summary: Partial<Record<keyof typeof SUMMARY_LABELS, number>> = {};
@@ -190,6 +190,17 @@ export function parseCurrentSupplyDemand(html: string): GridSnapshot {
   if (summary.generation === undefined) throw new GridParseError("The report has no Total Net Generation.");
   if (summary.interchange === undefined) throw new GridParseError("The report has no Net Actual Interchange.");
   if (groups.length === 0) throw new GridParseError("The report has no generation by fuel.");
+
+  // A row we could not read is skipped above. AESO's totals expose that, so a missing
+  // fuel can't quietly become 0 MW and a wrong answer.
+  const outputSum = groups.reduce((sum, group) => sum + group.output, 0);
+  if (outputSum !== summary.generation) {
+    throw new GridParseError(`Fuel outputs add up to ${outputSum}, but the report says ${summary.generation}.`);
+  }
+  const capabilitySum = groups.reduce((sum, group) => sum + group.capability, 0);
+  if (capabilityTotal !== null && capabilitySum !== capabilityTotal) {
+    throw new GridParseError(`Fuel capabilities add up to ${capabilitySum}, but the report says ${capabilityTotal}.`);
+  }
 
   return {
     asOf,
