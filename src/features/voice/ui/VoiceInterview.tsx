@@ -404,7 +404,6 @@ function Editor({
           <Textarea
             {...control}
             aria-describedby={[questionId, control["aria-describedby"]].filter(Boolean).join(" ")}
-            ruled
             rows={5}
             value={text}
             onChange={(event) => onEdit(event.target.value)}
