@@ -1,16 +1,16 @@
 /** A whole interview in Node, with fake adapters. Each test is one thing a learner could live through. */
 import { describe, expect, it, vi } from "vitest";
 import { SILENT_METER, MicError, type ListenDeps, type SocketLike, type SpeechHandlers, type VoiceAdapters } from "./adapters/types";
-import { DOUBLE_TAP_MS, SUBMIT_TIMEOUT_MS, VoiceSession, type VoiceCallbacks } from "./session";
+import { COUNTDOWN_MS, DOUBLE_TAP_MS, HOLD_MS, SUBMIT_TIMEOUT_MS, VoiceSession, type VoiceCallbacks } from "./session";
 
 class FakeSocket implements SocketLike {
   readyState = 0;
-  sent: (string | Blob | ArrayBuffer)[] = [];
+  sent: (string | ArrayBuffer)[] = [];
   onopen: ((event: unknown) => void) | null = null;
   onmessage: ((event: { data: unknown }) => void) | null = null;
   onclose: ((event: unknown) => void) | null = null;
   onerror: ((event: unknown) => void) | null = null;
-  send(data: string | Blob | ArrayBuffer) {
+  send(data: string | ArrayBuffer) {
     this.sent.push(data);
     if (data === '{"type":"ForceEndTurn"}') {
       queueMicrotask(() => this.turn("EndOfTurn", this.turnIndex, this.lastText));
@@ -38,10 +38,12 @@ class FakeSocket implements SocketLike {
 function build(over: { callbacks?: Partial<VoiceCallbacks>; listen?: Partial<ListenDeps>; now?: () => number } = {}) {
   let speech: SpeechHandlers | null = null;
   const sockets: FakeSocket[] = [];
+  const mics: ((chunk: ArrayBuffer) => void)[] = [];
   const log: string[] = [];
   const adapters: VoiceAdapters = {
     speech: {
       unlock: () => log.push("unlock"),
+      prefetch: (kind) => log.push(`prefetch:${kind}`),
       play: (kind, handlers) => {
         log.push(`play:${kind}`);
         speech = handlers;
@@ -53,8 +55,9 @@ function build(over: { callbacks?: Partial<VoiceCallbacks>; listen?: Partial<Lis
     },
     listen: {
       fetchGrant: async () => ({ token: "t", wsUrl: "wss://x" }),
-      openMic: async () => {
+      openMic: async (onChunk) => {
         log.push("mic-open");
+        mics.push(onChunk);
         return { meter: SILENT_METER, flush: () => {}, release: () => log.push("mic-release") };
       },
       createSocket: () => {
@@ -64,7 +67,6 @@ function build(over: { callbacks?: Partial<VoiceCallbacks>; listen?: Partial<Lis
       },
       ...over.listen,
     },
-    chime: () => log.push("chime"),
     unlockAudio: () => log.push("unlock-audio"),
   };
   const onAnswer = vi.fn(over.callbacks?.onAnswer ?? (async () => ({ passed: true, feedback: "Good." })));
@@ -81,16 +83,18 @@ function build(over: { callbacks?: Partial<VoiceCallbacks>; listen?: Partial<Lis
     speech: () => speech!,
     phase: () => session.getSnapshot().state.phase,
     socket: () => sockets.at(-1)!,
+    /** Sends one chunk of loud audio from the newest mic. */
+    speak: () => mics.at(-1)!(new Int16Array(4).fill(9_000).buffer),
   };
 }
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 5));
 
+/** One tap, the question plays and ends, and the mic opens by itself. */
 async function reachListening(t: ReturnType<typeof build>) {
   t.session.send({ type: "PRIMARY" });
   t.speech().onPlaying();
   t.speech().onEnded();
-  t.session.send({ type: "PRIMARY" });
   await settle();
   t.socket().open();
 }
@@ -112,7 +116,6 @@ describe("a full interview", () => {
     t.session.send({ type: "SUBMIT" });
     await vi.waitFor(() => expect(t.phase()).toBe("verdict"));
     expect(t.onAnswer).toHaveBeenCalledWith(shown, "voice");
-    expect(t.log).toContain("chime");
     expect(t.log).toContain("play:feedback");
   });
 
@@ -127,17 +130,17 @@ describe("a full interview", () => {
     await vi.waitFor(() => expect(t.onAnswer).toHaveBeenCalledWith("spoken word", "typed"));
   });
 
-  it("adds a second take after the first, even though turn_index restarts", async () => {
+  it("Re-record starts over on a new connection", async () => {
     const t = build();
     await reachListening(t);
     t.socket().turn("EndOfTurn", 0, "Take one.");
-    t.session.send({ type: "PRIMARY" });
-    await vi.waitFor(() => expect(t.phase()).toBe("heard"), { timeout: 3000 });
-    t.session.send({ type: "SAY_MORE" });
+    expect(t.phase()).toBe("heard");
+    t.session.send({ type: "RERECORD" });
     await settle();
     t.socket().open();
     t.socket().turn("EndOfTurn", 0, "Take two.");
-    expect(t.session.getSnapshot().text).toBe("Take one. Take two.");
+    expect(t.session.getSnapshot().text).toBe("Take two.");
+    expect(t.phase()).toBe("heard");
   });
 
   it("stays in checking when the parent returns no verdict, because the parent takes over", async () => {
@@ -184,13 +187,13 @@ describe("talking over the voice", () => {
 });
 
 describe("sliding to typing, with words kept", () => {
-  it("on a TTS failure", () => {
+  it("not on a TTS failure: the question is on screen, so it listens anyway", () => {
     const t = build();
     t.session.send({ type: "PRIMARY" });
     t.speech().onFailed();
-    expect(t.phase()).toBe("type-instead");
-    expect(t.session.getSnapshot().state.reason).toBe("tts");
-    expect(t.onTypeInstead).toHaveBeenCalledWith("");
+    expect(t.phase()).toBe("listening");
+    expect(t.session.getSnapshot().state.notice).toBe("no-spoken-question");
+    expect(t.onTypeInstead).not.toHaveBeenCalled();
   });
 
   it("on a token failure", async () => {
@@ -201,9 +204,6 @@ describe("sliding to typing, with words kept", () => {
         },
       },
     });
-    t.session.send({ type: "PRIMARY" });
-    t.speech().onPlaying();
-    t.speech().onEnded();
     t.session.send({ type: "PRIMARY" });
     await settle();
     expect(t.phase()).toBe("type-instead");
@@ -254,47 +254,28 @@ describe("a double-click is one tap", () => {
     return { clock, t: build({ now: () => clock.at }) };
   }
 
-  it("on Hear the question: the question still plays, and no mic opens", () => {
+  it("on Answer aloud: the question still plays", () => {
     const { clock, t } = withClock();
     t.session.send({ type: "PRIMARY" });
     clock.at = DOUBLE_TAP_MS - 1;
     t.session.send({ type: "PRIMARY" });
     expect(t.phase()).toBe("thinking");
-    expect(t.log).not.toContain("mic-open");
     expect(t.log).not.toContain("stop");
   });
 
-  it("on Start talking: it stays listening, not nothing heard", async () => {
+  it("on Re-record: the second click doesn't land on Done", async () => {
     const { clock, t } = withClock();
     t.session.send({ type: "PRIMARY" });
     t.speech().onPlaying();
     t.speech().onEnded();
-    clock.at = 5_000;
-    t.session.send({ type: "PRIMARY" });
-    clock.at = 5_100;
-    t.session.send({ type: "PRIMARY" });
-    await settle();
-    expect(t.phase()).toBe("listening");
-    expect(t.session.getSnapshot().state.closing).toBe(false);
-  });
-
-  it("on Say more: the second click doesn't land on Done", async () => {
-    const { clock, t } = withClock();
-    t.session.send({ type: "PRIMARY" });
-    t.speech().onPlaying();
-    t.speech().onEnded();
-    clock.at = 1_000;
-    t.session.send({ type: "PRIMARY" });
     await settle();
     t.socket().open();
     t.socket().turn("EndOfTurn", 0, "words");
-    clock.at = 2_000;
-    t.session.send({ type: "PRIMARY" });
-    await vi.waitFor(() => expect(t.phase()).toBe("heard"), { timeout: 3000 });
     clock.at = 9_000;
-    t.session.send({ type: "SAY_MORE" });
+    t.session.send({ type: "RERECORD" });
     clock.at = 9_100;
     t.session.send({ type: "PRIMARY" });
+    expect(t.phase()).toBe("listening");
     expect(t.session.getSnapshot().state.closing).toBe(false);
   });
 
@@ -328,7 +309,7 @@ describe("tapping quickly through a slow finish", () => {
   it("Done, Type instead, Use voice, Start talking: the old finish can't touch the new take", async () => {
     const t = build();
     await reachListening(t);
-    t.socket().turn("EndOfTurn", 0, "First take.");
+    t.socket().turn("Update", 0, "First take.");
     t.session.send({ type: "PRIMARY" });
     t.session.send({ type: "TYPE_INSTEAD" });
     t.session.send({ type: "RETRY_VOICE" });
@@ -350,8 +331,7 @@ describe("when an answer gets no reply", () => {
   async function reachHeard(t: ReturnType<typeof build>) {
     await reachListening(t);
     t.socket().turn("EndOfTurn", 0, "keep me");
-    t.session.send({ type: "PRIMARY" });
-    await vi.waitFor(() => expect(t.phase()).toBe("heard"), { timeout: 3000 });
+    expect(t.phase()).toBe("heard");
   }
 
   it("goes back to review with the words, instead of trapping the learner", async () => {
@@ -448,5 +428,83 @@ describe("cleaning up", () => {
     t.session.send({ type: "PRIMARY" });
     expect(t.phase()).toBe("ready");
     expect(t.log).not.toContain("play:question");
+  });
+});
+
+describe("hands-free", () => {
+  it("downloads the question before the tap, and opens mic and socket while it plays", async () => {
+    const t = build();
+    t.session.prefetch();
+    expect(t.log).toContain("prefetch:question");
+    t.session.send({ type: "PRIMARY" });
+    t.speech().onPlaying();
+    await settle();
+    expect(t.log).toContain("mic-open");
+    expect(t.sockets).toHaveLength(1);
+  });
+
+  it("sends silence, not the mic, until the question has ended", async () => {
+    const t = build();
+    t.session.send({ type: "PRIMARY" });
+    t.speech().onPlaying();
+    await settle();
+    t.socket().open();
+    t.speak();
+    expect(new Int16Array(t.socket().sent.at(-1) as ArrayBuffer).every((sample) => sample === 0)).toBe(true);
+    t.speech().onEnded();
+    await settle();
+    t.speak();
+    expect(new Int16Array(t.socket().sent.at(-1) as ArrayBuffer)[0]).toBe(9_000);
+  });
+
+  it("shows the answer at Flux's end of turn, and sends it after the countdown", async () => {
+    vi.useFakeTimers();
+    try {
+      const t = build();
+      t.session.send({ type: "PRIMARY" });
+      t.speech().onPlaying();
+      t.speech().onEnded();
+      await vi.advanceTimersByTimeAsync(10);
+      t.socket().open();
+      t.socket().turn("EndOfTurn", 0, "Heat ages the paper.");
+      expect(t.phase()).toBe("heard");
+      expect(t.session.getSnapshot().countdownEndsAt).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(HOLD_MS);
+      expect(t.socket().sent).toContain('{"type":"CloseStream"}');
+      await vi.advanceTimersByTimeAsync(COUNTDOWN_MS - HOLD_MS);
+      expect(t.onAnswer).toHaveBeenCalledWith("Heat ages the paper.", "voice");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("goes back to listening when they keep talking after a pause, and keeps both parts", async () => {
+    const t = build();
+    await reachListening(t);
+    t.socket().turn("EndOfTurn", 0, "Heat ages the paper.");
+    expect(t.phase()).toBe("heard");
+    t.socket().turn("Update", 1, "So it fails");
+    expect(t.phase()).toBe("listening");
+    t.socket().turn("EndOfTurn", 1, "So it fails sooner.");
+    expect(t.session.getSnapshot().text).toBe("Heat ages the paper. So it fails sooner.");
+  });
+
+  it("a key stops the countdown, and nothing is sent until they choose", async () => {
+    vi.useFakeTimers();
+    try {
+      const t = build();
+      t.session.send({ type: "PRIMARY" });
+      t.speech().onPlaying();
+      t.speech().onEnded();
+      await vi.advanceTimersByTimeAsync(10);
+      t.socket().open();
+      t.socket().turn("EndOfTurn", 0, "words");
+      t.session.send({ type: "STOP_COUNTDOWN" });
+      await vi.advanceTimersByTimeAsync(COUNTDOWN_MS * 2);
+      expect(t.onAnswer).not.toHaveBeenCalled();
+      expect(t.phase()).toBe("heard");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

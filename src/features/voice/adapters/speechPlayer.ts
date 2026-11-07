@@ -2,8 +2,9 @@
  * Plays the server's audio through an <audio> element wired into Web Audio, so the orb
  * can follow the real voice and a tap can fade it out.
  *
- * The question is fetched as soon as it is on screen (prefetch), so the tap that starts the
- * interview plays it at once, and "Hear it again" plays the same file.
+ * The question's request starts as soon as it is on screen (prefetch), so its first audio is
+ * already waiting when the tap comes. Deepgram streams it about as fast as it plays, so
+ * play() streams the prefetched response rather than waiting for the whole file.
  *
  * Otherwise it fetches first rather than pointing <audio> at the URL, because a media element
  * can't tell a 503 from any other problem. The stream then goes into MediaSource, so
@@ -28,8 +29,8 @@ export function createSpeechPlayer(urlFor: (kind: SpeechKind) => string): Speech
   let abort: AbortController | null = null;
   let objectUrl: string | null = null;
   let startTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Downloaded audio. Null means the download failed, and play() will try again itself. */
-  const prefetched = new Map<SpeechKind, Promise<Blob | null>>();
+  /** Responses requested early, each used once. Null means the request failed. */
+  const prefetched = new Map<SpeechKind, Promise<Response | null>>();
 
   function ensureGraph(): HTMLAudioElement {
     if (element) return element;
@@ -109,10 +110,7 @@ export function createSpeechPlayer(urlFor: (kind: SpeechKind) => string): Speech
 
     prefetch(kind: SpeechKind) {
       if (prefetched.has(kind)) return;
-      const download = fetch(urlFor(kind))
-        .then((response) => (response.ok ? response.blob() : null))
-        .catch(() => null);
-      prefetched.set(kind, download);
+      prefetched.set(kind, fetch(urlFor(kind)).catch(() => null));
     },
 
     play(kind: SpeechKind, handlers: SpeechHandlers) {
@@ -144,17 +142,10 @@ export function createSpeechPlayer(urlFor: (kind: SpeechKind) => string): Speech
 
       abort = new AbortController();
       const early = prefetched.get(kind);
+      prefetched.delete(kind);
       void (async () => {
         try {
-          const blob = early ? await early : null;
-          if (!isCurrent()) return;
-          if (blob) {
-            objectUrl = URL.createObjectURL(blob);
-            audio.src = objectUrl;
-            await audio.play();
-            return;
-          }
-          const response = await fetch(urlFor(kind), { signal: abort?.signal });
+          const response = (early && (await early)) || (await fetch(urlFor(kind), { signal: abort?.signal }));
           if (!isCurrent()) return;
           if (!response.ok) return fail();
           await streamInto(audio, response, isCurrent, fail);

@@ -24,6 +24,7 @@ import {
   settle,
   startTake,
   type Transcript,
+  type TurnUpdate,
 } from "./transcript";
 
 export type InputMethod = "voice" | "typed";
@@ -38,8 +39,24 @@ export const DOUBLE_TAP_MS = 350;
  */
 export const SUBMIT_TIMEOUT_MS = 65_000;
 
+/** The mic opens this long after the question's sound stops, so its last echo isn't heard. */
+export const ECHO_GUARD_MS = 150;
+/** A fade-out takes 180 ms in speechPlayer.ts. */
+const FADE_MS = 200;
+
+/**
+ * After Flux ends a turn, the mic stays open this long. Flux ended turns 0.7 to 1.5 s into
+ * a pause in our test, so this lets a pause of about 3 s pass without cutting anyone off.
+ * The words show at once, and the countdown runs alongside.
+ */
+export const HOLD_MS = 2_500;
+/** The heard answer sends itself after this, unless the learner steps in. */
+export const COUNTDOWN_MS = 3_000;
+/** With no words at all after this long, the mic closes and asks them to try again. */
+export const NO_WORDS_MS = 20_000;
+
 /** Each of these can move the main button under the pointer. */
-const TAPS: ReadonlySet<VoiceEvent["type"]> = new Set(["PRIMARY", "REPLAY", "SAY_MORE", "RETRY_VOICE"]);
+const TAPS: ReadonlySet<VoiceEvent["type"]> = new Set(["PRIMARY", "REPLAY", "RERECORD", "RETRY_VOICE"]);
 
 export type VoiceCallbacks = {
   /** Return the verdict to show it here, or nothing if the parent takes over. Throw if sending failed. */
@@ -57,6 +74,8 @@ export type VoiceSnapshot = {
   voiceActive: boolean;
   /** False while the browser may still be asking permission for the microphone. */
   micLive: boolean;
+  /** When the heard answer sends itself, or null when it won't. */
+  countdownEndsAt: number | null;
 };
 
 type Initial = {
@@ -80,6 +99,13 @@ export class VoiceSession {
   private submitted = 0;
   /** Which listening take is current, so a slow finish from an older one can't move the phase. */
   private take = 0;
+  /** Which visit to "heard" is current, so an old countdown or hold can't act on a new one. */
+  private round = 0;
+  /** The turn Flux last ended. Words in a later turn, while the mic is held, mean they kept going. */
+  private endedTurn = -1;
+  /** When the question's sound stopped, or will have stopped after a fade. */
+  private quietAt = Number.NEGATIVE_INFINITY;
+  private countdownEndsAt: number | null = null;
   private disposed = false;
   private lastTapAt = Number.NEGATIVE_INFINITY;
   private readonly now: () => number;
@@ -98,10 +124,7 @@ export class VoiceSession {
     this.micLive = this.pinnedMeter !== null;
     this.snapshot = this.buildSnapshot();
     this.listener = new Listener(adapters.listen, {
-      onTurn: (update) => {
-        this.transcript = applyTurn(this.transcript, update);
-        this.publish();
-      },
+      onTurn: (update) => this.onTurn(update),
       onFailed: (reason) => this.send({ type: "LISTEN_FAILED", reason }),
       onMicLive: () => {
         this.micLive = true;
@@ -121,10 +144,15 @@ export class VoiceSession {
 
   getSnapshot = (): VoiceSnapshot => this.snapshot;
 
+  /** Downloads the spoken question now, so the first tap plays it at once. */
+  prefetch(): void {
+    if (this.state.phase === "ready") this.adapters.speech.prefetch("question");
+  }
+
   /** Feeds the orb: the voice when it is talking, the mic when it is listening. */
   activeMeter(): AudioMeter {
     if (this.pinnedMeter) return this.pinnedMeter;
-    if (this.state.phase === "listening") return this.listener.meter;
+    if (this.state.phase === "listening" || this.state.holding) return this.listener.meter;
     if (this.voiceActive) return this.adapters.speech.meter;
     return SILENT_METER;
   }
@@ -136,9 +164,12 @@ export class VoiceSession {
   send(event: VoiceEvent): void {
     if (this.disposed || this.isSecondTap(event)) return;
     // Every tap goes through here, so this is where the browser's audio gets unlocked.
-    if (event.type === "PRIMARY" || event.type === "REPLAY" || event.type === "SAY_MORE") this.unlock();
+    if (event.type === "PRIMARY" || event.type === "REPLAY" || event.type === "RERECORD") this.unlock();
     const result = transition(this.state, event);
+    // Leaving "heard" cancels its countdown and hold, whatever the next phase is.
+    if (this.state.phase === "heard" && result.state.phase !== "heard") this.round += 1;
     this.state = result.state;
+    if (!this.state.countdown) this.countdownEndsAt = null;
     this.publish();
     for (const effect of result.effects) this.run(effect);
     // Handling a tap can block the page for a moment, and a second click then waits in line.
@@ -152,10 +183,11 @@ export class VoiceSession {
     this.publish();
   }
 
-  /** Stops the mic, the socket and the voice. Nothing starts again until activate(). Safe to call more than once. */
+  /** Stops the mic, the socket, the voice and every timer. Safe to call more than once. */
   dispose(): void {
     this.disposed = true;
     this.take += 1;
+    this.round += 1;
     this.submitted += 1;
     this.listener.abort();
     this.adapters.speech.stop();
@@ -165,6 +197,19 @@ export class VoiceSession {
   /** The component mounted. React's Strict Mode disposes once and remounts, so this undoes dispose. */
   activate(): void {
     this.disposed = false;
+  }
+
+  private onTurn(update: TurnUpdate): void {
+    this.transcript = applyTurn(this.transcript, update);
+    this.publish();
+    const { phase, holding, closing } = this.state;
+    const hasWords = update.transcript.trim().length > 0;
+    if (phase === "listening" && !closing && update.event === "EndOfTurn" && fullText(this.transcript).trim()) {
+      this.endedTurn = update.turnIndex;
+      this.send({ type: "END_OF_TURN" });
+    } else if (phase === "heard" && holding && hasWords && update.turnIndex > this.endedTurn) {
+      this.send({ type: "RESUMED" });
+    }
   }
 
   private isSecondTap(event: VoiceEvent): boolean {
@@ -190,31 +235,42 @@ export class VoiceSession {
         return;
       case "fade-speech":
         this.adapters.speech.fadeOut();
+        this.quietAt = this.now() + FADE_MS;
         this.setVoiceActive(false);
         return;
       case "stop-speech":
         this.adapters.speech.stop();
+        if (this.voiceActive) this.quietAt = this.now();
         this.setVoiceActive(false);
         return;
-      case "prepare-listen":
-        this.listener.prepare();
+      case "arm":
+        this.startListening();
         return;
       case "open-mic":
-        this.take += 1;
-        this.transcript = startTake(this.transcript);
-        this.micLive = false;
-        void this.listener.start();
-        this.publish();
+        this.openMic();
         return;
       case "finish-turn":
         void this.finishTurn();
+        return;
+      case "close-listen":
+        this.take += 1;
+        this.listener.close();
+        this.transcript = settle(this.transcript);
+        this.publish();
         return;
       case "abort-listen":
         this.take += 1;
         this.listener.abort();
         return;
-      case "chime":
-        this.adapters.chime();
+      case "clear-answer":
+        this.transcript = EMPTY_TRANSCRIPT;
+        this.publish();
+        return;
+      case "start-countdown":
+        this.startCountdown();
+        return;
+      case "start-hold":
+        this.after(HOLD_MS, { type: "HOLD_ENDED" });
         return;
       case "submit":
         void this.submit();
@@ -225,6 +281,48 @@ export class VoiceSession {
     }
   }
 
+  /** Opens the mic and the socket, sending silence until openMic lets the mic through. */
+  private startListening(): void {
+    if (this.listener.active) return;
+    this.take += 1;
+    this.transcript = startTake(this.transcript);
+    this.micLive = false;
+    this.endedTurn = -1;
+    void this.listener.start({ gated: true });
+    this.publish();
+  }
+
+  private openMic(): void {
+    this.startListening();
+    const take = this.take;
+    const wait = Math.max(0, this.quietAt + ECHO_GUARD_MS - this.now());
+    setTimeout(() => {
+      if (take === this.take) this.listener.ungate();
+    }, wait);
+    // Nobody said anything: close the mic rather than leave it open.
+    setTimeout(() => {
+      const { phase, closing } = this.state;
+      if (take === this.take && phase === "listening" && !closing && !fullText(this.transcript).trim()) {
+        this.send({ type: "PRIMARY" });
+      }
+    }, wait + NO_WORDS_MS);
+  }
+
+  private startCountdown(): void {
+    this.round += 1;
+    this.countdownEndsAt = this.now() + COUNTDOWN_MS;
+    this.after(COUNTDOWN_MS, { type: "COUNTDOWN_ENDED" });
+    this.publish();
+  }
+
+  /** Sends an event later, unless the interview has left this visit to "heard" by then. */
+  private after(ms: number, event: VoiceEvent): void {
+    const round = this.round;
+    setTimeout(() => {
+      if (round === this.round) this.send(event);
+    }, ms);
+  }
+
   private playSpeech(kind: "question" | "feedback"): void {
     this.adapters.speech.play(kind, {
       onPlaying: () => {
@@ -232,6 +330,7 @@ export class VoiceSession {
         this.send({ type: "SPEECH_PLAYING" });
       },
       onEnded: () => {
+        this.quietAt = this.now();
         this.setVoiceActive(false);
         this.send({ type: "SPEECH_ENDED" });
       },
@@ -282,6 +381,7 @@ export class VoiceSession {
       text: fullText(this.transcript),
       voiceActive: this.voiceActive,
       micLive: this.micLive,
+      countdownEndsAt: this.countdownEndsAt,
     };
   }
 

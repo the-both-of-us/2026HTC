@@ -35,21 +35,26 @@ class MockSocket implements SocketLike {
   private spoken: string[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(words: readonly string[]) {
+  constructor(private readonly words: readonly string[]) {
     setTimeout(() => {
       this.readyState = 1;
       this.onopen?.({});
-      let next = 0;
-      this.timer = setInterval(() => {
-        if (next >= words.length) return;
-        this.spoken.push(words[next++]);
-        this.emit("Update");
-        if (/[.?!]$/.test(words[next - 1])) this.endTurn("model");
-      }, 230);
     }, 150);
   }
 
-  send(data: string | Blob | ArrayBuffer) {
+  /** Words start with the first real audio. While the question plays the mic sends silence. */
+  private startTalking() {
+    let next = 0;
+    this.timer = setInterval(() => {
+      if (next >= this.words.length) return;
+      this.spoken.push(this.words[next++]);
+      this.emit("Update");
+      if (/[.?!]$/.test(this.words[next - 1])) this.endTurn("model");
+    }, 230);
+  }
+
+  send(data: string | ArrayBuffer) {
+    if (data instanceof ArrayBuffer && !this.timer && new Int16Array(data)[0] !== 0) this.startTalking();
     if (data === '{"type":"ForceEndTurn"}') {
       setTimeout(() => {
         if (this.spoken.length) this.endTurn("manual");
@@ -100,6 +105,7 @@ export function createMockAdapters({ question, answer, frozenFraction }: MockOpt
   return {
     speech: {
       unlock: () => {},
+      prefetch: () => {},
       play(_kind, handlers: SpeechHandlers) {
         clear();
         timers.push(
@@ -123,10 +129,13 @@ export function createMockAdapters({ question, answer, frozenFraction }: MockOpt
     },
     listen: {
       fetchGrant: async () => ({ token: "mock", wsUrl: "wss://mock" }),
-      openMic: async () => ({ meter: speechLikeMeter(0.85), flush: () => {}, release: () => {} }),
+      openMic: async (onChunk) => {
+        // Pretend audio: 80 ms chunks that aren't silence, so the socket knows the mic is through.
+        const chunks = setInterval(() => onChunk(new Int16Array(1_280).fill(1).buffer), 80);
+        return { meter: speechLikeMeter(0.85), flush: () => {}, release: () => clearInterval(chunks) };
+      },
       createSocket: () => new MockSocket(words),
     },
-    chime: () => {},
     unlockAudio: () => {},
   };
 }

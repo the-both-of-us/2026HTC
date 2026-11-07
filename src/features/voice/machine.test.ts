@@ -17,34 +17,84 @@ function run(events: VoiceEvent[], from = INITIAL_VOICE_STATE) {
 }
 
 describe("the happy path", () => {
-  it("walks from ready to verdict, opening the mic only after a tap", () => {
+  it("needs one tap: the mic opens when the question ends, and the answer sends itself", () => {
     const { state, effects } = run([
       { type: "PRIMARY" },
       { type: "SPEECH_PLAYING" },
       { type: "SPEECH_ENDED" },
-      { type: "PRIMARY" },
-      { type: "PRIMARY" },
-      { type: "TURN_CLOSED", hasText: true },
-      { type: "SUBMIT" },
+      { type: "END_OF_TURN" },
+      { type: "HOLD_ENDED" },
+      { type: "COUNTDOWN_ENDED" },
       { type: "VERDICT", verdict: { passed: true, feedback: "Good." } },
     ]);
     expect(state.phase).toBe("verdict");
     expect(effects).toEqual([
+      "arm",
       "play-question",
-      "prepare-listen",
-      "chime",
-      "prepare-listen",
       "open-mic",
-      "finish-turn",
+      "start-countdown",
+      "start-hold",
+      "close-listen",
       "submit",
       "play-feedback",
     ]);
   });
 
-  it("never opens the mic just because the voice stopped: there is no open mic", () => {
-    const { state, effects } = run([{ type: "PRIMARY" }, { type: "SPEECH_PLAYING" }, { type: "SPEECH_ENDED" }]);
-    expect(state.phase).toBe("your-turn");
-    expect(effects).not.toContain("open-mic");
+  it("keeps the mic shut while the question plays: arm sends silence until open-mic", () => {
+    const { state, effects } = run([{ type: "PRIMARY" }, { type: "SPEECH_PLAYING" }]);
+    expect(state.phase).toBe("speaking");
+    expect(effects).toEqual(["arm", "play-question"]);
+  });
+});
+
+describe("a pause that wasn't the end", () => {
+  it("goes back to listening if they speak while the mic is held", () => {
+    const { state } = run([{ type: "END_OF_TURN" }, { type: "RESUMED" }], at("listening"));
+    expect(state.phase).toBe("listening");
+    expect(state.countdown).toBe(false);
+  });
+
+  it("ignores speech once the hold is over", () => {
+    const { state } = run([{ type: "END_OF_TURN" }, { type: "HOLD_ENDED" }, { type: "RESUMED" }], at("listening"));
+    expect(state.phase).toBe("heard");
+  });
+
+  it("does not take an end of turn from Flux while Done is already finishing", () => {
+    expect(transition(at("listening", { closing: true }), { type: "END_OF_TURN" }).state.phase).toBe("listening");
+  });
+});
+
+describe("the countdown", () => {
+  const counting = at("heard", { countdown: true, holding: true });
+
+  it("stops on a key, and closes the held mic", () => {
+    const result = transition(counting, { type: "STOP_COUNTDOWN" });
+    expect(result.state).toMatchObject({ phase: "heard", countdown: false, holding: false });
+    expect(result.effects).toEqual(["abort-listen"]);
+    expect(transition(result.state, { type: "COUNTDOWN_ENDED" }).state.phase).toBe("heard");
+  });
+
+  it("stops on Edit and opens the text box", () => {
+    const result = transition(counting, { type: "EDIT" });
+    expect(result.state).toMatchObject({ phase: "heard", editing: true, countdown: false });
+  });
+
+  it("Re-record throws the answer away and listens again", () => {
+    const result = transition(counting, { type: "RERECORD" });
+    expect(result.state.phase).toBe("listening");
+    expect(result.effects).toEqual(["abort-listen", "clear-answer", "arm", "open-mic"]);
+  });
+
+  it("Send now sends at once", () => {
+    const result = transition(counting, { type: "SUBMIT" });
+    expect(result.state.phase).toBe("checking");
+    expect(result.effects).toEqual(["abort-listen", "submit"]);
+  });
+
+  it("also runs after Done, with no hold", () => {
+    const result = transition(at("listening", { closing: true }), { type: "TURN_CLOSED", hasText: true });
+    expect(result.state).toMatchObject({ phase: "heard", countdown: true, holding: false });
+    expect(result.effects).toEqual(["start-countdown"]);
   });
 });
 
@@ -55,10 +105,10 @@ describe("tapping while the voice is talking", () => {
     expect(result.effects).toEqual(["fade-speech", "open-mic"]);
   });
 
-  it("does not let a late speech-ended event pull the learner out of listening", () => {
+  it("does not let a late speech-ended event open the mic twice", () => {
     const { state, effects } = run([{ type: "PRIMARY" }, { type: "SPEECH_ENDED" }], at("speaking"));
     expect(state.phase).toBe("listening");
-    expect(effects).not.toContain("chime");
+    expect(effects.filter((effect) => effect === "open-mic")).toHaveLength(1);
   });
 
   it("can skip a voice that has not started yet", () => {
@@ -86,12 +136,12 @@ describe("Done", () => {
 });
 
 describe("falling back to typing", () => {
-  it("handles a failure of the voice", () => {
+  it("listens anyway when the spoken question fails, since the question is on screen", () => {
     for (const phase of ["thinking", "speaking"] as const) {
       const result = transition(at(phase), { type: "SPEECH_FAILED" });
-      expect(result.state.phase).toBe("type-instead");
-      expect(result.state.reason).toBe("tts");
-      expect(result.effects).toContain("notify-type-instead");
+      expect(result.state.phase).toBe("listening");
+      expect(result.state.notice).toBe("no-spoken-question");
+      expect(result.effects).toEqual(["stop-speech", "open-mic"]);
     }
   });
 
@@ -104,7 +154,7 @@ describe("falling back to typing", () => {
       const result = transition(at("listening"), { type: "LISTEN_FAILED", reason });
       expect(result.state.phase).toBe("type-instead");
       expect(result.state.reason).toBe(reason);
-      expect(result.effects).toEqual(["abort-listen", "notify-type-instead"]);
+      expect(result.effects).toEqual(["stop-speech", "abort-listen", "notify-type-instead"]);
     }
   });
 
@@ -130,7 +180,7 @@ describe("falling back to typing", () => {
 });
 
 describe("sending the answer", () => {
-  it("never sends on Space: sending is always deliberate", () => {
+  it("Space does not send: it only stops the countdown, through STOP_COUNTDOWN", () => {
     const result = transition(at("heard"), { type: "PRIMARY" });
     expect(result.state.phase).toBe("heard");
     expect(result.effects).toEqual([]);
@@ -144,10 +194,9 @@ describe("sending the answer", () => {
     }
   });
 
-  it("can add more speech to what was heard", () => {
-    const result = transition(at("heard"), { type: "SAY_MORE" });
-    expect(result.state.phase).toBe("listening");
-    expect(result.effects).toEqual(["open-mic"]);
+  it("keeps the heard answer if the held mic fails", () => {
+    const result = transition(at("heard", { holding: true, countdown: true }), { type: "LISTEN_FAILED", reason: "socket" });
+    expect(result.state).toMatchObject({ phase: "heard", holding: false, countdown: true });
   });
 
   it("skips the read-aloud when a verdict has no feedback", () => {

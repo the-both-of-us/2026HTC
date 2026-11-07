@@ -2,6 +2,16 @@
 
 The spoken follow-up question. OryxLearn asks it out loud, the learner answers out loud, and the words go to the same grader as a typed answer. If anything about voice fails, the interview slides to a text box with their words kept.
 
+## One tap
+
+1. **Answer aloud.** The only tap. The browser asks for the mic now, if it hasn't before. The token, mic and socket open while the question plays. The question's audio was requested when it appeared on screen, so it starts at once.
+2. **The question plays.** The mic is open but sends silence to Flux, so the question's own voice is never transcribed. A tap or Space skips it.
+3. **Listening.** It starts 150 ms after the question's sound stops, so the last echo dies away first. Echo cancellation is also on. Captions show live.
+4. **The answer ends by itself.** That happens at Flux's EndOfTurn. The mic stays open 2.5 s more: if they keep talking, it goes back to listening and keeps both parts. Done or Space ends it early.
+5. **Here's what I heard.** The text shows at once and sends itself after 3 s. Send now, Edit (counts as typed), and Re-record (starts over) are there. Any key, or Edit, stops the countdown. The text shown is the text sent.
+
+**Measured on 2026-11-07** with real Deepgram, a recorded answer played in as the mic, on `/voice-preview?real=1`: from the Answer aloud click to the question playing, 50 ms in the app (0.44 s including the test's automated click). From the last spoken word to the answer on screen, 1.1 to 1.4 s over 3 runs. A 2.2 s thinking pause in the middle was not cut off: Flux ended the turn, the learner kept talking, and both parts were sent. Not yet tried: a real microphone in a loud room, and echo from laptop speakers.
+
 ## How the audio flows
 
 ```
@@ -11,7 +21,7 @@ The spoken follow-up question. OryxLearn asks it out loud, the learner answers o
                                                                          |
                                                               AnalyserNode -> orb
 
- mic -> MediaRecorder (WebM/Opus, 100 ms chunks) -> WebSocket -> Deepgram Flux
+ mic -> AudioWorklet (16 kHz linear16, 80 ms chunks) -> WebSocket -> Deepgram Flux
   |                                                                  |
   AnalyserNode -> orb                               TurnInfo messages -> captions -> review -> grader
 ```
@@ -23,6 +33,8 @@ A token is only minted for someone with something to say right now: an existing 
 ## Why these providers
 
 - **Deepgram Flux (ears).** It's built for conversation: it reports turns, not just words, and lets a button end a turn on demand. A pause doesn't lose anything.
+- **linear16, not WebM.** We replayed the same Chrome-captured clips through real Flux both ways. Accuracy was the same (0 to 3% word error), and linear16 ended turns about 0.15 s sooner. It also lets the socket run on silence while the question plays, which WebM can't.
+- **End of turn.** `eot_threshold=0.7` and `eot_timeout_ms=3000` (`flux.ts`). Thresholds up to 0.9 still ended the turn 0.7 to 1.5 s into a 2 to 2.6 s pause after a whole clause, so raising it only made every answer slower. The 2.5 s hold in `session.ts` covers pauses instead.
 - **Deepgram Flux TTS (voice).** The interviewer speaks with `flux-hannah-en` on `POST /v2/speak`, the same account and key as the ears. The owner picked Hannah from eight voices on 2026-11-07; measured first audio was 0.33–0.52 s. Set `DEEPGRAM_VOICE` to change it.
 - **ElevenLabs (optional backup voice).** It's the difference between a person and text-to-speech. `eleven_v4_turbo` is tried first, because it's their real-time model.
 - **Cerebras (brain).** Unchanged. The same follow-up generation writes the words, so the voice can't wander or give away answers.
@@ -52,8 +64,8 @@ We send audio as binary frames, plus two control messages:
 - **The server decides every word.** `/speak` takes an attempt id, not text, and only speaks the stored question or feedback of an attempt the user owns. It won't read feedback while a follow-up is open.
 - **The text shown is the text sent.** The grader checks exact quotes, so `fullText` in `transcript.ts` is the one source for both. Editing it marks the answer as `typed`.
 - **Keyterms are safe to expose.** The socket URL is visible in the browser, so terms come only from the skill title and the learner's own explanation, never from checkpoints.
-- **No open mic.** The room is loud, so the mic only opens on a tap or Space. Tapping while the voice talks fades it out and opens the mic.
-- **A double-click is one tap.** A second tap on the main button within 350 ms is ignored, so it can't cancel the question or end a turn that has just started.
+- **The mic is on from the tap until the answer is heard.** It opens at Answer aloud, but sends silence while the question plays and for 150 ms after. Then it listens until Flux ends the turn and 2.5 s pass without more words. After that it closes. With no words for 20 s, it closes and asks them to try again. It never opens before the tap.
+- **A double-click is one tap.** A second tap on the main button within 350 ms is ignored, so it can't skip the question or end a turn that has just started.
 - **One take at a time.** A tap can stop a take while another step is still waiting, like a permission prompt or the end of a turn. Each take has a number in `listener.ts`, so when that wait ends, the old take cleans up its own mic and leaves the new one alone.
 - **Never an error screen.** Every failure below moves to typing with the words kept, and the question is always on screen as text.
 
@@ -62,7 +74,7 @@ We send audio as binary frames, plus two control messages:
 | Token fails, or no key (503) | Voice answers aren't available right now. If the token was already known to have failed, the browser never asks for the mic |
 | Socket closes or errors | The connection dropped, your words are still here |
 | 8 s of talking with no words | Voice stopped picking up your words |
-| Spoken question fails | The spoken question isn't available right now |
+| Spoken question fails | It listens anyway, and says to read the question on screen |
 | Mic blocked | Microphone access is off |
 
 **The 8 s check in a loud room.** The first second of listening measures the room. After that, only a level 3 times the room's (about 10 dB) counts as talking, a gap of 1.5 s starts the count over, and any new word does too. Those numbers are reasoned, not measured in a real room.
@@ -79,7 +91,7 @@ We send audio as binary frames, plus two control messages:
 | `listener.ts` | One turn: token, mic, socket, Done |
 | `session.ts` | Runs the machine through the adapters. No React |
 | `dictation.ts` | One recording at a time for `useDictation`. No React |
-| `adapters/` | The real browser audio, and the preview's pretend audio |
+| `adapters/` | The real browser audio (`pcmWorklet.ts` makes linear16), and the preview's pretend audio |
 | `server/` | Token minting, providers and failover, rate limits |
 | `ui/` | `VoiceInterview`, `Orb`, `useVoiceInterview`, `useDictation` |
 | `dev/` | A fake Deepgram and ElevenLabs for tests, and `realCheck.ts` for real keys |
@@ -104,7 +116,7 @@ const dictation = useDictation({ mapId, nodeId, onText: (text) => append(text) }
 // dictation.start(), dictation.stop(), dictation.finalText, dictation.interimText
 ```
 
-Note that `followUpBody` in teachback takes only `{ answer }`, so the follow-up's `inputMethod` isn't saved yet. The attempt's `integrity.inputMethod` describes the explanation.
+Teachback saves the follow-up's `inputMethod` (and `startedAfterMs`) on `followUp`. The attempt's `integrity.inputMethod` describes the explanation.
 
 ## Setup and checking
 

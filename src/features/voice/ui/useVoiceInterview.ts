@@ -25,8 +25,10 @@ export function useVoiceInterview({ attemptId, adapters, initial, onAnswer, onTy
   useEffect(() => session.setCallbacks({ onAnswer, onTypeInstead }));
 
   // Leaving the page must turn the microphone off. Strict Mode runs this twice, so mounting revives it.
+  // The spoken question starts downloading now, so the tap that starts the interview plays it at once.
   useEffect(() => {
     session.activate();
+    session.prefetch();
     return () => session.dispose();
   }, [session]);
 
@@ -44,6 +46,7 @@ function createLazyBrowserAdapters(attemptId: string): VoiceAdapters {
   return {
     speech: {
       unlock: () => get().speech.unlock(),
+      prefetch: (kind) => get().speech.prefetch(kind),
       play: (kind, handlers) => get().speech.play(kind, handlers),
       fadeOut: () => real?.speech.fadeOut(),
       stop: () => real?.speech.stop(),
@@ -57,7 +60,6 @@ function createLazyBrowserAdapters(attemptId: string): VoiceAdapters {
       openMic: (onChunk) => get().listen.openMic(onChunk),
       createSocket: (url, protocols) => get().listen.createSocket(url, protocols),
     },
-    chime: () => get().chime(),
     unlockAudio: () => get().unlockAudio(),
   };
 }

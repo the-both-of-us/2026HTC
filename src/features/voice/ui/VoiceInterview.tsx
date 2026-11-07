@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, type RefObject } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { Button, Field, StateMark, Textarea } from "@/shared/ui";
 import type { AudioMeter, VoiceAdapters } from "../adapters/types";
 import type { FallbackReason, VoiceNotice, VoicePhase, VoiceState, VoiceVerdict } from "../machine";
-import type { InputMethod } from "../session";
+import { COUNTDOWN_MS, type InputMethod } from "../session";
 import type { Transcript } from "../transcript";
 import { Orb, type OrbMood } from "./Orb";
 import { SpokenQuestion } from "./SpokenQuestion";
@@ -71,10 +71,11 @@ const FALLBACK_SENTENCE: Record<FallbackReason, string> = {
 const NOTICE_SENTENCE: Record<VoiceNotice, string> = {
   "nothing-heard": "That didn't pick up any words. Check your microphone and try again, or type instead.",
   "send-failed": "We couldn't confirm your answer was received. It's still here, so you can send it again.",
+  "no-spoken-question": "The spoken question isn't available right now, so read it above. I'm listening.",
 };
 
-function moodOf(phase: VoicePhase, verdict: VoiceVerdict | null): OrbMood {
-  switch (phase) {
+function moodOf(state: VoiceState): OrbMood {
+  switch (state.phase) {
     case "thinking":
     case "checking":
       return "thinking";
@@ -82,10 +83,10 @@ function moodOf(phase: VoicePhase, verdict: VoiceVerdict | null): OrbMood {
       return "voice";
     case "listening":
       return "mic";
+    case "heard":
+      return state.holding ? "mic" : "rest";
     case "verdict":
-      return verdict?.passed ? "proven" : "not-yet";
-    case "your-turn":
-      return "voice";
+      return state.verdict?.passed ? "proven" : "not-yet";
     default:
       return "rest";
   }
@@ -94,13 +95,16 @@ function moodOf(phase: VoicePhase, verdict: VoiceVerdict | null): OrbMood {
 function announcementFor(state: VoiceState, heardText: string): string {
   switch (state.phase) {
     case "speaking":
-      return "Asking the question aloud.";
+      return "Asking the question aloud. The microphone opens when it ends.";
     case "your-turn":
       return state.notice ? NOTICE_SENTENCE[state.notice] : "Your turn. Press Space or the Start talking button.";
     case "listening":
-      return state.closing ? "Finishing up." : "Listening. Press Space or the Done button when you finish.";
+      return state.closing ? "Finishing up." : "Listening. Just stop talking when you're done, or press Space.";
     case "heard":
-      return state.notice ? NOTICE_SENTENCE[state.notice] : `Here's what I heard: ${heardText}. Edit it if needed, then send.`;
+      if (state.notice) return NOTICE_SENTENCE[state.notice];
+      return state.countdown
+        ? `Here's what I heard: ${heardText}. It sends in 3 seconds. Press any key to stop it.`
+        : `Here's what I heard: ${heardText}. Send it, edit it, or record again.`;
     case "checking":
       return "Checking your answer.";
     case "verdict":
@@ -116,8 +120,8 @@ function announcementFor(state: VoiceState, heardText: string): string {
 
 function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onContinue, adapters, initial }: VoiceInterviewProps) {
   const { session, snapshot } = useVoiceInterview({ attemptId, onAnswer, onTypeInstead, adapters, initial });
-  const { state, finalText, interimText, text, micLive } = snapshot;
-  const { phase, closing, reason, notice, verdict } = state;
+  const { state, finalText, interimText, text, micLive, countdownEndsAt } = snapshot;
+  const { phase, closing, holding, countdown, editing, reason, notice, verdict } = state;
   const baseId = useId();
   const questionId = `${baseId}-question`;
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -126,6 +130,7 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
   const previousPhase = useRef(phase);
 
   const isAnswering = phase === "ready" || phase === "thinking" || phase === "speaking" || phase === "your-turn" || phase === "listening";
+  const autoSending = phase === "heard" && (countdown || holding);
 
   // Space is the main action anywhere on the page, except where it means something else.
   useEffect(() => {
@@ -141,16 +146,31 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
     return () => window.removeEventListener("keydown", onKey);
   }, [isAnswering, session]);
 
+  // While the answer is about to send itself, any key stops it, so nobody is rushed.
+  useEffect(() => {
+    if (!autoSending) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Shift" || event.key === "Control" || event.key === "Alt" || event.key === "Meta") return;
+      session.send({ type: "STOP_COUNTDOWN" });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [autoSending, session]);
+
   // Keep keyboard users where the next action is. Nothing moves on the very first render.
   useEffect(() => {
     if (previousPhase.current === phase) return;
     previousPhase.current = phase;
-    if (phase === "heard" || phase === "type-instead") {
+    if (phase === "type-instead") {
       editorRef.current?.querySelector("textarea")?.focus({ preventScroll: true });
-    } else if (isAnswering) {
+    } else if (isAnswering || phase === "heard") {
       controlsRef.current?.querySelector("button")?.focus({ preventScroll: true });
     }
   }, [phase, isAnswering]);
+
+  useEffect(() => {
+    if (editing) editorRef.current?.querySelector("textarea")?.focus({ preventScroll: true });
+  }, [editing]);
 
   // Tell the parent once when answering begins, for the evidence page's "began after" time.
   const began = useRef(false);
@@ -167,7 +187,7 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
   }, [finalText, interimText]);
 
   const primaryLabel: Partial<Record<VoicePhase, string>> = {
-    ready: "Hear the question",
+    ready: "Answer aloud",
     thinking: "Answer now",
     speaking: "Answer now",
     "your-turn": "Start talking",
@@ -189,9 +209,9 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
       <div className="grid gap-x-8 gap-y-3 p-4 @2xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] @2xl:p-8">
         <div className="flex items-center justify-center @2xl:items-start @2xl:pt-4">
           <Orb
-            mood={moodOf(phase, verdict)}
+            mood={moodOf(state)}
             getMeter={() => session.activeMeter()}
-            // On a phone, an answer box needs the room more than the orb does.
+            // On a phone, the answer needs the room more than the orb does.
             className={`block aspect-square w-full @2xl:max-w-[22rem] ${
               phase === "heard" || phase === "type-instead"
                 ? "max-w-[4.5rem]"
@@ -205,6 +225,7 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
         <div className="flex min-h-[23rem] min-w-0 flex-col @2xl:min-h-[26rem]">
           <div className="flex min-h-7 items-center gap-2">
             {verdict?.passed && <StateMark state="proven" size={18} />}
+            {(phase === "listening" || holding) && !closing && <LiveDot />}
             <p className={`text-sm font-semibold ${verdict?.passed ? "text-proven" : verdict ? "text-contour" : "text-forest-deep"}`}>
               {status}
             </p>
@@ -222,28 +243,47 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
 
           <div className="mt-4 flex min-h-0 flex-1 flex-col">
             {phase === "listening" && (
-              <LiveCaptions
-                boxRef={captionRef}
-                finalText={finalText}
-                interimText={interimText}
-                closing={closing}
-                micLive={micLive}
-              />
+              <>
+                {notice && <p className="mb-2 text-sm text-ink-soft">{NOTICE_SENTENCE[notice]}</p>}
+                <LiveCaptions
+                  boxRef={captionRef}
+                  finalText={finalText}
+                  interimText={interimText}
+                  closing={closing}
+                  micLive={micLive}
+                />
+              </>
             )}
 
             {(phase === "ready" || phase === "thinking" || phase === "speaking") && (
               <p className="text-base text-ink-soft">
-                {phase === "ready" ? "It's about what you just explained. Listen, then answer out loud." : ""}
+                {phase === "ready"
+                  ? "It's about what you just explained. One tap: you'll hear the question, then just answer out loud."
+                  : "The microphone opens when the question ends. Tap Answer now to start sooner."}
               </p>
             )}
 
             {phase === "your-turn" && (
               <p className="text-base text-ink-soft">
-                {notice ? NOTICE_SENTENCE[notice] : "Take a moment if you need one. The microphone stays off until you tap."}
+                {notice ? NOTICE_SENTENCE[notice] : "Tap when you're ready. The microphone stays off until then."}
               </p>
             )}
 
-            {(phase === "heard" || phase === "type-instead") && (
+            {phase === "heard" && !editing && (
+              <div className="flex flex-col gap-3">
+                {notice && <p className="text-base text-danger">{NOTICE_SENTENCE[notice]}</p>}
+                <p
+                  className="cursor-text border-l-2 border-accent pl-4 text-lg leading-relaxed text-ink"
+                  onClick={() => session.send({ type: "STOP_COUNTDOWN" })}
+                >
+                  {text}
+                </p>
+                {holding && <p className="text-sm text-ink-soft">Still listening for a moment, in case you have more to say.</p>}
+                {countdownEndsAt !== null && <Countdown endsAt={countdownEndsAt} />}
+              </div>
+            )}
+
+            {((phase === "heard" && editing) || phase === "type-instead") && (
               <Editor
                 id={`${baseId}-answer`}
                 questionId={questionId}
@@ -288,10 +328,15 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
             {phase === "heard" && (
               <>
                 <Button size="lg" disabled={!text.trim()} onClick={() => session.send({ type: "SUBMIT" })}>
-                  Send answer
+                  {autoSending ? "Send now" : "Send answer"}
                 </Button>
-                <Button variant="subtle" size="lg" onClick={() => session.send({ type: "SAY_MORE" })}>
-                  Say more
+                {!editing && (
+                  <Button variant="subtle" size="lg" onClick={() => session.send({ type: "EDIT" })}>
+                    Edit
+                  </Button>
+                )}
+                <Button variant="quiet" onClick={() => session.send({ type: "RERECORD" })}>
+                  Re-record
                 </Button>
               </>
             )}
@@ -338,6 +383,36 @@ function SpaceHint() {
     <kbd className="hidden rounded-[0.3rem] border border-on-dark/40 px-1.5 py-px font-sans text-xs font-medium text-on-dark @lg:inline-block">
       Space
     </kbd>
+  );
+}
+
+/** A small pulsing dot: the microphone is open. It holds still with reduced motion. */
+function LiveDot() {
+  return (
+    <span aria-hidden="true" className="relative flex size-2.5">
+      <span className="absolute inline-flex size-full rounded-full bg-accent-bright opacity-60 motion-safe:animate-ping" />
+      <span className="relative inline-flex size-2.5 rounded-full bg-accent-bright" />
+    </span>
+  );
+}
+
+/** "Sending in 3", counting down, with a thin bar that empties. */
+function Countdown({ endsAt }: { endsAt: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 100);
+    return () => clearInterval(timer);
+  }, []);
+  const left = Math.max(0, endsAt - now);
+  return (
+    <div className="flex flex-col gap-1.5" aria-hidden="true">
+      <p className="text-sm text-ink-soft tabular-nums">
+        Sending in {Math.ceil(left / 1000)}. Press any key or Edit to stop.
+      </p>
+      <div className="h-1 overflow-hidden rounded-full bg-rule">
+        <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, (left / COUNTDOWN_MS) * 100)}%` }} />
+      </div>
+    </div>
   );
 }
 
@@ -394,7 +469,7 @@ function Editor({
   id: string;
   questionId: string;
   editorRef: RefObject<HTMLDivElement | null>;
-  phase: "heard" | "type-instead";
+  phase: VoicePhase;
   reason: FallbackReason | null;
   notice: VoiceNotice | null;
   text: string;
@@ -402,7 +477,7 @@ function Editor({
 }) {
   const hint =
     phase === "heard"
-      ? "This exact text is what gets checked. Fix anything it misheard. Edited answers are recorded as typed."
+      ? "This exact text is what gets checked. Fix anything it misheard. An edited answer is recorded as typed."
       : undefined;
   const fallback = phase === "type-instead" && reason ? FALLBACK_SENTENCE[reason] : "";
   return (

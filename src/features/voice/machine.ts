@@ -160,7 +160,7 @@ export function transition(state: VoiceState, event: VoiceEvent): Transition {
 
     case "END_OF_TURN":
       if (state.phase !== "listening" || state.closing) return stay;
-      return to({ phase: "heard", holding: true, countdown: true }, ["start-hold", "start-countdown"]);
+      return to({ phase: "heard", holding: true, countdown: true }, ["start-countdown", "start-hold"]);
 
     case "RESUMED":
       return state.phase === "heard" && state.holding ? to({ phase: "listening" }) : stay;
