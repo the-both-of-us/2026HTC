@@ -41,6 +41,8 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
   - `flashcards/<mapId>/<nodeId>` and `quiz/<mapId>/<nodeId>` for the user's maps. Taking `mapIds: string[]` is fine too: I call it before deleting the maps, so `listMapsByOwner(userId)` still works then.
   - Only touch that user's records, and let it run twice without failing. Tell me when it's on main and I'll call it and remove the "not covered yet" line.
 
+- [ ] **`/dashboard`, `/review`, `/people` and `/battle` are hidden from the sidebar** until they do more than show a heading (and `/api/review`, `/api/network` stop returning 501). Tell me when each is on main and I'll put its link back in `src/shared/ui/SideNav.tsx`, or add it yourself in the same commit.
+
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
 ## Get started (Mirza)

@@ -1,17 +1,14 @@
 "use client";
 
 import clsx from "clsx";
-import { BookOpen, LayoutDashboard, Plus, RotateCcw, ShieldCheck, Swords, Users, Zap } from "lucide-react";
+import { BookOpen, Plus, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/", label: "Build", icon: Plus },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  // Dashboard, Review, People and Battle come back here once Mirza's pages are on main.
   { href: "/courses", label: "Courses", icon: BookOpen },
-  { href: "/review", label: "Review", icon: RotateCcw },
-  { href: "/people", label: "People", icon: Users },
-  { href: "/battle", label: "Battle", icon: Swords },
   { href: "/grid", label: "Grid", icon: Zap },
   // Phones reach it from the top bar instead, so the pill keeps room for its icons.
   { href: "/trust", label: "Trust", icon: ShieldCheck, largeOnly: true },
