@@ -19,7 +19,7 @@ await deleteDoc(`maps/${id}`);
 - **S3 permissions:** the role needs `s3:ListBucket` as well as get, put and delete. Without it, S3 reports a missing key as AccessDenied instead of NoSuchKey, so `getDoc` throws instead of returning null.
 - **Keys** are stored as given, so use `/` to group documents and list them by prefix. `listDocs` reads each document with its own request, so keep prefixes narrow. Build keys from ids the server made, not from raw user input.
 - **Storage failures throw** the driver's own error. Route handlers should catch it and show a human sentence.
-- There are no transactions: two writers to one key means the last write wins.
+- There are no transactions: two writers to one key means the last write wins. To let exactly one caller through, use `claimDoc(key, value)`, which returns false if the key is taken.
 
 Each driver is one file (`memory.ts`, `blob.ts`, `s3.ts`) implementing `driver.ts`.
 

@@ -25,6 +25,11 @@ export async function putDoc(key: string, value: unknown): Promise<void> {
   await driver().write(key, JSON.stringify(value));
 }
 
+/** Creates the document only if the key is free. Returns false if someone got there first. */
+export async function claimDoc(key: string, value: unknown): Promise<boolean> {
+  return driver().create(key, JSON.stringify(value));
+}
+
 /** Returns every document whose key starts with the prefix. */
 export async function listDocs<T>(prefix: string): Promise<T[]> {
   const keys = await driver().listKeys(prefix);

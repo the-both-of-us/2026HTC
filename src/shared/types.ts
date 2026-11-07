@@ -101,4 +101,8 @@ export type MapProgress = {
 
 export type NodeState = "locked" | "available" | "proven";
 
-export const PASS_SCORE = 70;
+/**
+ * 65, not 70: a node with 3 checkpoints scores 67 with 2 met, and that must pass.
+ * No other reachable score falls between 65 and 70, so nothing else changes.
+ */
+export const PASS_SCORE = 65;

@@ -41,6 +41,24 @@ export const s3Driver: StoreDriver = {
     );
   },
 
+  async create(key, text) {
+    try {
+      await getClient().send(
+        new PutObjectCommand({
+          Bucket: bucket(),
+          Key: key,
+          Body: text,
+          ContentType: "application/json",
+          IfNoneMatch: "*",
+        }),
+      );
+      return true;
+    } catch (error) {
+      if (error instanceof Error && error.name === "PreconditionFailed") return false;
+      throw error;
+    }
+  },
+
   async listKeys(prefix) {
     const keys: string[] = [];
     let token: string | undefined;

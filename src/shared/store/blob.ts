@@ -1,4 +1,4 @@
-import { del, get, list, put } from "@vercel/blob";
+import { BlobError, del, get, list, put } from "@vercel/blob";
 import type { StoreDriver } from "./driver";
 
 /** Vercel Blob, private. */
@@ -18,6 +18,22 @@ export const blobDriver: StoreDriver = {
       allowOverwrite: true,
       contentType: "application/json",
     });
+  },
+
+  async create(key, text) {
+    try {
+      await put(key, text, {
+        access: "private",
+        addRandomSuffix: false,
+        allowOverwrite: false,
+        contentType: "application/json",
+      });
+      return true;
+    } catch (error) {
+      // Blob has no special error class for this, only this message (checked by running it).
+      if (error instanceof BlobError && /already exists/i.test(error.message)) return false;
+      throw error;
+    }
   },
 
   async listKeys(prefix) {

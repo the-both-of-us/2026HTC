@@ -16,6 +16,11 @@ export const memoryDriver: StoreDriver = {
   async write(key, text) {
     memory.set(key, text);
   },
+  async create(key, text) {
+    if (memory.has(key)) return false;
+    memory.set(key, text);
+    return true;
+  },
   async listKeys(prefix) {
     return [...memory.keys()].filter((key) => key.startsWith(prefix));
   },

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { deleteDoc, getDoc, listDocs, putDoc } from "./index";
+import { claimDoc, deleteDoc, getDoc, listDocs, putDoc } from "./index";
 
 /** A pretend bucket. The mocked SDK below reads and writes it. */
 const { objects, sent, PAGE_SIZE } = vi.hoisted(() => ({
@@ -19,13 +19,16 @@ vi.mock("@aws-sdk/client-s3", () => {
 
   class S3Client {
     async send(command: Command) {
-      const { Key, Body, Prefix, ContinuationToken } = command.input;
+      const { Key, Body, Prefix, ContinuationToken, IfNoneMatch } = command.input;
       sent.push({ command: command.constructor.name, input: command.input });
 
       if (command instanceof GetObjectCommand) {
         const text = objects.get(Key as string);
         if (text === undefined) throw Object.assign(new Error("gone"), { name: "NoSuchKey" });
         return { Body: { transformToString: async () => text } };
+      }
+      if (command instanceof PutObjectCommand && IfNoneMatch === "*" && objects.has(Key as string)) {
+        throw Object.assign(new Error("taken"), { name: "PreconditionFailed" });
       }
       if (command instanceof PutObjectCommand) return void objects.set(Key as string, Body as string);
       if (command instanceof DeleteObjectCommand) return void objects.delete(Key as string);
@@ -51,6 +54,12 @@ beforeEach(() => {
 });
 
 describe("store (S3 driver)", () => {
+  it("claims a key only if it is free", async () => {
+    expect(await claimDoc("claims/one", { n: 1 })).toBe(true);
+    expect(await claimDoc("claims/one", { n: 2 })).toBe(false);
+    expect(await getDoc("claims/one")).toEqual({ n: 1 });
+  });
+
   it("writes JSON to the bucket and reads it back", async () => {
     await putDoc("maps/one", { n: 1 });
 
