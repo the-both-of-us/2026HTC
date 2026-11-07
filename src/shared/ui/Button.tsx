@@ -7,12 +7,12 @@ type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    "bg-forest text-on-dark border-forest hover:bg-forest-deep hover:border-forest-deep",
-  secondary: "bg-transparent text-ink border-ink hover:bg-sheet",
+    "bg-accent text-on-dark border-accent hover:bg-accent-bright hover:border-accent-bright hover:shadow-glow",
+  secondary: "bg-transparent text-ink border-control-edge hover:border-ink hover:bg-raised",
   subtle:
-    "bg-sheet text-ink border-control-edge hover:border-ink aria-pressed:bg-highlight aria-pressed:border-ink",
+    "bg-raised/70 text-ink border-rule-strong hover:border-control-edge hover:bg-raised aria-pressed:bg-accent/15 aria-pressed:border-accent/60",
   quiet:
-    "bg-transparent text-ink border-transparent underline underline-offset-4 decoration-1 hover:decoration-2",
+    "bg-transparent text-ink-soft border-transparent hover:text-ink hover:bg-raised",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -27,9 +27,9 @@ export function buttonClasses(
   size: ButtonSize = "md",
 ) {
   return clsx(
-    "inline-flex items-center justify-center gap-2.5 rounded-control border-2 font-semibold",
+    "inline-flex items-center justify-center gap-2 rounded-control border font-medium",
     "cursor-pointer transition-control",
-    "aria-disabled:cursor-not-allowed disabled:cursor-not-allowed disabled:opacity-60",
+    "aria-disabled:cursor-not-allowed aria-disabled:opacity-70 disabled:cursor-not-allowed disabled:opacity-60",
     VARIANT_CLASSES[variant],
     SIZE_CLASSES[size],
   );

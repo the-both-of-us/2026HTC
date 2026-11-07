@@ -14,50 +14,42 @@ type StateMarkProps = {
 };
 
 /**
- * The map symbol for a skill's state. Each state has its own shape, so the three
- * stay distinct in greyscale and for colour-blind readers. Borrowed from survey
- * maps: a filled triangle with a dot marks a fixed, checked station.
+ * The status dot for a skill's state. Each state has its own shape, so the three stay
+ * distinct in greyscale and for colour-blind readers: a filled circle with a tick, a dot
+ * in a ring, and a dashed ring.
  * Decorative: always put the state's name in text nearby.
  */
 export function StateMark({ state, size = 20, className }: StateMarkProps) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={className}
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className={className}>
       {state === "proven" && (
         <>
+          <circle cx="12" cy="12" r="11" fill="var(--color-proven)" />
           <path
-            d="M12 2.5 22.5 21h-21z"
-            fill="var(--color-proven)"
-            stroke="var(--color-proven)"
-            strokeWidth="1.5"
+            d="m6.8 12.6 3.6 3.6 6.8-7.6"
+            fill="none"
+            stroke="var(--color-on-proven)"
+            strokeWidth="2.8"
+            strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="12" cy="14.5" r="2.6" fill="var(--color-on-proven)" />
         </>
       )}
       {state === "available" && (
-        <path
-          d="M12 4.5 20.8 20H3.2z"
-          fill="var(--color-available-surface)"
-          stroke="var(--color-available)"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-available)" strokeWidth="2.5" />
+          <circle cx="12" cy="12" r="4.6" fill="var(--color-accent-bright)" />
+        </>
       )}
       {state === "locked" && (
         <circle
           cx="12"
           cy="12"
-          r="8.5"
-          fill="var(--color-locked-surface)"
+          r="9.5"
+          fill="none"
           stroke="var(--color-locked)"
-          strokeWidth="2.25"
-          strokeDasharray="3.5 3"
+          strokeWidth="2.5"
+          strokeDasharray="4 3.45"
         />
       )}
     </svg>
