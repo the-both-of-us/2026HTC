@@ -1,52 +1,40 @@
 **The grader stops answers that state no facts. It does not stop a chatbot that states them, and neither does the follow-up.** Passing here shows the text states the facts and a follow-up was answered correctly. It does not show a person understood anything on their own.
 
-We ran real chatbot output through the real grader and the real follow-up, with `openai/gpt-4o` and `google/gemini-2.5-flash`, across all 8 skills (`scripts/eval-chatbot.ts`, each answer graded once):
+### What changed since the last run
 
-- **Asked only what the map shows:** 0 of 32 reached 70, and the highest score was 67. Checkpoints are specific enough that a general answer misses them, now that browsers no longer receive them.
-- **Given the checkpoints:** 13 of 16 reached 70. A failed attempt's result screen shows the missed checkpoints, so someone can fail once and hand those to a chatbot.
-- **Then the live follow-up:** the same model's correct answer passed 13 of 13, so 13 of those 16 would be marked proven with no person understanding anything. The follow-up raises the effort, since it means going back to the chatbot with a new question. It doesn't block the route.
-- **What the follow-up does catch:** answers to the actual question, written to be wrong but confident, passed 0 of 13.
+This run (Nov 7, about 20:50 UTC) used the grader on `main` after three changes: the pass mark moved from 70 to 65, quotes go through `isUsableQuote` (at least 3 words, found in the text by `@/shared/quote`), and `copiesCheckpoint` gives no credit for a checkpoint whose own words appear nearly unchanged in the answer. The labels are the ones frozen in `4f4f4e2`.
 
-This is why the evidence page says it can't rule out outside help, and why it's something to ask about in an interview.
+- **All 4 earlier false passes now fail, and no new one appeared: 0 of 48.** The two answer-key pastes (`sql-parrot`, `feedback-parrot`) went from 100 to 0, which is what the copy check is for. The two "every checkpoint plus a false claim" cases (`grid-all-plus-error`, `transactions-all-plus-error`) went from 80 to 55 and 47. That was also the copy check, not the false claim: those answers were written close to the checkpoints' wording, so one checkpoint each stopped counting. **A flagged false claim can still pass if everything else is met** (100 minus 20 is 80), so that decision below still stands.
+- **The copy check costs honest answers too.** It removed credit from 4 of the 23 should-pass cases: `writing-strong` fell from 100 to 50 and is now the one false fail, `grid-strong` and `grid-ai-specific` from 100 to 75, and `abtest-strong` from 100 to 67. These answers were written by the AI builder after reading the checkpoints, so they repeat the wording more than a real learner would. Still, a learner who learned from the same words could lose credit the same way.
+- **`abtest-strong` passes only because the mark is now 65.** It met 2 of 3 checkpoints (67). At 70 it would be a second false fail.
+- **The 65 mark could add false passes.** A 3-checkpoint skill with 2 met now scores 67 and passes, while the labels call 2 of 3 a fail (the label rule asks for 70% of checkpoints). `stats-partly` scored exactly 67 in the earlier runs. In this run the copy check took it down to 33, so it does not show up as a false pass, but that is luck of wording, not the mark.
 
-**What the other numbers rest on.** The labelled set still agrees 67 of 71 times, and these counts recompute from `results.json`, but they flatter the grader in three ways:
+### Real chatbot answers (saved runs, not rerun)
 
-- **"No generic AI answer passed" is narrower than it sounds.** All 8 `ai-generic` cases were written by hand and state no facts. The 2 `ai-specific` cases state the facts, are labelled pass, and scored 100 in 6 of 6 runs.
-- **Many fail cases are easy.** 36 of the 48 fail cases never scored above 25. The fluent-empty and prompt-injection results (highest score 25 in those groups) do show the method working, but they say little about harder cheating.
-- **"11 of 12 follow-ups stopped" used fixed answers written before each question existed**, so they repeat earlier text and don't respond to it. The 13 of 13 above is the fairer number for a learner with a chatbot.
+The chatbot runs below were made before these changes, with the pass mark at 70, and they were not rerun because that costs gateway credit. Read against today's grader:
 
-All 10 informal-but-correct answers passed on all 3 runs, including a voice-style transcript, an English-learner answer with mistakes, curly punctuation, French and Arabic.
-
-The false-pass rate is 8.3%, but its range reaches 20%, so this sample doesn't prove it is under 10%. All 4 false passes come from two causes, and neither is the model being fooled.
+- **Given the checkpoints, as a failed attempt's result screen shows them:** 13 of 16 reached 70 then, and 15 of 16 reach 65. Replaying today's copy check on those saved answers, with no model call, removes one checkpoint's credit in 2 of 16 answers. One of those still scores 75, and the other was already a fail. So the copy check does not stop a chatbot that paraphrases. **The fail-once-then-ask-a-chatbot route is still open.**
+- **Asked only what the map shows:** 0 of 32 reached 70, and 3 of 32 reach 65 (all three at 67). Those 3 never got a follow-up, because the run only asked one at 70 or more.
+- **The live follow-up:** the same model's correct answer passed 13 of 13 then. Answers written to be wrong but confident passed 0 of 13.
 
 ### What to change, most important first
 
-The lead decides these. The only change to `grading.ts` so far is the three-word quote rule.
+The lead decides these.
 
-**1. Decide what a failed attempt shows.** Browsers no longer get the checkpoints from `GET /api/maps/[id]`: `toPublicMap` sends only `checkpointCount`. In this eval, `sql-parrot` and `feedback-parrot` pasted checkpoints word for word and scored 100 in 6 of 6 runs, and that route is closed until a learner fails once.
-- The result screen still lists missed checkpoints after a failed attempt, which is the route the chatbot runs above used. That is useful teaching, so this is a real trade-off.
-- Options: name only the topic of a missed checkpoint, or add an integrity signal when a credited quote nearly matches its checkpoint's wording. A signal shouldn't block, because honest answers can also come close.
+**1. Decide what a failed attempt shows.** Browsers no longer get checkpoints from `GET /api/maps/[id]` (only `checkpointCount`). The result screen still lists missed checkpoints after a failed attempt, and that is the route the chatbot runs used. It is useful teaching, so this is a real trade-off. Options: name only the topic of a missed checkpoint, or record an integrity signal when a credited quote nearly matches its checkpoint.
 
-**2. Decide whether a flagged false claim can still pass.** `grid-all-plus-error` and `transactions-all-plus-error` state every checkpoint and add a serious false claim (for example, that ROLLBACK works days after COMMIT). The model flagged the claim in 6 of 6 runs, so it did its job. The formula then gave 100 minus 20, which is 80 and a pass.
-- Change: in `attempts.ts` line 60, go to `not-yet` when `grade.misconceptions.length > 0`, and update `SPEC.md`.
-- Replaying the saved runs with that rule takes false passes from 4 to 2 of 48, and false fails stay at 0 of 23. No pass-labelled run had a flagged error (0 of 69). Those answers were written to be clean, so real learners may trigger false flags more often.
-- Reason to leave it alone: this eval labels these as fails by a rule stricter than `SPEC.md`, and the follow-up stopped these learners in 6 of 6 runs, because it aims at misconceptions first.
+**2. Decide whether `copiesCheckpoint` should block or only flag.** It closed the answer-key paste completely in this eval (all 24 pasted checkpoints rejected across 6 runs), but it also cost 4 honest answers points and caused the one false fail. Turning it into a signal on the evidence page would keep the honest answers' scores and still show the reader that the wording matched.
 
-**3. Stop the model's edited quote costing a learner a pass.** In `abtest-strong` run 1 the model cut a sentence short and added its own full stop, so the code rejected a true quote. The score fell from 100 to 67, the only false-fail run of 69. It is 1 of 337 quotes, and it was caught as designed, but the learner pays for the model's edit.
-- Prompt change: add to the first bullet of `GRADER_SYSTEM`: "Do not add or change punctuation at the start or end of the quote. Stop where the learner's words stop, even in the middle of a sentence."
-- Code change: strip punctuation from both ends of the quote in `quoteIsInText`. Removing the full stop makes this exact quote match, which was checked against the saved run. A fabricated quote still fails.
-- Optional: use the same curly-quote handling as `normalizeForMatch` in skill-map. This did not fail in this run, where the model copied curly punctuation correctly.
+**3. Decide whether a flagged false claim can still pass.** The model flagged the false claims in `grid-all-plus-error` and `transactions-all-plus-error` in every run. The formula still allows a pass with one such claim when everything else is met. Change: in `attempts.ts`, go to `not-yet` when `grade.misconceptions.length > 0`, and update `SPEC.md`. The follow-up stopped these learners in 6 of 6 earlier runs, because it aims at misconceptions first.
 
-**4. Decide on 3-checkpoint skills.** One miss on 3 checkpoints gives 67, a fail. One miss on 4 gives 75, a pass. So 3-checkpoint skills need a perfect answer, which is why one rejected quote flipped `abtest-strong`. 30 of the 40 nodes in the saved sample maps have 3. Asking the generator for exactly 4 would even this out.
+**4. 3-checkpoint skills and the 65 mark.** On 3 checkpoints, one miss now passes (67). On 4, one miss passes (75). That evens the two out, but it also means 2 of 3 is enough, which this eval's labels call a fail.
 
-**5. Follow-up questions can give away the correction.** In at least 3 of the 6 follow-ups on false claims, the question tells the learner the claim is wrong (for example, "if it is not stored in the transmission lines"). That goes against the "never reveal" rule in `QUESTION_SYSTEM`, which could use a line such as: "Do not say or imply that their claim is false."
+**5. Follow-up questions can give away the correction.** In at least 3 of the 6 follow-ups on false claims, the question tells the learner the claim is wrong (for example, "if it is not stored in the transmission lines"). `QUESTION_SYSTEM` could add: "Do not say or imply that their claim is false."
 
 ### Limits of these numbers
 
-- **Same author for answers and labels.** The AI builder wrote the answers after reading the checkpoints, so correct answers track them closely. Real learners will be messier, and 0 false fails is probably optimistic. Nothing here has been tried on real learners.
-- **The two rules behind the false passes.** With labels matching the formula in `SPEC.md`, the two false-claim cases would count as passes, leaving 2 of 46. Leaving out the answer-key pastes as well gives 0 of 44. The headline keeps all 4, because the labels were frozen first.
-- **Generated checkpoints are lightly tested.** Only 2 generated skills were scored, and they had no false passes other than the deliberate paste. The generator ran twice, because a bug in my title filter picked the wrong node the first time. That rejected node, "Probability basics", had vague checkpoints such as "Probability quantifies the likelihood of an event occurring", and it was never scored. Vague checkpoints like those remain a risk.
-- **Follow-up check.** Re-pasting got through 1 of the 6 follow-ups on pasted answers (`sql-parrot` run 1). This was 12 runs with answers written for the check. See the chatbot runs above for someone who looks up the right answer.
-- **Chatbot runs are small.** 48 answers from 2 models, graded once each, by prompts we wrote. Other prompts or models could do better or worse.
-- **The grader changed slightly after the labelled runs.** Quotes must now be at least three whole words, and the prompt says so. The shortest quote credited in `results.json` is 6 words, so the check itself would not change those runs. They have not been rerun with the new prompt. The chatbot runs did use it.
-- **One checkpoint looks overstated.** "The read_csv function ... parsing delimiters automatically" isn't quite right, since pandas assumes a comma unless told otherwise. It did not change a verdict here.
+- **Same author for answers and labels.** The AI builder wrote the answers after reading the checkpoints, so correct answers track them closely, which is exactly what the copy check punishes. Nothing here has been tried on real learners.
+- **The skills under test are frozen.** `skills.json` holds the checkpoints from the sample maps as they were when the labels were written. The sample maps on `main` have since been regenerated with a stricter prompt, so the live demo's checkpoints differ from these.
+- **The follow-up spot check and the chatbot runs are older.** Both used the grader from before these changes, and neither was rerun.
+- **The planted-quote test lost one case.** "Three real words cut off mid-word" was dropped, because `main`'s quote check matches inside words: a quote such as "very single da" counts if those letters are in the text. It still has to be at least 3 words and copied exactly, so it can't invent evidence, but it is looser than the whole-word rule it replaced.
+- **Small sample.** 71 cases, 3 runs each. The false-pass range still reaches 7%, and the false-fail range reaches 21%.

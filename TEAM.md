@@ -58,6 +58,8 @@ npm run dev
 
 AWS (ECS Express Mode, S3) is the primary target once it's verified. Until then, Vercel stays the live fallback at https://oryxlearn.vercel.app . Abdu deploys, with `scripts/deploy-aws.sh`. The store picks its driver from the environment: `S3_BUCKET` means S3, `BLOB_READ_WRITE_TOKEN` means Blob, otherwise memory. Pushes to `main` by Abdu also go live on Vercel straight away.
 
+**`PROOF_SEAL_SECRET`** (`openssl rand -hex 32`, set once, on every host) signs each published evidence page. Without it pages still publish, but they say the server has no seal, so an edit to the store can only be caught by a saved fingerprint.
+
 **Using an AI coding tool?** Start it with: "Read `TEAM.md`, `CLAUDE.md` and `SPEC.md`. I'm Mirza. Only edit paths Mirza owns."
 
 ## Git rules
