@@ -27,13 +27,15 @@ describe("parseFluxMessage", () => {
 });
 
 describe("buildFluxUrl", () => {
-  it("repeats keyterm for each term, and sends no encoding for WebM", () => {
+  it("repeats keyterm for each term, and asks for 16 kHz linear16 with our end-of-turn settings", () => {
     const url = new URL(buildFluxUrl("wss://api.deepgram.com", ["load flow", "SCADA"]));
     expect(url.pathname).toBe("/v2/listen");
     expect(url.searchParams.get("model")).toBe(FLUX_MODEL);
     expect(url.searchParams.getAll("keyterm")).toEqual(["load flow", "SCADA"]);
-    expect(url.searchParams.has("encoding")).toBe(false);
-    expect(url.searchParams.has("sample_rate")).toBe(false);
+    expect(url.searchParams.get("encoding")).toBe("linear16");
+    expect(url.searchParams.get("sample_rate")).toBe("16000");
+    expect(url.searchParams.get("eot_threshold")).toBe("0.7");
+    expect(url.searchParams.get("eot_timeout_ms")).toBe("3000");
   });
 });
 

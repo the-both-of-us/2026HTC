@@ -2,7 +2,10 @@
  * Plays the server's audio through an <audio> element wired into Web Audio, so the orb
  * can follow the real voice and a tap can fade it out.
  *
- * It fetches first rather than pointing <audio> at the URL, because a media element
+ * The question is fetched as soon as it is on screen (prefetch), so the tap that starts the
+ * interview plays it at once, and "Hear it again" plays the same file.
+ *
+ * Otherwise it fetches first rather than pointing <audio> at the URL, because a media element
  * can't tell a 503 from any other problem. The stream then goes into MediaSource, so
  * speech starts while it is still arriving. Where that isn't available, or for Gemini's
  * WAV, it waits for the whole file, which only costs a little time.
@@ -25,6 +28,8 @@ export function createSpeechPlayer(urlFor: (kind: SpeechKind) => string): Speech
   let abort: AbortController | null = null;
   let objectUrl: string | null = null;
   let startTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Downloaded audio. Null means the download failed, and play() will try again itself. */
+  const prefetched = new Map<SpeechKind, Promise<Blob | null>>();
 
   function ensureGraph(): HTMLAudioElement {
     if (element) return element;
@@ -102,6 +107,14 @@ export function createSpeechPlayer(urlFor: (kind: SpeechKind) => string): Speech
       void audio.play().catch(() => {});
     },
 
+    prefetch(kind: SpeechKind) {
+      if (prefetched.has(kind)) return;
+      const download = fetch(urlFor(kind))
+        .then((response) => (response.ok ? response.blob() : null))
+        .catch(() => null);
+      prefetched.set(kind, download);
+    },
+
     play(kind: SpeechKind, handlers: SpeechHandlers) {
       clearSource();
       const audio = ensureGraph();
@@ -130,8 +143,17 @@ export function createSpeechPlayer(urlFor: (kind: SpeechKind) => string): Speech
       startTimer = setTimeout(fail, START_TIMEOUT_MS);
 
       abort = new AbortController();
+      const early = prefetched.get(kind);
       void (async () => {
         try {
+          const blob = early ? await early : null;
+          if (!isCurrent()) return;
+          if (blob) {
+            objectUrl = URL.createObjectURL(blob);
+            audio.src = objectUrl;
+            await audio.play();
+            return;
+          }
           const response = await fetch(urlFor(kind), { signal: abort?.signal });
           if (!isCurrent()) return;
           if (!response.ok) return fail();

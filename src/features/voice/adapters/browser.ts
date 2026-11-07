@@ -1,5 +1,5 @@
 /** The real adapters: the browser's audio and our two API routes. */
-import { playChime, resumeAudio } from "./audioEngine";
+import { resumeAudio } from "./audioEngine";
 import { openBrowserMic } from "./mic";
 import { createSpeechPlayer } from "./speechPlayer";
 import type { FetchGrant, ListenDeps, SocketLike, SttGrant, VoiceAdapters } from "./types";
@@ -33,7 +33,6 @@ export function createBrowserAdapters(attemptId: string): VoiceAdapters {
       (kind) => `/api/voice/speak?attemptId=${encodeURIComponent(attemptId)}&say=${kind}`,
     ),
     listen: browserListenDeps(grantFetcher({ attemptId })),
-    chime: playChime,
     unlockAudio: resumeAudio,
   };
 }

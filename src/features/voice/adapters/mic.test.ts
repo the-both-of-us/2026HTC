@@ -8,47 +8,64 @@ vi.mock("./audioEngine", () => ({
 }));
 
 const disconnect = vi.fn();
-let context = { createMediaStreamSource: vi.fn(() => ({ connect: () => {}, disconnect })) };
+let context: Record<string, unknown>;
+const posted: unknown[] = [];
 
-function stubBrowser(recorder: new () => unknown) {
+function freshContext() {
+  return {
+    audioWorklet: { addModule: vi.fn(async () => {}) },
+    createMediaStreamSource: vi.fn(() => ({ connect: () => {}, disconnect })),
+  };
+}
+context = freshContext();
+
+class WorkingNode {
+  port = { onmessage: null as ((event: { data: unknown }) => void) | null, postMessage: (data: unknown) => posted.push(data) };
+}
+
+function stubBrowser(Node: unknown = WorkingNode) {
   const stop = vi.fn();
   vi.stubGlobal("navigator", {
     mediaDevices: { getUserMedia: async () => ({ getTracks: () => [{ stop }, { stop }] }) },
   });
-  const Recorder = Object.assign(recorder, { isTypeSupported: () => true });
-  vi.stubGlobal("MediaRecorder", Recorder);
+  vi.stubGlobal("AudioWorkletNode", Node);
+  vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: () => "blob:worklet" }));
   return stop;
 }
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
-  context = { createMediaStreamSource: vi.fn(() => ({ connect: () => {}, disconnect })) };
+  posted.length = 0;
+  context = freshContext();
 });
 
-async function open() {
+async function open(onChunk: (chunk: ArrayBuffer) => void = () => {}) {
   const { openBrowserMic } = await import("./mic");
-  return openBrowserMic(() => {});
-}
-
-class WorkingRecorder {
-  state = "inactive";
-  ondataavailable: unknown = null;
-  start() {
-    this.state = "recording";
-  }
-  stop() {
-    this.state = "inactive";
-  }
-  requestData() {}
+  return openBrowserMic(onChunk);
 }
 
 describe("openBrowserMic", () => {
-  it("turns the mic off if the recorder can't be created", async () => {
+  it("says unsupported, without asking for the mic, where there is no AudioWorklet", async () => {
+    const getUserMedia = vi.fn();
+    vi.stubGlobal("navigator", { mediaDevices: { getUserMedia } });
+    vi.stubGlobal("AudioWorkletNode", undefined);
+    await expect(open()).rejects.toMatchObject({ reason: "unsupported" });
+    expect(getUserMedia).not.toHaveBeenCalled();
+  });
+
+  it("turns the mic off if the worklet can't load", async () => {
+    const stop = stubBrowser();
+    context.audioWorklet = { addModule: vi.fn(async () => Promise.reject(new Error("blocked"))) };
+    await expect(open()).rejects.toBeInstanceOf(MicError);
+    expect(stop).toHaveBeenCalledTimes(2);
+  });
+
+  it("turns the mic off if the audio graph can't be built", async () => {
     const stop = stubBrowser(
       class {
         constructor() {
-          throw new Error("NotSupportedError");
+          throw new Error("no audio");
         }
       },
     );
@@ -57,29 +74,30 @@ describe("openBrowserMic", () => {
     expect(disconnect).toHaveBeenCalled();
   });
 
-  it("turns the mic off if the recorder can't start", async () => {
-    const stop = stubBrowser(
-      class extends WorkingRecorder {
-        start() {
-          throw new Error("InvalidStateError");
+  it("passes each PCM chunk on, flushes on request, and stops passing them once released", async () => {
+    stubBrowser();
+    const chunks: ArrayBuffer[] = [];
+    const nodes: WorkingNode[] = [];
+    vi.stubGlobal(
+      "AudioWorkletNode",
+      class extends WorkingNode {
+        constructor() {
+          super();
+          nodes.push(this);
         }
       },
     );
-    await expect(open()).rejects.toMatchObject({ reason: "unsupported" });
-    expect(stop).toHaveBeenCalledTimes(2);
-  });
-
-  it("turns the mic off if the audio graph can't be built", async () => {
-    const stop = stubBrowser(WorkingRecorder);
-    context.createMediaStreamSource = vi.fn(() => {
-      throw new Error("no audio");
-    });
-    await expect(open()).rejects.toBeInstanceOf(MicError);
-    expect(stop).toHaveBeenCalledTimes(2);
+    const mic = await open((chunk) => chunks.push(chunk));
+    nodes[0].port.onmessage?.({ data: new ArrayBuffer(2_560) });
+    expect(chunks).toHaveLength(1);
+    mic.flush();
+    expect(posted).toEqual(["flush"]);
+    mic.release();
+    expect(nodes[0].port.onmessage).toBeNull();
   });
 
   it("leaves the mic on when setup works, until it's released", async () => {
-    const stop = stubBrowser(WorkingRecorder);
+    const stop = stubBrowser();
     const mic = await open();
     expect(stop).not.toHaveBeenCalled();
     mic.release();

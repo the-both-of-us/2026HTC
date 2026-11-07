@@ -39,6 +39,8 @@ export type SpeechHandlers = {
 export type SpeechPort = {
   /** Call during a tap, so the browser allows sound later. */
   unlock(): void;
+  /** Starts downloading the audio now, so play() can start at once. */
+  prefetch(kind: SpeechKind): void;
   play(kind: SpeechKind, handlers: SpeechHandlers): void;
   fadeOut(): void;
   stop(): void;
@@ -49,7 +51,7 @@ export type SpeechPort = {
 
 export type MicHandle = {
   meter: AudioMeter;
-  /** Pushes out audio the recorder is still holding. */
+  /** Pushes out audio the worklet is still holding. */
   flush(): void;
   /** Stops recording and turns the browser's microphone light off. */
   release(): void;
@@ -63,7 +65,8 @@ export class MicError extends Error {
   }
 }
 
-export type OpenMic = (onChunk: (chunk: Blob | ArrayBuffer) => void) => Promise<MicHandle>;
+/** Each chunk is 16 kHz, 16-bit mono PCM, the format the socket URL names. */
+export type OpenMic = (onChunk: (chunk: ArrayBuffer) => void) => Promise<MicHandle>;
 
 export type SttGrant = { token: string; wsUrl: string };
 
@@ -73,7 +76,7 @@ export type FetchGrant = () => Promise<SttGrant>;
 /** The parts of a browser WebSocket we use. Node 22+ has the same one, which tests rely on. */
 export type SocketLike = {
   readyState: number;
-  send(data: string | Blob | ArrayBuffer): void;
+  send(data: string | ArrayBuffer): void;
   close(): void;
   onopen: ((event: unknown) => void) | null;
   onmessage: ((event: { data: unknown }) => void) | null;
@@ -92,7 +95,6 @@ export type ListenDeps = {
 export type VoiceAdapters = {
   speech: SpeechPort;
   listen: ListenDeps;
-  chime(): void;
   /** Call during a tap, so the browser allows audio analysis. */
   unlockAudio(): void;
 };

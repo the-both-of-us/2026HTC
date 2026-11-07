@@ -52,13 +52,29 @@ export function parseFluxMessage(raw: string): FluxMessage {
 export const FORCE_END_TURN = JSON.stringify({ type: "ForceEndTurn" });
 export const CLOSE_STREAM = JSON.stringify({ type: "CloseStream" });
 
+/** The browser sends raw 16-bit PCM at this rate. See adapters/pcmWorklet.ts. */
+export const FLUX_SAMPLE_RATE = 16_000;
+
 /**
- * The socket URL. No encoding or sample_rate: MediaRecorder sends WebM, and Flux reads
- * those from the container (it rejects them for containerized audio).
+ * End-of-turn settings, measured on 2026-11-07 with real Flux (see README): 0.7 ends a
+ * finished answer 0.7 to 1.4 s after the last word. No threshold up to 0.9 kept a 2 s pause
+ * after a whole clause from ending the turn, so session.ts holds the mic open briefly after
+ * EndOfTurn instead. The timeout caps how long a trailing-off answer waits.
+ */
+export const EOT_THRESHOLD = "0.7";
+export const EOT_TIMEOUT_MS = "3000";
+
+/**
+ * The socket URL. Raw linear16 rather than WebM: it was as accurate in our test, ended
+ * turns about 0.15 s sooner, and lets the socket stay open on silence while the question plays.
  */
 export function buildFluxUrl(base: string, keyterms: readonly string[]): string {
   const url = new URL("/v2/listen", base);
   url.searchParams.set("model", FLUX_MODEL);
+  url.searchParams.set("encoding", "linear16");
+  url.searchParams.set("sample_rate", String(FLUX_SAMPLE_RATE));
+  url.searchParams.set("eot_threshold", EOT_THRESHOLD);
+  url.searchParams.set("eot_timeout_ms", EOT_TIMEOUT_MS);
   for (const term of keyterms) url.searchParams.append("keyterm", term);
   return url.toString();
 }

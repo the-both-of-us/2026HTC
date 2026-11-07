@@ -1,6 +1,10 @@
 /**
- * One turn of listening: gets a token, opens the mic and the socket, streams audio,
- * reports words, and ends the turn cleanly. Used by the interview and by dictation.
+ * One take of listening: gets a token, opens the mic and the socket, streams audio,
+ * reports words, and ends cleanly. Used by the interview and by dictation.
+ *
+ * A take can start "gated": the mic and socket open, but Flux receives silence in place of
+ * the mic, until ungate(). The interview opens everything while the question plays, so
+ * nothing has to connect when it ends, and the question's own voice is never transcribed.
  *
  * Flux has three things to get right when ending a turn, all from its docs:
  *  - ForceEndTurn only covers audio already decoded, so we wait a moment first or
@@ -40,7 +44,8 @@ export class Listener {
   private stage: Stage = "idle";
   private socket: SocketLike | null = null;
   private mic: MicHandle | null = null;
-  private queue: (Blob | ArrayBuffer)[] = [];
+  private queue: ArrayBuffer[] = [];
+  private gated = false;
   private grant: PendingGrant | null = null;
   /**
    * Which take is current. A tap can stop one take and start another while the old one is
@@ -71,10 +76,16 @@ export class Listener {
     this.grant = this.fetchGrant();
   }
 
-  async start(): Promise<void> {
-    if (this.stage !== "idle" && this.stage !== "closed") return;
+  /** True while a take is opening or running. */
+  get active(): boolean {
+    return this.stage === "opening" || this.stage === "streaming" || this.stage === "finishing";
+  }
+
+  async start(options: { gated?: boolean } = {}): Promise<void> {
+    if (this.active) return;
     const run = ++this.run;
     this.stage = "opening";
+    this.gated = options.gated ?? false;
     this.queue = [];
     this.lastText = "";
     this.transcriptChanged = false;
@@ -109,7 +120,7 @@ export class Listener {
     }
     this.mic = mic;
     this.handlers.onMicLive?.();
-    this.startWatch();
+    if (!this.gated) this.startWatch();
 
     // The learner may have sat on the permission prompt until this token was nearly dead.
     if (!this.isFresh(pending)) pending = this.fetchGrant();
@@ -123,6 +134,23 @@ export class Listener {
     }
     if (run !== this.run) return;
     this.openSocket(grant);
+  }
+
+  /** Lets the mic's audio through. Safe to call before the mic or socket is open. */
+  ungate(): void {
+    if (!this.gated) return;
+    this.gated = false;
+    if (this.mic && this.active) this.startWatch();
+  }
+
+  /**
+   * Closes after Flux already ended the turn by itself: no tail and no ForceEndTurn,
+   * because there is no turn left to end. The words are already final.
+   */
+  close(): void {
+    if (!this.active) return;
+    if (this.socketIsOpen()) this.socket!.send(CLOSE_STREAM);
+    this.teardown();
   }
 
   /** Done: ends the turn. Resolves when the words are final and everything is closed. */
@@ -220,7 +248,9 @@ export class Listener {
     if (this.stage === "opening" || this.stage === "streaming") this.fail("socket");
   }
 
-  private sendAudio(chunk: Blob | ArrayBuffer): void {
+  private sendAudio(mic: ArrayBuffer): void {
+    // Silence of the same length keeps Flux's clock running, and the socket alive.
+    const chunk = this.gated ? new ArrayBuffer(mic.byteLength) : mic;
     if (this.stage === "streaming" || this.stage === "finishing") {
       if (this.socketIsOpen()) this.socket!.send(chunk);
     } else if (this.stage === "opening") {

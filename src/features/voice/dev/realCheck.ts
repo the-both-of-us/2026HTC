@@ -54,10 +54,11 @@ async function checkFlux(apiKey: string, base: string) {
   results.push("PASS Deepgram grant: token minted");
 
   const aiff = join(out, "speech.aiff");
-  const webm = join(out, "speech.webm");
+  const pcm = join(out, "speech.pcm");
   execFileSync("say", ["-o", aiff, SENTENCE]);
-  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-c:a", "libopus", "-b:a", "32k", "-ar", "48000", "-ac", "1", webm]);
-  const audio = readFileSync(webm);
+  // The browser's worklet sends 16 kHz linear16, so the check sends the same.
+  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-f", "s16le", "-ar", "16000", "-ac", "1", pcm]);
+  const audio = readFileSync(pcm);
 
   const url = buildFluxUrl(base.replace(/^http/, "ws"), extractKeyterms("Transformer insulation", SENTENCE));
   const socket = new WebSocket(url, ["bearer", token]);
@@ -78,12 +79,12 @@ async function checkFlux(apiKey: string, base: string) {
     };
     socket.onopen = async () => {
       results.push("PASS Flux: socket opened with the bearer subprotocol");
-      // Real time, in the same 100 ms pieces the browser sends.
-      const chunk = Math.ceil(audio.length / 40);
+      // Real time, in the same 80 ms pieces the browser sends (1,280 samples, 2 bytes each).
+      const chunk = 2_560;
       for (let i = 0; i < audio.length; i += chunk) {
         if (socket.readyState !== 1) return;
         socket.send(audio.subarray(i, i + chunk));
-        await new Promise((r) => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 80));
       }
       await new Promise((r) => setTimeout(r, 300));
       socket.send(FORCE_END_TURN);
