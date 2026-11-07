@@ -1,202 +1,237 @@
 {
   "sampleId": "instrumentation-renewables",
-  "generatedAt": "2026-11-07T18:46:31.434Z",
+  "generatedAt": "2026-11-07T19:18:13.032Z",
   "output": {
+    "isJobPosting": true,
     "title": "Instrumentation Technician, Renewable Energy",
     "subtitle": "Calgary, AB",
     "nodes": [
       {
-        "id": "electrical-basics",
-        "title": "Electrical basics",
-        "why": "Understanding voltage, current, and circuits is needed to wire and test instrumentation.",
+        "id": "basic-electrical",
+        "title": "Basic electrical principles",
+        "why": "To understand and work with sensor wiring, power supplies, and communication loops on equipment.",
         "prerequisites": [],
         "fromSource": false,
         "quote": null,
         "checkpoints": [
-          "Ohm's law states V = I × R, so increasing resistance lowers current at constant voltage.",
-          "A series circuit adds resistances, so total resistance equals sum of individual resistances.",
-          "A short circuit creates very low resistance, causing excessive current flow that can trip protective devices."
+          "Voltage is the electrical potential difference between two points.",
+          "Current flows from higher to lower potential, measured in amperes.",
+          "Resistance opposes current flow, determined by material and geometry.",
+          "Ohm's law relates voltage, current, and resistance, because V = I * R."
         ]
       },
       {
-        "id": "instrumentation-foundations",
+        "id": "instrumentation-basics",
         "title": "Instrumentation fundamentals",
-        "why": "Knowing how common sensors work enables accurate calibration and troubleshooting.",
+        "why": "To select, configure, and calibrate field instruments that measure process variables.",
         "prerequisites": [
-          "electrical-basics"
+          "basic-electrical"
         ],
         "fromSource": false,
         "quote": null,
         "checkpoints": [
-          "Pressure transducers convert pressure into a proportional electrical signal, often 4-20 mA.",
-          "Thermocouples generate voltage proportional to temperature difference between junctions, requiring cold-junction compensation.",
-          "Vibration sensors such as accelerometers output voltage proportional to acceleration, useful for monitoring rotating equipment."
+          "A sensor converts a physical quantity into an electrical signal.",
+          "Signal conditioning amplifies or scales raw sensor output to usable ranges.",
+          "Calibration aligns a sensor's output with known reference values.",
+          "Transducers often output a standardized current, such as 4-20 mA, for industrial communication."
         ]
       },
       {
-        "id": "safety-foundations",
-        "title": "Safety fundamentals",
-        "why": "Proper lockout, tagout, and fall protection keep technicians safe while working on equipment.",
+        "id": "basic-safety",
+        "title": "Basic safety practices",
+        "why": "To perform work safely by isolating energy sources and protecting against falls and arc hazards.",
         "prerequisites": [],
         "fromSource": false,
         "quote": null,
         "checkpoints": [
-          "Lockout-tagout isolates energy sources, preventing accidental start-up while work is performed.",
-          "Fall protection harnesses arrest a fall by distributing load, reducing injury risk.",
-          "Arc flash boundaries define distance where thermal exposure can cause burns, requiring PPE."
+          "Lockout/tagout isolates energy sources before work, preventing accidental startup.",
+          "Fall protection equipment must be anchored to a sturdy point, because fall forces are transferred there.",
+          "Arc flash hazards require insulated tools and appropriate PPE to avoid burns.",
+          "Personal protective equipment is selected based on the identified hazard category."
         ]
       },
       {
-        "id": "plc-basics",
-        "title": "PLC basics",
-        "why": "Reading ladder logic lets technicians interpret control programs linked to field devices.",
+        "id": "control-systems-basics",
+        "title": "Control systems basics",
+        "why": "To monitor and control field devices through SCADA and related control loops.",
         "prerequisites": [
-          "electrical-basics"
+          "basic-electrical",
+          "instrumentation-basics"
         ],
         "fromSource": false,
         "quote": null,
         "checkpoints": [
-          "Ladder logic uses rungs that represent logical operations, where contacts act as inputs and coils as outputs.",
-          "A PLC scan cycle reads inputs, executes logic, then updates outputs, typically within tens of milliseconds.",
-          "Bit addresses in PLC programs refer to specific I/O points, enabling direct control of field devices."
+          "SCADA monitors and controls field devices via remote telemetry.",
+          "A control loop consists of sensor, controller, and actuator to maintain a setpoint.",
+          "Human-machine interfaces display real-time process data for operators.",
+          "Alarms in control systems trigger when measurements exceed defined thresholds, because limits are breached."
         ]
       },
       {
-        "id": "sensor-calibration-troubleshooting",
-        "title": "Sensor calibration and troubleshooting",
-        "why": "Calibrating and fixing pressure, temperature, and vibration sensors ensures reliable turbine and substation data.",
+        "id": "sensor-calibration",
+        "title": "Pressure, temperature, and vibration sensor calibration",
+        "why": "To ensure pressure, temperature, and vibration sensors provide accurate readings for turbine and substation monitoring.",
         "prerequisites": [
-          "instrumentation-foundations",
-          "electrical-basics"
+          "basic-electrical",
+          "instrumentation-basics"
         ],
         "fromSource": true,
-        "quote": "Calibrate, troubleshoot and replace pressure",
+        "quote": "Calibrate, troubleshoot and replace pressure, temperature and vibration sensors",
         "checkpoints": [
-          "Calibration verifies that a sensor’s output matches a known standard, adjusting span or zero as needed.",
-          "If a pressure sensor reads high at zero pressure, the zero offset may be misadjusted.",
-          "Replacing a faulty vibration sensor restores accurate acceleration signals, preventing false alarms."
+          "Pressure sensors output voltage proportional to pressure, so a higher pressure yields higher voltage.",
+          "Temperature sensors like RTDs change resistance with temperature, requiring a Wheatstone bridge for measurement.",
+          "Vibration sensors (accelerometers) produce charge proportional to acceleration, which is converted to voltage.",
+          "Improper grounding can cause sensor signal noise, leading to false readings during calibration."
         ]
       },
       {
-        "id": "loop-tracing-4-20ma",
-        "title": "4‑20 mA loop tracing",
-        "why": "Tracing current loops identifies wiring faults that affect sensor signals to the SCADA system.",
+        "id": "4-20mA-loop",
+        "title": "4-20 mA loop tracing",
+        "why": "To trace and verify current loops that transmit sensor data to the SCADA system.",
         "prerequisites": [
-          "instrumentation-foundations",
-          "electrical-basics"
+          "basic-electrical",
+          "instrumentation-basics"
         ],
         "fromSource": true,
         "quote": "Trace 4-20 mA loops",
         "checkpoints": [
-          "A 4-20 mA loop supplies constant current, so any break causes the receiver to see 0 mA.",
-          "Measuring voltage across a resistor in the loop determines current using Ohm's law.",
-          "Loop testing with a multimeter can locate open circuits by checking for expected voltage drop."
+          "A 4-20 mA loop provides a live zero at 4 mA, so a broken wire appears as 0 mA.",
+          "Current in a loop is limited by the loop's total resistance and the power supply voltage.",
+          "Loop continuity is verified with a clamp meter, because the current can be measured without breaking the circuit.",
+          "Increasing loop resistance reduces current, which can cause the sensor to read low values."
         ]
       },
       {
-        "id": "modbus-communication",
-        "title": "Modbus communication",
-        "why": "Understanding Modbus lets technicians verify that field devices transmit data correctly to SCADA.",
+        "id": "modbus-troubleshooting",
+        "title": "Modbus communication troubleshooting",
+        "why": "To diagnose communication issues between field devices and SCADA using Modbus protocol.",
         "prerequisites": [
-          "electrical-basics"
+          "basic-electrical",
+          "control-systems-basics"
         ],
         "fromSource": true,
-        "quote": "Modbus signals from the field",
+        "quote": "Modbus signals from the field device to the SCADA system",
         "checkpoints": [
-          "Modbus RTU transmits data in frames with address, function code, and CRC for error checking.",
-          "Reading a holding register via Modbus retrieves the current sensor value from the device.",
-          "If a Modbus response has an invalid CRC, the master discards the message and may retry."
+          "Modbus uses a master/slave architecture where the master initiates requests.",
+          "Modbus RTU frames include a CRC checksum for error detection.",
+          "Addressing errors cause devices to ignore requests, so each slave must have a unique ID.",
+          "Baud rate mismatches between devices corrupt communication, leading to timeouts."
         ]
       },
       {
-        "id": "reading-p-and-id",
-        "title": "Reading P&IDs and schematics",
-        "why": "Interpreting diagrams allows technicians to locate and service the correct instrumentation.",
+        "id": "pids-schematics",
+        "title": "P&IDs and electrical schematics interpretation",
+        "why": "To interpret drawings that locate instruments and define wiring for maintenance tasks.",
         "prerequisites": [
-          "instrumentation-foundations"
+          "instrumentation-basics",
+          "basic-electrical"
         ],
         "fromSource": true,
-        "quote": "Read and mark up P&IDs",
+        "quote": "Read and mark up P&IDs, loop diagrams and electrical schematics",
         "checkpoints": [
-          "P&IDs show process equipment and instrumentation symbols, linking loops to physical devices.",
-          "Loop diagrams detail signal flow from field sensor through transmitters to control system.",
-          "Electrical schematics display wiring connections, enabling identification of circuit breakers and fuses."
+          "P&IDs show process flow and instrumentation symbols, allowing identification of sensor locations.",
+          "Loop diagrams connect field devices to control system I/O points, illustrating signal paths.",
+          "Electrical schematics use standardized symbols for relays, contacts, and power distribution.",
+          "Cross-referencing a P&ID with a schematic reveals wiring changes, because they reference the same tag numbers."
         ]
       },
       {
-        "id": "loto-and-height-safety",
-        "title": "LOTO and height safety",
-        "why": "Applying lockout‑tagout and fall protection prevents accidents during maintenance at elevation.",
+        "id": "lockout-tagout",
+        "title": "Lockout/tagout procedures",
+        "why": "To safely de‑energize equipment before performing calibration or repair work.",
         "prerequisites": [
-          "safety-foundations"
+          "basic-safety"
         ],
         "fromSource": true,
         "quote": "Follow lockout and tagout procedures",
         "checkpoints": [
-          "Lockout devices physically prevent operation, and tags warn personnel of the locked condition.",
-          "When working above 2 meters, harnesses must be anchored to a suitable load‑bearing point.",
-          "Conducting a pre‑task safety briefing reduces the chance of procedural oversights."
+          "Lockout devices physically prevent equipment operation, while tags provide warning information.",
+          "Procedures require verification of zero energy before work begins, because residual energy may remain.",
+          "Multiple energy sources must be isolated, so each source receives its own lock and tag.",
+          "Authorized personnel remove locks only after confirming the equipment is safe, preventing accidental restart."
         ]
       },
       {
-        "id": "scada-trend-analysis",
-        "title": "SCADA trend analysis",
-        "why": "Analyzing trends helps detect equipment degradation before it causes unplanned downtime.",
+        "id": "working-at-height",
+        "title": "Working at height safety",
+        "why": "To access high-mounted equipment on turbines and substations while preventing falls.",
         "prerequisites": [
-          "modbus-communication"
+          "basic-safety"
         ],
         "fromSource": true,
-        "quote": "Use SCADA trends to find",
+        "quote": "work safely at height",
         "checkpoints": [
-          "SCADA trend lines plot sensor values over time, revealing gradual deviations that indicate wear.",
-          "A sudden drop in vibration amplitude may signal a sensor fault, prompting inspection before failure.",
-          "Predictive alerts can be configured to trigger work orders when a parameter exceeds a set threshold."
+          "Fall arrest systems stop a fall by deploying a rope at a specific length, limiting descent distance.",
+          "Anchorage points must support at least five times the expected load, because forces are amplified during a fall.",
+          "Lanyards are inspected for cuts before each use, as damaged lines can fail under load.",
+          "Work platforms must be secured to prevent tipping, because unstable platforms increase fall risk."
         ]
       },
       {
-        "id": "maintenance-record-keeping",
-        "title": "Maintenance record keeping",
-        "why": "Documenting work orders and calibration results creates traceable equipment history.",
+        "id": "plc-basics",
+        "title": "PLC basics and ladder logic",
+        "why": "To read and understand ladder logic programs that control instrumentation and process functions.",
         "prerequisites": [
-          "sensor-calibration-troubleshooting",
-          "reading-p-and-id"
+          "basic-electrical",
+          "control-systems-basics"
+        ],
+        "fromSource": true,
+        "quote": "PLC basics, including reading ladder logic",
+        "checkpoints": [
+          "Ladder logic programs consist of rungs that represent Boolean control statements.",
+          "Inputs are read as discrete signals, which can be energized or de-energized.",
+          "Outputs are energized based on the logical results of the rung evaluations.",
+          "Scan cycles read inputs, execute logic, then update outputs, because the PLC processes sequentially."
+        ]
+      },
+      {
+        "id": "scada-trends",
+        "title": "SCADA trends analysis",
+        "why": "To analyze real‑time data trends to predict equipment failures before downtime occurs.",
+        "prerequisites": [
+          "control-systems-basics",
+          "basic-electrical"
+        ],
+        "fromSource": true,
+        "quote": "Use SCADA trends to find failing equipment",
+        "checkpoints": [
+          "Trend logs store historical tag values, enabling analysis of equipment performance over time.",
+          "Anomalous upward drift in temperature trends can indicate impending component failure.",
+          "SCADA alarms can be suppressed during trend analysis to avoid nuisance alerts.",
+          "Predictive alerts are generated when monitored parameters exceed predefined deviation limits, because thresholds are breached."
+        ]
+      },
+      {
+        "id": "maintenance-docs",
+        "title": "Maintenance documentation",
+        "why": "To record calibration activities and work orders clearly in the maintenance management system.",
+        "prerequisites": [
+          "sensor-calibration"
         ],
         "fromSource": true,
         "quote": "Write clear work orders and calibration records",
         "checkpoints": [
-          "Work orders assign a unique identifier, linking tasks to specific assets for traceability.",
-          "Calibration records must include date, instrument identification, and measured versus expected values.",
-          "Updating the maintenance system after a task ensures equipment history is current for future analysis."
+          "Work orders contain a description of the task, required parts, and assigned personnel.",
+          "Calibration records must include date, instrument ID, and measured versus expected values.",
+          "Documented actions provide traceability for regulatory compliance and future troubleshooting.",
+          "Accurate timestamps in records ensure chronological tracking of maintenance activities."
         ]
       },
       {
-        "id": "solar-inverter-knowledge",
-        "title": "Solar inverter knowledge",
-        "why": "Knowing inverter operation supports work on solar sites and integration with control systems.",
+        "id": "renewable-energy-controllers",
+        "title": "Renewable energy controller fundamentals",
+        "why": "To work with solar inverter and wind turbine controller systems that manage power conversion and turbine operation.",
         "prerequisites": [
-          "plc-basics"
+          "plc-basics",
+          "control-systems-basics"
         ],
         "fromSource": true,
-        "quote": "experience with solar inverters",
+        "quote": "experience with solar inverters or wind turbine controllers",
         "checkpoints": [
-          "Solar inverters convert DC from panels to AC, employing maximum power point tracking to optimize output.",
-          "Inverters communicate status via protocols like Modbus or CAN bus, allowing remote monitoring.",
-          "If an inverter’s input voltage exceeds limits, it will shut down to protect downstream equipment."
-        ]
-      },
-      {
-        "id": "wind-turbine-controller-knowledge",
-        "title": "Wind turbine controller knowledge",
-        "why": "Understanding turbine controllers aids troubleshooting of turbine-specific instrumentation.",
-        "prerequisites": [
-          "plc-basics"
-        ],
-        "fromSource": true,
-        "quote": "wind turbine controllers",
-        "checkpoints": [
-          "Wind turbine controllers manage blade pitch and generator torque based on wind speed measurements.",
-          "Controllers use supervisory control logic to activate brakes during overspeed events.",
-          "A fault in the yaw control system can misalign the rotor, reducing power capture."
+          "Solar inverters convert DC from panels to AC, synchronizing output with grid frequency.",
+          "Wind turbine controllers regulate blade pitch and generator torque to maintain rated power.",
+          "Both systems communicate status via Modbus or similar protocols, allowing SCADA integration.",
+          "Controller firmware updates can modify control algorithms, influencing performance and protection settings."
         ]
       }
     ]

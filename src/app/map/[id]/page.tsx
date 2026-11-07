@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { canReadMap } from "@/app/api/maps/[id]/access";
 import { getSkillMap } from "@/features/skill-map";
@@ -21,6 +22,9 @@ export default function MapPage({ params }: MapPageProps) {
 }
 
 async function MapFromRoute({ params }: MapPageProps) {
+  // The privacy check reads live data, and the storage client's use of the clock is an
+  // error under Cache Components unless the page is marked as request-time first.
+  await connection();
   const { id } = await params;
   if (await isPrivateToSomeoneElse(id)) return <PrivateMapNotice />;
   return <MapScreen mapId={id} />;

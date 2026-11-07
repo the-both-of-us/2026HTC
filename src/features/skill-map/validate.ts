@@ -1,3 +1,4 @@
+import { normalizeForMatch, quoteAppearsIn } from "@/shared/quote";
 import type { Citation, SkillNode, SourceKind } from "@/shared/types";
 import type { RawNode } from "./prompt";
 
@@ -142,27 +143,6 @@ export function breakCycles(nodes: RawNode[]): RawNode[] {
 export function ensureRoot(nodes: RawNode[]): RawNode[] {
   if (nodes.length === 0 || nodes.some((node) => node.prerequisites.length === 0)) return nodes;
   return nodes.map((node, index) => (index === 0 ? { ...node, prerequisites: [] } : node));
-}
-
-/**
- * Lower case, every run of whitespace turned into one space, and curly quotes and
- * long dashes made plain. Web pages often use those, and models often retype them,
- * but the words are the same.
- */
-export function normalizeForMatch(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[\u2010-\u2015\u2212]/g, "-")
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201c\u201d]/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/** True if the quote appears in the source, ignoring case and whitespace differences. */
-export function quoteAppearsIn(quote: string, source: string): boolean {
-  const normalized = normalizeForMatch(quote);
-  return normalized !== "" && normalizeForMatch(source).includes(normalized);
 }
 
 /**

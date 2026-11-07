@@ -1,12 +1,20 @@
+import clsx from "clsx";
+import { Lock } from "lucide-react";
 import type { NodeState, SkillNode } from "@/shared/types";
 import { StateMark } from "@/shared/ui";
-import { JobTab } from "./SkillNodeView";
+import { JobAsksTag } from "./SkillNodeView";
 
 const GROUPS: { state: NodeState; heading: string; empty: string }[] = [
   { state: "available", heading: "Ready to prove", empty: "Nothing is open right now." },
-  { state: "proven", heading: "Proven", empty: "Nothing proven yet." },
+  { state: "proven", heading: "Proven", empty: "Nothing proven yet. Your first skill will show here." },
   { state: "locked", heading: "Locked", empty: "Nothing is locked." },
 ];
+
+const ROW_CLASSES: Record<NodeState, string> = {
+  locked: "border-dashed border-locked/50 bg-locked-surface/60 text-ink-soft hover:border-locked",
+  available: "border-accent/60 bg-sheet hover:border-accent-bright hover:shadow-glow",
+  proven: "border-proven/50 bg-proven-surface/70 hover:border-proven",
+};
 
 type SkillListProps = {
   skills: SkillNode[];
@@ -15,7 +23,7 @@ type SkillListProps = {
   onSelect: (nodeId: string) => void;
 };
 
-/** The same skills as the map, as plain lists. Used on phones and by screen readers. */
+/** The same skills as the map, as plain lists. The default on phones, and for screen readers. */
 export function SkillList({ skills, states, selectedId, onSelect }: SkillListProps) {
   const titleOf = (id: string) => skills.find((skill) => skill.id === id)?.title ?? id;
 
@@ -25,47 +33,47 @@ export function SkillList({ skills, states, selectedId, onSelect }: SkillListPro
         const group = skills.filter((skill) => (states[skill.id] ?? "locked") === state);
         return (
           <section key={state} aria-labelledby={`skills-${state}`}>
-            <h2 id={`skills-${state}`} className="mb-2 flex items-center gap-2 text-xl font-medium">
-              <StateMark state={state} size={20} />
+            <h2 id={`skills-${state}`} className="mb-3 flex items-center gap-2 text-lg font-medium">
+              <StateMark state={state} size={16} />
               {heading}
-              <span className="font-sans text-base font-normal text-ink-soft">{group.length}</span>
+              <span className="text-sm font-normal text-ink-soft tabular-nums">{group.length}</span>
             </h2>
             {group.length === 0 ? (
-              <p className="text-ink-soft">{empty}</p>
+              <p className="rounded-sheet border border-dashed border-rule-strong px-4 py-5 text-center text-ink-soft">
+                {empty}
+              </p>
             ) : (
-              <ul className="flex flex-col border-t border-rule">
+              <ul className="flex flex-col gap-2">
                 {group.map((skill) => {
                   const waitingOn = skill.prerequisites.filter((id) => states[id] !== "proven");
                   return (
-                    <li key={skill.id} className="border-b border-rule">
+                    <li key={skill.id}>
                       <button
                         type="button"
                         data-skill-button={skill.id}
                         aria-expanded={selectedId === skill.id}
                         onClick={() => onSelect(skill.id)}
-                        className="flex min-h-14 w-full cursor-pointer items-start gap-3 py-3 text-left hover:bg-sheet aria-expanded:bg-highlight"
+                        className={clsx(
+                          "flex min-h-14 w-full cursor-pointer items-start gap-3 rounded-sheet border p-3.5 text-left transition-control aria-expanded:ring-2 aria-expanded:ring-ink",
+                          ROW_CLASSES[state],
+                        )}
                       >
-                        <StateMark state={state} size={22} className="mt-0.5 shrink-0" />
+                        <StateMark state={state} size={18} className="mt-0.5 shrink-0" />
                         <span className="min-w-0 flex-1">
-                          <span
-                            className={
-                              skill.fromSource
-                                ? "block font-display text-lg leading-6 font-semibold"
-                                : "block text-lg leading-6"
-                            }
-                          >
-                            {skill.title}
+                          <span className="block leading-6 font-medium">{skill.title}</span>
+                          <span className="mt-0.5 line-clamp-2 block text-sm text-ink-soft">
+                            {state === "locked" && waitingOn.length > 0
+                              ? `Needs ${waitingOn.map(titleOf).join(", ")}`
+                              : skill.why}
                           </span>
-                          {state === "locked" && waitingOn.length > 0 && (
-                            <span className="mt-0.5 block text-sm text-ink-soft">
-                              Needs {waitingOn.map(titleOf).join(", ")}
-                            </span>
-                          )}
                         </span>
                         {skill.fromSource ? (
-                          <JobTab inline />
+                          <JobAsksTag />
                         ) : (
-                          <span className="font-display text-sm text-ink-soft italic">Foundation</span>
+                          <span className="shrink-0 text-sm text-ink-soft">Foundation</span>
+                        )}
+                        {state === "locked" && (
+                          <Lock aria-hidden="true" size={15} className="mt-1 shrink-0" />
                         )}
                       </button>
                     </li>

@@ -9,7 +9,7 @@ export type SkillEdgeData = {
   live: boolean;
   /** That skill was proven just now, so the line draws itself. */
   justLit: boolean;
-  /** Plays the column-by-column entrance. */
+  /** Plays the row-by-row entrance. */
   reveal: boolean;
   layer: number;
 };
@@ -17,9 +17,8 @@ export type SkillEdgeData = {
 export type SkillFlowEdge = Edge<SkillEdgeData, "skill">;
 
 /**
- * A line between two skills. Dashed and thin until its source is proven, then solid
- * and thick with pale dots travelling along it. Line style carries the meaning, so it
- * still reads in greyscale and with motion turned off.
+ * A curved line between two skills. Thin and dim until its source is proven, then thick
+ * and bright with a soft halo. Thickness carries the meaning, so it reads in greyscale.
  */
 export function SkillEdge({ sourceX, sourceY, targetX, targetY, data }: EdgeProps<SkillFlowEdge>) {
   const waypoints = data?.waypoints ?? [];
@@ -31,34 +30,21 @@ export function SkillEdge({ sourceX, sourceY, targetX, targetY, data }: EdgeProp
       <path
         d={path}
         fill="none"
-        stroke="var(--color-locked)"
+        stroke="var(--color-violet-dim)"
         strokeWidth={2}
-        strokeDasharray="5 6"
         style={style}
         className={clsx(data?.reveal && "line-reveal")}
       />
     );
   }
 
+  // pathLength=1 lets the draw animation work on a line of any length.
+  const drawn = data.justLit ? { pathLength: 1, className: "line-draw" } : {};
+
   return (
     <g style={style} className={clsx(data.reveal && "line-reveal")}>
-      <path
-        d={path}
-        fill="none"
-        stroke="var(--color-proven)"
-        strokeWidth={4.5}
-        pathLength={data.justLit ? 1 : undefined}
-        className={clsx(data.justLit && "line-draw")}
-      />
-      <path
-        d={path}
-        fill="none"
-        stroke="var(--color-highlight)"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeDasharray="1 17"
-        className={clsx("line-live-dots", data.justLit && "line-dots-late")}
-      />
+      <path d={path} fill="none" stroke="var(--color-violet)" strokeOpacity={0.22} strokeWidth={7} {...drawn} />
+      <path d={path} fill="none" stroke="var(--color-violet)" strokeWidth={3} {...drawn} />
     </g>
   );
 }

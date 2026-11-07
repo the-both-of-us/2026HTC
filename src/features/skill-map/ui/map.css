@@ -10,16 +10,18 @@
 
 .skill-map-flow .react-flow__node {
   cursor: pointer;
+  border-radius: var(--radius-sheet);
 }
 
-/* The handles are only anchor points for the lines. Nobody can drag them. */
+/* The handles are small dots on the card's edge. Nobody can drag them. */
 .skill-map-flow .react-flow__handle {
-  width: 1px;
-  height: 1px;
+  width: 7px;
+  height: 7px;
   min-width: 0;
   min-height: 0;
   border: 0;
-  background: transparent;
+  border-radius: 50%;
+  background: var(--handle-colour, var(--color-locked));
   pointer-events: none;
 }
 
@@ -32,19 +34,21 @@
   color: inherit;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  /* First load: the map arrives one column at a time, left to right. */
-  @keyframes skill-arrive {
-    from {
-      opacity: 0;
-      transform: translateX(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
+.skill-map-flow .react-flow__minimap {
+  overflow: hidden;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius-control);
+}
 
+/* A phone has no room for the overview. It pans with a finger instead. */
+@media (max-width: 1023px) {
+  .skill-map-flow .react-flow__minimap {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* First load: the map arrives one row at a time, top to bottom. */
   @keyframes line-arrive {
     from {
       opacity: 0;
@@ -54,36 +58,49 @@
     }
   }
 
-  .skill-reveal {
-    animation: skill-arrive 340ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
-    animation-delay: calc(var(--reveal-layer) * 240ms);
+  @keyframes card-arrive {
+    from {
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      transform: none;
+    }
+  }
+
+  /* Opacity only on the outer box: the handles inside it must not move. */
+  .node-fade-in {
+    animation: line-arrive 340ms ease-out both;
+    animation-delay: calc(var(--reveal-layer) * 130ms);
+  }
+
+  .card-reveal {
+    animation: card-arrive 340ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    animation-delay: calc(var(--reveal-layer) * 130ms);
   }
 
   .line-reveal {
     animation: line-arrive 300ms ease-out both;
-    animation-delay: calc(var(--reveal-layer) * 240ms + 170ms);
+    animation-delay: calc(var(--reveal-layer) * 130ms + 170ms);
   }
 
-  /* A proven line: pale dots travel along it, towards what it opens. */
-  @keyframes line-flow {
-    to {
-      stroke-dashoffset: -18;
-    }
-  }
-
-  .line-live-dots {
-    animation: line-flow 1.1s linear infinite;
-  }
-
-  /* Just proven: the stamp lands, the lines draw themselves, the next skills light up. */
-  @keyframes stamp-land {
+  /* Just proven: the tick lands, a green ring spreads, the lines draw, the next skills open. */
+  @keyframes mark-land {
     from {
-      transform: scale(1.9);
+      transform: scale(0.3);
       opacity: 0;
     }
     to {
       transform: none;
       opacity: 1;
+    }
+  }
+
+  @keyframes card-proven {
+    from {
+      box-shadow: 0 0 0 0 rgb(91 170 122 / 0.65);
+    }
+    to {
+      box-shadow: 0 0 0 18px rgb(91 170 122 / 0);
     }
   }
 
@@ -96,39 +113,36 @@
     }
   }
 
-  @keyframes skill-unlock {
+  @keyframes card-unlock {
     0% {
       background-color: var(--color-locked-surface);
-      box-shadow: 0 0 0 0 var(--color-highlight);
+      box-shadow: 0 0 0 0 rgb(75 143 212 / 0.8);
     }
-    35% {
-      background-color: var(--color-highlight);
-      box-shadow: 0 0 0 9px var(--color-highlight);
+    45% {
+      background-color: rgb(75 143 212 / 0.32);
+      box-shadow: 0 0 34px 8px rgb(75 143 212 / 0.55);
     }
     100% {
       background-color: var(--color-available-surface);
-      box-shadow: 0 0 0 0 transparent;
+      box-shadow: var(--shadow-glow);
     }
   }
 
-  .stamp-land {
-    animation: stamp-land 320ms cubic-bezier(0.3, 0, 0.2, 1) both;
+  .mark-land {
+    animation: mark-land 340ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  }
+
+  .card-proven {
+    animation: card-proven 800ms ease-out 120ms both;
   }
 
   .line-draw {
     stroke-dasharray: 1;
-    animation: line-draw 520ms ease-in-out 180ms both;
+    animation: line-draw 560ms ease-in-out 240ms both;
   }
 
-  /* The dots wait until the line has finished drawing. */
-  .line-dots-late {
-    animation:
-      line-arrive 300ms ease-out 700ms both,
-      line-flow 1.1s linear infinite;
-  }
-
-  .skill-unlock {
-    animation: skill-unlock 1100ms ease-out 560ms both;
+  .card-unlock {
+    animation: card-unlock 1100ms ease-out 620ms both;
   }
 
   /* The panel answers the person's own click. */
@@ -143,7 +157,35 @@
     }
   }
 
-  .panel-open {
-    animation: panel-open 180ms ease-out both;
+  @keyframes sheet-open {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
+
+  .panel-open {
+    animation: sheet-open 200ms ease-out both;
+  }
+
+  @media (min-width: 1024px) {
+    .panel-open {
+      animation-name: panel-open;
+    }
+  }
+
+  /* The list view's bar and the header's bar grow when a skill is proven. */
+  .progress-fill {
+    transition: width 600ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+}
+
+/* The dotted background of the loading picture, matching the map's own. */
+.dotted-canvas {
+  background-image: radial-gradient(#27324a 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
 }

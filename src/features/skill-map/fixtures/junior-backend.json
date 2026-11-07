@@ -1,219 +1,235 @@
 {
   "sampleId": "junior-backend",
-  "generatedAt": "2026-11-07T18:45:37.861Z",
+  "generatedAt": "2026-11-07T19:17:50.721Z",
   "output": {
+    "isJobPosting": true,
     "title": "Junior Backend Developer",
     "subtitle": "Calgary, AB (hybrid)",
     "nodes": [
       {
         "id": "programming-basics",
-        "title": "Programming basics",
-        "why": "Understanding basic programming constructs enables writing any backend code.",
+        "title": "Programming fundamentals",
+        "why": "You need core coding concepts to write any backend logic.",
         "prerequisites": [],
         "fromSource": false,
         "quote": null,
         "checkpoints": [
-          "Variables store values of a specific data type and can be reassigned within their scope.",
-          "Control flow statements like if/else decide which block of code executes based on a condition.",
-          "Loops such as for and while repeat execution until a termination condition becomes false."
+          "Variables store values that can be read and modified throughout a program.",
+          "Control flow statements like if, for, and while determine which code runs.",
+          "Functions encapsulate reusable logic and can return results.",
+          "Scope determines where a variable or function is accessible, preventing name clashes."
         ]
       },
       {
-        "id": "web-basics",
-        "title": "Web basics",
-        "why": "Knowing how client‑server communication works underpins building HTTP services.",
-        "prerequisites": [],
-        "fromSource": false,
-        "quote": null,
-        "checkpoints": [
-          "A client sends an HTTP request to a server, which returns a response containing status and data.",
-          "Stateless request-response model means each request is independent and does not rely on previous ones.",
-          "Web browsers interpret HTML, CSS, and JavaScript to render user interfaces."
-        ]
-      },
-      {
-        "id": "git-workflow",
-        "title": "Git workflow",
-        "why": "Git workflow lets you manage code changes, collaborate via branches and pull requests.",
+        "id": "git-basics",
+        "title": "Git version control",
+        "why": "All code changes are tracked and shared using Git.",
         "prerequisites": [
           "programming-basics"
         ],
         "fromSource": true,
-        "quote": "Comfort with Git, including branches",
+        "quote": "Comfort with Git, including branches and pull requests.",
         "checkpoints": [
-          "A branch creates an independent line of development, allowing changes without affecting main.",
-          "Pull requests submit a branch’s changes for review before merging into the target branch.",
-          "Merging combines commit histories and can create a merge commit when histories diverge."
+          "A branch isolates work, allowing independent commits without affecting main.",
+          "Merging integrates changes from a branch into another, preserving history.",
+          "Pull requests show proposed commits and enable reviewers to comment before merging.",
+          "Merge conflicts arise when concurrent edits change the same part of a file, because Git lacks a resolution."
+        ]
+      },
+      {
+        "id": "javascript-basics",
+        "title": "JavaScript fundamentals",
+        "why": "Node.js runs JavaScript, so you need to understand its core language features.",
+        "prerequisites": [
+          "programming-basics"
+        ],
+        "fromSource": false,
+        "quote": null,
+        "checkpoints": [
+          "Variables declared with const cannot be reassigned, while let allows later assignment.",
+          "Asynchronous functions return promises, enabling non‑blocking operations.",
+          "The event loop processes callbacks after the current call stack empties.",
+          "Objects inherit properties from their prototype, so missing properties are looked up the chain."
+        ]
+      },
+      {
+        "id": "nodejs-typescript",
+        "title": "Node.js with TypeScript",
+        "why": "The service code is written in TypeScript and executed on Node.js.",
+        "prerequisites": [
+          "javascript-basics"
+        ],
+        "fromSource": true,
+        "quote": "Build and test REST API endpoints in TypeScript on Node.js.",
+        "checkpoints": [
+          "TypeScript adds static types to JavaScript, catching mismatched assignments at compile time.",
+          "The tsc compiler transpiles .ts files to JavaScript that Node.js can execute.",
+          "Node.js uses a single thread with an event‑driven architecture for I/O.",
+          "Modules are imported using import/export syntax, and Node resolves them at runtime."
         ]
       },
       {
         "id": "http-fundamentals",
         "title": "HTTP fundamentals",
-        "why": "HTTP fundamentals are required to design correct REST endpoints and handle status codes.",
+        "why": "REST APIs communicate over HTTP, requiring knowledge of methods and status codes.",
         "prerequisites": [
-          "web-basics"
+          "nodejs-typescript"
         ],
         "fromSource": true,
-        "quote": "working understanding of HTTP: methods",
+        "quote": "A working understanding of HTTP: methods, status codes and how caching headers behave.",
         "checkpoints": [
-          "GET requests retrieve resources without a request body, while POST sends data to create resources.",
-          "HTTP status code 404 indicates the server cannot find the requested resource.",
-          "Cache‑Control: max‑age directive tells browsers how long a response may be cached."
+          "GET requests retrieve data without side effects, while POST creates new resources.",
+          "HTTP status 200 indicates success, while 404 signals a missing resource.",
+          "Cache‑Control headers like max‑age tell browsers how long a response may be cached.",
+          "Idempotent methods such as PUT can be repeated safely because the result remains the same."
         ]
       },
       {
-        "id": "typescript",
-        "title": "TypeScript",
-        "why": "TypeScript provides type safety for the Node.js codebase used in the APIs.",
+        "id": "rest-api-design",
+        "title": "REST API design",
+        "why": "You will create endpoints that follow REST conventions for the scheduling product.",
         "prerequisites": [
-          "programming-basics"
-        ],
-        "fromSource": true,
-        "quote": "in TypeScript on Node.js",
-        "checkpoints": [
-          "TypeScript adds static type annotations that are checked at compile time before emitting JavaScript.",
-          "Interface definitions declare object shapes, enabling compile‑time verification of property existence.",
-          "The tsc compiler reports type errors such as assigning a string to a number variable."
-        ]
-      },
-      {
-        "id": "nodejs-runtime",
-        "title": "Node.js runtime",
-        "why": "Node.js runtime executes the TypeScript‑compiled JavaScript that powers the service.",
-        "prerequisites": [
-          "programming-basics",
-          "typescript"
-        ],
-        "fromSource": true,
-        "quote": "on Node.js",
-        "checkpoints": [
-          "Node.js uses an event‑driven, non‑blocking I/O model to handle many concurrent connections.",
-          "The require function loads CommonJS modules synchronously from the file system.",
-          "process.env provides access to environment variables at runtime."
-        ]
-      },
-      {
-        "id": "rest-api-development",
-        "title": "REST API development",
-        "why": "REST API development creates the endpoints that external clients will call.",
-        "prerequisites": [
-          "nodejs-runtime",
           "http-fundamentals",
-          "typescript"
+          "nodejs-typescript"
         ],
         "fromSource": true,
-        "quote": "Build and test REST API endpoints",
+        "quote": "Build and test REST API endpoints in TypeScript on Node.js.",
         "checkpoints": [
-          "REST endpoints map HTTP methods to CRUD operations on resources.",
-          "Path parameters are extracted from the URL and passed to handler functions.",
-          "Returning a 201 status code signals that a new resource was successfully created."
+          "Endpoints should use nouns for resources and HTTP verbs to indicate actions.",
+          "Path parameters identify specific resources, while query parameters filter or paginate results.",
+          "Responses should include appropriate status codes, such as 201 for a created record.",
+          "Statelessness means each request contains all information needed, so server does not store client context."
         ]
       },
       {
-        "id": "automated-testing",
-        "title": "Automated testing",
-        "why": "Automated testing ensures each code change stays correct and catches regressions.",
-        "prerequisites": [
-          "nodejs-runtime",
-          "rest-api-development"
-        ],
-        "fromSource": true,
-        "quote": "Write automated tests with every change",
-        "checkpoints": [
-          "Unit tests isolate a single function and assert expected output given specific inputs.",
-          "Test runners detect failing assertions and report the file and line of the failure.",
-          "Running tests in CI ensures code changes do not break existing functionality."
-        ]
-      },
-      {
-        "id": "sql-basics",
-        "title": "SQL basics",
-        "why": "SQL basics allow writing queries that retrieve and aggregate data from PostgreSQL.",
+        "id": "postgresql-db",
+        "title": "PostgreSQL database",
+        "why": "The application stores invoices and payments in a PostgreSQL relational database.",
         "prerequisites": [
           "programming-basics"
         ],
         "fromSource": true,
-        "quote": "Basic SQL, including joins",
+        "quote": "Design PostgreSQL tables, write migrations, and add indexes when queries slow down.",
         "checkpoints": [
-          "INNER JOIN returns rows with matching keys in both tables, excluding non‑matches.",
-          "GROUP BY aggregates rows sharing a column value, enabling SUM, COUNT, AVG calculations.",
-          "WHERE filters rows before GROUP BY, affecting which data is aggregated."
+          "PostgreSQL stores data in tables with rows and columns.",
+          "Each table has a primary key that uniquely identifies its rows.",
+          "Foreign keys enforce referential integrity between related tables.",
+          "SQL statements are executed within a transaction, which can be committed or rolled back."
         ]
       },
       {
-        "id": "postgresql-schema",
-        "title": "PostgreSQL schema",
-        "why": "PostgreSQL schema design defines the tables storing invoices and payments.",
+        "id": "sql-queries",
+        "title": "SQL query writing",
+        "why": "You need to retrieve and aggregate data such as invoices and payments.",
         "prerequisites": [
-          "sql-basics"
+          "postgresql-db"
         ],
         "fromSource": true,
-        "quote": "Design PostgreSQL tables",
+        "quote": "Basic SQL, including joins and aggregates.",
         "checkpoints": [
-          "Primary keys uniquely identify rows and are indexed automatically by PostgreSQL.",
-          "Foreign key constraints enforce referential integrity between related tables.",
-          "Migrations record incremental schema changes, allowing versioned upgrades and rollbacks."
+          "INNER JOIN returns rows with matching keys in both tables.",
+          "LEFT JOIN keeps all rows from the left table, filling missing right columns with NULL.",
+          "GROUP BY groups rows to compute aggregates like SUM or COUNT per group.",
+          "HAVING filters groups after aggregation, unlike WHERE which filters rows before aggregation."
+        ]
+      },
+      {
+        "id": "database-migrations",
+        "title": "Database migrations",
+        "why": "Schema changes are applied safely using migration scripts.",
+        "prerequisites": [
+          "postgresql-db",
+          "sql-queries"
+        ],
+        "fromSource": true,
+        "quote": "Design PostgreSQL tables, write migrations, and add indexes when queries slow down.",
+        "checkpoints": [
+          "A migration defines incremental changes like CREATE TABLE or ALTER COLUMN.",
+          "Migrations are run sequentially, ensuring the database schema matches application code.",
+          "Rollback steps revert the schema to the previous state if a migration fails.",
+          "Each migration is recorded in a schema history table, so duplicate runs are prevented."
         ]
       },
       {
         "id": "database-indexing",
         "title": "Database indexing",
-        "why": "Database indexing improves query performance when data volume grows.",
+        "why": "Indexes speed up query reads that filter on indexed columns.",
         "prerequisites": [
-          "postgresql-schema"
+          "postgresql-db",
+          "sql-queries"
         ],
         "fromSource": true,
-        "quote": "add indexes when queries slow down",
+        "quote": "add indexes when queries slow down.",
         "checkpoints": [
-          "Creating an index on a column speeds up SELECT queries using that column in WHERE clauses.",
-          "Indexes increase write latency because each INSERT must also update the index structures.",
-          "A composite index on (a, b) can be used for queries filtering by a and b together."
+          "An index stores column values in a sorted structure, enabling fast lookups.",
+          "Using an index reduces read latency because the database can locate rows without scanning the whole table.",
+          "Each insert or update must also modify the index, so writes become slower.",
+          "A missing index causes full table scans, which increase query time as data grows."
         ]
       },
       {
         "id": "database-transactions",
         "title": "Database transactions",
-        "why": "Transactions guarantee that invoices and their payments are saved atomically.",
+        "why": "Transactions ensure related records are saved together, preventing partial data.",
         "prerequisites": [
-          "postgresql-schema"
+          "postgresql-db",
+          "sql-queries"
         ],
         "fromSource": true,
-        "quote": "Use transactions so that an invoice",
+        "quote": "Use transactions so that an invoice and its payment records are never left half saved.",
         "checkpoints": [
-          "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
-          "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
-          "Isolation levels control visibility of intermediate transaction data to other concurrent sessions."
+          "A transaction groups multiple statements that either all commit or all roll back.",
+          "If an error occurs, the transaction is rolled back, reverting all changes.",
+          "Isolation levels control visibility of uncommitted data, preventing dirty reads.",
+          "Committing a transaction finalizes changes, making them visible to other sessions."
         ]
       },
       {
-        "id": "auth-and-validation",
-        "title": "Auth and validation",
-        "why": "Authentication and validation protect customer data and prevent malformed input.",
+        "id": "automated-testing",
+        "title": "Automated testing",
+        "why": "Tests verify each change works and catch regressions before deployment.",
         "prerequisites": [
-          "rest-api-development",
-          "postgresql-schema"
+          "nodejs-typescript"
         ],
         "fromSource": true,
-        "quote": "Handle authentication and input validation",
+        "quote": "Write automated tests with every change, and fix the bugs that your tests find.",
         "checkpoints": [
-          "Input validation rejects data that does not match expected type or format before processing.",
-          "Authentication verifies a user’s identity, often by checking tokens or session cookies.",
-          "Storing passwords with bcrypt hashes protects them from being recovered if the database leaks."
+          "Unit tests isolate a single function to assert its output for given inputs.",
+          "Test runners execute all test files and report failures, halting the build on errors.",
+          "Mocks replace external dependencies so tests run deterministically without network calls.",
+          "Code coverage measures which lines were executed during tests, exposing untested logic."
         ]
       },
       {
-        "id": "log-debugging",
-        "title": "Log debugging",
-        "why": "Log debugging helps locate production errors quickly.",
+        "id": "logging-debugging",
+        "title": "Logging and debugging",
+        "why": "Analyzing logs helps identify production errors quickly.",
         "prerequisites": [
-          "nodejs-runtime"
+          "nodejs-typescript"
         ],
         "fromSource": true,
-        "quote": "Review logs to trace production errors",
+        "quote": "Review logs to trace production errors back to their cause.",
         "checkpoints": [
-          "Log entries typically include timestamps, severity levels, and contextual messages.",
-          "Filtering logs by error level isolates entries that indicate failures.",
-          "Stack traces in error logs pinpoint the function call sequence leading to an exception."
+          "Log entries include timestamps, severity levels, and messages that describe events.",
+          "Structured logs in JSON allow automated parsing and filtering.",
+          "Stack traces show the call sequence that led to an exception.",
+          "Correlation IDs link related log entries across services, so the origin of an error is traceable."
+        ]
+      },
+      {
+        "id": "authentication-and-validation",
+        "title": "Authentication and input validation",
+        "why": "The service must verify users and ensure data integrity before processing.",
+        "prerequisites": [
+          "rest-api-design"
+        ],
+        "fromSource": true,
+        "quote": "Handle authentication and input validation carefully, because we store customer data.",
+        "checkpoints": [
+          "Authentication verifies identity, typically by checking credentials against a user store.",
+          "Tokens such as JWT carry user claims and are validated on each request.",
+          "Input validation checks format and type, rejecting malformed data before it reaches business logic.",
+          "Failing validation returns a 400 status, preventing unsafe data from being processed."
         ]
       }
     ]

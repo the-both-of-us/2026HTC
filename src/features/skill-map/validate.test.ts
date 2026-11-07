@@ -1,3 +1,4 @@
+import { quoteAppearsIn } from "@/shared/quote";
 import { describe, expect, it } from "vitest";
 import type { RawNode } from "./prompt";
 import {
@@ -9,7 +10,6 @@ import {
   dedupeNodes,
   dropBadPrerequisites,
   ensureRoot,
-  quoteAppearsIn,
   toSlug,
   validateNodes,
 } from "./validate";
