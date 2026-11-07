@@ -6,7 +6,7 @@ import { LEARNER_TEXT_RULE, wrapLearnerText } from "./learnerText";
 const GRADER_SYSTEM = `You check a learner's explanation of a skill against a fixed list of checkpoints. You do not give a score.
 
 For each checkpoint, return the number of the checkpoint and either a quote or null.
-- A quote is words copied exactly from the learner's text, in one unbroken piece, with no edits and no ellipsis. Use the shortest passage that states the fact on its own.
+- A quote is words copied exactly from the learner's text, in one unbroken piece, with no edits and no ellipsis. Use the shortest passage of at least three words that states the fact on its own.
 - Return null unless the learner states the specific fact in the checkpoint. If a reader could not check that fact from the quote alone, return null.
 - Fluent general wording does not count. Polished phrases that only sound related to the topic, such as "a robust approach", "delivers comprehensive coverage" or "focuses on what matters", state no checkable fact, so they get null. Never give credit for what the learner probably meant.
 - Plain, informal or clumsy wording does count, when the specific fact is really there.
@@ -59,11 +59,32 @@ export function computeScore(met: number, total: number, errors: number): number
   return Math.max(0, Math.round((met / total) * 100) - 20 * errors);
 }
 
-/** True only if the quote really appears in the text, ignoring case and whitespace. */
+/** Shorter than this, a quote can't state a checkable fact. */
+export const MIN_QUOTE_WORDS = 3;
+
+// Splits text the way a language's own rules do, so this also works for French and Arabic.
+const wordSplitter = new Intl.Segmenter("und", { granularity: "word" });
+
+/**
+ * True only if the quote really appears in the text, ignoring case and whitespace. It must
+ * be at least three words long and start and end on word edges, so "a" can't match inside
+ * "data" and count as evidence.
+ */
 export function quoteIsInText(quote: string, text: string): boolean {
   const normalisedQuote = normalise(quote);
-  // Every string "includes" the empty string, so an empty quote must be ruled out.
-  return normalisedQuote !== "" && normalise(text).includes(normalisedQuote);
+  const quoteWords = [...wordSplitter.segment(normalisedQuote)].filter((piece) => piece.isWordLike);
+  if (quoteWords.length < MIN_QUOTE_WORDS) return false;
+
+  const normalisedText = normalise(text);
+  const wordEdges = new Set(
+    [...wordSplitter.segment(normalisedText)].flatMap((piece) => [piece.index, piece.index + piece.segment.length]),
+  );
+  let at = normalisedText.indexOf(normalisedQuote);
+  while (at !== -1) {
+    if (wordEdges.has(at) && wordEdges.has(at + normalisedQuote.length)) return true;
+    at = normalisedText.indexOf(normalisedQuote, at + 1);
+  }
+  return false;
 }
 
 function normalise(text: string): string {

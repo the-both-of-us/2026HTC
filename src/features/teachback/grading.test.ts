@@ -59,7 +59,7 @@ describe("computeScore", () => {
 
 describe("quoteIsInText", () => {
   it("ignores case", () => {
-    expect(quoteIsInText("INNER JOIN", "an inner join")).toBe(true);
+    expect(quoteIsInText("AN INNER JOIN", "an inner join")).toBe(true);
   });
 
   it("ignores differences in whitespace, including new lines", () => {
@@ -67,8 +67,24 @@ describe("quoteIsInText", () => {
   });
 
   it("rejects words that are not there, or not next to each other", () => {
-    expect(quoteIsInText("outer join", "an inner join")).toBe(false);
-    expect(quoteIsInText("inner rows", "inner join rows")).toBe(false);
+    expect(quoteIsInText("an outer join", "an inner join")).toBe(false);
+    expect(quoteIsInText("the inner rows", "the inner join rows")).toBe(false);
+  });
+
+  it("rejects a quote too short to state a fact", () => {
+    expect(quoteIsInText("a", "an inner join")).toBe(false);
+    expect(quoteIsInText("inner join", "an inner join")).toBe(false);
+  });
+
+  it("rejects a quote that starts or ends inside a word", () => {
+    expect(quoteIsInText("ner join keeps", "an inner join keeps rows")).toBe(false);
+    expect(quoteIsInText("inner join kee", "an inner join keeps rows")).toBe(false);
+  });
+
+  it("finds a whole-word match after a false start, and in other languages", () => {
+    expect(quoteIsInText("cat sat down", "concat sat down, then the cat sat down")).toBe(true);
+    expect(quoteIsInText("une jointure interne garde", "Une jointure interne garde les lignes.")).toBe(true);
+    expect(quoteIsInText("الربط الداخلي يحتفظ", "الربط الداخلي يحتفظ بالصفوف")).toBe(true);
   });
 
   it("rejects an empty or blank quote", () => {
@@ -138,7 +154,7 @@ describe("gradeExplanation", () => {
         { number: 1, quote: "only keeps rows that match in both tables" },
         { number: 2, quote: "keeps every row from the left table" },
         { number: 3, quote: "the missing side is NULL" },
-        { number: 4, quote: "inner join" },
+        { number: 4, quote: "An inner join" },
       ],
       factualErrors: ["They said X, but Y is true.", "   "],
     });
