@@ -47,7 +47,8 @@ export function MixBarTall({ snapshot }: { snapshot: GridSnapshot }) {
             <button
               key={item.family}
               type="button"
-              aria-label={describe(item)}
+              // The name has to start with any label we print, so voice control users can say what they see.
+              aria-label={item.share >= LABEL_FITS_FROM ? `${Math.round(item.share)}%. ${describe(item)}` : describe(item)}
               onPointerEnter={() => setActiveFamily(item.family)}
               // A finger lifting counts as the pointer leaving, so a tap has to set it as well.
               onClick={() => setActiveFamily(item.family)}
