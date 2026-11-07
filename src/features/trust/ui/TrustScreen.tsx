@@ -60,6 +60,11 @@ export function TrustScreen() {
               proved and when, never what you wrote.
             </li>
             <li>
+              <strong className="font-medium">People and review:</strong> your public profile on
+              /people (name, city, contact link) and your spaced-repetition schedule and review
+              days.
+            </li>
+            <li>
               <strong className="font-medium">Only in this browser:</strong> unsent drafts, and the
               Accessible learning mode setting.
             </li>

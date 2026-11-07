@@ -1,12 +1,39 @@
 import { randomUUID } from "node:crypto";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { isPublished, publishCourse } from "@/features/courses";
+import { deleteUserData as deleteNetworkProfile } from "@/features/network";
 import { getProof, publishProof } from "@/features/proof";
+import { deleteUserData as deleteReviewData } from "@/features/review";
 import { getSkillMap } from "@/features/skill-map";
 import { getAttempt, getProgress } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { Attempt, SkillMap } from "@/shared/types";
 import { deleteUserData, NOTHING_DELETED } from "./deleteData";
+
+const calls = vi.hoisted(() => ({ order: [] as string[] }));
+
+vi.mock("@/features/network", () => ({
+  deleteUserData: vi.fn(async () => {
+    calls.order.push("network");
+    return { profiles: 1 };
+  }),
+}));
+vi.mock("@/features/review", () => ({
+  deleteUserData: vi.fn(async () => {
+    calls.order.push("review");
+    return { reviewRecords: 4 };
+  }),
+}));
+vi.mock("@/features/proof", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/proof")>();
+  return {
+    ...actual,
+    deleteProofsByOwner: async (userId: string) => {
+      calls.order.push("proof");
+      return actual.deleteProofsByOwner(userId);
+    },
+  };
+});
 
 const EXPLANATION =
   "An inner join keeps only rows that match in both tables, while a left join keeps every left row and fills the rest with NULL.";
@@ -28,8 +55,15 @@ async function seedLearner() {
         why: "Needed for the job.",
         prerequisites: [],
         fromSource: true,
-        citation: { kind: "posting", quote: "Strong SQL required", verified: true },
-        checkpoints: ["Inner join keeps only matches", "Left join keeps every left row"],
+        citation: {
+          kind: "posting",
+          quote: "Strong SQL required",
+          verified: true,
+        },
+        checkpoints: [
+          "Inner join keeps only matches",
+          "Left join keeps every left row",
+        ],
       },
     ],
     createdAt: "2026-11-07T10:00:00.000Z",
@@ -40,26 +74,53 @@ async function seedLearner() {
     nodeId: "joins",
     ownerId: userId,
     explanation: EXPLANATION,
-    integrity: { pasted: false, activeMs: 42_000, wordCount: 24, inputMethod: "typed" },
+    integrity: {
+      pasted: false,
+      activeMs: 42_000,
+      wordCount: 24,
+      inputMethod: "typed",
+    },
     grade: {
       score: 100,
       checkpoints: [
-        { checkpoint: "Inner join keeps only matches", quote: "keeps only rows that match in both tables", met: true },
-        { checkpoint: "Left join keeps every left row", quote: "keeps every left row", met: true },
+        {
+          checkpoint: "Inner join keeps only matches",
+          quote: "keeps only rows that match in both tables",
+          met: true,
+        },
+        {
+          checkpoint: "Left join keeps every left row",
+          quote: "keeps every left row",
+          met: true,
+        },
       ],
       misconceptions: [],
       rejectedQuotes: 0,
     },
-    followUp: { question: "What happens to a row with no match?", answer: "It gets NULLs.", passed: true, feedback: "Right." },
+    followUp: {
+      question: "What happens to a row with no match?",
+      answer: "It gets NULLs.",
+      passed: true,
+      feedback: "Right.",
+    },
     status: "proven",
     createdAt: "2026-11-07T11:00:00.000Z",
   };
 
   await putDoc(`maps/${map.id}`, map);
   await putDoc(`attempts/${attempt.id}`, attempt);
-  await putDoc(`attempts/${attempt.id}/claim`, { claimedAt: "2026-11-07T11:00:00.000Z" });
-  await putDoc(`progress/${map.id}/${userId}/joins`, { nodeId: "joins", attemptId: attempt.id, provenAt: "2026-11-07T11:00:00.000Z" });
-  await putDoc(`grid-solves/${userId}/reserve-margin`, { exerciseId: "reserve-margin", solvedAt: "2026-11-07T12:00:00.000Z" });
+  await putDoc(`attempts/${attempt.id}/claim`, {
+    claimedAt: "2026-11-07T11:00:00.000Z",
+  });
+  await putDoc(`progress/${map.id}/${userId}/joins`, {
+    nodeId: "joins",
+    attemptId: attempt.id,
+    provenAt: "2026-11-07T11:00:00.000Z",
+  });
+  await putDoc(`grid-solves/${userId}/reserve-margin`, {
+    exerciseId: "reserve-margin",
+    solvedAt: "2026-11-07T12:00:00.000Z",
+  });
   const proof = await publishProof(userId, map.id, "Maya Chen");
   await publishCourse(map.id, userId, "Maya");
   return { userId, map, attempt, proofId: proof.id };
@@ -70,6 +131,9 @@ describe("deleteUserData", () => {
   let someoneElse: Awaited<ReturnType<typeof seedLearner>>;
 
   beforeEach(async () => {
+    calls.order.length = 0;
+    vi.mocked(deleteNetworkProfile).mockClear();
+    vi.mocked(deleteReviewData).mockClear();
     me = await seedLearner();
     someoneElse = await seedLearner();
   });
@@ -77,7 +141,17 @@ describe("deleteUserData", () => {
   it("removes the user's maps, attempts, claims, progress, evidence pages, course listings and grid answers", async () => {
     const counts = await deleteUserData(me.userId);
 
-    expect(counts).toEqual({ maps: 1, attempts: 1, provenSkills: 1, evidencePages: 1, courses: 1, gridAnswers: 1, circles: 0 });
+    expect(counts).toEqual({
+      maps: 1,
+      attempts: 1,
+      provenSkills: 1,
+      evidencePages: 1,
+      courses: 1,
+      gridAnswers: 1,
+      circles: 0,
+      networkProfiles: 1,
+      reviewRecords: 4,
+    });
     expect(await getSkillMap(me.map.id)).toBeNull();
     expect(await getAttempt(me.attempt.id)).toBeNull();
     expect(await getDoc(`attempts/${me.attempt.id}/claim`)).toBeNull();
@@ -100,17 +174,38 @@ describe("deleteUserData", () => {
 
     expect(await getSkillMap(someoneElse.map.id)).toEqual(before.map);
     expect(await getAttempt(someoneElse.attempt.id)).toEqual(before.attempt);
-    expect(await getDoc(`attempts/${someoneElse.attempt.id}/claim`)).not.toBeNull();
-    expect(await getProgress(someoneElse.map.id, someoneElse.userId)).toEqual(before.progress);
+    expect(
+      await getDoc(`attempts/${someoneElse.attempt.id}/claim`),
+    ).not.toBeNull();
+    expect(await getProgress(someoneElse.map.id, someoneElse.userId)).toEqual(
+      before.progress,
+    );
     expect(await getProof(someoneElse.proofId)).toEqual(before.proof);
     expect(before.proof?.state).toBe("live");
     expect(await isPublished(someoneElse.map.id)).toBe(true);
-    expect(await getDoc(`grid-solves/${someoneElse.userId}/reserve-margin`)).not.toBeNull();
+    expect(
+      await getDoc(`grid-solves/${someoneElse.userId}/reserve-margin`),
+    ).not.toBeNull();
+  });
+
+  it("deletes the public people profile before anything else, and the review data with the user's id", async () => {
+    await deleteUserData(me.userId);
+
+    expect(deleteNetworkProfile).toHaveBeenCalledExactlyOnceWith(me.userId);
+    expect(deleteReviewData).toHaveBeenCalledExactlyOnceWith(me.userId);
+    expect(calls.order[0]).toBe("network");
+    expect(calls.order.indexOf("network")).toBeLessThan(
+      calls.order.indexOf("proof"),
+    );
+    expect(calls.order).toContain("review");
   });
 
   it("is safe to run again, and for someone with nothing saved", async () => {
     await deleteUserData(me.userId);
-    expect(await deleteUserData(me.userId)).toEqual(NOTHING_DELETED);
-    expect(await deleteUserData(randomUUID())).toEqual(NOTHING_DELETED);
+    expect(await deleteUserData(me.userId)).toEqual({
+      ...NOTHING_DELETED,
+      networkProfiles: 1,
+      reviewRecords: 4,
+    });
   });
 });

@@ -1,7 +1,9 @@
 import { deleteCircleData } from "@/features/circles";
 import { isPublished, unpublishCourse } from "@/features/courses";
 import { deleteGridSolves } from "@/features/grid";
+import { deleteUserData as deleteNetworkProfile } from "@/features/network";
 import { deleteProofsByOwner } from "@/features/proof";
+import { deleteUserData as deleteReviewData } from "@/features/review";
 import { deleteSkillMap, listMapsByOwner } from "@/features/skill-map";
 import { deleteLearnerData } from "@/features/teachback";
 
@@ -15,6 +17,10 @@ export type DeletedCounts = {
   gridAnswers: number;
   /** Study circles left, including any this user started, which close for everyone. */
   circles: number;
+  /** The public profile on /people: 0 or 1. */
+  networkProfiles: number;
+  /** Spaced-repetition state and the review day log. */
+  reviewRecords: number;
 };
 
 export const NOTHING_DELETED: DeletedCounts = {
@@ -25,10 +31,12 @@ export const NOTHING_DELETED: DeletedCounts = {
   courses: 0,
   gridAnswers: 0,
   circles: 0,
+  networkProfiles: 0,
+  reviewRecords: 0,
 };
 
 /**
- * Deletes everything one person made: their evidence pages, course listings, attempts,
+ * Deletes everything one person made: their public people profile, evidence pages, course listings, attempts,
  * proven skills, grid answers, study circles and maps. Public things go first, so they stop showing straight away.
  * Maps go last, because the steps before look things up through them.
  *
@@ -36,6 +44,8 @@ export const NOTHING_DELETED: DeletedCounts = {
  * If a step fails, the error goes up and the caller can simply run it again.
  */
 export async function deleteUserData(userId: string): Promise<DeletedCounts> {
+  // First, because the profile is public: it must stop showing on /people straight away.
+  const { profiles } = await deleteNetworkProfile(userId);
   const evidencePages = await deleteProofsByOwner(userId);
 
   const maps = await listMapsByOwner(userId);
@@ -45,9 +55,19 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
 
   const learner = await deleteLearnerData(userId);
   const gridAnswers = await deleteGridSolves(userId);
+  const { reviewRecords } = await deleteReviewData(userId);
   // Before the maps, so no circle points at a map that is gone.
   const { memberships } = await deleteCircleData(userId);
   await Promise.all(maps.map((map) => deleteSkillMap(map.id)));
 
-  return { maps: maps.length, ...learner, evidencePages, courses: listed.length, gridAnswers, circles: memberships };
+  return {
+    maps: maps.length,
+    ...learner,
+    evidencePages,
+    courses: listed.length,
+    gridAnswers,
+    circles: memberships,
+    networkProfiles: profiles,
+    reviewRecords,
+  };
 }
