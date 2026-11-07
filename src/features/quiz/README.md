@@ -2,6 +2,64 @@
 
 **Owner:** Mirza. See `TEAM.md`.
 
-Generate a multiple-choice quiz per node, keys 1-4 to answer, and explain every answer.
+A multiple-choice quiz for each skill on a map, so a learner can check what they know before they teach it back. Every answer is explained. The UI is `QuizTab`, exported from `@/features/quiz/client` and shown in the skill panel. Everything else here is server code.
 
-**Status:** skeleton. `QuizScreen` is a placeholder.
+**Status:** built. `QuizScreen` is still a placeholder.
+
+## How a quiz is made
+
+1. `getOrCreateQuiz(mapId, nodeId)` loads the map with `getSkillMap` and checks the node is on it. Only then does it build the store key, so raw input never reaches the store.
+2. A saved quiz is returned as it is. Otherwise one `chatJSON` call (label `quiz`) asks for 5 questions about the node's title, why and checkpoints.
+3. `validateQuiz` checks the reply in code: it trims text, drops empty, overlong and duplicate questions, needs 4 distinct options (ignoring case), strips any "A." or "2)" label the model added, and rejects true catch-alls such as "All of the above" or "None of these" (an answer like "All of them" is kept). A question whose prompt or explanation points at an option by position ("option B", "the first one") is dropped, since the options are shuffled. It keeps 3 to 6 questions; fewer than 3 throws a `QuizError` (502) and nothing is saved.
+4. The model puts the right option first. Code shuffles the options and sets `answerIndex`, so answers are not stuck in one position. Ids, `mapId`, `nodeId` and the citation are set by code too.
+
+The citation is the node's own, and only when `verified` is true. The model never writes one.
+
+## The posting is data
+
+The map title and node text came from a posting someone pasted. `buildQuizPrompt` puts them inside `<skill>` tags, removes any copy of those tags from the text, and the system prompt tells the model to ignore instructions inside.
+
+## Cost
+
+The AI allows about 5 requests a minute, so:
+
+- Opening a skill only reads the store (`GET`). The quiz is made when the learner presses **Make a quiz**.
+- Each quiz is saved once per node and reused by everyone who opens that map.
+- Concurrent requests for the same node share one model call, through an in-memory map of pending promises.
+
+## API
+
+| Route | Returns |
+|---|---|
+| `GET /api/quiz?mapId=&nodeId=` | `{items}`: the saved questions, or `null`. Never calls the model. |
+| `POST /api/quiz` `{mapId, nodeId}` | `{items}`: the saved questions, or new ones. |
+
+Errors are `{error: "a sentence for people"}` with a 400, 404, 500, 502 or 503.
+
+The response includes `answerIndex`, since this is self-study. **Battle must strip `answerIndex` (and the explanation) before sending questions to players.**
+
+## Keyboard
+
+Keys are handled only on the quiz's own region, never on the page, so typing in the teach-back box above is never taken. Keys pressed in a text field are ignored.
+
+| Key | Does |
+|---|---|
+| `1` to `4` | Chooses that option, before answering |
+| `Enter` | Next question, after answering. Answering moves focus to **Next question**, so Enter or Space there moves on |
+| `Tab` | Moves between the options and buttons, which all work by mouse or touch too |
+
+When a button press removes the focused control (making a quiz, an error, trying again), focus moves to whatever replaced it: the loading line, **Make a quiz**, the error's retry button, or the first question. Right and wrong are shown with words and an icon, not colour alone. The explanation is in an `aria-live` region.
+
+## Storage
+
+- `quiz/<mapId>/<nodeId>`: `{items: QuizQuestion[], createdAt}`.
+
+## Files
+
+- `quiz.ts`: `getSavedQuiz`, `getOrCreateQuiz`.
+- `validate.ts`: the reply schema, checks and shuffle. `prompt.ts`: the prompts. `http.ts`: request parsing and error responses (tested in `http.test.ts`).
+- `ui/quizState.ts`: progress, scoring, key handling and where focus goes, as plain functions. `ui/api.ts`: fetch helpers.
+
+## Tests
+
+`npm test -- quiz` mocks the model.
