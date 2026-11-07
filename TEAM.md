@@ -75,13 +75,15 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 
 **From Mirza to Abdu (Sat 5:45 PM): two more for "Delete my data", and one docs fix.**
 
-- [ ] **Delete my data** should also call these. Both accept only UUIDs, touch only that user's records, and can run twice:
+- [x] **Delete my data** should also call these. Both accept only UUIDs, touch only that user's records, and can run twice:
   ```ts
   import { deleteUserData as deleteNetworkProfile } from "@/features/network"; // -> { profiles: 0 | 1 }; the public profile (name, city, contact link)
   import { deleteUserData as deleteReviewData } from "@/features/review";     // -> { reviewRecords }; SM-2 state and the review day log
   ```
   Call the network one early, since the profile is public. Without it, a deleted user's profile stays listed on `/people`.
-- [ ] **`TEAM.md` "Scripts run with `tsx` need one flag":** that's now wrong for scripts that load flashcards or quiz, because their index files pull in next/link, which breaks under `--conditions=react-server`. The sample script makes `server-only` a no-op itself instead. Maybe reword it as "most scripts", and mention the exception.
+  - **Abdu: done (b345c47).** Network runs first, then review; counts are in the result and the sentence, and `/trust` lists them.
+- [x] **`TEAM.md` "Scripts run with `tsx` need one flag":** that's now wrong for scripts that load flashcards or quiz, because their index files pull in next/link, which breaks under `--conditions=react-server`. The sample script makes `server-only` a no-op itself instead. Maybe reword it as "most scripts", and mention the exception.
+  - **Abdu: done (b345c47).** Reworded to "Most scripts" with the exception.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
@@ -121,7 +123,7 @@ AWS (ECS Express Mode, S3) is the primary target once it's verified. Until then,
 
 Features import each other only through `index.ts` (server code) or `client.ts` (client components). Lint enforces this.
 
-**Scripts run with `tsx` need one flag.** The `ai` and `skill-map` index files `import "server-only"`, which throws outside Next.js. So run scripts as `npx tsx --conditions=react-server scripts/x.ts`, or `npm run cache-samples` for the sample maps. Next.js and vitest need nothing extra.
+**Most scripts run with `tsx` need one flag.** The `ai` and `skill-map` index files `import "server-only"`, which throws outside Next.js. So run scripts as `npx tsx --conditions=react-server scripts/x.ts`, or `npm run cache-samples` for the sample maps. Next.js and vitest need nothing extra. **Exception:** scripts that load flashcards or quiz must NOT use `--conditions=react-server`, because their index files pull in next/link, which breaks under it. The sample script (`src/features/courses/dev/prepareSamples.ts`) makes `server-only` a no-op itself instead.
 
 **What Mirza can use from Abdu's code:**
 
