@@ -23,6 +23,9 @@ const DETAIL: CourseDetail = {
   isOwner: false,
   likedByMe: false,
   myCopyId: null,
+  signedIn: false,
+  signInRequired: false,
+  displayName: null,
   skills: [],
 };
 

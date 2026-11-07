@@ -25,13 +25,13 @@ A listing holds `authorId`, the owner's identity cookie. It never leaves the ser
 | Route | Does | Who |
 |---|---|---|
 | `GET /api/courses?sort=popular\|new&q=` | `{courses}`: the directory. Popular is most likes, then newest. `q` matches title, subtitle or author name. | Anyone |
-| `POST /api/courses` `{mapId, authorName?}` | `{course}` (201): publish, or republish | The map's owner |
-| `GET /api/courses/[mapId]` | `{course, title, subtitle, published, isSample, isOwner, likedByMe, myCopyId, skills}` | Anyone if public, else only the owner |
+| `POST /api/courses` `{mapId, authorName?}` | `{course}` (201): publish, or republish | The map's owner, signed in once Auth0 is set up |
+| `GET /api/courses/[mapId]` | `{course, title, subtitle, published, isSample, isOwner, likedByMe, myCopyId, signedIn, signInRequired, displayName, skills}` | Anyone if public, else only the owner |
 | `POST /api/courses/[mapId]/start` | `{mapId}` of the map to open: 201 with a new copy, 200 with the copy made before. The owner gets their own map back (200). | Anyone if public, else only the owner |
 | `DELETE /api/courses/[mapId]` | `{ok: true}`: make it private again | The map's owner |
-| `PUT` / `DELETE /api/courses/[mapId]/like` | `{liked, likeCount}` | Anyone but the owner, public courses only |
+| `PUT` / `DELETE /api/courses/[mapId]/like` | `{liked, likeCount}` | Anyone but the owner, public courses only, signed in once Auth0 is set up |
 
-Errors are `{error: "a sentence for people"}` with a 400, 403, 404 or 500. Raw errors only go to the server log, prefixed `[courses]`.
+Errors are `{error: "a sentence for people"}` with a 400, 401 (sign in first), 403, 404 or 500. Raw errors only go to the server log, prefixed `[courses]`.
 
 ## Rules
 
@@ -67,7 +67,14 @@ What can still happen: a like that passed the "is it public?" check just before 
 
 ## Sign-in
 
-There is no sign-in yet. `session.ts` holds the one seam: `requirePublisher(userId)`, `requireLiker(userId)` and `requireLearner(userId)` allow guests today (they only check the id is a UUID). The Auth0 step makes them require a signed-in session. Nothing else changes.
+`session.ts` holds the one seam, using `isAuthConfigured()` from `@/features/auth` and identity's `getSession()`:
+
+- `requirePublisher(userId)` and `requireLiker(userId)` are async. Once Auth0 is set up they need a signed-in session for that same user id, and otherwise throw a 401: "Sign in to publish a course, so your name shows on it." or "Sign in to like courses." Without Auth0 (tests, offline development) guests may publish and like.
+- `requireUnpublisher(userId)`: making your own course private never needs a sign-in, so a guest can always take a course down.
+- `requireLearner(userId)`: starting a course never needs a sign-in. There is no login wall.
+- `viewerAccess()` gives `getCourse` the viewer's `signedIn`, `signInRequired` and `displayName` (their own name only, never an id). The course page shows `SignInPrompt` from `@/features/auth/client` in place of the like button and the publish form when `signInRequired` is true, and "Name to show" starts with `displayName` when signed in.
+
+The order of checks is unchanged: a missing map is a 404 and someone else's map is a 403 before any sign-in check. `auth` never imports `courses`, so there is no cycle.
 
 ## Waiting on Abdu
 

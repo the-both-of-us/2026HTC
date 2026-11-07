@@ -13,7 +13,7 @@ import {
   sortListings,
 } from "./rules";
 import { ensureSampleCourses, SEED_OWNER_ID } from "./seed";
-import { requirePublisher } from "./session";
+import { requirePublisher, requireUnpublisher, viewerAccess } from "./session";
 import { findMyCopy } from "./start";
 import { toPublicCourse, type CourseDetail, type CourseListing, type CourseSort, type PublicCourse } from "./types";
 
@@ -29,10 +29,12 @@ async function requireMap(mapId: string, notFound = MAP_NOT_FOUND): Promise<Skil
   return map;
 }
 
-async function requireOwnedMap(mapId: string, userId: string): Promise<SkillMap> {
+/** Publishing needs a sign-in once Auth0 is set up. Making a course private never does. */
+async function requireOwnedMap(mapId: string, userId: string, action: "publish" | "unpublish"): Promise<SkillMap> {
   const map = await requireMap(mapId);
   if (map.ownerId !== userId) throw new CoursesError(NOT_YOURS, 403);
-  requirePublisher(userId);
+  if (action === "publish") await requirePublisher(userId);
+  else requireUnpublisher(userId);
   return map;
 }
 
@@ -77,10 +79,11 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
   if (!saved && !isOwner) throw new CoursesError(COURSE_NOT_FOUND, 404);
   const listing = saved ? await withLikeCount(saved) : null;
 
-  const [likedByMe, myCopyId] = await Promise.all([
+  const [likedByMe, myCopyId, viewer] = await Promise.all([
     UUID_PATTERN.test(viewerId) ? getDoc(likeKey(map.id, viewerId)).then((like) => like !== null) : false,
     // The owner's map is already theirs, so they never have a copy to continue.
     isOwner ? null : findMyCopy(map.id, viewerId),
+    viewerAccess(),
   ]);
 
   return {
@@ -92,6 +95,9 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
     isOwner,
     likedByMe,
     myCopyId,
+    signedIn: viewer.signedIn,
+    signInRequired: viewer.signInRequired,
+    displayName: viewer.displayName,
     skills: learningOrder(map.nodes).map((node) => ({
       id: node.id,
       title: node.title,
@@ -106,7 +112,7 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
  * the likes. A map built from a sample posting is labelled a sample, because its job ad is fictional.
  */
 export async function publishCourse(mapId: string, userId: string, authorName?: string | null): Promise<PublicCourse> {
-  const map = await requireOwnedMap(mapId, userId);
+  const map = await requireOwnedMap(mapId, userId, "publish");
   const name = normalizeAuthorName(authorName);
   const listing = await saveListing(map, { authorName: name, isSample: isSamplePostingText(map.sourceText) });
   return toPublicCourse(listing);
@@ -114,7 +120,7 @@ export async function publishCourse(mapId: string, userId: string, authorName?: 
 
 /** Takes the course out of the directory. Owner only. Like documents stay, so republishing restores the count. */
 export async function unpublishCourse(mapId: string, userId: string): Promise<void> {
-  const map = await requireOwnedMap(mapId, userId);
+  const map = await requireOwnedMap(mapId, userId, "unpublish");
   await deleteDoc(listingKey(map.id));
 }
 

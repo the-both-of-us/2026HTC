@@ -33,7 +33,7 @@ async function recount(mapId: string): Promise<number> {
 export async function likeCourse(mapId: string, userId: string): Promise<LikeResult> {
   const map = await requirePublishedMap(mapId);
   if (map.ownerId === userId) throw new CoursesError(OWN_COURSE, 403);
-  requireLiker(userId);
+  await requireLiker(userId);
 
   const key = likeKey(map.id, userId);
   if (!(await getDoc<LikeDoc>(key))) {
@@ -45,7 +45,7 @@ export async function likeCourse(mapId: string, userId: string): Promise<LikeRes
 /** Removes the viewer's like. Unliking a course you never liked changes nothing. */
 export async function unlikeCourse(mapId: string, userId: string): Promise<LikeResult> {
   const map = await requirePublishedMap(mapId);
-  requireLiker(userId);
+  await requireLiker(userId);
 
   await deleteDoc(likeKey(map.id, userId));
   return { liked: false, likeCount: await recount(map.id) };

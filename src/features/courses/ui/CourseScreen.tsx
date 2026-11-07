@@ -3,6 +3,7 @@
 import { ArrowLeft, Heart, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { SignInPrompt } from "@/features/auth/client";
 import { type Ref, useEffect, useId, useRef, useState, useTransition } from "react";
 import { Badge, Button, buttonClasses, Card, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import type { CourseDetail, LikeResult, PublicCourse } from "../types";
@@ -163,14 +164,19 @@ function LoadedCourse({
 
       <div className="mt-6 flex flex-col gap-5">
         <StartCourseAction mapId={mapId} isOwner={isOwner} myCopyId={detail.myCopyId ?? null} />
-        {published && course && (
+        {published && course && (detail.signInRequired && !isOwner ? (
+          <div className="flex flex-col items-start gap-1">
+            <p className="text-base">{likesLabel(course.likeCount)}</p>
+            <SignInPrompt action="like" />
+          </div>
+        ) : (
           <LikeToggle
             key={course.publishedAt}
             mapId={mapId}
             initial={{ liked: detail.likedByMe, likeCount: course.likeCount }}
             isOwner={isOwner}
           />
-        )}
+        ))}
       </div>
 
       {isOwner && (
@@ -181,7 +187,14 @@ function LoadedCourse({
               ? "It is listed in Courses, so anyone can find it and like it."
               : "Only you can open it until you publish it."}
           </p>
-          <PublishControls mapId={mapId} published={published} onChange={onPublishChange} showViewLink={false} />
+          <PublishControls
+            mapId={mapId}
+            published={published}
+            onChange={onPublishChange}
+            showViewLink={false}
+            signInRequired={detail.signInRequired === true}
+            displayName={detail.displayName ?? null}
+          />
         </Card>
       )}
 

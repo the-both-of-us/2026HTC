@@ -52,6 +52,15 @@ export type CourseDetail = {
    * page can offer "Continue this course". Always null for the owner. The id is the viewer's own map.
    */
   myCopyId: string | null;
+  /** True when the viewer is signed in. Always false while Auth0 is not set up. */
+  signedIn: boolean;
+  /**
+   * True when the viewer must sign in before publishing or liking (Auth0 is set up and
+   * they are a guest), so the page shows a sign-in sentence instead of a control that fails.
+   */
+  signInRequired: boolean;
+  /** The viewer's own name from sign-in, to pre-fill "Name to show". Never anyone else's. */
+  displayName: string | null;
   /** In learning order: every skill comes after the skills it needs. */
   skills: CourseSkill[];
 };
