@@ -48,11 +48,11 @@ npm run dev
 - **Storage:** with no Blob token, data lives in memory and is lost on restart. That's fine for local work.
 - **After pulling, if `package.json` changed:** run `npm install --legacy-peer-deps`. Two new packages came in on Nov 7: `server-only` and `@aws-sdk/client-s3`.
 - **`SESSION_SECRET`:** leave it empty locally, since a development secret is built in. Old unsigned cookies now count as no cookie, so maps you made before Nov 7 under an old cookie won't open for you. Build a new one.
-- **Live site:** https://proofline-tan.vercel.app . Abdu deploys.
+- **Live site:** https://oryxlearn.vercel.app . Abdu deploys.
 
 ## Hosting
 
-AWS (ECS Express Mode, S3) is the primary target once it's verified. Until then, Vercel stays the live fallback at https://proofline-tan.vercel.app . Abdu deploys, with `scripts/deploy-aws.sh`. The store picks its driver from the environment: `S3_BUCKET` means S3, `BLOB_READ_WRITE_TOKEN` means Blob, otherwise memory. Pushes to `main` by Abdu also go live on Vercel straight away.
+AWS (ECS Express Mode, S3) is the primary target once it's verified. Until then, Vercel stays the live fallback at https://oryxlearn.vercel.app . Abdu deploys, with `scripts/deploy-aws.sh`. The store picks its driver from the environment: `S3_BUCKET` means S3, `BLOB_READ_WRITE_TOKEN` means Blob, otherwise memory. Pushes to `main` by Abdu also go live on Vercel straight away.
 
 **Using an AI coding tool?** Start it with: "Read `TEAM.md`, `CLAUDE.md` and `SPEC.md`. I'm Mirza. Only edit paths Mirza owns."
 
