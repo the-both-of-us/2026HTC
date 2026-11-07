@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { deleteDoc, getDoc, listDocs, putDoc } from "./index";
+import { deleteDoc, getDoc, listDocs, putDoc, putDocIfAbsent } from "./index";
 
 // An empty token selects the in-memory driver, so these tests run offline.
 beforeEach(() => {
@@ -24,6 +24,12 @@ describe("store (in-memory driver)", () => {
     const doc = await getDoc<{ n: number }>("test/copy");
     doc!.n = 99;
     expect(await getDoc("test/copy")).toEqual({ n: 1 });
+  });
+
+  it("lets only one caller claim a key, and leaves the first value alone", async () => {
+    const results = await Promise.all([1, 2, 3].map((n) => putDocIfAbsent("test/claim", { n })));
+    expect(results).toEqual([true, false, false]);
+    expect(await getDoc("test/claim")).toEqual({ n: 1 });
   });
 
   it("lists only the documents under a prefix", async () => {

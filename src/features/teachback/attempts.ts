@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
-import { getDoc, putDoc } from "@/shared/store";
+import { deleteDoc, getDoc, putDoc, putDocIfAbsent } from "@/shared/store";
 import {
   PASS_SCORE,
   type Attempt,
@@ -89,20 +89,34 @@ export async function answerFollowUp(userId: string, attemptId: string, answer: 
   const map = await loadOwnMap(attempt.mapId, userId);
   const node = findNode(map, attempt.nodeId);
 
-  const trimmedAnswer = answer.trim();
-  const result = await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer);
+  // Each attempt gets one answer. Claiming it before the model call means answers sent
+  // at the same time can't each get a try and let the last one win.
+  const claimKey = `followup-claims/${attempt.id}`;
+  const claimed = await putDocIfAbsent(claimKey, { at: new Date().toISOString() });
+  if (!claimed) {
+    throw new AttemptError("This answer is already being checked. If nothing comes back, start the skill again.", 409);
+  }
 
-  const finished: Attempt = {
-    ...attempt,
-    followUp: { ...attempt.followUp, answer: trimmedAnswer, passed: result.passed, feedback: result.feedback },
-    status: result.passed ? "proven" : "not-yet",
-  };
+  try {
+    const trimmedAnswer = answer.trim();
+    const result = await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer);
 
-  // Progress goes first. If saving the attempt then fails, the learner can simply
-  // answer again, which would not be possible the other way round.
-  if (result.passed) await markProven(attempt.mapId, userId, node.id, attempt.id);
-  await saveAttempt(finished);
-  return finished;
+    const finished: Attempt = {
+      ...attempt,
+      followUp: { ...attempt.followUp, answer: trimmedAnswer, passed: result.passed, feedback: result.feedback },
+      status: result.passed ? "proven" : "not-yet",
+    };
+
+    // Progress goes first. If saving the attempt then fails, the learner can simply
+    // answer again, which would not be possible the other way round.
+    if (result.passed) await markProven(attempt.mapId, userId, node.id, attempt.id);
+    await saveAttempt(finished);
+    return finished;
+  } catch (error) {
+    // Nothing was decided, so this was not their one answer. Let them send it again.
+    await deleteDoc(claimKey).catch(() => {});
+    throw error;
+  }
 }
 
 /** Returns the attempt, or null. The id comes from a URL, so it must look like one of ours. */

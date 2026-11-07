@@ -1,4 +1,4 @@
-import { del, get, list, put } from "@vercel/blob";
+import { BlobError, del, get, list, put } from "@vercel/blob";
 
 /**
  * A small JSON document store.
@@ -51,6 +51,34 @@ export async function putDoc(key: string, value: unknown): Promise<void> {
     allowOverwrite: true,
     contentType: "application/json",
   });
+}
+
+/**
+ * Creates the document only if the key is empty, and says whether it did. Two requests
+ * racing for the same key can't both get true, so this works as a one-time claim.
+ */
+export async function putDocIfAbsent(key: string, value: unknown): Promise<boolean> {
+  const text = JSON.stringify(value);
+
+  if (!hasBlobToken()) {
+    if (memory.has(key)) return false;
+    memory.set(key, text);
+    return true;
+  }
+
+  try {
+    await put(key, text, {
+      access: "private",
+      addRandomSuffix: false,
+      allowOverwrite: false,
+      contentType: "application/json",
+    });
+    return true;
+  } catch (error) {
+    // Blob has no error class of its own for this, only this message.
+    if (error instanceof BlobError && /already exists/i.test(error.message)) return false;
+    throw error;
+  }
 }
 
 /** Returns every document whose key starts with the prefix. */

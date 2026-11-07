@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { chatJSON } from "@/features/ai";
+import { AiUnavailableError, chatJSON } from "@/features/ai";
 import { putDoc } from "@/shared/store";
 import type { Attempt, IntegritySignals, SkillMap, SkillNode } from "@/shared/types";
 import { answerFollowUp, getAttempt, getProgress, getProgressView, startAttempt, toLearnerView, type NewAttempt } from "./attempts";
@@ -159,6 +159,34 @@ describe("status transitions", () => {
     await answerFollowUp(OWNER, attempt.id, "No idea.");
 
     await expect(answerFollowUp(OWNER, attempt.id, "Second try.")).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("answers sent at the same time get one try between them", async () => {
+    const attempt = await reachFollowUp();
+    // Only the first judgement is queued: a second model call would have no reply and throw.
+    modelJudges(false);
+    mockChatJSON.mockClear();
+
+    const results = await Promise.allSettled(
+      ["one", "two", "three", "four", "five"].map((answer) => answerFollowUp(OWNER, attempt.id, answer)),
+    );
+
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(4);
+    expect((await getAttempt(attempt.id))?.status).toBe("not-yet");
+    expect(await getProgress(mapId, OWNER)).toBeNull();
+  });
+
+  it("gives the try back if the model could not answer", async () => {
+    const attempt = await reachFollowUp();
+    mockChatJSON.mockRejectedValueOnce(new AiUnavailableError());
+    mockChatJSON.mockRejectedValueOnce(new AiUnavailableError());
+    await expect(answerFollowUp(OWNER, attempt.id, "A real answer.")).rejects.toBeInstanceOf(AiUnavailableError);
+
+    modelJudges(true);
+    const finished = await answerFollowUp(OWNER, attempt.id, "A real answer.");
+    expect(finished.status).toBe("proven");
   });
 
   it("a not-yet attempt has no follow-up to answer", async () => {
