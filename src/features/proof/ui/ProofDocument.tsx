@@ -1,4 +1,4 @@
-import { CircleCheck, CircleMinus } from "lucide-react";
+import { CircleCheck, CircleMinus, Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import type { ProofSnapshot } from "../types";
@@ -27,8 +27,9 @@ export function ProofDocument({ snapshot, hash, url }: ProofDocumentProps) {
               The evidence
             </h2>
             <p className="mt-1 text-ink-soft">
-              For each skill, {snapshot.displayName} wrote an explanation, then answered a question about it. Highlights
-              mark the exact words that met a checkpoint.
+              Each skill says how it was proved. For an explanation, {snapshot.displayName} then answered a question
+              about it, and highlights mark the exact words that met a checkpoint. For a caught mistake, the AI wrote
+              the explanation and they found and fixed what it got wrong.
             </p>
           </div>
           {snapshot.skills.map((skill) => (
@@ -86,6 +87,17 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
               </li>
             ))}
           </ul>
+
+          {snapshot.finalInterview && (
+            <p className="mt-5 flex items-start gap-3 rounded-control border border-amber/50 bg-amber/10 p-3">
+              <Trophy size={22} aria-hidden="true" className="mt-0.5 shrink-0 text-amber" />
+              <span>
+                <span className="font-semibold">Course badge.</span> Passed the final interview: three questions mixing
+                these skills, written by the AI after every skill was proven. {snapshot.finalInterview.passedCount} of 3
+                passed{snapshot.finalInterview.spokenCount > 0 ? `, ${snapshot.finalInterview.spokenCount} answered aloud` : ""}.
+              </span>
+            </p>
+          )}
 
           {snapshot.notYetProven.length > 0 && (
             <p className="mt-4 text-sm text-ink-soft">

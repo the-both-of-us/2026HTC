@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import { InlineText } from "@/shared/ui";
 import type { ProofSkill } from "../types";
-import { followUpMethodLine, formatDateTime, highlightSegments, integrityLines, plural, scoreLine, sourceName } from "./format";
+import { followUpMethodLine, formatDateTime, highlightSegments, integrityLines, plural, provedByLine, scoreLine, sourceName } from "./format";
 
 /** One proven skill: what they wrote, what was found in it, and how it was tested. */
 export function SkillEvidence({ skill }: { skill: ProofSkill }) {
@@ -19,6 +19,9 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
             {skill.title}
           </h3>
           <p className="mt-1 text-ink-soft">{skill.why}</p>
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm font-medium text-accent-bright">
+            {provedByLine(skill)}
+          </p>
         </div>
         <div className="shrink-0 text-right">
           <p className="text-3xl font-medium text-proven tabular-nums">
@@ -32,12 +35,22 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
       </header>
 
       <div className="flex flex-col gap-7 p-5 sm:p-6">
-        <Section title="What they wrote">
-          <Transcript skill={skill} />
-        </Section>
+        {skill.catch ? (
+          <Section title="The AI's explanation, with its planted mistakes">
+            <CatchEvidence record={skill.catch} />
+          </Section>
+        ) : (
+          <Section title="What they wrote">
+            <Transcript skill={skill} />
+          </Section>
+        )}
 
-        <Section title="Checkpoints">
-          <p className="mb-3 text-sm text-ink-soft">{scoreLine(skill)} A pass needs {PASS_SCORE}, plus the follow-up.</p>
+        <Section title={skill.catch ? "Planted mistakes" : "Checkpoints"}>
+          <p className="mb-3 text-sm text-ink-soft">
+            {skill.catch
+              ? `${scoreLine(skill).replace("checkpoint", "planted mistake")} Each correct sentence they marked as wrong cost 20. A pass needs ${PASS_SCORE}.`
+              : `${scoreLine(skill)} A pass needs ${PASS_SCORE}, plus the follow-up.`}
+          </p>
           <Checkpoints skill={skill} />
           {skill.factualErrors.length > 0 && (
             <div className="mt-4">
@@ -59,24 +72,26 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
           )}
         </Section>
 
-        <Section title="Live follow-up question">
-          <p className="text-sm text-ink-soft">Written after they submitted, from their own words. It had to be passed.</p>
-          <p className="mt-3 font-semibold">
-            <InlineText text={skill.followUp.question} />
-          </p>
-          <p className="mt-3 border-l-2 border-control-edge pl-3.5 whitespace-pre-wrap">{skill.followUp.answer}</p>
-          <FollowUpMethod followUp={skill.followUp} />
-          {skill.followUp.feedback && (
-            <p className="mt-3 flex items-start gap-2 text-sm text-ink-soft">
-              <CircleCheck size={18} aria-hidden="true" className="mt-px shrink-0 text-proven" />
-              <span>
-                <span className="font-semibold text-ink">Passed.</span> <InlineText text={skill.followUp.feedback} />
-              </span>
+        {!skill.catch && (
+          <Section title="Live follow-up question">
+            <p className="text-sm text-ink-soft">Written after they submitted, from their own words. It had to be passed.</p>
+            <p className="mt-3 font-semibold">
+              <InlineText text={skill.followUp.question} />
             </p>
-          )}
-        </Section>
+            <p className="mt-3 border-l-2 border-control-edge pl-3.5 whitespace-pre-wrap">{skill.followUp.answer}</p>
+            <FollowUpMethod followUp={skill.followUp} />
+            {skill.followUp.feedback && (
+              <p className="mt-3 flex items-start gap-2 text-sm text-ink-soft">
+                <CircleCheck size={18} aria-hidden="true" className="mt-px shrink-0 text-proven" />
+                <span>
+                  <span className="font-semibold text-ink">Passed.</span> <InlineText text={skill.followUp.feedback} />
+                </span>
+              </p>
+            )}
+          </Section>
+        )}
 
-        <Section title="How the explanation was written">
+        <Section title={skill.catch ? "How the corrections were written" : "How the explanation was written"}>
           <Signals skill={skill} />
           <p className="mt-2 text-sm text-ink-soft">{formatDateTime(skill.attemptedAt)}</p>
         </Section>
@@ -207,5 +222,32 @@ function SourceNote({ skill }: { skill: ProofSkill }) {
       <blockquote className="border-l-2 border-proven pl-3.5">“{source.quote}”</blockquote>
       <figcaption className="mt-1.5 text-sm text-ink-soft">{sourceName(source)}. Code confirmed these words appear in it.</figcaption>
     </figure>
+  );
+}
+
+/** Each sentence of the AI's explanation: where its mistakes were, and what this person marked and said. */
+function CatchEvidence({ record }: { record: NonNullable<ProofSkill["catch"]> }) {
+  const planted = new Map(record.planted.map((item) => [item.sentence, item.why]));
+  const picks = new Map(record.picks.map((pick) => [pick.sentence, pick]));
+  return (
+    <ol className="flex flex-col gap-2.5">
+      {record.sentences.map((sentence, index) => {
+        const why = planted.get(index + 1);
+        const pick = picks.get(index + 1);
+        return (
+          <li key={index} className={why ? "border-l-2 border-amber pl-3" : "pl-3.5 text-ink-soft"}>
+            <p>
+              <span className="font-semibold">{index + 1}.</span> {sentence}
+            </p>
+            {why && <p className="mt-1 text-sm">Planted mistake: {why}</p>}
+            {pick && (
+              <p className="mt-1 text-sm">
+                {pick.fixed ? "Caught it" : why ? "Marked it, but the fix missed" : "Marked it, but it was correct"}: “{pick.correction}”
+              </p>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }

@@ -121,3 +121,21 @@ function findQuote(text: string, quote: string): { start: number; end: number } 
 function escapeForRegExp(word: string): string {
   return word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+/**
+ * How the skill was proved, said honestly. A record from before formats existed has no
+ * format, and was a written or spoken explanation plus a follow-up.
+ */
+export function provedByLine(skill: ProofSkill): string {
+  const aloud = skill.integrity.inputMethod === "voice";
+  if (skill.format === "catch" && skill.catch) {
+    const caught = skill.catch.picks.filter((pick) => pick.fixed).length;
+    return `Caught ${plural(caught, "planted mistake")} in an AI explanation and corrected ${caught === 1 ? "it" : "them"}`;
+  }
+  if (skill.format === "kid") {
+    const grade = skill.readingGrade === undefined ? "" : `, reading grade ${Math.round(skill.readingGrade)} measured by code`;
+    return `Explained it ${aloud ? "aloud " : ""}for a 10-year-old${grade}`;
+  }
+  if (skill.format === "timed") return aloud ? "Explained it aloud against a 30-second clock" : "Typed it against a 30-second clock";
+  return aloud ? "Explained it aloud in their own words" : "Explained it in writing, in their own words";
+}
