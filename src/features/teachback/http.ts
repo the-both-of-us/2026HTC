@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export { errorResponse, parseBody } from "@/shared/http";
-
 /** The shapes the API accepts. Length limits live in attempts.ts, with friendly messages. */
 export const newAttemptBody = z.object({
   mapId: z.string(),

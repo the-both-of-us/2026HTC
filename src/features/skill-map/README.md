@@ -8,6 +8,8 @@ import { deriveNodeStates, generateSkillMap, getSkillMap, SkillMapError, toPubli
 const map = await generateSkillMap({ text, kind: "posting", ownerId }); // validates, then saves it
 const same = await getSkillMap(map.id);                                  // null if missing
 const states = deriveNodeStates(map, progress);                          // { nodeId: "locked" | "available" | "proven" }
+const copy = await copySkillMap(map.id, newOwnerId);                     // a new map with forkedFrom set, no progress. Check who may read the original first.
+const mine = await listMapsByOwner(ownerId);                             // newest first
 ```
 
 ## How a map gets made
@@ -24,15 +26,15 @@ A quote counts as verified only if code finds it in the posting (`@/shared/quote
 
 ## Reading a map
 
-Anyone with the id can read a map through `GET /api/maps/[id]`, which returns `toPublicMap(map)`. **Never send a full `SkillMap` to a browser:** `ownerId` is the owner's identity cookie value, so publishing it would let a reader act as them, and checkpoints are the answer key, so a reader gets only `checkpointCount`.
+Only the owner can read a map, unless it is published as a course (`isPublished` from `@/features/courses`). `GET /api/maps/[id]` and the map page check that with `canReadMap` in `src/app/api/maps/[id]/access.ts`. It sits at route level because courses imports skill-map. `getSkillMap` itself is not gated, so server code can still read a map. **Never send a full `SkillMap` to a browser:** `ownerId` is the owner's identity cookie value, so publishing it would let a reader act as them, and checkpoints are the answer key, so a reader gets only `checkpointCount`. `toPublicMap` handles both.
 
 ## The demo cache
 
 `fixtures/*.json` hold real, unedited model replies for each sample in `src/shared/samplePostings.ts`. They go through the same validation as live replies.
 
 ```
-npx tsx scripts/cache-samples.ts           # only the samples with no saved file
-npx tsx scripts/cache-samples.ts --force   # all of them again
+npm run cache-samples              # only the samples with no saved file
+npm run cache-samples -- --force   # all of them again
 ```
 
 The script does not save a reply with an unverified citation, so run it again if it says so. `fixtures.test.ts` fails if a sample's text changes without new output being saved.
