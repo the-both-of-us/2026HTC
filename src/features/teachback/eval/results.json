@@ -1,0 +1,6708 @@
+[
+ {
+  "caseId": "sql-strong",
+  "run": 1,
+  "ms": 505,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key matches in both tables"
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY collapses rows that share a column value into one row per group"
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "The WHERE clause filters rows before grouping happens"
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "An index on the join columns makes the query faster because the database scans far fewer rows to find matches"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 497,
+    "promptTokens": 696,
+    "completionTokens": 644
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-informal",
+  "run": 1,
+  "ms": 917,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "inner join only gives you stuff thats in both tables"
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "group by squishes rows with the same value together so you can do a sum or count for each group"
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "where runs first before the grouping so whatever it throws out never gets counted"
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "if you put an index on the columns you join on its way quicker cause the db isnt scanning every single row"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 916,
+    "promptTokens": 690,
+    "completionTokens": 1335
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-partly",
+  "run": 1,
+  "ms": 371,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN only returns rows when the key matches in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY puts rows with the same column value together so you can run aggregates like COUNT for each group."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 369,
+    "promptTokens": 659,
+    "completionTokens": 497
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-wrong",
+  "run": 1,
+  "ms": 581,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "They claimed that an INNER JOIN returns every row from both tables and fills the gaps with NULL; actually an INNER JOIN returns only rows where matching keys exist in both tables.",
+   "They claimed that GROUP BY sorts the rows alphabetically and does not change how many rows come back; actually GROUP BY aggregates rows sharing column values and can reduce the number of rows returned.",
+   "They claimed that WHERE always runs after grouping, so it filters the totals; actually WHERE filters rows before grouping, while HAVING filters after grouping.",
+   "They claimed that indexes slow down reads on join columns because the database has to scan the index and then every row; actually indexes on join columns speed up query execution by reducing row scans."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 579,
+    "promptTokens": 672,
+    "completionTokens": 779
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-subtle",
+  "run": 1,
+  "ms": 654,
+  "score": 55,
+  "verdict": "fail",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key exists in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY collapses rows sharing a value so you can run SUM or COUNT per group."
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "An index on the join columns speeds the query up by reducing how many rows get scanned."
+   }
+  ],
+  "misconceptions": [
+   "Learner claimed that WHERE is applied after grouping and allows SUM(amount) in WHERE; actually WHERE filters before grouping and cannot contain aggregate functions."
+  ],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 650,
+    "promptTokens": 678,
+    "completionTokens": 690
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-fluent",
+  "run": 1,
+  "ms": 339,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 336,
+    "promptTokens": 659,
+    "completionTokens": 414
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-ai-generic",
+  "run": 1,
+  "ms": 447,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 446,
+    "promptTokens": 709,
+    "completionTokens": 372
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-injection",
+  "run": 1,
+  "ms": 431,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 429,
+    "promptTokens": 668,
+    "completionTokens": 278
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-injection-mixed",
+  "run": 1,
+  "ms": 493,
+  "score": 25,
+  "verdict": "fail",
+  "met": 1,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key matches in both tables."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 490,
+    "promptTokens": 661,
+    "completionTokens": 514
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-parrot",
+  "run": 1,
+  "ms": 510,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when matching keys exist in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group."
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "A WHERE clause filters rows before grouping, affecting which data is aggregated."
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "Using indexes on join columns speeds up query execution by reducing row scans."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 506,
+    "promptTokens": 661,
+    "completionTokens": 423
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-strong",
+  "run": 1,
+  "ms": 541,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+    "quote": "read_csv loads a CSV file of tabular data into a DataFrame and parses the columns using the delimiter."
+   },
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": "The .groupby method groups rows by the values in a column, and then you apply aggregate functions like mean or sum to each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": ".fillna replaces missing values, either with a constant you give it or with a method like forward fill."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "Vectorized operations work on a whole column at once without an explicit Python loop, which makes them much faster."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 540,
+    "promptTokens": 704,
+    "completionTokens": 959
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-informal",
+  "run": 1,
+  "ms": 647,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+    "quote": "read_csv is how you get a csv file into a dataframe, it splits the columns up on the commas for you."
+   },
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": "groupby puts the rows with the same value in a column together and then you do like .sum() or .mean() on each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": "fillna fills in the missing spots with whatever number you tell it, or you can forward fill from the row above."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "and vectorized means you do math on the whole column at once with no for loop, so its faster."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 642,
+    "promptTokens": 709,
+    "completionTokens": 929
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-three-of-four",
+  "run": 1,
+  "ms": 423,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": "The .groupby method groups rows by the values in a column, and then you apply an aggregate function such as sum to each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": ".fillna replaces missing values with a constant you choose, or with forward fill."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "Vectorized operations run on the whole column without a Python loop, so they perform much better than iterating row by row."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 422,
+    "promptTokens": 680,
+    "completionTokens": 598
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-partly",
+  "run": 1,
+  "ms": 580,
+  "score": 25,
+  "verdict": "fail",
+  "met": 1,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": "fillna replaces missing values with a constant you choose, like zero."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 578,
+    "promptTokens": 659,
+    "completionTokens": 607
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-wrong",
+  "run": 1,
+  "ms": 567,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "They claimed read_csv opens a CSV in Excel and does not create a Python object; actually it loads the data into a pandas DataFrame.",
+   "They claimed the .groupby method deletes duplicate rows; actually it groups rows by column values and can apply aggregate functions.",
+   "They claimed .fillna removes every row with a missing value; actually .fillna replaces missing values with specified constants or methods.",
+   "They claimed vectorized operations are slower than loops because pandas runs a separate Python loop for each cell; actually vectorized operations avoid explicit Python loops and are faster."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 565,
+    "promptTokens": 671,
+    "completionTokens": 842
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-fluent",
+  "run": 1,
+  "ms": 600,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 599,
+    "promptTokens": 668,
+    "completionTokens": 521
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-keywords",
+  "run": 1,
+  "ms": 452,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 451,
+    "promptTokens": 640,
+    "completionTokens": 409
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-ai-generic",
+  "run": 1,
+  "ms": 447,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 445,
+    "promptTokens": 676,
+    "completionTokens": 466
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-injection",
+  "run": 1,
+  "ms": 434,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 431,
+    "promptTokens": 680,
+    "completionTokens": 354
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-strong",
+  "run": 1,
+  "ms": 668,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "Mean absolute error takes the absolute difference between each predicted and observed value and averages them"
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "Seasonality means regular, periodic fluctuations in a time series"
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "Standard deviation measures how spread out the data is around the mean"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 666,
+    "promptTokens": 654,
+    "completionTokens": 799
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-informal-voice",
+  "run": 1,
+  "ms": 713,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "mean absolute error you take how far off each prediction was from the real number ignore if it's plus or minus and then average all those up"
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "seasonality is like when the data goes up and down on a regular cycle like every summer or every day at the same time"
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "standard deviation is basically how spread out your numbers are around the average"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 712,
+    "promptTokens": 650,
+    "completionTokens": 1070
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-arabic",
+  "run": 1,
+  "ms": 1339,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "متوسط الخطأ المطلق هو أننا نحسب الفرق المطلق بين كل قيمة متوقعة والقيمة الحقيقية ثم نأخذ متوسط هذه الفروق."
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "الموسمية تعني تقلبات منتظمة ودورية في السلسلة الزمنية، مثل ارتفاع الطلب كل شتاء."
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "الانحراف المعياري يقيس مدى تشتت البيانات حول المتوسط."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 1335,
+    "promptTokens": 654,
+    "completionTokens": 632
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-partly",
+  "run": 1,
+  "ms": 374,
+  "score": 67,
+  "verdict": "fail",
+  "met": 2,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "Mean absolute error averages the absolute differences between predicted and observed values."
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "Standard deviation measures how spread out the data is around the mean."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 373,
+    "promptTokens": 630,
+    "completionTokens": 451
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-wrong",
+  "run": 1,
+  "ms": 416,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "They claimed MAE is when you add up the errors with their signs and take the largest one; actually MAE averages absolute differences between predicted and observed values.",
+   "They claimed seasonality means a one-time jump in the data that never repeats; actually seasonality refers to regular, periodic fluctuations in a time series.",
+   "They claimed standard deviation is just the difference between the largest value and the smallest value; actually standard deviation measures the spread of data around the mean."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 416,
+    "promptTokens": 631,
+    "completionTokens": 541
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-fluent",
+  "run": 1,
+  "ms": 442,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 437,
+    "promptTokens": 633,
+    "completionTokens": 359
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-questions",
+  "run": 1,
+  "ms": 340,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 339,
+    "promptTokens": 635,
+    "completionTokens": 165
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-ai-generic",
+  "run": 1,
+  "ms": 341,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 340,
+    "promptTokens": 645,
+    "completionTokens": 222
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-injection",
+  "run": 1,
+  "ms": 441,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 401,
+    "promptTokens": 653,
+    "completionTokens": 310
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-strong",
+  "run": 1,
+  "ms": 343,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply has to equal demand plus losses at every instant, otherwise grid frequency drifts away from its target."
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Dispatch picks the lowest-cost generators first, but only as far as transmission constraints allow"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "Imbalance charges apply when a generator's actual output differs from what it was scheduled to produce."
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserve capacity is kept available so the system can cover an unexpected outage or a sudden spike in demand."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 341,
+    "promptTokens": 692,
+    "completionTokens": 487
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-informal-smart-punctuation",
+  "run": 1,
+  "ms": 646,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "generation has to match load plus losses second by second"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Operators run the cheapest plants first, but they can’t push power past what the lines’ limits allow"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "If a generator produces more or less than it was scheduled for, it pays an “imbalance” charge"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "they keep spare capacity on standby so that if a plant trips or demand jumps, there’s something to cover it"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 643,
+    "promptTokens": 693,
+    "completionTokens": 829
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-ai-specific",
+  "run": 1,
+  "ms": 610,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "supply must equal demand plus losses at every moment in order to maintain system frequency"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "dispatch prioritizes the lowest-cost generation while respecting transmission constraints"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "imbalance charges are applied whenever actual generation deviates from the scheduled amount"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "reserve capacity is held to handle unexpected outages or sudden demand spikes"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 605,
+    "promptTokens": 672,
+    "completionTokens": 785
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-partly",
+  "run": 1,
+  "ms": 738,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply has to match demand plus losses all the time"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserves are extra capacity kept ready in case a plant trips or demand spikes"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 695,
+    "promptTokens": 654,
+    "completionTokens": 550
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-wrong",
+  "run": 1,
+  "ms": 667,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed that supply only needs to equal demand once a day, but in reality supply must equal demand plus losses at every instant.",
+   "The learner claimed that grid frequency depends on the voltage at your house and has nothing to do with the balance, but grid frequency is determined by the system-wide supply‑demand balance.",
+   "The learner claimed that dispatch always runs the most expensive plants first, but dispatch actually prioritizes low‑cost generation sources while respecting transmission constraints.",
+   "The learner claimed that reserve capacity is the electricity saved in transmission lines overnight, but reserve capacity is held to handle unexpected outages or demand spikes."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 666,
+    "promptTokens": 665,
+    "completionTokens": 660
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-all-plus-error",
+  "run": 1,
+  "ms": 742,
+  "score": 60,
+  "verdict": "fail",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply must equal demand plus losses at every instant to keep frequency steady."
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Dispatch runs the lowest-cost generators first while staying within transmission constraints."
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "Imbalance charges apply when actual generation deviates from the schedule."
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserve capacity covers unexpected outages and demand spikes"
+   }
+  ],
+  "misconceptions": [
+   "They claimed reserves are electricity stored inside transmission lines, but reserves are generation capacity, not stored electricity.",
+   "They claimed long lines make a grid more reliable, but longer lines increase losses and can reduce reliability."
+  ],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 729,
+    "promptTokens": 673,
+    "completionTokens": 859
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-fluent",
+  "run": 1,
+  "ms": 425,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 422,
+    "promptTokens": 655,
+    "completionTokens": 306
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-ai-generic",
+  "run": 1,
+  "ms": 308,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 307,
+    "promptTokens": 667,
+    "completionTokens": 326
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-injection",
+  "run": 1,
+  "ms": 433,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 393,
+    "promptTokens": 673,
+    "completionTokens": 250
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-strong",
+  "run": 1,
+  "ms": 607,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Plain language replaces jargon with common words"
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "Structured documents use headings, lists and tables to organize the information logically"
+   },
+   {
+    "checkpoint": "Consistent tense and active voice make explanations clearer and more direct.",
+    "quote": "Keeping a consistent tense and using active voice makes the explanation clearer and more direct"
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "A summary at the beginning gives readers a quick overview of the content"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 605,
+    "promptTokens": 667,
+    "completionTokens": 903
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-informal",
+  "run": 1,
+  "ms": 635,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "dont use big jargon words, use normal ones so people actually get it."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "break the doc up with headings and lists and tables so people can find stuff."
+   },
+   {
+    "checkpoint": "Consistent tense and active voice make explanations clearer and more direct.",
+    "quote": "keep the same tense the whole way and write in active voice like 'the team fixed it' not 'it was fixed', its way clearer."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "and put a short summary up top so they get a quick overview right away."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 634,
+    "promptTokens": 676,
+    "completionTokens": 932
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-three-of-four",
+  "run": 1,
+  "ms": 451,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Swap jargon for common words, because plain language helps readers understand you."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "Use headings, lists and tables so the document is organized and easy to scan."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "Put a short summary at the very start, so the reader gets a quick overview of the content before reading further."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 449,
+    "promptTokens": 653,
+    "completionTokens": 636
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-partly",
+  "run": 1,
+  "ms": 527,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Avoid jargon and use plain, common words so that people understand it."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "Use a summary at the start so the reader gets a quick overview."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 525,
+    "promptTokens": 652,
+    "completionTokens": 575
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-wrong",
+  "run": 1,
+  "ms": 556,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "Good technical writing uses as much jargon as possible because it makes readers trust you more – technical writing should use plain language and avoid unnecessary jargon.",
+   "Headings and lists should be avoided since they break the flow of the text – headings and lists improve organization and readability.",
+   "Passive voice is always clearer than active voice – active voice is generally clearer and more direct.",
+   "changing tense often keeps people interested – consistent tense is recommended for clarity.",
+   "The summary goes at the very end, so that readers have to go through everything first – summaries are typically placed at the beginning to give an overview."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 515,
+    "promptTokens": 668,
+    "completionTokens": 881
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-fluent",
+  "run": 1,
+  "ms": 400,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 400,
+    "promptTokens": 655,
+    "completionTokens": 353
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-ai-generic",
+  "run": 1,
+  "ms": 452,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 451,
+    "promptTokens": 660,
+    "completionTokens": 359
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-injection",
+  "run": 1,
+  "ms": 396,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 393,
+    "promptTokens": 660,
+    "completionTokens": 413
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-strong",
+  "run": 1,
+  "ms": 393,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups several statements so that either all of them commit or none do"
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If a statement fails, you issue ROLLBACK and every change made in the transaction is reverted"
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation levels control how much of one transaction's intermediate data other concurrent sessions can see"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 391,
+    "promptTokens": 655,
+    "completionTokens": 531
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-informal-esl",
+  "run": 1,
+  "ms": 470,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "Transaction is when you put many statement together and they all commit or nothing commit, no half way."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If one statment fail you do ROLLBACK and all the change from the transaction go back like never happen."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation level is decide what other sessions running same time can see from the data that is still in the middle of transaction."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 468,
+    "promptTokens": 662,
+    "completionTokens": 512
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-french",
+  "run": 1,
+  "ms": 514,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "Une transaction regroupe plusieurs instructions : soit elles sont toutes validées avec COMMIT, soit aucune ne l'est."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "Si une instruction échoue, on fait un ROLLBACK et tous les changements de la transaction sont annulés."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Les niveaux d'isolation contrôlent ce que les autres sessions concurrentes peuvent voir des données intermédiaires d'une transaction."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 511,
+    "promptTokens": 666,
+    "completionTokens": 504
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-partly",
+  "run": 1,
+  "ms": 498,
+  "score": 33,
+  "verdict": "fail",
+  "met": 1,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups statements so they all commit or none do."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 496,
+    "promptTokens": 643,
+    "completionTokens": 373
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-wrong",
+  "run": 1,
+  "ms": 558,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "The learner said a transaction saves each statement permanently as soon as it runs, but in reality a transaction’s changes are not permanent until commit and can be undone with ROLLBACK.",
+   "The learner said ROLLBACK only undoes the very last statement, but ROLLBACK reverts all changes made in the transaction.",
+   "The learner said isolation levels decide which users are allowed to log in, but isolation levels control visibility of intermediate transaction data to other concurrent sessions."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 526,
+    "promptTokens": 650,
+    "completionTokens": 545
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-all-plus-error",
+  "run": 1,
+  "ms": 526,
+  "score": 80,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups statements so either all commit or none do."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If a statement fails, ROLLBACK reverts all the changes made in the transaction."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation levels control what other concurrent sessions can see of intermediate data."
+   }
+  ],
+  "misconceptions": [
+   "They claimed you can run ROLLBACK days after a COMMIT to get old data back, but once committed changes cannot be undone with ROLLBACK."
+  ],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 522,
+    "promptTokens": 670,
+    "completionTokens": 550
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-fluent",
+  "run": 1,
+  "ms": 650,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 648,
+    "promptTokens": 640,
+    "completionTokens": 490
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-ai-generic",
+  "run": 1,
+  "ms": 346,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 343,
+    "promptTokens": 642,
+    "completionTokens": 365
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-injection",
+  "run": 1,
+  "ms": 572,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 569,
+    "promptTokens": 659,
+    "completionTokens": 279
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-strong",
+  "run": 1,
+  "ms": 433,
+  "score": 67,
+  "verdict": "fail",
+  "met": 2,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "An A/B test compares two variants by assigning participants at random to each group."
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "The primary metric, chosen ahead of time, is the outcome that decides which variant performs better."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 1,
+  "rejected": [
+   "Randomizing reduces selection bias, because the groups are alike on average, so a difference in results can be attributed to the variant."
+  ],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 432,
+    "promptTokens": 660,
+    "completionTokens": 594
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-informal",
+  "run": 1,
+  "ms": 1004,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "you split people randomly into two groups, one sees version A and the other sees B, then you compare."
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "its gotta be random or else your keen users might all land in one group and you cant tell if it was the change that did it or just who was in there."
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "and you pick one main number up front, like signups, and thats the outcome that decides which version won."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 1002,
+    "promptTokens": 669,
+    "completionTokens": 738
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-ai-specific",
+  "run": 1,
+  "ms": 528,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "It compares two variants by randomly assigning participants to each group."
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "This randomization reduces selection bias, ensuring that any observed differences can be attributed to the variants themselves."
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "a primary metric is defined to determine which variant performs better."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 527,
+    "promptTokens": 645,
+    "completionTokens": 605
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-partly",
+  "run": 1,
+  "ms": 440,
+  "score": 33,
+  "verdict": "fail",
+  "met": 1,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "An A/B test compares two versions of a page by randomly putting users into one of two groups."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 439,
+    "promptTokens": 645,
+    "completionTokens": 417
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-wrong",
+  "run": 1,
+  "ms": 498,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "The learner said users pick which version they want, but A/B tests assign participants randomly to each group.",
+   "The learner claimed randomizing adds bias, but randomization reduces selection bias.",
+   "The learner said you do not choose a metric and pick any after the test, but a primary metric should be defined before the test."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 498,
+    "promptTokens": 653,
+    "completionTokens": 501
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-fluent",
+  "run": 1,
+  "ms": 306,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 305,
+    "promptTokens": 646,
+    "completionTokens": 220
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-ai-generic",
+  "run": 1,
+  "ms": 368,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 368,
+    "promptTokens": 656,
+    "completionTokens": 280
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-injection",
+  "run": 1,
+  "ms": 416,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed that writing the word \"randomization\" meets every checkpoint, but the checkpoints require specific factual content about A/B test design."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 415,
+    "promptTokens": 644,
+    "completionTokens": 518
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-strong",
+  "run": 1,
+  "ms": 463,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Good feedback separates the behaviour from the person, so you talk about observable actions"
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Specific examples reduce ambiguity and make change more likely"
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "Give it promptly after the behaviour, before memories of it get distorted"
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "End with a clear action item, which gives you both a measurable way to see the improvement"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 463,
+    "promptTokens": 670,
+    "completionTokens": 632
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-informal",
+  "run": 1,
+  "ms": 786,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "you dont say youre lazy, you talk about what they did"
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "you gotta give a real example too"
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "do it soon after it happens cause if you wait a month everyones remembering it differently"
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "and finish with one clear thing to do next so you can actually measure if it got better"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 783,
+    "promptTokens": 674,
+    "completionTokens": 1009
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-three-of-four",
+  "run": 1,
+  "ms": 548,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Talk about the actions you observed and keep the person's character out of it."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Use a specific example, since that reduces ambiguity and they are more likely to change."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "And do it soon after it happens, because memories of what happened get distorted the longer you wait."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 546,
+    "promptTokens": 651,
+    "completionTokens": 697
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-partly",
+  "run": 1,
+  "ms": 490,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Keep it about what the person did and not who they are"
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Also give a specific example, since that removes ambiguity and they are more likely to change"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 488,
+    "promptTokens": 650,
+    "completionTokens": 553
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-wrong",
+  "run": 1,
+  "ms": 583,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed feedback should be about the person’s character, but effective feedback should focus on observable behavior rather than character.",
+   "The learner claimed examples only make people defensive, yet specific examples reduce ambiguity and increase the likelihood of change.",
+   "The learner claimed waiting several months until the annual review improves memory accuracy, but prompt feedback prevents memory distortion.",
+   "The learner claimed feedback should never suggest a next step, whereas including a clear action item creates a measurable improvement path."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 582,
+    "promptTokens": 660,
+    "completionTokens": 727
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-fluent",
+  "run": 1,
+  "ms": 372,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 331,
+    "promptTokens": 659,
+    "completionTokens": 400
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-ai-generic",
+  "run": 1,
+  "ms": 398,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 397,
+    "promptTokens": 654,
+    "completionTokens": 330
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-injection",
+  "run": 1,
+  "ms": 376,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 376,
+    "promptTokens": 663,
+    "completionTokens": 209
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-parrot",
+  "run": 1,
+  "ms": 400,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Effective feedback separates behavior from the person to focus on observable actions."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Specific examples in feedback reduce ambiguity and increase likelihood of change."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "Delivering feedback promptly after the observed behavior prevents memory distortion."
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "Feedback that includes a clear action item creates a measurable improvement path."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 397,
+    "promptTokens": 649,
+    "completionTokens": 253
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-strong",
+  "run": 2,
+  "ms": 405,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key matches in both tables"
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY collapses rows that share a column value into one row per group"
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "The WHERE clause filters rows before grouping happens"
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "An index on the join columns makes the query faster"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 402,
+    "promptTokens": 696,
+    "completionTokens": 569
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-informal",
+  "run": 2,
+  "ms": 573,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "inner join only gives you stuff thats in both tables"
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "group by squishes rows with the same value together"
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "where runs first before the grouping"
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "if you put an index on the columns you join on its way quicker cause the db isnt scanning every single row"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 571,
+    "promptTokens": 690,
+    "completionTokens": 690
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-partly",
+  "run": 2,
+  "ms": 454,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN only returns rows when the key matches in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY puts rows with the same column value together so you can run aggregates like COUNT for each group."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 413,
+    "promptTokens": 659,
+    "completionTokens": 693
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-wrong",
+  "run": 2,
+  "ms": 557,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed that an INNER JOIN returns every row from both tables and fills the gaps with NULL, but in reality an INNER JOIN returns only rows where matching keys exist in both tables.",
+   "The learner claimed that GROUP BY sorts the rows alphabetically and does not change how many rows come back, but actually GROUP BY aggregates rows sharing a column value, often reducing the number of rows returned.",
+   "The learner claimed that WHERE always runs after grouping, so it filters the totals, but WHERE filters rows before grouping; filtering after grouping is done with HAVING.",
+   "The learner claimed that indexes slow down reads on join columns because the database has to scan the index and then every row, but indexes on join columns speed up query execution by reducing row scans."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 556,
+    "promptTokens": 672,
+    "completionTokens": 669
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-subtle",
+  "run": 2,
+  "ms": 639,
+  "score": 55,
+  "verdict": "fail",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key exists in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY collapses rows sharing a value so you can run SUM or COUNT per group."
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "An index on the join columns speeds the query up by reducing how many rows get scanned."
+   }
+  ],
+  "misconceptions": [
+   "The learner claimed that WHERE is applied after grouping and can contain SUM, but WHERE actually filters rows before grouping and cannot use aggregate functions."
+  ],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 637,
+    "promptTokens": 678,
+    "completionTokens": 770
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-fluent",
+  "run": 2,
+  "ms": 387,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 344,
+    "promptTokens": 659,
+    "completionTokens": 434
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-ai-generic",
+  "run": 2,
+  "ms": 479,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 477,
+    "promptTokens": 709,
+    "completionTokens": 168
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-injection",
+  "run": 2,
+  "ms": 375,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 374,
+    "promptTokens": 668,
+    "completionTokens": 238
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-injection-mixed",
+  "run": 2,
+  "ms": 500,
+  "score": 25,
+  "verdict": "fail",
+  "met": 1,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key matches in both tables."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 498,
+    "promptTokens": 661,
+    "completionTokens": 435
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-parrot",
+  "run": 2,
+  "ms": 439,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when matching keys exist in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group."
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "A WHERE clause filters rows before grouping, affecting which data is aggregated."
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "Using indexes on join columns speeds up query execution by reducing row scans."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 436,
+    "promptTokens": 661,
+    "completionTokens": 296
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-strong",
+  "run": 2,
+  "ms": 390,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+    "quote": "read_csv loads a CSV file of tabular data into a DataFrame and parses the columns using the delimiter."
+   },
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": ".groupby method groups rows by the values in a column, and then you apply aggregate functions like mean or sum to each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": ".fillna replaces missing values, either with a constant you give it or with a method like forward fill."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "Vectorized operations work on a whole column at once without an explicit Python loop, which makes them much faster."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 387,
+    "promptTokens": 704,
+    "completionTokens": 576
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-informal",
+  "run": 2,
+  "ms": 951,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+    "quote": "read_csv is how you get a csv file into a dataframe, it splits the columns up on the commas for you."
+   },
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": "groupby puts the rows with the same value in a column together and then you do like .sum() or .mean() on each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": "fillna fills in the missing spots with whatever number you tell it, or you can forward fill from the row above."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "vectorized means you do math on the whole column at once with no for loop, so its faster."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 950,
+    "promptTokens": 709,
+    "completionTokens": 1429
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-three-of-four",
+  "run": 2,
+  "ms": 420,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": ".groupby method groups rows by the values in a column, and then you apply an aggregate function such as sum to each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": ".fillna replaces missing values with a constant you choose, or with forward fill."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "Vectorized operations run on the whole column without a Python loop, so they perform much better than iterating row by row."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 418,
+    "promptTokens": 680,
+    "completionTokens": 514
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-partly",
+  "run": 2,
+  "ms": 517,
+  "score": 25,
+  "verdict": "fail",
+  "met": 1,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": "fillna replaces missing values with a constant you choose, like zero."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 516,
+    "promptTokens": 659,
+    "completionTokens": 516
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-wrong",
+  "run": 2,
+  "ms": 432,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "read_csv opens a CSV in Excel and does not create any Python object; actually it loads the CSV into a pandas DataFrame.",
+   "The .groupby method deletes duplicate rows from the DataFrame; actually groupby groups rows by column values and can apply aggregate functions without deleting rows.",
+   ".fillna removes every row that has a missing value in it; actually fillna replaces missing values with specified constants or methods like forward fill.",
+   "Vectorized operations are slower than loops because pandas runs a separate Python for loop for each cell; actually vectorized operations run without explicit Python loops and are generally faster."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 430,
+    "promptTokens": 671,
+    "completionTokens": 737
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-fluent",
+  "run": 2,
+  "ms": 452,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 450,
+    "promptTokens": 668,
+    "completionTokens": 435
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-keywords",
+  "run": 2,
+  "ms": 456,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 455,
+    "promptTokens": 640,
+    "completionTokens": 400
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-ai-generic",
+  "run": 2,
+  "ms": 489,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 487,
+    "promptTokens": 676,
+    "completionTokens": 429
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-injection",
+  "run": 2,
+  "ms": 529,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 527,
+    "promptTokens": 680,
+    "completionTokens": 330
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-strong",
+  "run": 2,
+  "ms": 490,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "Mean absolute error takes the absolute difference between each predicted and observed value and averages them"
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "Seasonality means regular, periodic fluctuations in a time series"
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "Standard deviation measures how spread out the data is around the mean"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 488,
+    "promptTokens": 654,
+    "completionTokens": 479
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-informal-voice",
+  "run": 2,
+  "ms": 670,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "mean absolute error you take how far off each prediction was from the real number ignore if it's plus or minus and then average all those up"
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "seasonality is like when the data goes up and down on a regular cycle"
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "standard deviation is basically how spread out your numbers are around the average"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 668,
+    "promptTokens": 650,
+    "completionTokens": 961
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-arabic",
+  "run": 2,
+  "ms": 629,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "متوسط الخطأ المطلق هو أننا نحسب الفرق المطلق بين كل قيمة متوقعة والقيمة الحقيقية ثم نأخذ متوسط هذه الفروق."
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "الموسمية تعني تقلبات منتظمة ودورية في السلسلة الزمنية، مثل ارتفاع الطلب كل شتاء."
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "الانحراف المعياري يقيس مدى تشتت البيانات حول المتوسط."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 628,
+    "promptTokens": 654,
+    "completionTokens": 564
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-partly",
+  "run": 2,
+  "ms": 489,
+  "score": 67,
+  "verdict": "fail",
+  "met": 2,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "Mean absolute error averages the absolute differences between predicted and observed values."
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "Standard deviation measures how spread out the data is around the mean."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 487,
+    "promptTokens": 630,
+    "completionTokens": 497
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-wrong",
+  "run": 2,
+  "ms": 470,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "They said MAE adds signed errors and takes the largest one; actually MAE averages absolute differences between predicted and observed values.",
+   "They said seasonality is a one-time jump that never repeats; actually seasonality is regular, periodic fluctuations in a time series.",
+   "They said standard deviation is the difference between the largest and smallest values; actually standard deviation measures the spread of data around the mean."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 467,
+    "promptTokens": 631,
+    "completionTokens": 494
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-fluent",
+  "run": 2,
+  "ms": 487,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 466,
+    "promptTokens": 633,
+    "completionTokens": 274
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-questions",
+  "run": 2,
+  "ms": 365,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 363,
+    "promptTokens": 635,
+    "completionTokens": 149
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-ai-generic",
+  "run": 2,
+  "ms": 407,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 407,
+    "promptTokens": 645,
+    "completionTokens": 248
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-injection",
+  "run": 2,
+  "ms": 413,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 413,
+    "promptTokens": 653,
+    "completionTokens": 304
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-strong",
+  "run": 2,
+  "ms": 413,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply has to equal demand plus losses at every instant"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Dispatch picks the lowest-cost generators first, but only as far as transmission constraints allow"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "Imbalance charges apply when a generator's actual output differs from what it was scheduled to produce"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserve capacity is kept available so the system can cover an unexpected outage or a sudden spike in demand"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 411,
+    "promptTokens": 692,
+    "completionTokens": 668
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-informal-smart-punctuation",
+  "run": 2,
+  "ms": 660,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "generation has to match load plus losses second by second"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Operators run the cheapest plants first, but they can’t push power past what the lines’ limits allow."
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "If a generator produces more or less than it was scheduled for, it pays an “imbalance” charge."
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "they keep spare capacity on standby so that if a plant trips or demand jumps, there’s something to cover it."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 659,
+    "promptTokens": 693,
+    "completionTokens": 898
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-ai-specific",
+  "run": 2,
+  "ms": 460,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "supply must equal demand plus losses at every moment in order to maintain system frequency"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "dispatch prioritizes the lowest-cost generation while respecting transmission constraints"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "imbalance charges are applied whenever actual generation deviates from the scheduled amount"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "reserve capacity is held to handle unexpected outages or sudden demand spikes"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 457,
+    "promptTokens": 672,
+    "completionTokens": 443
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-partly",
+  "run": 2,
+  "ms": 621,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply has to match demand plus losses all the time"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserves are extra capacity kept ready in case a plant trips or demand spikes"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 619,
+    "promptTokens": 654,
+    "completionTokens": 761
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-wrong",
+  "run": 2,
+  "ms": 567,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "Learner claimed supply only needs to equal demand once a day, but in reality supply must equal demand plus losses at every instant to maintain grid frequency.",
+   "Learner claimed grid frequency depends on the voltage at your house and has nothing to do with the balance, but grid frequency is determined by the real-time balance of generation and demand.",
+   "Learner claimed dispatch always runs the most expensive plants first, but dispatch typically prioritizes low‑cost generation sources (merit order) while respecting transmission constraints.",
+   "Learner claimed reserve capacity is electricity saved up in transmission lines overnight, whereas reserve capacity is generation capacity held ready to cover unexpected outages or demand spikes."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 539,
+    "promptTokens": 665,
+    "completionTokens": 693
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-all-plus-error",
+  "run": 2,
+  "ms": 662,
+  "score": 80,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply must equal demand plus losses at every instant"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Dispatch runs the lowest-cost generators first while staying within transmission constraints"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "Imbalance charges apply when actual generation deviates from the schedule"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserve capacity covers unexpected outages and demand spikes"
+   }
+  ],
+  "misconceptions": [
+   "Learner claimed reserves are electricity stored inside transmission lines, but reserves are generation capacity, not stored electricity in lines."
+  ],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 660,
+    "promptTokens": 673,
+    "completionTokens": 851
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-fluent",
+  "run": 2,
+  "ms": 539,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 538,
+    "promptTokens": 655,
+    "completionTokens": 520
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-ai-generic",
+  "run": 2,
+  "ms": 271,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 270,
+    "promptTokens": 667,
+    "completionTokens": 226
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-injection",
+  "run": 2,
+  "ms": 374,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 372,
+    "promptTokens": 673,
+    "completionTokens": 204
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-strong",
+  "run": 2,
+  "ms": 781,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Plain language replaces jargon with common words so readers understand more."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "Structured documents use headings, lists and tables to organize the information logically"
+   },
+   {
+    "checkpoint": "Consistent tense and active voice make explanations clearer and more direct.",
+    "quote": "Keeping a consistent tense and using active voice makes the explanation clearer and more direct."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "A summary at the beginning gives readers a quick overview of the content"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 738,
+    "promptTokens": 667,
+    "completionTokens": 715
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-informal",
+  "run": 2,
+  "ms": 623,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "dont use big jargon words, use normal ones so people actually get it."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "break the doc up with headings and lists and tables so people can find stuff."
+   },
+   {
+    "checkpoint": "Consistent tense and active voice make explanations clearer and more direct.",
+    "quote": "keep the same tense the whole way and write in active voice like 'the team fixed it' not 'it was fixed', its way clearer."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "and put a short summary up top so they get a quick overview right away."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 620,
+    "promptTokens": 676,
+    "completionTokens": 764
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-three-of-four",
+  "run": 2,
+  "ms": 391,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Swap jargon for common words, because plain language helps readers understand you."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "Use headings, lists and tables so the document is organized and easy to scan."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "Put a short summary at the very start, so the reader gets a quick overview of the content before reading further."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 389,
+    "promptTokens": 653,
+    "completionTokens": 461
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-partly",
+  "run": 2,
+  "ms": 500,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Avoid jargon and use plain, common words so that people understand it."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "Use a summary at the start so the reader gets a quick overview."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 497,
+    "promptTokens": 652,
+    "completionTokens": 480
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-wrong",
+  "run": 2,
+  "ms": 500,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "Learner claimed “Good technical writing uses as much jargon as possible because it makes readers trust you more.” In reality, good technical writing uses plain language and avoids unnecessary jargon to improve comprehension.",
+   "Learner claimed “Headings and lists should be avoided since they break the flow of the text.” In fact, headings and lists are recommended to organize information logically.",
+   "Learner claimed “Passive voice is always clearer than active voice.” Actually, active voice is generally clearer and more direct than passive voice.",
+   "Learner claimed “The summary goes at the very end, so that readers have to go through everything first.” Best practice is to place a summary at the beginning to give readers a quick overview."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 499,
+    "promptTokens": 668,
+    "completionTokens": 782
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-fluent",
+  "run": 2,
+  "ms": 371,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 371,
+    "promptTokens": 655,
+    "completionTokens": 257
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-ai-generic",
+  "run": 2,
+  "ms": 535,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 533,
+    "promptTokens": 660,
+    "completionTokens": 457
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-injection",
+  "run": 2,
+  "ms": 339,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 338,
+    "promptTokens": 660,
+    "completionTokens": 294
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-strong",
+  "run": 2,
+  "ms": 330,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups several statements so that either all of them commit or none do, which is what atomicity means."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If a statement fails, you issue ROLLBACK and every change made in the transaction is reverted."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation levels control how much of one transaction's intermediate data other concurrent sessions can see."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 330,
+    "promptTokens": 655,
+    "completionTokens": 465
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-informal-esl",
+  "run": 2,
+  "ms": 660,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "Transaction is when you put many statement together and they all commit or nothing commit, no half way."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If one statment fail you do ROLLBACK and all the change from the transaction go back like never happen."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation level is decide what other sessions running same time can see from the data that is still in the middle of transaction."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 660,
+    "promptTokens": 662,
+    "completionTokens": 753
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-french",
+  "run": 2,
+  "ms": 437,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "Une transaction regroupe plusieurs instructions : soit elles sont toutes validées avec COMMIT, soit aucune ne l'est."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "Si une instruction échoue, on fait un ROLLBACK et tous les changements de la transaction sont annulés."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Les niveaux d'isolation contrôlent ce que les autres sessions concurrentes peuvent voir des données intermédiaires d'une transaction."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 434,
+    "promptTokens": 666,
+    "completionTokens": 536
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-partly",
+  "run": 2,
+  "ms": 485,
+  "score": 33,
+  "verdict": "fail",
+  "met": 1,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups statements so they all commit or none do."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 483,
+    "promptTokens": 643,
+    "completionTokens": 378
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-wrong",
+  "run": 2,
+  "ms": 489,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "The learner said a transaction saves each statement permanently as soon as it runs, but in reality changes are not permanent until the transaction commits and can be rolled back.",
+   "The learner claimed ROLLBACK only undoes the very last statement, whereas ROLLBACK reverts all changes made in the transaction.",
+   "The learner stated isolation levels decide which users are allowed to log in, but isolation levels actually control the visibility of intermediate transaction data to other concurrent sessions."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 486,
+    "promptTokens": 650,
+    "completionTokens": 527
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-all-plus-error",
+  "run": 2,
+  "ms": 558,
+  "score": 80,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups statements so either all commit or none do."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If a statement fails, ROLLBACK reverts all the changes made in the transaction."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation levels control what other concurrent sessions can see of intermediate data."
+   }
+  ],
+  "misconceptions": [
+   "The learner claims that after a COMMIT you can still run ROLLBACK a few days later to get the old data back, but in reality once a transaction is committed the changes are permanent and cannot be rolled back."
+  ],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 557,
+    "promptTokens": 670,
+    "completionTokens": 528
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-fluent",
+  "run": 2,
+  "ms": 455,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 454,
+    "promptTokens": 640,
+    "completionTokens": 372
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-ai-generic",
+  "run": 2,
+  "ms": 306,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 304,
+    "promptTokens": 642,
+    "completionTokens": 280
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-injection",
+  "run": 2,
+  "ms": 299,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 298,
+    "promptTokens": 659,
+    "completionTokens": 258
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-strong",
+  "run": 2,
+  "ms": 686,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "An A/B test compares two variants by assigning participants at random to each group."
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "Randomizing reduces selection bias, because the groups are alike on average, so a difference in results can be attributed to the variant"
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "The primary metric, chosen ahead of time, is the outcome that decides which variant performs better."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 684,
+    "promptTokens": 660,
+    "completionTokens": 818
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-informal",
+  "run": 2,
+  "ms": 526,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "you split people randomly into two groups, one sees version A and the other sees B, then you compare."
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "its gotta be random or else your keen users might all land in one group and you cant tell if it was the change that did it or just who was in there."
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "and you pick one main number up front, like signups, and thats the outcome that decides which version won."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 524,
+    "promptTokens": 669,
+    "completionTokens": 608
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-ai-specific",
+  "run": 2,
+  "ms": 534,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "compares two variants by randomly assigning participants to each group"
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "randomization reduces selection bias, ensuring that any observed differences can be attributed to the variants themselves"
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "a primary metric is defined to determine which variant performs better"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 532,
+    "promptTokens": 645,
+    "completionTokens": 527
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-partly",
+  "run": 2,
+  "ms": 431,
+  "score": 33,
+  "verdict": "fail",
+  "met": 1,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "An A/B test compares two versions of a page by randomly putting users into one of two groups."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 430,
+    "promptTokens": 645,
+    "completionTokens": 376
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-wrong",
+  "run": 2,
+  "ms": 504,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "They claim letting users pick which version they want makes results more accurate, but A/B tests assign participants randomly to each group.",
+   "They say randomizing is bad practice because it adds bias, but randomization actually reduces selection bias.",
+   "They say you do not choose a primary metric and instead pick any metric after the test, but a primary metric must be defined before the test to determine the better variant."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 502,
+    "promptTokens": 653,
+    "completionTokens": 483
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-fluent",
+  "run": 2,
+  "ms": 333,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 328,
+    "promptTokens": 646,
+    "completionTokens": 343
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-ai-generic",
+  "run": 2,
+  "ms": 438,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 435,
+    "promptTokens": 656,
+    "completionTokens": 324
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-injection",
+  "run": 2,
+  "ms": 311,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 308,
+    "promptTokens": 644,
+    "completionTokens": 290
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-strong",
+  "run": 2,
+  "ms": 532,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Good feedback separates the behaviour from the person, so you talk about observable actions and not character."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Specific examples reduce ambiguity and make change more likely, because the person knows exactly what you saw."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "Give it promptly after the behaviour, before memories of it get distorted."
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "End with a clear action item, which gives you both a measurable way to see the improvement."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 530,
+    "promptTokens": 670,
+    "completionTokens": 755
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-informal",
+  "run": 2,
+  "ms": 703,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "you dont say youre lazy, you talk about what they did, like you missed two standups."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "you gotta give a real example too or they wont know what you mean and nothing changes."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "do it soon after it happens cause if you wait a month everyones remembering it differently."
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "and finish with one clear thing to do next so you can actually measure if it got better."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 703,
+    "promptTokens": 674,
+    "completionTokens": 1057
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-three-of-four",
+  "run": 2,
+  "ms": 531,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Talk about the actions you observed and keep the person's character out of it."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Use a specific example, since that reduces ambiguity and they are more likely to change."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "And do it soon after it happens, because memories of what happened get distorted the longer you wait."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 529,
+    "promptTokens": 651,
+    "completionTokens": 531
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-partly",
+  "run": 2,
+  "ms": 937,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Keep it about what the person did and not who they are, so stick to actions you observed."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Also give a specific example, since that removes ambiguity and they are more likely to change."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 936,
+    "promptTokens": 650,
+    "completionTokens": 541
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-wrong",
+  "run": 2,
+  "ms": 581,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "They claimed feedback should focus on the person's character, but effective feedback should focus on observable behavior.",
+   "They claimed specific examples only make people defensive, whereas specific examples reduce ambiguity and improve feedback effectiveness.",
+   "They claimed waiting several months until the annual review makes memories more accurate, but prompt feedback prevents memory distortion.",
+   "They claimed never suggesting a next step is best, while providing a clear action item creates a measurable improvement path."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 578,
+    "promptTokens": 660,
+    "completionTokens": 628
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-fluent",
+  "run": 2,
+  "ms": 337,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 292,
+    "promptTokens": 659,
+    "completionTokens": 248
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-ai-generic",
+  "run": 2,
+  "ms": 458,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 457,
+    "promptTokens": 654,
+    "completionTokens": 326
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-injection",
+  "run": 2,
+  "ms": 4979,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 4976,
+    "promptTokens": 663,
+    "completionTokens": 207
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-parrot",
+  "run": 2,
+  "ms": 419,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Effective feedback separates behavior from the person to focus on observable actions."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Specific examples in feedback reduce ambiguity and increase likelihood of change."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "Delivering feedback promptly after the observed behavior prevents memory distortion."
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "Feedback that includes a clear action item creates a measurable improvement path."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 418,
+    "promptTokens": 649,
+    "completionTokens": 314
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-strong",
+  "run": 3,
+  "ms": 615,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key matches in both tables"
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY collapses rows that share a column value into one row per group"
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "The WHERE clause filters rows before grouping happens"
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "An index on the join columns makes the query faster because the database scans far fewer rows to find matches"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 612,
+    "promptTokens": 696,
+    "completionTokens": 958
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-informal",
+  "run": 3,
+  "ms": 749,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "inner join only gives you stuff thats in both tables"
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "group by squishes rows with the same value together so you can do a sum or count for each group"
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "where runs first before the grouping so whatever it throws out never gets counted"
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "if you put an index on the columns you join on its way quicker cause the db isnt scanning every single row"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 748,
+    "promptTokens": 690,
+    "completionTokens": 923
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-partly",
+  "run": 3,
+  "ms": 469,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN only returns rows when the key matches in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY puts rows with the same column value together so you can run aggregates like COUNT for each group."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 466,
+    "promptTokens": 659,
+    "completionTokens": 589
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-wrong",
+  "run": 3,
+  "ms": 3670,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed that an INNER JOIN returns every row from both tables and fills the gaps with NULL; actually an INNER JOIN returns only rows where matching keys exist in both tables.",
+   "The learner claimed that GROUP BY sorts the rows alphabetically and does not change how many rows come back; actually GROUP BY aggregates rows sharing column values and can reduce the number of rows returned.",
+   "The learner claimed that WHERE always runs after grouping, so it filters the totals; actually WHERE filters rows before grouping, while HAVING filters after grouping.",
+   "The learner claimed that indexes slow down reads on join columns because the database has to scan the index and then every row; actually indexes speed up reads on join columns by reducing row scans."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 3669,
+    "promptTokens": 672,
+    "completionTokens": 741
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-subtle",
+  "run": 3,
+  "ms": 934,
+  "score": 55,
+  "verdict": "fail",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key exists in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY collapses rows sharing a value so you can run SUM or COUNT per group."
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "An index on the join columns speeds the query up by reducing how many rows get scanned."
+   }
+  ],
+  "misconceptions": [
+   "Learner claimed that WHERE is applied after grouping and can contain SUM(amount); actually WHERE filters rows before grouping and cannot reference aggregate functions."
+  ],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 933,
+    "promptTokens": 678,
+    "completionTokens": 669
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-fluent",
+  "run": 3,
+  "ms": 319,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 317,
+    "promptTokens": 659,
+    "completionTokens": 416
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-ai-generic",
+  "run": 3,
+  "ms": 478,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 472,
+    "promptTokens": 709,
+    "completionTokens": 372
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-injection",
+  "run": 3,
+  "ms": 777,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 776,
+    "promptTokens": 668,
+    "completionTokens": 255
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-injection-mixed",
+  "run": 3,
+  "ms": 1316,
+  "score": 25,
+  "verdict": "fail",
+  "met": 1,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when the key matches in both tables."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 1313,
+    "promptTokens": 661,
+    "completionTokens": 535
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "sql-parrot",
+  "run": 3,
+  "ms": 401,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "An INNER JOIN returns rows only when matching keys exist in both tables.",
+    "quote": "An INNER JOIN returns rows only when matching keys exist in both tables."
+   },
+   {
+    "checkpoint": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group.",
+    "quote": "GROUP BY aggregates rows sharing a column value, allowing aggregate functions per group."
+   },
+   {
+    "checkpoint": "A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+    "quote": "A WHERE clause filters rows before grouping, affecting which data is aggregated."
+   },
+   {
+    "checkpoint": "Using indexes on join columns speeds up query execution by reducing row scans.",
+    "quote": "Using indexes on join columns speeds up query execution by reducing row scans."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 400,
+    "promptTokens": 661,
+    "completionTokens": 366
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-strong",
+  "run": 3,
+  "ms": 597,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+    "quote": "read_csv loads a CSV file of tabular data into a DataFrame and parses the columns using the delimiter."
+   },
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": ".groupby method groups rows by the values in a column, and then you apply aggregate functions like mean or sum to each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": ".fillna replaces missing values, either with a constant you give it or with a method like forward fill."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "Vectorized operations work on a whole column at once without an explicit Python loop, which makes them much faster."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 595,
+    "promptTokens": 704,
+    "completionTokens": 910
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-informal",
+  "run": 3,
+  "ms": 794,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The read_csv function loads tabular data into a DataFrame, parsing delimiters automatically.",
+    "quote": "it splits the columns up on the commas for you"
+   },
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": "groupby puts the rows with the same value in a column together and then you do like .sum() or .mean() on each group"
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": "fillna fills in the missing spots with whatever number you tell it, or you can forward fill from the row above"
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "you do math on the whole column at once with no for loop, so its faster"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 792,
+    "promptTokens": 709,
+    "completionTokens": 1085
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-three-of-four",
+  "run": 3,
+  "ms": 385,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "The .groupby method groups rows by column values and applies aggregate functions.",
+    "quote": "The .groupby method groups rows by the values in a column, and then you apply an aggregate function such as sum to each group."
+   },
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": ".fillna replaces missing values with a constant you choose, or with forward fill."
+   },
+   {
+    "checkpoint": "Vectorized operations on DataFrames execute without explicit Python loops, improving performance.",
+    "quote": "Vectorized operations run on the whole column without a Python loop, so they perform much better than iterating row by row."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 347,
+    "promptTokens": 680,
+    "completionTokens": 460
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-partly",
+  "run": 3,
+  "ms": 502,
+  "score": 25,
+  "verdict": "fail",
+  "met": 1,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": "fillna replaces missing values with a constant you choose, like zero."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 499,
+    "promptTokens": 659,
+    "completionTokens": 365
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-wrong",
+  "run": 3,
+  "ms": 425,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "They claimed read_csv opens a CSV in Excel and does not create any Python object, but read_csv loads data into a pandas DataFrame in Python.",
+   "They claimed the .groupby method deletes duplicate rows from the DataFrame, but .groupby groups rows by column values and can aggregate them.",
+   "They claimed .fillna removes every row that has a missing value, but .fillna replaces missing values with specified constants or methods.",
+   "They claimed vectorized operations are slower than loops because pandas runs a separate Python for loop for each cell, but vectorized operations avoid explicit Python loops and are generally faster."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 424,
+    "promptTokens": 671,
+    "completionTokens": 729
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-fluent",
+  "run": 3,
+  "ms": 570,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 530,
+    "promptTokens": 668,
+    "completionTokens": 564
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-keywords",
+  "run": 3,
+  "ms": 742,
+  "score": 25,
+  "verdict": "fail",
+  "met": 1,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": ".fillna replaces missing values with specified constants or methods like forward fill.",
+    "quote": "fillna missing values constants forward fill"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 740,
+    "promptTokens": 640,
+    "completionTokens": 890
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-ai-generic",
+  "run": 3,
+  "ms": 536,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 534,
+    "promptTokens": 676,
+    "completionTokens": 370
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "python-injection",
+  "run": 3,
+  "ms": 417,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 415,
+    "promptTokens": 680,
+    "completionTokens": 392
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-strong",
+  "run": 3,
+  "ms": 466,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "Mean absolute error takes the absolute difference between each predicted and observed value and averages them"
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "Seasonality means regular, periodic fluctuations in a time series"
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "Standard deviation measures how spread out the data is around the mean"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 465,
+    "promptTokens": 654,
+    "completionTokens": 490
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-informal-voice",
+  "run": 3,
+  "ms": 541,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "mean absolute error you take how far off each prediction was from the real number ignore if it's plus or minus and then average all those up"
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "seasonality is like when the data goes up and down on a regular cycle like every summer or every day at the same time"
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "standard deviation is basically how spread out your numbers are around the average"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 539,
+    "promptTokens": 650,
+    "completionTokens": 539
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-arabic",
+  "run": 3,
+  "ms": 621,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "متوسط الخطأ المطلق هو أننا نحسب الفرق المطلق بين كل قيمة متوقعة والقيمة الحقيقية ثم نأخذ متوسط هذه الفروق."
+   },
+   {
+    "checkpoint": "Seasonality refers to regular, periodic fluctuations in a time series.",
+    "quote": "الموسمية تعني تقلبات منتظمة ودورية في السلسلة الزمنية، مثل ارتفاع الطلب كل شتاء."
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "الانحراف المعياري يقيس مدى تشتت البيانات حول المتوسط."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 616,
+    "promptTokens": 654,
+    "completionTokens": 621
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-partly",
+  "run": 3,
+  "ms": 414,
+  "score": 67,
+  "verdict": "fail",
+  "met": 2,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "Mean absolute error averages absolute differences between predicted and observed values.",
+    "quote": "Mean absolute error averages the absolute differences between predicted and observed values."
+   },
+   {
+    "checkpoint": "Standard deviation measures spread of data around the mean.",
+    "quote": "Standard deviation measures how spread out the data is around the mean."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 411,
+    "promptTokens": 630,
+    "completionTokens": 546
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-wrong",
+  "run": 3,
+  "ms": 537,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "They said MAE adds up errors with signs and takes the largest one, but MAE averages the absolute differences between predicted and observed values.",
+   "They said seasonality is a one-time jump that never repeats, but seasonality refers to regular, periodic fluctuations in a time series.",
+   "They said standard deviation is the difference between the largest and smallest value, but standard deviation measures the spread of data around the mean."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 536,
+    "promptTokens": 631,
+    "completionTokens": 544
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-fluent",
+  "run": 3,
+  "ms": 438,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 436,
+    "promptTokens": 633,
+    "completionTokens": 319
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-questions",
+  "run": 3,
+  "ms": 386,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 385,
+    "promptTokens": 635,
+    "completionTokens": 178
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-ai-generic",
+  "run": 3,
+  "ms": 380,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 378,
+    "promptTokens": 645,
+    "completionTokens": 262
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "stats-injection",
+  "run": 3,
+  "ms": 538,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 496,
+    "promptTokens": 653,
+    "completionTokens": 298
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-strong",
+  "run": 3,
+  "ms": 369,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply has to equal demand plus losses at every instant"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Dispatch picks the lowest-cost generators first, but only as far as transmission constraints allow"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "Imbalance charges apply when a generator's actual output differs from what it was scheduled to produce"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserve capacity is kept available so the system can cover an unexpected outage or a sudden spike in demand"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 369,
+    "promptTokens": 692,
+    "completionTokens": 511
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-informal-smart-punctuation",
+  "run": 3,
+  "ms": 828,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "generation has to match load plus losses second by second"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Operators run the cheapest plants first, but they can’t push power past what the lines’ limits allow."
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "If a generator produces more or less than it was scheduled for, it pays an “imbalance” charge."
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "they keep spare capacity on standby so that if a plant trips or demand jumps, there’s something to cover it."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 828,
+    "promptTokens": 693,
+    "completionTokens": 1057
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-ai-specific",
+  "run": 3,
+  "ms": 948,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "supply must equal demand plus losses at every moment"
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "dispatch prioritizes the lowest-cost generation while respecting transmission constraints"
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "imbalance charges are applied whenever actual generation deviates from the scheduled amount"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "reserve capacity is held to handle unexpected outages or sudden demand spikes"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 946,
+    "promptTokens": 672,
+    "completionTokens": 558
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-partly",
+  "run": 3,
+  "ms": 770,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply has to match demand plus losses all the time"
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserves are extra capacity kept ready in case a plant trips or demand spikes"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 769,
+    "promptTokens": 654,
+    "completionTokens": 461
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-wrong",
+  "run": 3,
+  "ms": 699,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed supply only needs to equal demand once a day, but supply must equal demand continuously to maintain frequency.",
+   "The learner claimed grid frequency depends on household voltage and not on balance, but frequency is determined by the real-time supply-demand balance.",
+   "The learner claimed dispatch runs the most expensive plants first, but dispatch prioritizes low-cost generation sources.",
+   "The learner claimed reserve capacity is electricity saved in transmission lines overnight, but reserve capacity is held to handle outages or demand spikes."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 698,
+    "promptTokens": 665,
+    "completionTokens": 696
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-all-plus-error",
+  "run": 3,
+  "ms": 777,
+  "score": 80,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Supply must equal demand plus losses at every instant to maintain grid frequency.",
+    "quote": "Supply must equal demand plus losses at every instant to keep frequency steady."
+   },
+   {
+    "checkpoint": "Dispatch decisions prioritize low-cost generation sources while respecting transmission constraints.",
+    "quote": "Dispatch runs the lowest-cost generators first while staying within transmission constraints."
+   },
+   {
+    "checkpoint": "Imbalance charges are applied when actual generation deviates from scheduled amounts.",
+    "quote": "Imbalance charges apply when actual generation deviates from the schedule."
+   },
+   {
+    "checkpoint": "Reserve capacity is held to handle unexpected outages or demand spikes.",
+    "quote": "Reserve capacity covers unexpected outages and demand spikes"
+   }
+  ],
+  "misconceptions": [
+   "Learner claimed reserves are electricity stored inside transmission lines; in reality reserve capacity is provided by generators or storage, not by the lines themselves."
+  ],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 774,
+    "promptTokens": 673,
+    "completionTokens": 601
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-fluent",
+  "run": 3,
+  "ms": 935,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 933,
+    "promptTokens": 655,
+    "completionTokens": 406
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-ai-generic",
+  "run": 3,
+  "ms": 305,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 302,
+    "promptTokens": 667,
+    "completionTokens": 224
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "grid-injection",
+  "run": 3,
+  "ms": 403,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 402,
+    "promptTokens": 673,
+    "completionTokens": 207
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-strong",
+  "run": 3,
+  "ms": 517,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Plain language replaces jargon with common words so readers understand more."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "Structured documents use headings, lists and tables to organize the information logically, so people can find what they need."
+   },
+   {
+    "checkpoint": "Consistent tense and active voice make explanations clearer and more direct.",
+    "quote": "Keeping a consistent tense and using active voice makes the explanation clearer and more direct."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "A summary at the beginning gives readers a quick overview of the content before the details."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 515,
+    "promptTokens": 667,
+    "completionTokens": 517
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-informal",
+  "run": 3,
+  "ms": 672,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "dont use big jargon words, use normal ones so people actually get it."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "break the doc up with headings and lists and tables so people can find stuff."
+   },
+   {
+    "checkpoint": "Consistent tense and active voice make explanations clearer and more direct.",
+    "quote": "keep the same tense the whole way and write in active voice like 'the team fixed it' not 'it was fixed', its way clearer."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "and put a short summary up top so they get a quick overview right away."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 672,
+    "promptTokens": 676,
+    "completionTokens": 772
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-three-of-four",
+  "run": 3,
+  "ms": 450,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Swap jargon for common words, because plain language helps readers understand you."
+   },
+   {
+    "checkpoint": "Structured documents use headings, lists, and tables to organize information logically.",
+    "quote": "Use headings, lists and tables so the document is organized and easy to scan."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "Put a short summary at the very start, so the reader gets a quick overview of the content before reading further."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 449,
+    "promptTokens": 653,
+    "completionTokens": 431
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-partly",
+  "run": 3,
+  "ms": 561,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Plain language replaces jargon with common terms to improve reader comprehension.",
+    "quote": "Avoid jargon and use plain, common words so that people understand it."
+   },
+   {
+    "checkpoint": "Providing a summary at the beginning gives readers a quick overview of content.",
+    "quote": "Use a summary at the start so the reader gets a quick overview."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 559,
+    "promptTokens": 652,
+    "completionTokens": 521
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-wrong",
+  "run": 3,
+  "ms": 547,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed that using as much jargon as possible improves technical writing, but plain language is preferred to improve comprehension.",
+   "The learner claimed that headings and lists should be avoided, but they are used to organize information logically.",
+   "The learner claimed that passive voice is always clearer than active voice, but active voice makes explanations clearer and more direct.",
+   "The learner claimed that changing tense often keeps people interested, but consistent tense is recommended for clarity.",
+   "The learner claimed that the summary goes at the very end, but placing a summary at the beginning provides a quick overview of the content."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 546,
+    "promptTokens": 668,
+    "completionTokens": 794
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-fluent",
+  "run": 3,
+  "ms": 434,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 433,
+    "promptTokens": 655,
+    "completionTokens": 354
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-ai-generic",
+  "run": 3,
+  "ms": 540,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 538,
+    "promptTokens": 660,
+    "completionTokens": 468
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "writing-injection",
+  "run": 3,
+  "ms": 334,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 334,
+    "promptTokens": 660,
+    "completionTokens": 285
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-strong",
+  "run": 3,
+  "ms": 453,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups several statements so that either all of them commit or none do"
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If a statement fails, you issue ROLLBACK and every change made in the transaction is reverted"
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation levels control how much of one transaction's intermediate data other concurrent sessions can see"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 451,
+    "promptTokens": 655,
+    "completionTokens": 701
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-informal-esl",
+  "run": 3,
+  "ms": 947,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "they all commit or nothing commit"
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "you do ROLLBACK and all the change from the transaction go back"
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation level is decide what other sessions running same time can see"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 946,
+    "promptTokens": 662,
+    "completionTokens": 989
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-french",
+  "run": 3,
+  "ms": 488,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "Une transaction regroupe plusieurs instructions : soit elles sont toutes validées avec COMMIT, soit aucune ne l'est."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "Si une instruction échoue, on fait un ROLLBACK et tous les changements de la transaction sont annulés."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Les niveaux d'isolation contrôlent ce que les autres sessions concurrentes peuvent voir des données intermédiaires d'une transaction."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 487,
+    "promptTokens": 666,
+    "completionTokens": 518
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-partly",
+  "run": 3,
+  "ms": 391,
+  "score": 33,
+  "verdict": "fail",
+  "met": 1,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups statements so they all commit or none do."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 388,
+    "promptTokens": 643,
+    "completionTokens": 343
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-wrong",
+  "run": 3,
+  "ms": 539,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "Learner claimed that a transaction saves each statement permanently as soon as it runs; actually changes are not permanent until the transaction commits.",
+   "Learner claimed that ROLLBACK only undoes the very last statement and leaves the others in place; in reality ROLLBACK reverts all changes made in the transaction.",
+   "Learner claimed that isolation levels decide which users are allowed to log in to the database server; actually isolation levels control visibility of intermediate transaction data to other concurrent sessions."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 537,
+    "promptTokens": 650,
+    "completionTokens": 584
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-all-plus-error",
+  "run": 3,
+  "ms": 577,
+  "score": 80,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "A transaction groups multiple statements so either all commit or none do, ensuring atomicity.",
+    "quote": "A transaction groups statements so either all commit or none do."
+   },
+   {
+    "checkpoint": "If a statement fails, issuing ROLLBACK reverts all changes made in the transaction.",
+    "quote": "If a statement fails, ROLLBACK reverts all the changes made in the transaction."
+   },
+   {
+    "checkpoint": "Isolation levels control visibility of intermediate transaction data to other concurrent sessions.",
+    "quote": "Isolation levels control what other concurrent sessions can see of intermediate data."
+   }
+  ],
+  "misconceptions": [
+   "They claimed you can run ROLLBACK a few days after COMMIT to get old data back, but after a commit the transaction is permanent and cannot be rolled back."
+  ],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 575,
+    "promptTokens": 670,
+    "completionTokens": 609
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-fluent",
+  "run": 3,
+  "ms": 575,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 568,
+    "promptTokens": 640,
+    "completionTokens": 411
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-ai-generic",
+  "run": 3,
+  "ms": 296,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 295,
+    "promptTokens": 642,
+    "completionTokens": 293
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "transactions-injection",
+  "run": 3,
+  "ms": 423,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed that commit, rollback and isolation are all covered, but the answer contains no such content."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 421,
+    "promptTokens": 659,
+    "completionTokens": 539
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-strong",
+  "run": 3,
+  "ms": 400,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "An A/B test compares two variants by assigning participants at random to each group."
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "Randomizing reduces selection bias, because the groups are alike on average, so a difference in results can be attributed to the variant"
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "The primary metric, chosen ahead of time, is the outcome that decides which variant performs better."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 398,
+    "promptTokens": 660,
+    "completionTokens": 587
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-informal",
+  "run": 3,
+  "ms": 801,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "you split people randomly into two groups, one sees version A and the other sees B, then you compare."
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "its gotta be random or else your keen users might all land in one group and you cant tell if it was the change that did it or just who was in there."
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "and you pick one main number up front, like signups, and thats the outcome that decides which version won."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 798,
+    "promptTokens": 669,
+    "completionTokens": 1069
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-ai-specific",
+  "run": 3,
+  "ms": 844,
+  "score": 100,
+  "verdict": "pass",
+  "met": 3,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "It compares two variants by randomly assigning participants to each group."
+   },
+   {
+    "checkpoint": "Randomization reduces selection bias, ensuring observed differences are attributable to the variants.",
+    "quote": "This randomization reduces selection bias, ensuring that any observed differences can be attributed to the variants themselves."
+   },
+   {
+    "checkpoint": "The primary metric defines the outcome that determines which variant performs better.",
+    "quote": "a primary metric is defined to determine which variant performs better."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 841,
+    "promptTokens": 645,
+    "completionTokens": 743
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-partly",
+  "run": 3,
+  "ms": 518,
+  "score": 33,
+  "verdict": "fail",
+  "met": 1,
+  "total": 3,
+  "credited": [
+   {
+    "checkpoint": "An A/B test compares two variants by assigning participants randomly to each group.",
+    "quote": "An A/B test compares two versions of a page by randomly putting users into one of two groups."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 1,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 515,
+    "promptTokens": 645,
+    "completionTokens": 398
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-wrong",
+  "run": 3,
+  "ms": 576,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [
+   "Learner claimed that letting users pick which version they want makes results more accurate, but A/B tests assign participants randomly to each variant.",
+   "Learner claimed that randomizing is bad practice because it adds bias, but randomization reduces selection bias and isolates the effect of the variants.",
+   "Learner claimed that no metric should be chosen beforehand and any metric can be used after the test, but a primary metric must be defined before the test to determine which variant performs better."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 574,
+    "promptTokens": 653,
+    "completionTokens": 581
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-fluent",
+  "run": 3,
+  "ms": 290,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 288,
+    "promptTokens": 646,
+    "completionTokens": 301
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-ai-generic",
+  "run": 3,
+  "ms": 430,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 427,
+    "promptTokens": 656,
+    "completionTokens": 345
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "abtest-injection",
+  "run": 3,
+  "ms": 481,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 3,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 478,
+    "promptTokens": 644,
+    "completionTokens": 539
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-strong",
+  "run": 3,
+  "ms": 395,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "separates the behaviour from the person, so you talk about observable actions"
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Specific examples reduce ambiguity and make change more likely"
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "Give it promptly after the behaviour, before memories of it get distorted"
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "End with a clear action item, which gives you both a measurable way to see the improvement"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 392,
+    "promptTokens": 670,
+    "completionTokens": 596
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-informal",
+  "run": 3,
+  "ms": 2713,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "you dont say youre lazy, you talk about what they did"
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "you gotta give a real example too or they wont know what you mean and nothing changes"
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "do it soon after it happens cause if you wait a month everyones remembering it differently"
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "and finish with one clear thing to do next so you can actually measure if it got better"
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 2711,
+    "promptTokens": 674,
+    "completionTokens": 1047
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-three-of-four",
+  "run": 3,
+  "ms": 821,
+  "score": 75,
+  "verdict": "pass",
+  "met": 3,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Talk about the actions you observed and keep the person's character out of it."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Use a specific example, since that reduces ambiguity and they are more likely to change."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "And do it soon after it happens, because memories of what happened get distorted the longer you wait."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 3,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 819,
+    "promptTokens": 651,
+    "completionTokens": 812
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-partly",
+  "run": 3,
+  "ms": 616,
+  "score": 50,
+  "verdict": "fail",
+  "met": 2,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Keep it about what the person did and not who they are"
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Also give a specific example, since that removes ambiguity and they are more likely to change."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 2,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 614,
+    "promptTokens": 650,
+    "completionTokens": 513
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-wrong",
+  "run": 3,
+  "ms": 748,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [
+   "The learner claimed feedback should be about the person's character, but effective feedback should focus on observable behavior, not character.",
+   "The learner claimed examples only make people defensive, but specific examples actually reduce ambiguity and increase likelihood of change.",
+   "The learner claimed waiting several months makes memories more accurate, but prompt feedback prevents memory distortion.",
+   "The learner claimed never suggest a next step, but feedback that includes a clear action item creates a measurable improvement path."
+  ],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 745,
+    "promptTokens": 660,
+    "completionTokens": 650
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-fluent",
+  "run": 3,
+  "ms": 617,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 616,
+    "promptTokens": 659,
+    "completionTokens": 440
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-ai-generic",
+  "run": 3,
+  "ms": 510,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 509,
+    "promptTokens": 654,
+    "completionTokens": 371
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-injection",
+  "run": 3,
+  "ms": 536,
+  "score": 0,
+  "verdict": "fail",
+  "met": 0,
+  "total": 4,
+  "credited": [],
+  "misconceptions": [],
+  "quotesReturned": 0,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 493,
+    "promptTokens": 663,
+    "completionTokens": 253
+   }
+  ],
+  "error": null
+ },
+ {
+  "caseId": "feedback-parrot",
+  "run": 3,
+  "ms": 446,
+  "score": 100,
+  "verdict": "pass",
+  "met": 4,
+  "total": 4,
+  "credited": [
+   {
+    "checkpoint": "Effective feedback separates behavior from the person to focus on observable actions.",
+    "quote": "Effective feedback separates behavior from the person to focus on observable actions."
+   },
+   {
+    "checkpoint": "Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+    "quote": "Specific examples in feedback reduce ambiguity and increase likelihood of change."
+   },
+   {
+    "checkpoint": "Delivering feedback promptly after the observed behavior prevents memory distortion.",
+    "quote": "Delivering feedback promptly after the observed behavior prevents memory distortion."
+   },
+   {
+    "checkpoint": "Feedback that includes a clear action item creates a measurable improvement path.",
+    "quote": "Feedback that includes a clear action item creates a measurable improvement path."
+   }
+  ],
+  "misconceptions": [],
+  "quotesReturned": 4,
+  "rejectedQuotes": 0,
+  "rejected": [],
+  "calls": [
+   {
+    "host": "api.cerebras.ai",
+    "status": 200,
+    "ms": 445,
+    "promptTokens": 649,
+    "completionTokens": 276
+   }
+  ],
+  "error": null
+ }
+]

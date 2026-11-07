@@ -113,6 +113,8 @@ export type GroupRow = {
   agreed: number;
   falsePasses: number;
   falseFails: number;
+  /** The highest score in any run, so one lucky run can't hide behind a majority. */
+  highestScore: number;
 };
 
 function groupRows(results: CaseResult[], nameOf: (result: CaseResult) => string): GroupRow[] {
@@ -125,6 +127,7 @@ function groupRows(results: CaseResult[], nameOf: (result: CaseResult) => string
       agreed: group.filter((result) => result.majority === result.evalCase.expected).length,
       falsePasses: group.filter((result) => result.evalCase.expected === "fail" && result.majority === "pass").length,
       falseFails: group.filter((result) => result.evalCase.expected === "pass" && result.majority === "fail").length,
+      highestScore: Math.max(0, ...group.flatMap((result) => result.scores.filter((score) => score !== null))),
     };
   });
 }

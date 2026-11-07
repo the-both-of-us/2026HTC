@@ -8,6 +8,6 @@ Measures `gradeExplanation` with real model calls. `npm run eval` writes `docs/e
 - `fetchTap.ts`: reads token counts and raw replies without changing the grader.
 - `plantedQuotes.ts`: plants fake quotes through the real grader, with no model call.
 - `report.ts`, `findings.md`: the written report. `findings.md` is the hand-written reading of the latest run.
-- `results.json`: every raw run.
+- `results.json`: every raw run. `followups.json`: the follow-up spot check, from `npm run eval -- --followups`.
 
 Commit `cases.json` before running, so labels can't be fitted to results. Other features must not import from this folder.

@@ -1,0 +1,110 @@
+[
+ {
+  "caseId": "sql-parrot",
+  "run": 1,
+  "score": 100,
+  "question": "If table A has a row without a matching B key, how does an INNER JOIN plus a WHERE filter on A's column handle that row?",
+  "answer": "An INNER JOIN returns rows only when matching keys exist in both tables. A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+  "passed": true,
+  "feedback": "You correctly noted that the row without a matching B key is excluded by the INNER JOIN, so it never reaches the WHERE filter."
+ },
+ {
+  "caseId": "sql-parrot",
+  "run": 2,
+  "score": 100,
+  "question": "If you add a WHERE condition on the join column after the INNER JOIN, how does it change which rows appear versus placing the condition in the ON clause?",
+  "answer": "An INNER JOIN returns rows only when matching keys exist in both tables. A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+  "passed": false,
+  "feedback": "Your answer does not explain how placing the condition in the ON clause versus the WHERE clause changes which rows appear."
+ },
+ {
+  "caseId": "sql-parrot",
+  "run": 3,
+  "score": 100,
+  "question": "When joining Orders to Customers and grouping by customer ID, how does placing a WHERE condition on Orders before the GROUP BY change the aggregated order count?",
+  "answer": "An INNER JOIN returns rows only when matching keys exist in both tables. A WHERE clause filters rows before grouping, affecting which data is aggregated.",
+  "passed": false,
+  "feedback": "You need to explain that the WHERE clause filters out orders before grouping, so only the remaining orders are counted, potentially reducing the aggregated order count."
+ },
+ {
+  "caseId": "feedback-parrot",
+  "run": 1,
+  "score": 100,
+  "question": "Describe how you would give feedback to a colleague who interrupts meetings, applying your points on separating behavior, using specific examples, prompt timing, with a clear action item.",
+  "answer": "Effective feedback separates behavior from the person to focus on observable actions. Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+  "passed": false,
+  "feedback": "You need to actually describe a specific, timely feedback statement for the interrupting colleague, including a concrete example and clear action item."
+ },
+ {
+  "caseId": "feedback-parrot",
+  "run": 2,
+  "score": 100,
+  "question": "In a scenario where a teammate repeatedly interrupts meetings, how would you structure feedback using the principles you described?",
+  "answer": "Effective feedback separates behavior from the person to focus on observable actions. Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+  "passed": false,
+  "feedback": "You need to apply the principles to the specific situation, describing the behavior, giving examples, and suggesting an action."
+ },
+ {
+  "caseId": "feedback-parrot",
+  "run": 3,
+  "score": 100,
+  "question": "How would you phrase feedback to a team member who missed a deadline, ensuring you separate the behavior from the person?",
+  "answer": "Effective feedback separates behavior from the person to focus on observable actions. Specific examples in feedback reduce ambiguity and increase likelihood of change.",
+  "passed": false,
+  "feedback": "You need to give a concrete example of how to phrase the feedback, separating the behavior from the person."
+ },
+ {
+  "caseId": "grid-all-plus-error",
+  "run": 1,
+  "score": 80,
+  "question": "When a generator trips unexpectedly, how does the reserve capacity you described maintain frequency if it is not stored in the transmission lines?",
+  "answer": "Reserves are electricity stored inside the transmission lines, so longer lines hold more of it and the grid can draw on that when a plant trips.",
+  "passed": false,
+  "feedback": "Your answer repeats the mistaken idea that reserves are stored in transmission lines and doesn't explain how frequency is maintained."
+ },
+ {
+  "caseId": "grid-all-plus-error",
+  "run": 2,
+  "score": 80,
+  "question": "What is the actual source of reserve capacity in a power grid, and how does it differ from the concept of electricity being stored in transmission lines?",
+  "answer": "Reserves are electricity stored inside the transmission lines, so longer lines hold more of it and the grid can draw on that when a plant trips.",
+  "passed": false,
+  "feedback": "Reserve capacity comes from generators or storage assets that can quickly provide power, not from electricity being stored in transmission lines."
+ },
+ {
+  "caseId": "grid-all-plus-error",
+  "run": 3,
+  "score": 80,
+  "question": "Given your claim that reserves are stored in transmission lines, what actual resource can be dispatched quickly to supply reserve power?",
+  "answer": "Reserves are electricity stored inside the transmission lines, so longer lines hold more of it and the grid can draw on that when a plant trips.",
+  "passed": false,
+  "feedback": "You repeated the incorrect claim about line storage instead of naming a real quick‑dispatch resource like spinning reserve, batteries, or pumped‑hydro."
+ },
+ {
+  "caseId": "transactions-all-plus-error",
+  "run": 1,
+  "score": 80,
+  "question": "If you committed a transaction yesterday, what specific database mechanism would you need to use to retrieve the prior state instead of issuing ROLLBACK?",
+  "answer": "Commits are only temporary, so you can run ROLLBACK a few days later and the database will bring the old data back.",
+  "passed": false,
+  "feedback": "Your answer repeats the misconception that you can ROLLBACK after a commit, but you actually need to use a backup/restore or point‑in‑time recovery mechanism to retrieve the prior state."
+ },
+ {
+  "caseId": "transactions-all-plus-error",
+  "run": 2,
+  "score": 80,
+  "question": "If you issued COMMIT and then later executed ROLLBACK, what would happen to the changes made before the COMMIT?",
+  "answer": "Commits are only temporary, so you can run ROLLBACK a few days later and the database will bring the old data back.",
+  "passed": false,
+  "feedback": "Your answer is incorrect; after a COMMIT the changes are permanent and a later ROLLBACK cannot undo them."
+ },
+ {
+  "caseId": "transactions-all-plus-error",
+  "run": 3,
+  "score": 80,
+  "question": "If you committed a transaction that inserted a row, what happens when you attempt a ROLLBACK two days later?",
+  "answer": "Commits are only temporary, so you can run ROLLBACK a few days later and the database will bring the old data back.",
+  "passed": false,
+  "feedback": "You cannot roll back a transaction after it has been committed; commits are permanent, so a later ROLLBACK will not revert the inserted row."
+ }
+]
