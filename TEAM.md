@@ -54,7 +54,7 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
     All accept only UUIDs, touch only that user's records, and can run twice.
 
 - [ ] **FYI, nothing to do: study circles are on main** (`src/features/circles`, Abdu's). A map owner starts one from the map header, others join at `/circle/<code>` with their own copy of the map, and the circle page shows who proved what, live. If the dashboard lists maps, a member's copy is a normal map with `forkedFrom` set.
-- [ ] **`/dashboard`, `/review`, `/people` and `/battle` are hidden from the sidebar** until they do more than show a heading (and `/api/review`, `/api/network` stop returning 501). Tell me when each is on main and I'll put its link back in `src/shared/ui/SideNav.tsx`, or add it yourself in the same commit.
+- [x] **`/dashboard`, `/review`, `/people` and `/battle` are hidden from the sidebar** until they do more than show a heading (and `/api/review`, `/api/network` stop returning 501). Tell me when each is on main and I'll put its link back in `src/shared/ui/SideNav.tsx`, or add it yourself in the same commit.
 
 **From Mirza to Abdu (Sat Nov 7, evening): sign-in is on main** (`cda2f31`, optional Auth0; guests can still do everything except publish and like). These are in your files:
 
@@ -62,13 +62,26 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 - [ ] **`<SignInNotice />`** from `@/features/auth/client` just inside `<body>` in `layout.tsx`. It shows "Sign-in didn't finish…" after a failed or expired sign-in.
 - [ ] **Deploy env:** `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET` (a new random 32+ chars per host) and `APP_BASE_URL` (`https://oryxlearn.vercel.app` on Vercel). Mirza sends the values privately. Please add the five names with empty values to `.env.example`. For AWS, tell Mirza the URL so its `/api/auth/callback` can be added in Auth0.
 - [ ] **Shared-laptop takeover (security review finding, in `identity.ts`).** Today `pf_uid` alone proves ownership. If someone copies a guest's signed `pf_uid` on a shared laptop and the next person then signs in there, the account links to that id, and the copied cookie still opens everything. Suggested fix: once an id is linked to an account (`account-of/<userId>` exists in the store), only accept that `pf_uid` together with a matching `pf_account`. A bare `pf_uid` for a linked id should count as no cookie, which gives a fresh guest. Mirza can add a helper `isLinkedUserId(userId)` to `@/features/auth` if you want it.
-- [ ] Sidebar links: none of `/dashboard`, `/review`, `/people` or `/battle` is ready yet. I'll add each link back in `SideNav.tsx` in the same commit that makes the page real, as you suggested.
+- [x] Sidebar links: none of `/dashboard`, `/review`, `/people` or `/battle` is ready yet. I'll add each link back in `SideNav.tsx` in the same commit that makes the page real, as you suggested.
+  - **Mirza: done.** Dashboard, Review and People are back in `SideNav.tsx` (`b408697`). Battle stays out.
 
 **From Mirza to Abdu (Sat Nov 7, 4:45 PM): status and two questions.**
 
 - [ ] **Dropping `battle`?** Your study circles already give the demo its "scan a QR code, learn together, see it live" moment, so battle adds little for the time it takes. I plan to drop it and spend the time on `network`, `dashboard`, `review` and the Devpost. Say so here if you were counting on it.
 - [ ] **Sample flashcards and quizzes made in advance need your AI keys** (mine aren't on this machine). I'll add a script that makes and saves them for the three sample courses, paced for the rate limit, then note here how to run it. It's a one-time run, so the demo never waits on AI for those courses. Flashcards and quiz ask Gemini first, so a `GEMINI_API_KEY` counts toward that MLH prize.
+  - **Mirza: the script is on main.** Run it once from the repo root, with the store (`S3_BUCKET` or `BLOB_READ_WRITE_TOKEN`, the one the live site uses) and AI keys in `.env.local`:
+    `npx tsx --env-file=.env.local src/features/courses/dev/prepareSamples.ts --dry-run` prints the plan, then run it again without `--dry-run`. That's about 84 calls, roughly 18 minutes; saved items are skipped, so it's safe to stop and rerun. **No `--conditions=react-server`** for this one (see the courses README).
 - [ ] **Devpost:** I'll draft the text, the AI disclosure, the MLH categories and the 3-minute video script in `docs/submission/` from about 9-10 PM. Add anything you want mentioned (voice, PDF/topic input, evidence page, study circles, grid, trust page) here or in that folder.
+
+**From Mirza to Abdu (Sat 5:45 PM): two more for "Delete my data", and one docs fix.**
+
+- [ ] **Delete my data** should also call these. Both accept only UUIDs, touch only that user's records, and can run twice:
+  ```ts
+  import { deleteUserData as deleteNetworkProfile } from "@/features/network"; // -> { profiles: 0 | 1 }; the public profile (name, city, contact link)
+  import { deleteUserData as deleteReviewData } from "@/features/review";     // -> { reviewRecords }; SM-2 state and the review day log
+  ```
+  Call the network one early, since the profile is public. Without it, a deleted user's profile stays listed on `/people`.
+- [ ] **`TEAM.md` "Scripts run with `tsx` need one flag":** that's now wrong for scripts that load flashcards or quiz, because their index files pull in next/link, which breaks under `--conditions=react-server`. The sample script makes `server-only` a no-op itself instead. Maybe reword it as "most scripts", and mention the exception.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
@@ -149,7 +162,7 @@ Every skeleton screen is a working placeholder at its URL, so you can replace th
 
 ## Mirza's work, in order
 
-**Status (Sat 4:45 PM):** steps 1-4 are done and on main, and flashcards and quiz now ask Gemini first. Next is `network`, then `dashboard` and `review` together, with the Devpost draft started by about 10 PM. `battle` is likely dropped (see the open requests).
+**Status (Sat 5:45 PM):** steps 1-7 are done and on main: flashcards, quiz (both ask Gemini first), courses, auth, network (`/people`), review (`/review`, SM-2) and dashboard (`/dashboard`). The Devpost draft is in `docs/submission/`. Left: generating the samples' cards in advance (needs your keys, see below), then polish. `battle` is likely dropped.
 
 Each step is done when it works in the running app with no raw errors on screen. The details, data shapes, cloud choices and the list of things Mirza needs from Abdu are in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
@@ -157,11 +170,11 @@ Each step is done when it works in the running app with no raw errors on screen.
 2. ✅ **`quiz`:** generate multiple-choice questions per node, saved and generated in advance the same way. Answer with keys 1-4, and explain every answer. *Done, except generating the samples' cards and questions in advance, which needs an AI key (see the open requests).* Both ask Gemini first.
 3. ✅ **`courses`:** every map is a private course until its owner publishes it. Browse, like (once per user, signed in), and start someone's course, which copies it to you. Seed it with real, useful courses, never "Test Course 1".
 4. ✅ **`auth`:** optional sign-in and sign-out with Auth0 (an MLH category). Never a login wall. Signing in keeps your courses on every device. Signing out starts a fresh guest.
-5. **`network`:** match by proven skills. The Prompt 2 "networks" part depends on this. Any demo profile must be visibly labelled as a demo.
-6. **`dashboard`:** your courses (private and public), what's proven, what's due, and your streak.
-7. **`review`:** a spaced repetition queue of due flashcards using SM-2.
+5. ✅ **`network`:** match by proven skills. The Prompt 2 "networks" part depends on this. Any demo profile must be visibly labelled as a demo.
+6. ✅ **`dashboard`:** your courses (private and public), what's proven, what's due, and your streak.
+7. ✅ **`review`:** a spaced repetition queue of due flashcards using SM-2.
 8. **`battle` (stretch, likely dropped):** scan a QR code and play a live quiz. Polling every 1-2 seconds is fine.
-9. **`docs/submission/`:** the Devpost text, the AI disclosure, the MLH categories we use, and a video script that fits the 3-minute presentation. Start by 10 PM tonight.
+9. 🟡 **`docs/submission/`** (draft on main): the Devpost text, the AI disclosure, the MLH categories we use, and a video script that fits the 3-minute presentation. Start by 10 PM tonight.
 
 ## Timeline
 
