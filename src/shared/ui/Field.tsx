@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { ReactNode, TextareaHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 /** Props Field hands to its input, so the label, hint and error are all connected. */
 export type FieldControlProps = {
@@ -62,6 +62,22 @@ export function Textarea({ className, ...rest }: TextareaProps) {
       {...rest}
       className={clsx(
         "block w-full resize-y rounded-control border border-control-edge bg-paper/70 px-3.5 py-2.5 text-base leading-7 text-ink transition-control",
+        "placeholder:text-ink-soft hover:border-ink-soft focus:border-accent-bright focus:shadow-glow aria-invalid:border-danger read-only:text-ink-soft",
+        className,
+      )}
+    />
+  );
+}
+
+type TextInputProps = InputHTMLAttributes<HTMLInputElement>;
+
+/** A one-line input that looks like Textarea. */
+export function TextInput({ className, ...rest }: TextInputProps) {
+  return (
+    <input
+      {...rest}
+      className={clsx(
+        "block w-full rounded-control border border-control-edge bg-paper/70 px-3.5 py-2.5 text-base leading-7 text-ink transition-control",
         "placeholder:text-ink-soft hover:border-ink-soft focus:border-accent-bright focus:shadow-glow aria-invalid:border-danger read-only:text-ink-soft",
         className,
       )}

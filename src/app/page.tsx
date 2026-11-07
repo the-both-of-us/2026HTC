@@ -18,8 +18,8 @@ export default function Home() {
             Turn any job posting into a skill map
           </h1>
           <p className="max-w-2xl text-lg text-ink-soft">
-            Paste a posting and OryxLearn lays out the skills it asks for. Explain each one in your
-            own words, answer a follow-up, and share the proof.
+            Paste a posting, upload a PDF or name a topic, and OryxLearn lays out the skills. Explain
+            each one in your own words, answer a follow-up, and share the proof.
           </p>
           <HowItWorksButton className="self-start px-0!" />
         </PostingForm>

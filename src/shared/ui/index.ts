@@ -3,7 +3,7 @@ export { Button, buttonClasses } from "./Button";
 export { Card } from "./Card";
 export { ComingSoon } from "./ComingSoon";
 export { ErrorNotice } from "./ErrorNotice";
-export { Field, Textarea } from "./Field";
+export { Field, Textarea, TextInput } from "./Field";
 export type { FieldControlProps } from "./Field";
 export { LogoMark } from "./LogoMark";
 export { PageShell } from "./PageShell";
