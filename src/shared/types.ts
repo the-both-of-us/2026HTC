@@ -40,6 +40,8 @@ export type SkillMap = {
   sourceText: string;
   nodes: SkillNode[];
   createdAt: string;
+  /** Set on a copy: the id of the map it was started from. */
+  forkedFrom?: string;
 };
 
 export type IntegritySignals = {
