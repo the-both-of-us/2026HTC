@@ -9,6 +9,7 @@ import { putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 import { GET as getCourseRoute, DELETE as unpublishRoute } from "./[mapId]/route";
 import { DELETE as unlikeRoute, PUT as likeRoute } from "./[mapId]/like/route";
+import { POST as startRoute } from "./[mapId]/start/route";
 import { GET as listRoute, POST as publishRoute } from "./route";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
@@ -35,6 +36,7 @@ async function body(response: Response): Promise<unknown> {
 
 beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
+  vi.stubEnv("S3_BUCKET", "");
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   mapId = randomUUID();
   const map: SkillMap = {
@@ -115,6 +117,44 @@ describe("courses routes", () => {
     const ownLike = await likeRoute(new Request("http://localhost"), ctx(mapId));
     expect(ownLike.status).toBe(403);
     expect(await body(ownLike)).toEqual({ error: "You can't like your own course." });
+  });
+
+  it("starts a course: 201 with the new copy, then 200 with the same one, and the owner keeps their map", async () => {
+    const start = () => startRoute(new Request("http://localhost", { method: "POST" }), ctx(mapId));
+
+    // Private: a 404 for anyone but the owner, with the same sentence as a missing course.
+    asUser(FAN);
+    const hidden = await start();
+    expect(hidden.status).toBe(404);
+    const missing = await startRoute(new Request("http://localhost", { method: "POST" }), ctx(randomUUID()));
+    expect(await body(hidden)).toEqual(await body(missing));
+    expect((await startRoute(new Request("http://localhost", { method: "POST" }), ctx("x".repeat(101)))).status).toBe(400);
+
+    asUser(OWNER);
+    const own = await start();
+    expect(own.status).toBe(200);
+    expect(await body(own)).toEqual({ mapId });
+    await publishRoute(publishRequest({ mapId, authorName: "Ana" }));
+
+    asUser(FAN);
+    const created = await start();
+    expect(created.status).toBe(201);
+    const { mapId: copyId } = (await body(created)) as { mapId: string };
+    expect(copyId).not.toBe(mapId);
+    expect(copyId).toMatch(/^[0-9a-f-]{36}$/);
+
+    const again = await start();
+    expect(again.status).toBe(200);
+    expect(await body(again)).toEqual({ mapId: copyId });
+
+    // The course page now offers the copy to the learner, and nothing to the owner.
+    expect(await body(await getCourseRoute(new Request("http://localhost"), ctx(mapId)))).toMatchObject({
+      myCopyId: copyId,
+    });
+    asUser(OWNER);
+    expect(await body(await getCourseRoute(new Request("http://localhost"), ctx(mapId)))).toMatchObject({
+      myCopyId: null,
+    });
   });
 
   it("answers 500 with a sentence when something unexpected breaks", async () => {

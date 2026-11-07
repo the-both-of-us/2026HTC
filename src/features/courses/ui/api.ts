@@ -26,6 +26,10 @@ const UNPUBLISH_MESSAGES: Messages = {
   failed: "Your course could not be made private this time. Please try again.",
   timedOut: "Making the course private took too long. Please try again.",
 };
+const START_MESSAGES: Messages = {
+  failed: "This course could not be started this time. Please try again.",
+  timedOut: "Starting the course took too long. Please try again.",
+};
 const LIKE_MESSAGES: Messages = {
   failed: "Your like could not be saved this time. Please try again.",
   timedOut: "Saving your like took too long. Please try again.",
@@ -65,6 +69,8 @@ function field(body: unknown, name: string): unknown {
 function isCourse(value: unknown): value is PublicCourse {
   return typeof field(value, "mapId") === "string" && typeof field(value, "title") === "string";
 }
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function courseUrl(mapId: string): string {
   return `/api/courses/${encodeURIComponent(mapId)}`;
@@ -122,5 +128,16 @@ export function setLike(mapId: string, liked: boolean): Promise<Result<LikeResul
     const nextLiked = field(body, "liked");
     const likeCount = field(body, "likeCount");
     return typeof nextLiked === "boolean" && typeof likeCount === "number" ? { liked: nextLiked, likeCount } : null;
+  });
+}
+
+/**
+ * Starts the course and returns the map to open: your own copy, made now or earlier, or the
+ * course itself if it is yours. The id is checked, because the page navigates to it.
+ */
+export function startCourse(mapId: string): Promise<Result<{ mapId: string }>> {
+  return request(`${courseUrl(mapId)}/start`, { method: "POST" }, START_MESSAGES, (body) => {
+    const startedId = field(body, "mapId");
+    return typeof startedId === "string" && UUID_PATTERN.test(startedId) ? { mapId: startedId } : null;
   });
 }

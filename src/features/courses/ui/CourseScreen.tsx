@@ -2,10 +2,11 @@
 
 import { ArrowLeft, Heart, Lock } from "lucide-react";
 import Link from "next/link";
-import { type Ref, useEffect, useId, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { type Ref, useEffect, useId, useRef, useState, useTransition } from "react";
 import { Badge, Button, buttonClasses, Card, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import type { CourseDetail, LikeResult, PublicCourse } from "../types";
-import { fetchCourse, setLike } from "./api";
+import { fetchCourse, setLike, startCourse } from "./api";
 import { likesLabel, mapHref, optimisticLike, SAMPLE_NOTE, skillsLabel } from "./courseView";
 import { PublishControls } from "./PublishCourseButton";
 
@@ -161,7 +162,7 @@ function LoadedCourse({
       {isSample && <p className="mt-3 text-sm text-ink-soft">{SAMPLE_NOTE}</p>}
 
       <div className="mt-6 flex flex-col gap-5">
-        <StartCourseAction mapId={mapId} />
+        <StartCourseAction mapId={mapId} isOwner={isOwner} myCopyId={detail.myCopyId ?? null} />
         {published && course && (
           <LikeToggle
             key={course.publishedAt}
@@ -211,17 +212,74 @@ function LoadedCourse({
 }
 
 /**
- * The course's main action. START COURSE: when skill-map exports copySkillMap, this is the
- * one place to swap in a "Start this course" button that POSTs /api/courses/[mapId]/start
- * and opens the learner's own copy.
+ * The course's main action. The owner opens their own map, a learner who started the course
+ * continues their copy, and anyone else starts one.
  */
-function StartCourseAction({ mapId }: { mapId: string }) {
+function StartCourseAction({ mapId, isOwner, myCopyId }: { mapId: string; isOwner: boolean; myCopyId: string | null }) {
+  const openId = isOwner ? mapId : myCopyId;
+  if (openId) {
+    return (
+      <div className="flex flex-col items-start gap-2">
+        <Link href={mapHref(openId)} className={buttonClasses("primary", "lg")}>
+          {isOwner ? "Open your map" : "Continue this course"}
+        </Link>
+      </div>
+    );
+  }
+  return <StartCourseButton mapId={mapId} />;
+}
+
+/** Makes the learner's own copy, then opens it. A failure shows a sentence and a retry. */
+function StartCourseButton({ mapId }: { mapId: string }) {
+  const router = useRouter();
+  const [requesting, setRequesting] = useState(false);
+  // True while the router loads the new map, so the button stays busy until the page changes.
+  const [navigating, startNavigation] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  // Blocks a second click before React has re-rendered the button as pending.
+  const busy = useRef(false);
+  const buttonId = useId();
+  const noteId = useId();
+
+  async function start() {
+    if (busy.current) return;
+    busy.current = true;
+    setRequesting(true);
+    setError(null);
+    const result = await startCourse(mapId);
+    busy.current = false;
+    setRequesting(false);
+    if (result.ok) {
+      startNavigation(() => router.push(mapHref(result.mapId)));
+    } else {
+      setError(result.message);
+    }
+  }
+
   return (
     <div className="flex flex-col items-start gap-2">
-      <Link href={mapHref(mapId)} className={buttonClasses("primary", "lg")}>
-        View the map
-      </Link>
-      <p className="text-sm text-ink-soft">Starting your own copy of this course is coming soon.</p>
+      <Button
+        id={buttonId}
+        size="lg"
+        pending={requesting || navigating}
+        aria-describedby={noteId}
+        onClick={() => void start()}
+      >
+        Start this course
+      </Button>
+      <p id={noteId} className="text-sm text-ink-soft">
+        You get your own copy of the map, so you can prove each skill yourself.
+      </p>
+      {error && (
+        <ErrorNotice
+          message={error}
+          onRetry={() => {
+            // Retrying removes this notice and its button, so keep focus on the start button.
+            document.getElementById(buttonId)?.focus();
+            void start();
+          }}
+        />
+      )}
     </div>
   );
 }

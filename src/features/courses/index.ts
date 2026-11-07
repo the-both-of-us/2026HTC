@@ -5,5 +5,7 @@ export { coursesErrorResponse, parseListQuery, parseMapIdParam, parsePublishBody
 export type { ListQuery, PublishRequest } from "./http";
 export { likeCourse, unlikeCourse } from "./likes";
 export { ensureSampleCourses } from "./seed";
+export { startCourse } from "./start";
+export type { StartResult } from "./start";
 export { toPublicCourse } from "./types";
 export type { CourseDetail, CourseSkill, CourseSort, LikeResult, PublicCourse } from "./types";

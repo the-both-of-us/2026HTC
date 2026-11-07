@@ -2,7 +2,7 @@ import { getSkillMap } from "@/features/skill-map";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { deleteDoc, getDoc, listDocs } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
-import { CoursesError } from "./errors";
+import { COURSE_NOT_FOUND, CoursesError } from "./errors";
 import { getListing, likeKey, listingKey, saveListing, withLikeCount } from "./listing";
 import {
   isSamplePostingText,
@@ -14,10 +14,10 @@ import {
 } from "./rules";
 import { ensureSampleCourses, SEED_OWNER_ID } from "./seed";
 import { requirePublisher } from "./session";
+import { findMyCopy } from "./start";
 import { toPublicCourse, type CourseDetail, type CourseListing, type CourseSort, type PublicCourse } from "./types";
 
 const MAP_NOT_FOUND = "We could not find that map. Check the link, or build a new one.";
-const COURSE_NOT_FOUND = "We could not find that course. It may have been made private, or the link is incomplete.";
 const NOT_YOURS = "Only the person who built this map can publish it or make it private.";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -77,7 +77,11 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
   if (!saved && !isOwner) throw new CoursesError(COURSE_NOT_FOUND, 404);
   const listing = saved ? await withLikeCount(saved) : null;
 
-  const likedByMe = UUID_PATTERN.test(viewerId) ? (await getDoc(likeKey(map.id, viewerId))) !== null : false;
+  const [likedByMe, myCopyId] = await Promise.all([
+    UUID_PATTERN.test(viewerId) ? getDoc(likeKey(map.id, viewerId)).then((like) => like !== null) : false,
+    // The owner's map is already theirs, so they never have a copy to continue.
+    isOwner ? null : findMyCopy(map.id, viewerId),
+  ]);
 
   return {
     course: listing ? toPublicCourse(listing) : null,
@@ -87,6 +91,7 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
     isSample: listing?.isSample ?? isSamplePostingText(map.sourceText),
     isOwner,
     likedByMe,
+    myCopyId,
     skills: learningOrder(map.nodes).map((node) => ({
       id: node.id,
       title: node.title,

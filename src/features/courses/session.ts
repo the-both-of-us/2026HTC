@@ -1,10 +1,10 @@
 import { CoursesError } from "./errors";
 
 /**
- * The one place that decides who may publish and who may like.
+ * The one place that decides who may publish, like and start a course.
  *
- * There is no sign-in yet, so guests may do both today. When the Auth0 step lands,
- * these two functions start requiring a signed-in session (and throw a 401 sentence
+ * There is no sign-in yet, so guests may do all three today. When the Auth0 step lands,
+ * these functions start requiring a signed-in session (and throw a 401 sentence
  * otherwise). Nothing else in this feature needs to change.
  */
 
@@ -24,5 +24,10 @@ export function requirePublisher(userId: string): void {
 
 /** Who may like a course. Guests, until sign-in exists. */
 export function requireLiker(userId: string): void {
+  assertUserId(userId);
+}
+
+/** Who may start a course (copy it to their own map). Guests, until sign-in exists. */
+export function requireLearner(userId: string): void {
   assertUserId(userId);
 }

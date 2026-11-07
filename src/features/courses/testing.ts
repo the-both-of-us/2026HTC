@@ -3,11 +3,13 @@ import { randomUUID } from "node:crypto";
 import { putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { resetSeedStateForTests } from "./seed";
+import { resetStartStateForTests } from "./start";
 
-/** Empties the in-memory store and forgets seeding, so each test starts clean. */
+/** Empties the in-memory store and forgets seeding and starts in flight, so each test starts clean. */
 export function resetStore(): void {
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   resetSeedStateForTests();
+  resetStartStateForTests();
 }
 
 export function makeNode(id: string, prerequisites: string[] = [], fromSource = true): SkillNode {

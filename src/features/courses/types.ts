@@ -47,6 +47,11 @@ export type CourseDetail = {
   isSample: boolean;
   isOwner: boolean;
   likedByMe: boolean;
+  /**
+   * The viewer's own copy, if they started this course and the copy still exists, so the
+   * page can offer "Continue this course". Always null for the owner. The id is the viewer's own map.
+   */
+  myCopyId: string | null;
   /** In learning order: every skill comes after the skills it needs. */
   skills: CourseSkill[];
 };

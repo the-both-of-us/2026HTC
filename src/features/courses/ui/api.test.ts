@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CourseDetail, PublicCourse } from "../types";
-import { fetchCourse, fetchCourses, publishCourse, setLike, unpublishCourse } from "./api";
+import { fetchCourse, fetchCourses, publishCourse, setLike, startCourse, unpublishCourse } from "./api";
 
 const COURSE: PublicCourse = {
   mapId: "m1",
@@ -22,6 +22,7 @@ const DETAIL: CourseDetail = {
   isSample: false,
   isOwner: false,
   likedByMe: false,
+  myCopyId: null,
   skills: [],
 };
 
@@ -133,5 +134,35 @@ describe("setLike", () => {
   it("treats a strange body as a failure", async () => {
     respond(200, { liked: "yes" });
     expect(await setLike("m1", true)).toMatchObject({ ok: false });
+  });
+});
+
+describe("startCourse", () => {
+  const COPY = "0b7e3c1a-2f4d-4e5a-9b6c-7d8e9f0a1b2c";
+
+  it("POSTs to the start route and returns the map to open, made now or before", async () => {
+    respond(201, { mapId: COPY });
+    expect(await startCourse("m/1")).toEqual({ ok: true, mapId: COPY });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/courses/m%2F1/start");
+    expect(init).toMatchObject({ method: "POST", signal: expect.any(AbortSignal) });
+
+    respond(200, { mapId: COPY });
+    expect(await startCourse("m1")).toEqual({ ok: true, mapId: COPY });
+  });
+
+  it("passes the server's sentence through, with the status", async () => {
+    respond(404, { error: "We could not find that course." });
+    expect(await startCourse("m1")).toEqual({ ok: false, message: "We could not find that course.", status: 404 });
+  });
+
+  it("refuses an answer that is not a map id, so the page never navigates somewhere odd", async () => {
+    respond(201, { mapId: "javascript:alert(1)" });
+    expect(await startCourse("m1")).toMatchObject({ ok: false, message: expect.stringMatching(/could not be started/) });
+  });
+
+  it("explains a lost connection", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    expect(await startCourse("m1")).toMatchObject({ ok: false, status: null, message: expect.stringMatching(/reached/) });
   });
 });
