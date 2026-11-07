@@ -1,32 +1,34 @@
-import { Sparkles } from "lucide-react";
 import { Suspense } from "react";
-import { LiveLabourCard } from "@/features/labour";
-import { PostingForm } from "@/features/landing";
+import { LandingFigures, LandingFiguresSource, PostingForm } from "@/features/landing";
 import { HowItWorksButton } from "@/features/landing/client";
 import { PageShell } from "@/shared/ui";
 
 export default function Home() {
   return (
-    <PageShell width="wide">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-9">
-        <PostingForm>
-          <p className="inline-flex items-center gap-1.5 self-start rounded-full border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm text-accent-bright">
-            <Sparkles aria-hidden="true" size={14} />
-            AI-built skill maps
-          </p>
-          <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
-            Turn any job posting into a skill map
-          </h1>
-          <p className="max-w-2xl text-lg text-ink-soft">
-            Paste a posting, upload a PDF or name a topic, and OryxLearn lays out the skills. Explain
-            each one in your own words, answer a follow-up, and share the proof.
-          </p>
-          <HowItWorksButton className="self-start px-0!" />
-        </PostingForm>
+    <PageShell
+      width="full"
+      footer={
         <Suspense fallback={null}>
-          <LiveLabourCard />
+          <LandingFiguresSource />
         </Suspense>
-      </div>
+      }
+    >
+      <PostingForm
+        figures={
+          <Suspense fallback={null}>
+            <LandingFigures />
+          </Suspense>
+        }
+      >
+        <h1 className="text-[clamp(2.5rem,11.4vw,4rem)] leading-[1.02] font-bold lg:text-[clamp(2.875rem,5.1vw,4.625rem)]">
+          Prove the skills a job asks for.
+        </h1>
+        <p className="max-w-[54ch] text-[1.0625rem] leading-[1.45] text-ink-soft lg:text-lg">
+          Paste a posting and OryxLearn lays out what it needs. Explain each skill in your own words, answer one live
+          question, and share a record an employer can check.
+        </p>
+        <HowItWorksButton className="self-start" />
+      </PostingForm>
     </PageShell>
   );
 }

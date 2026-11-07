@@ -36,17 +36,17 @@ export function HowItWorksButton({ className }: { className?: string }) {
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
-        className="m-auto max-h-[90dvh] w-[min(32rem,calc(100vw-2rem))] overflow-y-auto rounded-sheet border border-control-edge bg-sheet p-5 text-ink backdrop:bg-black/70 sm:p-6"
+        className="m-auto max-h-[90dvh] w-[min(32rem,calc(100vw-2rem))] overflow-y-auto border-[1.5px] border-ink bg-sheet p-5 text-ink shadow-panel backdrop:bg-ink/60 sm:p-6"
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 id={titleId} className="text-2xl font-medium">
+          <h2 id={titleId} className="text-2xl font-bold">
             How OryxLearn checks you
           </h2>
           <button
             type="button"
             aria-label="Close"
             onClick={() => dialogRef.current?.close()}
-            className="-m-1 inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-control hover:bg-paper"
+            className="-m-1 inline-flex size-10 shrink-0 cursor-pointer items-center justify-center hover:bg-raised"
           >
             <X size={20} aria-hidden="true" />
           </button>
@@ -58,7 +58,7 @@ export function HowItWorksButton({ className }: { className?: string }) {
             <li key={step.text} className="flex items-start gap-3">
               <span
                 className={`mt-0.5 inline-flex w-12 shrink-0 justify-center rounded-control border py-0.5 text-sm font-medium ${
-                  step.by === "Code" ? "border-proven text-proven" : "border-control-edge text-ink-soft"
+                  step.by === "Code" ? "border-ink bg-ink text-on-ink" : "border-ink-soft border-dashed text-ink-soft"
                 }`}
               >
                 {step.by}
@@ -68,7 +68,7 @@ export function HowItWorksButton({ className }: { className?: string }) {
           ))}
         </ol>
 
-        <h3 className="mt-6 font-medium">Measured, not promised</h3>
+        <h3 className="mt-6 font-bold">Measured, not promised</h3>
         <p className="text-sm text-ink-soft">From our grading eval on Nov 7, 2026: 71 test answers, each graded 3 times.</p>
         <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-sm">
           {MEASURED.map((line) => (

@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { LearningModeToggle } from "./LearningModeToggle";
@@ -11,81 +10,68 @@ type PageWidth = "reading" | "wide" | "full";
 
 const WIDTH_CLASSES: Record<PageWidth, string> = {
   /** Evidence pages and long text: a comfortable line length. */
-  reading: "mx-auto w-full max-w-3xl px-4 py-8 sm:px-6",
+  reading: "mx-auto w-full max-w-3xl px-4 py-8 sm:px-7",
   /** Tools with more than one column. */
-  wide: "mx-auto w-full max-w-6xl px-4 py-8 sm:px-6",
+  wide: "mx-auto w-full max-w-6xl px-4 py-8 sm:px-7",
   /** The page manages its own layout, such as the map. */
   full: "w-full",
 };
 
 type PageShellProps = {
   width?: PageWidth;
-  /** Links or actions on the right of the top bar. */
+  /** Links or actions in a bar above the page. */
   headerActions?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
 };
 
-/** Every page's frame: skip link, sidebar, top bar on phones, and <main>. */
+/** Every page's frame: skip link, the sidebar (a top bar with a menu on phones), and <main>. */
 export function PageShell({ width = "wide", headerActions, footer, children }: PageShellProps) {
+  const guestNote = (
+    <>
+      <LearningModeToggle className="-mx-2" />
+      <p className="text-sm text-ink-soft">
+        Learning as a guest. Your progress stays in this browser.{" "}
+        <Link href="/trust" className="font-semibold text-ink underline underline-offset-4">
+          What we store
+        </Link>
+      </p>
+    </>
+  );
+
   return (
-    <div className="flex min-h-dvh pb-24 lg:pb-0">
+    <div className="flex min-h-dvh flex-col lg:flex-row">
       <SkipLink />
 
-      <aside aria-label="Site" className="z-40 flex-col border-r border-rule bg-sheet/80 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-48 lg:shrink-0">
+      <aside
+        aria-label="Site"
+        className="z-40 flex flex-wrap items-center border-b border-rule bg-paper px-4 lg:sticky lg:top-0 lg:h-dvh lg:w-52 lg:shrink-0 lg:flex-col lg:flex-nowrap lg:items-stretch lg:border-r lg:border-b-0 lg:px-0"
+      >
         <Link
           href="/"
-          className="hidden min-h-14 items-center gap-2.5 border-b border-rule px-4 text-lg font-medium lg:flex"
+          className="flex min-h-14 items-center gap-2.5 text-[1.1875rem] font-bold tracking-[-0.02em] font-stretch-[125%] lg:min-h-[3.75rem] lg:px-6"
         >
           <LogoMark />
           OryxLearn
         </Link>
-        {/* The active link depends on the URL, so it streams in after prerendering. */}
-        <Suspense fallback={<div className="min-h-14 lg:min-h-0" />}>
-          <SideNav />
+        {/* The current page depends on the URL, so the links stream in after prerendering. */}
+        <Suspense fallback={<span className="ml-auto min-h-11 lg:hidden" />}>
+          <SideNav>{guestNote}</SideNav>
         </Suspense>
-        <div className="mt-auto hidden flex-col gap-2 border-t border-rule px-2 py-3 lg:flex">
-          <LearningModeToggle />
-          <p className="px-2 text-sm text-ink-soft">
-            Learning as a guest.{" "}
-            <Link href="/trust" className="text-accent-bright underline underline-offset-4">
-              What we store
-            </Link>
-          </p>
-        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* On large screens the sidebar carries the name, so this bar only appears for actions. */}
-        <header
-          className={clsx(
-            "flex min-h-14 items-center justify-between gap-4 border-b border-rule px-4 sm:px-6",
-            !headerActions && "lg:hidden",
-          )}
-        >
-          <Link href="/" className="flex items-center gap-2.5 text-lg font-medium lg:invisible">
-            <LogoMark />
-            {/* The smallest phones need the room for the buttons on the right. */}
-            <span className="max-[359px]:sr-only">OryxLearn</span>
-          </Link>
-          <div className="flex items-center gap-1 lg:hidden">
-            <LearningModeToggle compact />
-            <Link
-              href="/trust"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-control text-ink-soft transition-control hover:bg-raised hover:text-ink"
-            >
-              <ShieldCheck aria-hidden="true" size={20} />
-              <span className="sr-only">Trust and your data</span>
-            </Link>
-          </div>
-          {headerActions && <div className="flex items-center gap-3">{headerActions}</div>}
-        </header>
+        {headerActions && (
+          <header className="flex min-h-14 items-center justify-end gap-3 border-b border-rule px-4 sm:px-7">
+            {headerActions}
+          </header>
+        )}
 
         <main id="main" tabIndex={-1} className={clsx("flex flex-1 flex-col", WIDTH_CLASSES[width])}>
           {children}
         </main>
 
-        {footer && <footer className="px-4 py-6 text-sm text-ink-soft sm:px-6">{footer}</footer>}
+        {footer && <footer className="px-4 py-6 text-sm text-ink-soft sm:px-7">{footer}</footer>}
       </div>
     </div>
   );

@@ -14,9 +14,9 @@ type StateMarkProps = {
 };
 
 /**
- * The status dot for a skill's state. Each state has its own shape, so the three stay
- * distinct in greyscale and for colour-blind readers: a filled circle with a tick, a dot
- * in a ring, and a dashed ring.
+ * The status mark for a skill's state, after Seal's ledger. Each state has its own shape, so
+ * the three stay distinct in greyscale and for colour-blind readers: a solid ink disc with a
+ * tick, an open ring on a blank, and a dotted ring.
  * Decorative: always put the state's name in text nearby.
  */
 export function StateMark({ state, size = 20, className }: StateMarkProps) {
@@ -24,22 +24,12 @@ export function StateMark({ state, size = 20, className }: StateMarkProps) {
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className={className}>
       {state === "proven" && (
         <>
-          <circle cx="12" cy="12" r="11" fill="var(--color-proven)" />
-          <path
-            d="m6.8 12.6 3.6 3.6 6.8-7.6"
-            fill="none"
-            stroke="var(--color-on-proven)"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <circle cx="12" cy="12" r="11" fill="var(--color-ink)" />
+          <path d="m6.8 12.6 3.6 3.6 6.8-7.6" fill="none" stroke="var(--color-on-ink)" strokeWidth="2.8" />
         </>
       )}
       {state === "available" && (
-        <>
-          <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-available)" strokeWidth="2.5" />
-          <circle cx="12" cy="12" r="4.6" fill="var(--color-accent-bright)" />
-        </>
+        <circle cx="12" cy="12" r="9.5" fill="var(--color-sheet)" stroke="var(--color-ink)" strokeWidth="2.5" />
       )}
       {state === "locked" && (
         <circle
@@ -49,7 +39,8 @@ export function StateMark({ state, size = 20, className }: StateMarkProps) {
           fill="none"
           stroke="var(--color-locked)"
           strokeWidth="2.5"
-          strokeDasharray="4 3.45"
+          strokeLinecap="round"
+          strokeDasharray="0.1 4.6"
         />
       )}
     </svg>

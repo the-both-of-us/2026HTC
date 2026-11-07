@@ -1,109 +1,125 @@
 @import "tailwindcss";
 
 /*
- * OryxLearn design tokens: a deep navy workspace with a clear blue accent and sage green
- * for proven skills. Use them as Tailwind classes, e.g. bg-paper is the page and bg-sheet
- * is a raised surface. One dark theme on purpose.
+ * OryxLearn design tokens: Seal. Security-paper green, deep viridian ink, and a teal to violet
+ * to magenta foil used only on proven things, like the printing on a banknote or passport.
+ * Square corners and one typeface, Mona Sans, at different widths. Use them as Tailwind
+ * classes, e.g. bg-paper is the page and bg-sheet is a raised surface. Never hard-code colours.
+ *
+ * Contrast (WCAG AA, checked): ink on paper 10.7, on sheet 11.9, on raised 9.8, on tint 7.9;
+ * ink-soft on paper 6.9, on sheet 7.6, on raised 6.3, on tint 5.1; proven on paper 5.8,
+ * on sheet 6.4, on proven-surface 5.2; danger on paper 7.3, on danger-surface 7.0;
+ * accent-bright on paper 8.5; on-ink on ink 10.7; on-ink-soft on ink 7.5.
  */
 @theme {
+  /* Seal's own names */
+  --color-paper-hi: #f7f9f5; /* an unstruck blank */
+  --color-ink-2: #37564f; /* offset ink, secondary text */
+  --color-tint: #bfd1c7; /* underprint */
+  --color-foil-a: #007a70; /* colour-shift foil: graphics on proven things only, never text */
+  --color-foil-b: #5a2fb8;
+  --color-foil-c: #b81e68;
+  --color-alert: #96182c;
+  --color-on-ink: #e8efea; /* text on an ink band */
+  --color-on-ink-soft: #b8cdc4;
+  --color-ink-press: #042220; /* the shadow under a pressed die */
+
   /* Surfaces */
-  --color-paper: #070a10; /* page background */
-  --color-sheet: #0c1018; /* cards, panels, the sidebar */
-  --color-raised: #131c28; /* controls and cards that sit on a sheet */
-  --color-rule: #1a1f2e; /* decorative lines only, never the edge of a control */
-  --color-rule-strong: #2a3446; /* card edges and quiet buttons */
-  --color-control-edge: #5b6885; /* edges of inputs, 3:1 or better on paper and sheet */
+  --color-paper: #e8efea; /* page background: security paper */
+  --color-sheet: #f7f9f5; /* cards, panels, inputs */
+  --color-raised: #dce6e0; /* hover fills and code on a sheet */
+  --color-rule: #bfd1c7; /* decorative lines only, never the edge of a control */
+  --color-rule-strong: #8ca69b; /* card edges and quiet dividers */
+  --color-control-edge: #37564f; /* edges of inputs, 6.9:1 on paper */
 
   /* Text */
-  --color-ink: #dde7f2;
-  --color-ink-soft: #9aaec5;
-  --color-on-dark: #010508; /* text on accent or green fills */
+  --color-ink: #0a3a37;
+  --color-ink-soft: #37564f;
+  --color-on-dark: #e8efea; /* text on accent (ink) fills */
 
   /* Actions and feedback */
-  --color-accent: #4b8fd4;
-  --color-accent-bright: #7db3ea; /* hover, and accent-coloured text on dark */
-  --color-amber: #d29c44; /* missed checkpoints and the "Job asks" tag, safe for text */
-  --color-violet: #8d84e8; /* lines on the map once they are open */
-  --color-violet-dim: #6b64b5; /* lines on the map that are not open yet */
-  --color-danger: #f08a7b;
-  --color-danger-surface: #2a1210;
-  --color-focus: #a5cdf7;
+  --color-accent: #0a3a37; /* primary buttons are ink */
+  --color-accent-bright: #0d4b47; /* hover, and link-coloured text */
+  --color-amber: #37564f; /* missed checkpoints and the "Job asks" tag: offset ink, shown dashed */
+  --color-violet: #5a2fb8; /* foil violet, for lines on the map once they are open */
+  --color-violet-dim: #37564f; /* lines on the map that are not open yet */
+  --color-danger: #96182c;
+  --color-danger-surface: #f6e4e6;
+  --color-focus: #0a3a37;
 
   /*
    * Skill node states. Never rely on colour alone: StateMark gives each state its own
    * shape, each state has its own edge style, and nodes always say their state in words.
-   *   locked:    dashed ring, dashed edge, lock icon, dimmed
-   *   available: dot in a ring, solid edge, soft blue glow
-   *   proven:    filled circle with a tick, solid green edge
+   *   locked:    dotted ring and a lock, offset ink
+   *   available: an unstruck blank with a reeded edge, ink
+   *   proven:    a struck seal with a tick, ink and foil
    */
-  --color-locked: #8a97ad;
-  --color-locked-surface: #1a1c2c;
-  --color-available: #4b8fd4;
-  --color-available-surface: #101d2e;
-  --color-proven: #5baa7a;
-  --color-proven-surface: #14301f;
-  --color-on-proven: #04100a;
+  --color-locked: #37564f;
+  --color-locked-surface: #dde5e0;
+  --color-available: #0a3a37;
+  --color-available-surface: #f7f9f5;
+  --color-proven: #00675e; /* foil teal darkened for text */
+  --color-proven-surface: #d3e6df;
+  --color-on-proven: #f7f9f5;
 
   /* Earlier names for the same colours. Kept so other screens keep working. */
-  --color-forest: #4b8fd4;
-  --color-forest-deep: #7db3ea;
-  --color-contour: #d29c44;
-  --color-highlight: #24405f; /* behind ink text only: quotes and selected rows */
+  --color-forest: #0a3a37;
+  --color-forest-deep: #0d4b47;
+  --color-contour: #37564f;
+  --color-highlight: #bfd1c7; /* behind ink text only: quotes and selected rows */
 
-  /* Type: variable fonts from next/font, see src/app/layout.tsx */
-  --font-sans: var(--font-outfit), system-ui, sans-serif;
-  --font-display: var(--font-outfit), system-ui, sans-serif;
-  --font-serif: var(--font-cormorant), Georgia, serif; /* big moments only: the hero and the verdict */
+  /* Type: Mona Sans, a variable font with width and weight axes. See src/app/layout.tsx */
+  --font-sans: var(--font-mona), system-ui, sans-serif;
+  --font-display: var(--font-mona), system-ui, sans-serif;
+  --font-serif: var(--font-mona), system-ui, sans-serif; /* big moments: set wide, see below */
 
-  /* The classic typographic scale, 14 to 72 px */
+  /* Seal's type scale, 14 to 74 px */
   --text-sm: 0.875rem;
-  --text-sm--line-height: 1.45;
+  --text-sm--line-height: 1.4;
   --text-base: 1rem;
-  --text-base--line-height: 1.55;
+  --text-base--line-height: 1.5;
   --text-lg: 1.125rem;
-  --text-lg--line-height: 1.5;
+  --text-lg--line-height: 1.45;
   --text-xl: 1.3125rem;
-  --text-xl--line-height: 1.35;
+  --text-xl--line-height: 1.2;
   --text-2xl: 1.5rem;
-  --text-2xl--line-height: 1.3;
+  --text-2xl--line-height: 1.1;
   --text-3xl: 2.25rem;
-  --text-3xl--line-height: 1.12;
+  --text-3xl--line-height: 1.06;
   --text-4xl: 3rem;
-  --text-4xl--line-height: 1.08;
+  --text-4xl--line-height: 1.02;
   --text-5xl: 3.75rem;
-  --text-5xl--line-height: 1.04;
-  --text-6xl: 4.5rem;
+  --text-5xl--line-height: 1.02;
+  --text-6xl: 4.625rem;
   --text-6xl--line-height: 1.02;
 
-  /* Corners: controls are a little tighter than the cards they sit on */
-  --radius-control: 0.625rem;
-  --radius-sheet: 1rem;
+  /* Corners are square. A die-cut 2px on controls. */
+  --radius-control: 0.125rem;
+  --radius-sheet: 0.125rem;
 
-  /* Soft glows */
-  --shadow-panel: 0 20px 60px rgb(1 2 6 / 0.55);
-  --shadow-glow: 0 0 20px rgb(75 143 212 / 0.42);
-  --shadow-glow-strong: 0 0 26px rgb(75 143 212 / 0.55);
-  --shadow-glow-green: 0 0 16px rgb(91 170 122 / 0.28);
+  /* No glows: ink rules and a pressed-die shadow instead. Names kept for older screens. */
+  --shadow-panel: 0 10px 30px rgb(10 58 55 / 0.12);
+  --shadow-glow: inset 0 0 0 1.5px var(--color-ink);
+  --shadow-glow-strong: inset 0 0 0 2.5px var(--color-ink);
+  --shadow-glow-green: inset 0 0 0 1.5px var(--color-proven);
+  --shadow-press: 0 2px 0 var(--color-ink-press);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
   }
 
-  /* A faint blue light from the top of the page, fading into navy. */
   body {
     background-color: var(--color-paper);
-    background-image:
-      radial-gradient(ellipse 80% 40% at 50% -10%, rgb(75 143 212 / 0.12), transparent),
-      radial-gradient(ellipse 60% 30% at 80% 80%, rgb(60 110 170 / 0.06), transparent);
-    background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: var(--text-base);
-    line-height: 1.55;
-    letter-spacing: -0.005em;
+    font-stretch: 100%;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -111,17 +127,36 @@
   h2,
   h3 {
     font-family: var(--font-display);
+    font-stretch: 112%;
+    letter-spacing: -0.012em;
     text-wrap: balance;
+  }
+
+  /* Headlines are set wide, like the denomination on a note. */
+  h1,
+  .font-serif {
+    font-stretch: 125%;
+    letter-spacing: -0.028em;
   }
 
   p {
     text-wrap: pretty;
   }
 
-  /* One focus style everywhere: a bright ring, set off from the element. */
+  ::placeholder {
+    color: var(--color-ink-soft);
+    opacity: 1;
+  }
+
+  /* One focus style everywhere: a thick ink outline, set off from the element. */
   :focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 2px;
+    outline: 3px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  /* On an ink band the outline turns paper-coloured. */
+  .on-ink :focus-visible {
+    outline-color: var(--color-on-ink);
   }
 
   /* <main> takes focus from the skip link; it does not need a ring around the page. */
@@ -130,7 +165,7 @@
   }
 
   ::selection {
-    background-color: var(--color-highlight);
+    background-color: var(--color-tint);
     color: var(--color-ink);
   }
 
@@ -141,7 +176,6 @@
 
   ::-webkit-scrollbar-thumb {
     background: var(--color-rule-strong);
-    border-radius: 3px;
   }
 }
 
@@ -242,10 +276,10 @@ html[data-learning-mode] ::after {
 
   @keyframes ring-spread {
     from {
-      box-shadow: 0 0 0 0 rgb(91 170 122 / 0.6);
+      box-shadow: 0 0 0 0 rgb(0 103 94 / 0.5);
     }
     to {
-      box-shadow: 0 0 0 26px rgb(91 170 122 / 0);
+      box-shadow: 0 0 0 26px rgb(0 103 94 / 0);
     }
   }
 

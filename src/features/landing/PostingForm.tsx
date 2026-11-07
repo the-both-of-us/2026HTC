@@ -1,12 +1,10 @@
 "use client";
 
-import clsx from "clsx";
-import { Briefcase, ChevronRight, FileText, Gauge, Lightbulb, Server, Sparkles, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
-import { Badge, Button, ErrorNotice, Field, Spinner, Textarea, TextInput } from "@/shared/ui";
+import { Badge, Button, ErrorNotice, Seal, SealBlank, sha256Hex, Spinner, tabId, Tabs } from "@/shared/ui";
 import { SampleFromLink } from "./SampleFromLink";
 
 /** Anything shorter than this cannot be a whole job posting. */
@@ -19,9 +17,9 @@ const SLOW_AFTER_SECONDS = 20;
 
 /** The three things a map can be built from. */
 const MODES = [
-  { id: "posting", label: "Job posting", icon: Briefcase, noun: "posting" },
-  { id: "pdf", label: "PDF", icon: FileText, noun: "PDF" },
-  { id: "topic", label: "Topic", icon: Lightbulb, noun: "topic" },
+  { id: "posting", label: "Paste a posting", noun: "posting" },
+  { id: "pdf", label: "Upload a PDF", noun: "PDF" },
+  { id: "topic", label: "Name a topic", noun: "topic" },
 ] as const;
 type Mode = (typeof MODES)[number]["id"];
 const nounOf = (mode: Mode) => MODES.find((item) => item.id === mode)?.noun ?? "posting";
@@ -42,28 +40,12 @@ const couldNotBuild = (mode: Mode) =>
 const couldNotConnect = (mode: Mode) =>
   `OryxLearn could not be reached. Check your connection, then try again. Your ${nounOf(mode)} is still here.`;
 
-/** A look for each sample card, by sample id. Anything else gets the first look below. */
-const SAMPLE_LOOKS: Record<string, { icon: typeof Zap; edge: string; tile: string }> = {
-  "data-analyst-grid": {
-    icon: Zap,
-    edge: "border-l-accent hover:border-accent",
-    tile: "border-accent/45 bg-accent/10 text-accent-bright",
-  },
-  "instrumentation-renewables": {
-    icon: Gauge,
-    edge: "border-l-amber hover:border-amber",
-    tile: "border-amber/45 bg-amber/10 text-amber",
-  },
-  "junior-backend": {
-    icon: Server,
-    edge: "border-l-violet hover:border-violet",
-    tile: "border-violet/45 bg-violet/10 text-violet",
-  },
-};
-const DEFAULT_LOOK = { ...SAMPLE_LOOKS["data-analyst-grid"], icon: Briefcase };
-
-/** The hero's form and the sample cards under it. `children` is the hero's heading. */
-export function PostingForm({ children }: { children: ReactNode }) {
+/**
+ * The front page, after Seal: the headline and the input on the left, a large guilloche seal on
+ * the right that redraws as you type (its centre is `figures`), and an ink band of sample postings.
+ * On phones: the input, then the samples, then the seal. `children` is the headline copy.
+ */
+export function PostingForm({ children, figures }: { children: ReactNode; figures?: ReactNode }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("posting");
   const [shape, setShape] = useState<Shape>("auto");
@@ -75,6 +57,10 @@ export function PostingForm({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+
+  // The seal is drawn from what you have typed, so every posting gets its own. Deferred, so
+  // typing stays quick while the big seal redraws.
+  const seed = useDeferredValue("oryxlearn" + (mode === "posting" ? text : mode === "topic" ? topic : (file?.name ?? "")));
 
   // Count seconds for as long as the map is being built.
   useEffect(() => {
@@ -185,218 +171,207 @@ export function PostingForm({ children }: { children: ReactNode }) {
     buildMap("posting", sampleText);
   }
 
+  const errorId = fieldError ? "build-error" : undefined;
+  const panelId = "build-input";
+
   return (
-    <div className="flex flex-col gap-9">
+    <div className="relative flex flex-col">
       <Suspense fallback={null}>
         <SampleFromLink onSample={loadSample} />
       </Suspense>
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        className="relative flex flex-col gap-5 overflow-hidden rounded-[1.25rem] border border-rule-strong bg-sheet/90 p-5 shadow-panel sm:p-7"
-      >
-        {/* A soft pool of light in the corner of the card. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-32 left-1/3 size-96 rounded-full bg-accent/10 blur-3xl"
-        />
-        <div className="relative flex flex-col gap-3">{children}</div>
 
-        <div role="group" aria-label="What to build the map from" className="relative flex flex-wrap gap-2">
-          {MODES.map((item) => {
-            const Icon = item.icon;
-            const active = mode === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={active}
-                disabled={pending}
-                onClick={() => switchMode(item.id)}
-                className={clsx(
-                  "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-control disabled:cursor-default",
-                  active
-                    ? "border-accent/60 bg-accent/12 text-accent-bright"
-                    : "border-rule-strong text-ink-soft hover:border-ink-soft hover:text-ink",
-                )}
-              >
-                <Icon aria-hidden="true" size={15} />
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+      <section className="relative z-10 px-4 pt-4 pb-6 sm:px-7 lg:flex lg:min-h-[max(37.5rem,calc(100dvh-11.875rem))] lg:w-[min(40.625rem,50%)] lg:flex-col lg:justify-center lg:pt-6 lg:pb-10">
+        <div className="flex flex-col gap-3.5">{children}</div>
 
-        {mode === "posting" && (
-          <Field
-            id="posting"
-            label="Job posting"
-            hint="Paste the whole posting, including the requirements."
-            error={fieldError}
-            className="relative"
+        <form onSubmit={handleSubmit} noValidate className="mt-5">
+          <Tabs
+            label="What to build a map from"
+            items={MODES}
+            value={mode}
+            onChange={switchMode}
+            idPrefix="build"
+            panelId={panelId}
+            disabled={pending}
+          />
+          <div
+            id={panelId}
+            role="tabpanel"
+            aria-labelledby={tabId("build", mode)}
+            className="border-[1.5px] border-ink bg-sheet"
           >
-            {(control) => (
-              <Textarea
-                {...control}
-                rows={4}
-                className="sm:min-h-52"
-                value={text}
-                readOnly={pending}
-                onChange={(event) => {
-                  setText(event.target.value);
-                  setFieldError(null);
-                }}
-              />
+            {mode === "posting" && (
+              <>
+                <label htmlFor="posting" className="sr-only">
+                  Job posting
+                </label>
+                <textarea
+                  id="posting"
+                  value={text}
+                  readOnly={pending}
+                  aria-describedby={errorId}
+                  aria-invalid={fieldError ? true : undefined}
+                  placeholder="Paste the whole posting, including the requirements."
+                  onChange={(event) => {
+                    setText(event.target.value);
+                    setFieldError(null);
+                  }}
+                  className="block h-28 w-full resize-none bg-transparent px-4 py-3.5 leading-[1.45] focus-visible:-outline-offset-3"
+                />
+              </>
             )}
-          </Field>
-        )}
 
-        {mode === "pdf" && (
-          <Field
-            id="pdf"
-            label="PDF"
-            hint="Course notes, a syllabus or a job description, with text you can select. Up to 4 MB and 30 pages. Each skill quotes the page it came from."
-            error={fieldError}
-            className="relative"
-          >
-            {(control) => (
-              <input
-                {...control}
-                type="file"
-                accept="application/pdf,.pdf"
-                disabled={pending}
-                onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null);
-                  setFieldError(null);
-                }}
-                className="block w-full cursor-pointer rounded-control border border-dashed border-control-edge bg-paper/70 px-4 py-6 text-base text-ink-soft transition-control hover:border-ink-soft focus-visible:border-accent-bright aria-invalid:border-danger file:mr-4 file:cursor-pointer file:rounded-control file:border-0 file:bg-accent/15 file:px-4 file:py-2 file:font-medium file:text-accent-bright sm:py-12"
-              />
+            {mode === "pdf" && (
+              <label className="flex h-28 cursor-pointer items-center gap-4 px-4 has-[:focus-visible]:outline-3 has-[:focus-visible]:-outline-offset-3 has-[:focus-visible]:outline-ink [&:hover_b]:underline">
+                <span className="relative size-17 shrink-0">
+                  <SealBlank />
+                </span>
+                <span>
+                  <b className="font-semibold">{file ? file.name : "Choose a PDF"}</b>
+                  <br />
+                  <span className="text-[0.9375rem] text-ink-soft">
+                    {file
+                      ? "Ready to map."
+                      : "Course notes, a syllabus or a job description, up to 4 MB and 30 pages. Each skill quotes its page."}
+                  </span>
+                </span>
+                <input
+                  id="pdf"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  disabled={pending}
+                  aria-describedby={errorId}
+                  aria-invalid={fieldError ? true : undefined}
+                  onChange={(event) => {
+                    setFile(event.target.files?.[0] ?? null);
+                    setFieldError(null);
+                  }}
+                  className="sr-only"
+                />
+              </label>
             )}
-          </Field>
-        )}
 
-        {mode === "topic" && (
-          <Field
-            id="topic"
-            label="Topic"
-            hint="A skill or subject in a few words. With no source to quote, the AI builds the map from what it knows, so its skills have no citations."
-            error={fieldError}
-            className="relative"
-          >
-            {(control) => (
-              <TextInput
-                {...control}
-                value={topic}
-                maxLength={MAX_TOPIC_LENGTH}
-                placeholder="For example: SQL window functions"
-                readOnly={pending}
-                onChange={(event) => {
-                  setTopic(event.target.value);
-                  setFieldError(null);
-                }}
-              />
+            {mode === "topic" && (
+              <>
+                <label htmlFor="topic" className="sr-only">
+                  Topic
+                </label>
+                <input
+                  id="topic"
+                  type="text"
+                  value={topic}
+                  maxLength={MAX_TOPIC_LENGTH}
+                  readOnly={pending}
+                  aria-describedby={["topic-hint", errorId].filter(Boolean).join(" ")}
+                  aria-invalid={fieldError ? true : undefined}
+                  placeholder="For example, SQL window functions"
+                  onChange={(event) => {
+                    setTopic(event.target.value);
+                    setFieldError(null);
+                  }}
+                  className="block h-28 w-full bg-transparent px-4 text-[1.375rem] font-medium font-stretch-[110%] focus-visible:-outline-offset-3"
+                />
+              </>
             )}
-          </Field>
-        )}
-
-        {mode !== "pdf" && (
-          <div role="group" aria-label="How big to make it" className="relative flex flex-wrap items-center gap-2">
-            <span className="text-sm text-ink-soft">Size:</span>
-            {SHAPES.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={shape === item.id}
-                disabled={pending}
-                onClick={() => setShape(item.id)}
-                className={clsx(
-                  "cursor-pointer rounded-full border px-3 py-1 text-sm transition-control disabled:cursor-default",
-                  shape === item.id
-                    ? "border-violet/60 bg-violet/12 text-ink"
-                    : "border-rule-strong text-ink-soft hover:border-ink-soft hover:text-ink",
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
           </div>
-        )}
 
-        {loadedSample && (
-          <p className="relative flex flex-wrap items-center gap-2 text-sm text-ink-soft">
-            <Badge tone="sample">Sample text</Badge>
-            Written for this demo. It is not a real listing.
-          </p>
-        )}
-
-        <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-          {pending ? (
-            <Button variant="quiet" onClick={() => abortRef.current?.abort()}>
-              Cancel
-            </Button>
-          ) : (
-            <p className="text-sm text-ink-soft">No account needed.</p>
+          {fieldError && (
+            <p id="build-error" className="mt-2 text-[0.9375rem] font-semibold text-danger">
+              {fieldError}
+            </p>
           )}
-          <Button type="submit" size="lg" pending={pending} className="grow sm:grow-0">
-            {!pending && <Sparkles aria-hidden="true" size={18} />}
-            {pending ? "Building your map" : `Map this ${nounOf(mode)}`}
-          </Button>
-        </div>
+          {mode === "topic" && (
+            <p id="topic-hint" className="mt-2 text-sm text-ink-soft">
+              With no source to quote, the AI builds the map from what it knows, so its skills have no citations.
+            </p>
+          )}
+          {mode !== "pdf" && (
+            <div role="group" aria-label="How big to make it" className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-sm text-ink-soft">Size:</span>
+              {SHAPES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={shape === item.id}
+                  disabled={pending}
+                  onClick={() => setShape(item.id)}
+                  className={
+                    "min-h-9 cursor-pointer px-2.5 text-sm font-semibold transition-control disabled:cursor-default " +
+                    (shape === item.id
+                      ? "bg-ink text-on-ink"
+                      : "text-ink-soft shadow-[inset_0_0_0_1.5px_var(--color-rule-strong)] hover:text-ink hover:shadow-[inset_0_0_0_1.5px_var(--color-ink)]")
+                  }
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {loadedSample && (
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+              <Badge tone="sample">Sample text</Badge>
+              Written for this demo. It is not a real listing.
+            </p>
+          )}
 
-        {pending && <BuildStatus seconds={seconds} mode={mode} planning={mode !== "pdf" && shape !== "course"} />}
-
-        {requestError && <ErrorNotice message={requestError} onRetry={() => buildMap(mode, text)} />}
-      </form>
-
-      {!pending && (
-        <section aria-labelledby="samples-heading" className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h2 id="samples-heading" className="text-xl font-medium">
-              Starter postings
-            </h2>
-            <p className="text-sm text-ink-soft">Samples written for this demo, not real listings.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3">
+            <Button type="submit" pending={pending} className="max-lg:w-full">
+              {pending ? "Building your map" : `Map this ${nounOf(mode)}`}
+            </Button>
+            {pending ? (
+              <Button variant="quiet" onClick={() => abortRef.current?.abort()}>
+                Cancel
+              </Button>
+            ) : (
+              <p className="text-sm text-ink-soft">No account needed.</p>
+            )}
           </div>
-          <ul className="grid gap-3 md:grid-cols-3">
-            {SAMPLE_POSTINGS.map((sample) => {
-              const look = SAMPLE_LOOKS[sample.id] ?? DEFAULT_LOOK;
-              const Icon = look.icon;
-              return (
-                <li key={sample.id} className="flex">
-                  <button
-                    type="button"
-                    onClick={() => buildSample(sample.text)}
-                    className={clsx(
-                      "flex w-full cursor-pointer flex-col gap-3 rounded-sheet border border-l-[3px] border-rule-strong bg-sheet/90 p-4 text-left transition-control hover:-translate-y-0.5 hover:bg-raised",
-                      look.edge,
-                    )}
-                  >
-                    <span className="flex items-start gap-3">
-                      <span
-                        className={clsx(
-                          "flex size-10 shrink-0 items-center justify-center rounded-control border",
-                          look.tile,
-                        )}
-                      >
-                        <Icon aria-hidden="true" size={19} />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block leading-snug font-medium">{sample.label}</span>
-                        <span className="mt-0.5 line-clamp-2 block text-sm text-ink-soft">
-                          {locationLine(sample.text)}
-                        </span>
-                      </span>
-                    </span>
-                    <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-accent-bright">
-                      Map this sample
-                      <ChevronRight aria-hidden="true" size={16} />
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+
+          {pending && <BuildStatus seconds={seconds} mode={mode} planning={mode !== "pdf" && shape !== "course"} />}
+          {requestError && <ErrorNotice className="mt-4" message={requestError} onRetry={() => buildMap(mode, text)} />}
+        </form>
+      </section>
+
+      {/* The seal sits beside the copy on large screens and after the samples on phones. */}
+      <section
+        aria-label="Alberta unemployment, live from Statistics Canada"
+        className="order-last overflow-hidden pt-2 pb-5 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:top-0 lg:order-none lg:h-[max(37.5rem,calc(100dvh-11.875rem))] lg:p-0"
+      >
+        <div className="relative left-1/2 aspect-square w-[min(135vw,40rem)] -translate-x-1/2 lg:absolute lg:top-1/2 lg:left-[52%] lg:w-[min(48.75rem,118vh)] lg:translate-x-0 lg:-translate-y-1/2">
+          <Seal fingerprint={sha256Hex(seed)} state="ink" detail="hero" center={38} />
+          {figures && <div className="absolute inset-0 flex items-center justify-center">{figures}</div>}
+        </div>
+      </section>
+
+      <section aria-labelledby="samples-heading" className="on-ink bg-ink px-4 pt-5.5 pb-6.5 text-on-ink sm:px-7 lg:min-h-[11.875rem] lg:pt-6 lg:pb-5.5">
+        <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+          <h2 id="samples-heading" className="text-[1.1875rem] font-semibold">
+            Or start from a sample posting
+          </h2>
+          <p className="text-[0.90625rem] text-on-ink-soft">Written for this demo, not real listings.</p>
+        </div>
+        <ul className="mt-3 grid gap-1 md:grid-cols-3 md:gap-x-7.5">
+          {SAMPLE_POSTINGS.map((sample) => (
+            <li key={sample.id} className="flex">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => buildSample(sample.text)}
+                className="group flex w-full cursor-pointer items-center gap-4 py-2 pr-2 text-left disabled:cursor-default disabled:opacity-70"
+              >
+                <span className="size-21 shrink-0 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-(--ease-out) motion-safe:group-hover:rotate-[14deg]">
+                  <Seal fingerprint={sha256Hex(sample.id)} state="on-ink" detail="mid" center={30} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-lg leading-tight font-semibold tracking-[-0.005em] font-stretch-[108%] decoration-[1.5px] underline-offset-4 group-hover:underline">
+                    {sample.label}
+                  </span>
+                  <span className="mt-0.5 block text-[0.90625rem] leading-snug text-on-ink-soft">{locationLine(sample.text)}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
@@ -420,8 +395,8 @@ function BuildStatus({ seconds, mode, planning }: { seconds: number; mode: Mode;
   const isSlow = seconds >= SLOW_AFTER_SECONDS;
 
   return (
-    <div className="relative flex items-start gap-3 rounded-control border border-accent/40 bg-accent/8 p-4">
-      <Spinner size={20} className="mt-0.5 shrink-0 text-accent-bright" />
+    <div className="mt-4 flex items-start gap-3 border-[1.5px] border-ink bg-sheet p-4">
+      <Spinner size={20} className="mt-0.5 shrink-0 text-ink" />
       <div>
         {/* Only this sentence is announced; it changes once at most. */}
         <p role="status" className="font-medium">

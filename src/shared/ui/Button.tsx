@@ -5,20 +5,23 @@ import { Spinner } from "./Spinner";
 type ButtonVariant = "primary" | "secondary" | "subtle" | "quiet";
 type ButtonSize = "sm" | "md" | "lg";
 
+// Seal: buttons press in like a die. Primary is solid ink on a hard 2px shadow; secondary is
+// an ink outline that fills on hover; quiet is an underlined word.
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    "bg-accent text-on-dark border-accent hover:bg-accent-bright hover:border-accent-bright hover:shadow-glow",
-  secondary: "bg-transparent text-ink border-control-edge hover:border-ink hover:bg-raised",
+    "bg-accent text-on-dark shadow-press hover:bg-accent-bright active:translate-y-0.5 active:shadow-none",
+  secondary:
+    "bg-transparent text-ink shadow-[inset_0_0_0_1.5px_var(--color-ink)] hover:bg-ink hover:text-on-ink active:translate-y-px",
   subtle:
-    "bg-raised/70 text-ink border-rule-strong hover:border-control-edge hover:bg-raised aria-pressed:bg-accent/15 aria-pressed:border-accent/60",
+    "bg-sheet text-ink shadow-[inset_0_0_0_1.5px_var(--color-rule-strong)] hover:shadow-[inset_0_0_0_1.5px_var(--color-ink)] aria-pressed:bg-ink aria-pressed:text-on-ink",
   quiet:
-    "bg-transparent text-ink-soft border-transparent hover:text-ink hover:bg-raised",
+    "bg-transparent text-ink underline decoration-[1.5px] underline-offset-4 hover:decoration-[3px]",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
   sm: "min-h-10 px-3 text-sm",
-  md: "min-h-11 px-4 text-base",
-  lg: "min-h-13 px-6 text-lg",
+  md: "min-h-[2.875rem] px-5 text-base",
+  lg: "min-h-13 px-6 text-[1.0625rem]",
 };
 
 /** The button's look as a class string, so a <Link> can look like a button too. */
@@ -27,11 +30,13 @@ export function buttonClasses(
   size: ButtonSize = "md",
 ) {
   return clsx(
-    "inline-flex items-center justify-center gap-2 rounded-control border font-medium",
+    "inline-flex items-center justify-center gap-2 rounded-control text-center leading-tight font-semibold font-stretch-[108%]",
     "cursor-pointer transition-control",
     "aria-disabled:cursor-not-allowed aria-disabled:opacity-70 disabled:cursor-not-allowed disabled:opacity-60",
     VARIANT_CLASSES[variant],
     SIZE_CLASSES[size],
+    // A quiet button is a word, so it keeps only a sliver of padding.
+    variant === "quiet" && "px-0.5!",
   );
 }
 

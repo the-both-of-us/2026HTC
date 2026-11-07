@@ -32,7 +32,7 @@ export function Field({ id, label, hint, error, className, children }: FieldProp
 
   return (
     <div className={clsx("flex flex-col gap-1.5", className)}>
-      <label htmlFor={id} className="text-base font-medium">
+      <label htmlFor={id} className="text-base font-semibold">
         {label}
       </label>
       {hint && (
@@ -61,8 +61,8 @@ export function Textarea({ className, ...rest }: TextareaProps) {
     <textarea
       {...rest}
       className={clsx(
-        "block w-full resize-y rounded-control border border-control-edge bg-paper/70 px-3.5 py-2.5 text-base leading-7 text-ink transition-control",
-        "placeholder:text-ink-soft hover:border-ink-soft focus:border-accent-bright focus:shadow-glow aria-invalid:border-danger read-only:text-ink-soft",
+        "block w-full resize-y rounded-none border-[1.5px] border-ink bg-sheet px-3.5 py-3 text-base leading-normal text-ink transition-control",
+        "placeholder:text-ink-soft focus-visible:outline-offset-1 aria-invalid:border-danger read-only:text-ink-soft",
         className,
       )}
     />
@@ -71,14 +71,14 @@ export function Textarea({ className, ...rest }: TextareaProps) {
 
 type TextInputProps = InputHTMLAttributes<HTMLInputElement>;
 
-/** A one-line input that looks like Textarea. */
+/** A one-line input that looks like Textarea: a 1.5px ink edge on a blank sheet. */
 export function TextInput({ className, ...rest }: TextInputProps) {
   return (
     <input
       {...rest}
       className={clsx(
-        "block w-full rounded-control border border-control-edge bg-paper/70 px-3.5 py-2.5 text-base leading-7 text-ink transition-control",
-        "placeholder:text-ink-soft hover:border-ink-soft focus:border-accent-bright focus:shadow-glow aria-invalid:border-danger read-only:text-ink-soft",
+        "block w-full rounded-none border-[1.5px] border-ink bg-sheet px-3.5 py-3 text-base leading-normal text-ink transition-control",
+        "placeholder:text-ink-soft focus-visible:outline-offset-1 aria-invalid:border-danger read-only:text-ink-soft",
         className,
       )}
     />
