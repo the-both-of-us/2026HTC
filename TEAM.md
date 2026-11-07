@@ -15,6 +15,19 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 | **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/` | `flashcards/`, `quiz/`, `courses/`, `network/`, `review/`, `battle/` |
 | **Everything else** | `src/shared/`, config files, `SPEC.md`, `CLAUDE.md`, deploys | `docs/submission/` (Devpost, AI disclosure, video script) |
 
+## Open requests
+
+Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
+
+**From Mirza to Abdu (Sat Nov 7).** Flashcards and quiz are pushed. Courses is being built now, and these block parts of it:
+
+- [ ] `copySkillMap(mapId, newOwnerId): Promise<SkillMap>` exported from `@/features/skill-map`. It's for "Start this course": copy the map under a new id and owner, keep the nodes, and add `forkedFrom: mapId`. Until it exists, the course page shows "View the map" instead of "Start this course".
+- [ ] `listMapsByOwner(ownerId): Promise<SkillMap[]>` exported from `@/features/skill-map`, for "My courses" on the dashboard.
+- [ ] Private maps: `GET /api/maps/[id]` returns the map only to its owner, unless the course is published. Check with `isPublished(mapId)` from `@/features/courses`, which is coming in the courses commit. Right now anyone with a link can read any map.
+- [ ] Put `<PublishCourseButton mapId={id} />` from `@/features/courses/client` in the map header. It shows nothing to people who don't own the map.
+
+The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
+
 ## Get started (Mirza)
 
 ```bash
