@@ -1,6 +1,7 @@
 "use client";
 
 import { MapCanvas } from "@/features/skill-map/client";
+import { CircleRace } from "@/features/streaks/client";
 import { PartyPopper, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -151,6 +152,7 @@ function LoadedCircle({ view, now, stale }: { view: CircleView; now: number; sta
         </div>
 
         <aside className="flex flex-col gap-5 lg:w-88 lg:shrink-0 lg:overflow-y-auto">
+          <CircleRace view={view} now={now} />
           <section aria-labelledby="circle-scan" className="hidden rounded-sheet border border-rule-strong bg-sheet/80 p-4 lg:block">
             <h2 id="circle-scan" className="mb-3 text-lg font-medium">Scan to join</h2>
             <CircleQr url={circleUrl(view.code)} size={256} />

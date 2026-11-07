@@ -1,3 +1,4 @@
+import { recordProved } from "@/features/streaks";
 import { answerFollowUp, followUpBody, toLearnerView } from "@/features/teachback";
 import { getUserId } from "@/shared/identity";
 import { errorResponse, parseBody } from "@/shared/http";
@@ -10,6 +11,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { answer, ...details } = await parseBody(request, followUpBody);
     const userId = await getUserId();
     const attempt = await answerFollowUp(userId, id, answer, details);
+    // Keeps the daily streak. It never throws, and counts each attempt once.
+    if (attempt.status === "proven") {
+      await recordProved(userId, { mapId: attempt.mapId, nodeId: attempt.nodeId, attemptId: attempt.id });
+    }
     return Response.json(toLearnerView(attempt));
   } catch (error) {
     return errorResponse(error, "Something went wrong on our side, and your answer was not saved. Please try again.");

@@ -10,9 +10,9 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 | | **Abdu** (`VVarrior1`) | **Mirza** (`MirzaHB`) |
 |---|---|---|
-| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles`, `programs` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
+| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles`, `programs`, `streaks` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
 | **Pages** (`src/app/`) | `page.tsx`, `layout.tsx`, `globals.css`, `map/`, `proof/`, `grid/`, `circle/`, `program/` | `dashboard/`, `courses/`, `review/`, `people/`, `battle/` |
-| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/`, `programs/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
+| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/`, `programs/`, `streak/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
 | **Everything else** | `src/shared/`, config files, `SPEC.md`, `CLAUDE.md`, deploys | `docs/submission/` (Devpost, AI disclosure, video script) |
 
 ## Open requests
@@ -90,6 +90,10 @@ The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `
 **From Abdu to Mirza (Sat Nov 7, evening): programs are on main** (`src/features/programs`, Abdu's). A broad goal, such as a job or "web development", now becomes a program of 4 to 8 courses at `/program/<id>`, each course a normal map built when it's opened.
 
 - [ ] **List the learner's programs in `/courses`** (a "Your programs" row above the public courses, or on the dashboard if you prefer). Call it from a server component or route: `import { listMyPrograms } from "@/features/programs"`, then `await listMyPrograms(userId)` gives `{ id, title, summary, courseCount, href }[]`, newest first, with no owner id. Link each row to `href`. Programs are private, so show them only to their owner, never in the public list. A course map inside a program has `program` set (`{ id, title, courseNumber, courseCount }`), so "My courses" can group by it if you like.
+
+**From Abdu to Mirza (Sat Nov 7, night): one streak number everywhere.**
+
+- [ ] **The dashboard's streak** (`src/features/dashboard/streak.ts`) counts local days from proofs and reviews. The sidebar now shows a flame from `@/features/streaks` (Edmonton days, one freeze a week, counted on each proof), so the two can disagree on screen. Please show `getStreak(userId)` from `@/features/streaks` on the dashboard instead: it returns `{ count, best, doneToday, freezeReady, frozen, sparksThisWeek, combo, week }`, where `week` is Monday to Sunday. If reviews should count toward the streak too, say so here and I'll add a `recordStudied(userId, id)` hook.
 
 ## Get started (Mirza)
 

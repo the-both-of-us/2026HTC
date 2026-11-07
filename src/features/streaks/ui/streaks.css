@@ -1,0 +1,34 @@
+/* Motion only for people who haven't asked for less. Learning Mode turns it off too. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes combo-pop {
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.12);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes flame-flicker {
+    0%,
+    100% {
+      transform: scale(1) rotate(0deg);
+    }
+    50% {
+      transform: scale(1.08) rotate(-3deg);
+    }
+  }
+
+  :root:not([data-learning-mode]) .combo-pop {
+    animation: combo-pop 420ms ease-out both;
+  }
+
+  :root:not([data-learning-mode]) .flame-lit {
+    animation: flame-flicker 2.4s ease-in-out infinite;
+  }
+}

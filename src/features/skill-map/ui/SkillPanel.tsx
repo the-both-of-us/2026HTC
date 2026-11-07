@@ -5,7 +5,7 @@ import { TeachBackPanel } from "@/features/teachback/client";
 import clsx from "clsx";
 import { BadgeCheck, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { Citation, NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { Badge, Button, InlineText, NODE_STATE_LABELS, ReadAloudButton, StateMark } from "@/shared/ui";
 import { JobAsksTag } from "./SkillNodeView";
@@ -27,6 +27,10 @@ type SkillPanelProps = {
   onSelect: (nodeId: string) => void;
   onProven: (nodeId: string) => void;
   onClose: () => void;
+  /** The streak and combo just earned, shown with what the proof opened. */
+  reward?: ReactNode;
+  /** The quick check that relights a proved skill that has started to fade. */
+  relight?: ReactNode;
 };
 
 const SOURCE_NAME: Record<SourceKind, string> = { posting: "posting", pdf: "PDF", topic: "topic" };
@@ -44,6 +48,8 @@ export function SkillPanel({
   onSelect,
   onProven,
   onClose,
+  reward,
+  relight,
 }: SkillPanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -82,6 +88,7 @@ export function SkillPanel({
       role="status"
       className="flex flex-col gap-3 rounded-sheet border border-proven/60 bg-proven-surface p-4"
     >
+      {reward}
       <p className="font-medium">
         {ownNotice.unlockedIds.length > 0
           ? `That opens ${listInWords(ownNotice.unlockedIds.map(titleOf))}.`
@@ -189,6 +196,8 @@ export function SkillPanel({
 
             </>
           )}
+
+          {isOwner && relight}
 
           {state !== "locked" && !isOwner && (
             <p className="border-t border-rule pt-5">

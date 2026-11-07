@@ -1,9 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import { BookOpen, LayoutDashboard, Plus, RotateCcw, ShieldCheck, Users, Zap } from "lucide-react";
+import { BookOpen, Flame, LayoutDashboard, Plus, RotateCcw, ShieldCheck, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Build", icon: Plus },
@@ -28,6 +29,7 @@ export function SideNav() {
         "lg:static lg:flex-col lg:justify-start lg:gap-1 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-3 lg:shadow-none lg:backdrop-blur-none",
       )}
     >
+      <StreakFlame />
       {NAV_ITEMS.map(({ href, label, icon: Icon, largeOnly }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
         return (
@@ -50,5 +52,47 @@ export function SideNav() {
         );
       })}
     </nav>
+  );
+}
+
+/** What the streaks feature sends: shared code can't import a feature, so the shape is repeated here. */
+type Streak = { count: number; doneToday: boolean };
+
+/**
+ * The daily streak's flame. It loads once, then follows the "oryx:streak" event that the map
+ * sends after each proof. Nothing shows until there is a streak.
+ */
+function StreakFlame() {
+  const [streak, setStreak] = useState<Streak | null>(null);
+
+  useEffect(() => {
+    fetch("/api/streak")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { streak: Streak | null } | null) => setStreak((current) => current ?? body?.streak ?? null))
+      .catch(() => undefined);
+    const onStreak = (event: Event) => setStreak((event as CustomEvent<Streak>).detail);
+    window.addEventListener("oryx:streak", onStreak);
+    return () => window.removeEventListener("oryx:streak", onStreak);
+  }, []);
+
+  if (!streak || streak.count === 0) return null;
+  const label = `${streak.count}-day streak${streak.doneToday ? ", kept today" : ", 1 topic keeps it today"}`;
+
+  return (
+    <p
+      title={label}
+      className={clsx(
+        "flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-full text-sm font-semibold tabular-nums",
+        "lg:flex-none lg:justify-start lg:gap-2.5 lg:px-3",
+        streak.doneToday ? "text-amber" : "text-ink-soft",
+      )}
+    >
+      <Flame aria-hidden="true" size={18} className={clsx(streak.doneToday ? "fill-amber/30" : "opacity-70")} />
+      <span aria-hidden="true">{streak.count}</span>
+      <span className="sr-only">{label}</span>
+      <span aria-hidden="true" className="hidden font-medium lg:inline">
+        {streak.count === 1 ? "day" : "days"}
+      </span>
+    </p>
   );
 }

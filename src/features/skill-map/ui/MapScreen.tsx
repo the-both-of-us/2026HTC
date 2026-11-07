@@ -5,6 +5,7 @@ import { LiveGridCard, LiveGridStrip } from "@/features/grid/client";
 import { HowItWorksButton } from "@/features/landing/client";
 import { ProgramCrumb } from "@/features/programs/client";
 import { ShareProofButton } from "@/features/proof/client";
+import { ProofReward, RelightCheck, StreakNudge, useMapHabits, type ProofRewardData } from "@/features/streaks/client";
 import clsx from "clsx";
 import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -186,6 +187,10 @@ function LoadedMap({
   );
   const [playReveal, setPlayReveal] = useState(true);
   const [notice, setNotice] = useState<ProvenNotice | null>(null);
+  // The habit loop: streak, topic of the day, fading. Only for the map's owner.
+  const { habits, reload: reloadHabits, afterProof } = useMapHabits(map.id, isOwner);
+  const [reward, setReward] = useState<ProofRewardData | null>(null);
+  const [relitId, setRelitId] = useState<string | null>(null);
 
   // The entrance plays once: after this, nothing may replay it.
   useEffect(() => {
@@ -198,6 +203,8 @@ function LoadedMap({
   const provenCount = map.nodes.filter((node) => states[node.id] === "proven").length;
   const selected = map.nodes.find((node) => node.id === selectedId) ?? null;
   const nextSkill = map.nodes.find((node) => states[node.id] === "available") ?? null;
+  const featured = map.nodes.find((node) => node.id === habits?.topicOfTheDay) ?? null;
+  const selectedDim = selected ? (habits?.dim[selected.id] ?? 0) : 0;
 
   const selectSkill = useCallback((nodeId: string) => {
     setSelectedId(nodeId);
@@ -242,8 +249,10 @@ function LoadedMap({
       setPlayReveal(false);
       setProven(next);
       setNotice({ nodeId, unlockedIds });
+      setReward(null);
+      void afterProof(nodeId).then(setReward);
     },
-    [map, proven],
+    [map, proven, afterProof],
   );
 
   return (
@@ -270,6 +279,17 @@ function LoadedMap({
                 </Badge>
               )}
               <Progress proven={provenCount} total={map.nodes.length} />
+              {isOwner && habits && (
+                <StreakNudge
+                  className="mt-2"
+                  streak={habits.streak}
+                  topicOfTheDay={
+                    featured && states[featured.id] === "available"
+                      ? { title: featured.title, onOpen: () => selectSkill(featured.id) }
+                      : null
+                  }
+                />
+              )}
             </div>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2.5">
@@ -312,6 +332,8 @@ function LoadedMap({
                   reveal={playReveal}
                   justProvenId={notice?.nodeId ?? null}
                   justUnlockedIds={notice?.unlockedIds ?? []}
+                  dim={habits?.dim}
+                  featuredId={habits?.topicOfTheDay}
                   onSelect={selectSkill}
                 />
               </div>
@@ -343,6 +365,23 @@ function LoadedMap({
               onSelect={selectSkill}
               onProven={handleProven}
               onClose={closePanel}
+              reward={reward && notice?.nodeId === selected.id && <ProofReward reward={reward} />}
+              relight={
+                states[selected.id] === "proven" &&
+                (selectedDim > 0 || relitId === selected.id) && (
+                  <RelightCheck
+                    key={selected.id}
+                    mapId={map.id}
+                    nodeId={selected.id}
+                    title={selected.title}
+                    dim={selectedDim}
+                    onRelit={(nodeId) => {
+                      setRelitId(nodeId);
+                      void reloadHabits();
+                    }}
+                  />
+                )
+              }
             />
           )}
         </div>

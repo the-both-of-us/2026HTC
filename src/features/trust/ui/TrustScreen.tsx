@@ -60,6 +60,10 @@ export function TrustScreen() {
               proved and when, never what you wrote.
             </li>
             <li>
+              <strong className="font-medium">Streak:</strong> the days you proved something, your
+              sparks this week and when you last relit each topic. Only you see it.
+            </li>
+            <li>
               <strong className="font-medium">People and review:</strong> your public profile on
               /people (name, city, contact link) and your spaced-repetition schedule and review
               days.

@@ -1,6 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import clsx from "clsx";
-import { Briefcase, FileText, Lock } from "lucide-react";
+import { Briefcase, FileText, Lock, Star } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { NODE_STATE_LABELS, StateMark } from "@/shared/ui";
@@ -17,6 +17,10 @@ export type SkillNodeData = {
   justUnlocked: boolean;
   /** Initials of study circle members who proved this skill. */
   avatars: string[];
+  /** A proved skill fades a step at 3, 7 and 14 days, until it's relit. 0 is fully lit. */
+  dim: number;
+  /** Today's topic of the day. */
+  featured: boolean;
 };
 
 export type SkillFlowNode = Node<SkillNodeData, "skill">;
@@ -35,9 +39,13 @@ const HANDLE_COLOURS: Record<NodeState, string> = {
   proven: "var(--color-proven)",
 };
 
+/** Fading is a nudge to revisit, never a lost proof, so the card only dims. */
+const DIM_CLASSES = ["", "opacity-80 saturate-50", "opacity-60 saturate-25", "opacity-45 grayscale"];
+
 /** One skill on the map. Its edge, its status dot and its words all say its state. */
 export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
-  const { skill, state, layer, selected, reveal, justProven, justUnlocked, avatars } = data;
+  const { skill, state, layer, selected, reveal, justProven, justUnlocked, avatars, dim, featured } = data;
+  const fading = state === "proven" && dim > 0;
 
   return (
     // The handles sit on this outer box, which only ever fades. React Flow measures them
@@ -62,6 +70,8 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
           reveal && "card-reveal",
           justProven && "card-proven",
           justUnlocked && "card-unlock",
+          fading && DIM_CLASSES[dim],
+          featured && state === "available" && "ring-2 ring-amber/70",
         )}
       >
         <div className="flex items-start gap-2">
@@ -76,7 +86,13 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
           {state === "locked" && <Lock aria-hidden="true" size={14} className="mt-[3px] shrink-0" />}
         </div>
         <p className="flex items-center justify-between gap-2 text-[13px] leading-none">
-          <span>{NODE_STATE_LABELS[state]}</span>
+          <span>{fading ? "Fading, relight it" : NODE_STATE_LABELS[state]}</span>
+          {featured && state === "available" && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber">
+              <Star aria-hidden="true" size={11} />
+              Today
+            </span>
+          )}
           {skill.fromSource && <JobAsksTag kind={skill.citation?.kind} />}
         </p>
       </div>
