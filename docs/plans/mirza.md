@@ -117,7 +117,7 @@ These are in Abdu's paths, so Mirza doesn't edit them.
 - [ ] `shared/identity.ts`: sign the cookie, add `getSession()` returning `{ userId, signedIn, displayName }`, and add a way to set the user id after sign-in.
 - [ ] Give Mirza ownership of `src/features/auth/` and `src/app/api/auth/` in `TEAM.md` and `CODEOWNERS`.
 - [ ] Add a Gemini route in `features/ai/routes.ts`, and a way for a caller to name a preferred route.
-- [ ] Move `parseBody` and `errorResponse` from teachback into `src/shared/http.ts`, since every route needs them.
+- [x] Move `parseBody` and `errorResponse` from teachback into `src/shared/http.ts`, since every route needs them.
 - [ ] Add `import "server-only"` to server feature `index.ts` files.
 - [ ] AWS move: S3 store driver, Bedrock route, container deploy. Update `.env.example` and the Vercel notes in `TEAM.md`.
 - [ ] Register the GoDaddy domain and point it at the deployment.

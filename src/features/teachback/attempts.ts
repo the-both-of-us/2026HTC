@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
+import { HttpError } from "@/shared/http";
 import { getDoc, putDoc } from "@/shared/store";
 import {
   PASS_SCORE,
@@ -21,12 +22,9 @@ export const MAX_ANSWER_CHARACTERS = 2_000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A problem we can explain to the user. The message is safe to show them. */
-export class AttemptError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
+export class AttemptError extends HttpError {
+  constructor(message: string, status: number) {
+    super(message, status);
     this.name = "AttemptError";
   }
 }

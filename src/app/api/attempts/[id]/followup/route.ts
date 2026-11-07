@@ -1,5 +1,6 @@
-import { answerFollowUp, errorResponse, followUpBody, parseBody, toLearnerView } from "@/features/teachback";
+import { answerFollowUp, followUpBody, toLearnerView } from "@/features/teachback";
 import { getUserId } from "@/shared/identity";
+import { errorResponse, parseBody } from "@/shared/http";
 
 export const maxDuration = 60;
 
@@ -11,6 +12,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const attempt = await answerFollowUp(userId, id, answer);
     return Response.json(toLearnerView(attempt));
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, "Something went wrong on our side, and your answer was not saved. Please try again.");
   }
 }

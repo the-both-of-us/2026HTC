@@ -71,6 +71,7 @@ import { getProgress } from "@/features/teachback";                     // getPr
 import { chatJSON, chatText, AiUnavailableError } from "@/features/ai"; // chatJSON({ prompt, schema, label })
 import { getDoc, putDoc, listDocs, deleteDoc } from "@/shared/store";   // keys like "flashcards/<mapId>/<nodeId>"
 import { getUserId } from "@/shared/identity";                          // anonymous user, in route handlers
+import { errorResponse, HttpError, parseBody } from "@/shared/http";    // parseBody(request, zodSchema), errorResponse(error, fallbackSentence?)
 import { Button, Card, ComingSoon, ErrorNotice, Field, PageShell } from "@/shared/ui";
 ```
 
