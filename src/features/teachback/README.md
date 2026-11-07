@@ -7,14 +7,14 @@ Grades a learner's explanation of a skill, asks a follow-up about what they wrot
 1. `POST /api/attempts` calls `startAttempt`. It refuses a locked node, someone else's map, a proven node, or fewer than 15 words, all before spending a model call.
 2. `gradeExplanation` gets quotes and factual errors from the model. Code checks each quote and works out the score.
 3. Below `PASS_SCORE` (70) the status is `not-yet`, and the learner can retry with a new attempt. Otherwise it is `needs-followup`, with a question from `generateFollowUp`.
-4. `POST /api/attempts/[id]/followup` calls `answerFollowUp`. A pass gives `proven` and updates `MapProgress`. A fail gives `not-yet`.
+4. `POST /api/attempts/[id]/followup` calls `answerFollowUp`. A pass gives `proven` and updates `MapProgress`. A fail gives `not-yet`. Each attempt gets one answer: `putDocIfAbsent` claims it before the model call, so answers sent together can't each get a try. The claim is given back only if the model or the store failed.
 
 ## Why the model doesn't score
 
 Asking a model to "score this answer" gave fluent, empty text 55-85/100. So the model only points at evidence:
 
 - For each checkpoint it returns an exact quote from the learner's text, or null, plus a list of factual errors.
-- Code checks each quote is really in the text, ignoring case and whitespace. A quote that isn't there counts as not met.
+- Code checks each quote is really in the text, ignoring case and whitespace. It must be at least three whole words, so "a" can't match inside another word. A quote that fails counts as not met.
 - `score = max(0, round(met / total * 100) - 20 * errors)`, in `computeScore`.
 
 ## The learner's text is data

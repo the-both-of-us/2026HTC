@@ -9,5 +9,6 @@ Measures `gradeExplanation` with real model calls. `npm run eval` writes `docs/e
 - `plantedQuotes.ts`: plants fake quotes through the real grader, with no model call.
 - `report.ts`, `findings.md`: the written report. `findings.md` is the hand-written reading of the latest run.
 - `results.json`: every raw run. `followups.json`: the follow-up spot check, from `npm run eval -- --followups`.
+- `chatbot.json`: real chat models' answers through the grader and the follow-up, from `npx tsx scripts/eval-chatbot.ts`.
 
 Commit `cases.json` before running, so labels can't be fitted to results. Other features must not import from this folder.

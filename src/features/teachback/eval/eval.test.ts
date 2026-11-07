@@ -3,6 +3,7 @@ import { countWords } from "../learnerText";
 import cases from "./cases.json";
 import { majorityVerdict, percentile, summarize, toRate, type EvalCase, type RunRecord } from "./metrics";
 import { runPlantedQuotes } from "./plantedQuotes";
+import { summarizeChatbot, type ChatbotRun } from "./report";
 import skills from "./skills.json";
 
 function record(caseId: string, run: number, score: number | null): RunRecord {
@@ -111,5 +112,34 @@ describe("planted fake quotes", () => {
     const results = await runPlantedQuotes();
     expect(results.length).toBeGreaterThanOrEqual(6);
     expect(results.filter((item) => !item.rejected)).toEqual([]);
+  });
+});
+
+describe("summarizeChatbot", () => {
+  const run = (followUp: ChatbotRun["followUp"]): ChatbotRun => ({
+    model: "m",
+    skill: "s",
+    prompt: "plain",
+    explanation: "text",
+    score: followUp ? 100 : 0,
+    met: 0,
+    total: 4,
+    followUp,
+  });
+  const followUp = (rightPassed: boolean, wrongPassed: boolean) => ({
+    question: "q",
+    rightAnswer: "r",
+    rightPassed,
+    wrongAnswer: "w",
+    wrongPassed,
+  });
+
+  it("counts only answers that reached the follow-up, and those that got through it", () => {
+    expect(summarizeChatbot([run(null), run(followUp(true, false)), run(followUp(false, true))])).toEqual({
+      runs: 3,
+      passedGrade: 2,
+      rightPassed: 1,
+      wrongPassed: 1,
+    });
   });
 });

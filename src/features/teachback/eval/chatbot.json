@@ -1,0 +1,560 @@
+[
+ {
+  "model": "openai/gpt-4o",
+  "skill": "sql",
+  "prompt": "plain",
+  "explanation": "SQL queries are structured commands used to interact with databases, enabling users to retrieve, insert, update, or delete data. Utilizing SQL (Structured Query Language), these queries are essential for database management and involve several key statements. For example, `SELECT` retrieves data from tables, `INSERT` adds new records, `UPDATE` modifies existing data, and `DELETE` removes records. Additionally, clauses like `WHERE` filter results, while `ORDER BY` and `GROUP BY` organize and aggregate data. SQL is designed to be highly readable and is widely used across various database systems to efficiently manage and manipulate relational data.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "sql",
+  "prompt": "plain",
+  "explanation": "SQL queries are precise commands written in Structured Query Language (SQL) used to communicate with and manage relational databases. These commands allow users to perform a wide range of operations, primarily retrieving specific data from one or more tables (`SELECT` statements), but also modifying existing records (`UPDATE`), adding new ones (`INSERT`), deleting old ones (`DELETE`), and even defining or altering the database's structure itself (`CREATE TABLE`, `ALTER TABLE`). Essentially, a query is an instruction telling the database what data to provide or what action to take.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "sql",
+  "prompt": "for-the-job",
+  "explanation": "Understanding SQL queries is crucial for retrieving and combining data from database tables, especially in roles like an analyst dealing with load, generation, and outage records. SQL (Structured Query Language) allows you to seamlessly access and manipulate databases, which is essential for generating insights and reports.\n\nKey SQL operations such as `SELECT`, `JOIN`, and `WHERE` clauses enable you to extract specific data. The `SELECT` statement specifies the columns you want, while `JOIN` clauses are essential for combining data from multiple tables based on related columns. `INNER JOIN` fetches records with matching values, while `LEFT JOIN` includes all records from the left table and matched records from the right. The `WHERE` clause allows you to filter data based on conditions, enhancing precision and relevance.\n\nMastery of these SQL components ensures you can efficiently gather and synthesize the necessary load, generation, and outage data, providing actionable insights to support business decisions.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "sql",
+  "prompt": "for-the-job",
+  "explanation": "SQL is **fundamental** for the analyst to effectively retrieve and combine critical operational data.\n\n**Specific facts that matter:**\n\n1.  **`SELECT` Statements:** Used to precisely extract desired columns (e.g., `timestamp`, `value`, `event_type`) from individual tables like `LoadRecords`, `GenerationRecords`, and `OutageEvents`. This ensures only relevant data is pulled.\n2.  **`JOIN` Clauses (e.g., `INNER JOIN`, `LEFT JOIN`):** These are crucial for *combining* the disparate datasets. They link related records across tables based on common identifiers like `timestamp`, `plant_id`, or `equipment_id`. For instance, an analyst might `INNER JOIN` `GenerationRecords` and `OutageEvents` on `timestamp` and `plant_id` to correlate generation output with outage occurrences.\n3.  **`WHERE` Clauses:** Essential for filtering the combined dataset to focus on specific periods, regions, or outage types, enabling targeted analysis.\n4.  **`GROUP BY` and Aggregate Functions (e.g., `SUM`, `AVG`, `COUNT`):** Allow the analyst to summarize combined data (e.g., total generation during outages, average load per hour) for high-level insights.\n\nThese SQL capabilities empower the analyst to build comprehensive operational views, identify correlations, and perform critical performance and reliability analyses that would be impossible with isolated data.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "python",
+  "prompt": "plain",
+  "explanation": "Pandas is a powerful and versatile open-source data analysis and manipulation library for Python. It provides data structures like Series and DataFrames that simplify handling structured data, making tasks like data cleaning, transformation, and aggregation more intuitive. With functions for reading and writing various data formats (e.g., CSV, Excel, SQL), as well as robust support for time series operations, pandas is widely used for data wrangling in data science and machine learning projects. Its integration with other libraries like NumPy and Matplotlib enhances its functionality, making it essential for efficient data analysis workflows.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "python",
+  "prompt": "plain",
+  "explanation": "Pandas is a powerful, open-source Python library widely used for data manipulation and analysis. It introduces two primary data structures: the `DataFrame`, a two-dimensional labeled data structure similar to a spreadsheet or SQL table, and the `Series`, a one-dimensional labeled array. Pandas excels at reading, cleaning, transforming, and analyzing structured data from various sources like CSVs, Excel files, and databases, making it an indispensable tool for data scientists and analysts for tasks ranging from data wrangling to complex statistical operations.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "python",
+  "prompt": "for-the-job",
+  "explanation": "Python pandas is a powerful and flexible open-source data analysis and manipulation library, essential for handling time-series data. It provides data structures like DataFrames and Series, which simplify the process of cleaning, transforming, and analyzing large datasets. Pandas excels in handling missing data, applying functions for data aggregation or transformation, and reshaping datasets through operations like pivoting and melting.\n\nFor time-series analysis, pandas offers robust datetime functionality, allowing easy parsing, indexing, and resampling of date and time data. This facilitates time-based operations like rolling windows and shifting data, which are crucial for trend analysis and forecasting.\n\nPandas integrates seamlessly with other libraries like NumPy and Matplotlib, enhancing analytical capabilities and visualization. It supports operations such as filtering, merging, and joining datasets, which are key for generating comprehensive reports.\n\nIn a reporting environment, pandas' efficiency in processing and analyzing data enhances decision-making and insight generation, making it invaluable for any data-driven organization.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "statistics",
+  "prompt": "plain",
+  "explanation": "Statistics is the field of mathematics that focuses on collecting, analyzing, interpreting, presenting, and organizing data. It involves descriptive statistics, which summarize data through measures such as mean, median, mode, and standard deviation, giving insight into data distribution and trends. Inferential statistics use sample data to make predictions or inferences about a larger population, employing techniques like hypothesis testing, confidence intervals, and regression analysis. Central to statistics are concepts of probability and variability, which help in estimating uncertainty and making data-driven decisions.",
+  "score": 0,
+  "met": 0,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "python",
+  "prompt": "for-the-job",
+  "explanation": "Pandas is Python's indispensable library for data manipulation and analysis, centered around its powerful **DataFrame** object – a tabular structure akin to a spreadsheet, ideal for handling the diverse datasets encountered in time-series analysis.\n\n**Specific facts that matter for this role:**\n\n*   **Cleaning:** Pandas offers robust methods like `df.dropna()`, `df.fillna()`, and `df.drop_duplicates()` to efficiently prepare raw data by handling missing values and inconsistencies.\n*   **Transformation:** It enables complex data reshaping and feature engineering through functions like `df.merge()` (for combining data), `df.groupby()` (for aggregation), and `df.apply()` (for custom operations).\n*   **Time-Series Analysis:** Pandas excels here with native datetime indexing capabilities. Functions like `df.resample()` allow easy aggregation (e.g., daily data to weekly averages), and `df.rolling()` computes moving statistics, which are critical for identifying trends and patterns in time-series data for reporting.\nIts vectorized operations ensure high performance, making it perfect for efficient data pipelines leading to insightful reports.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "statistics",
+  "prompt": "for-the-job",
+  "explanation": "Statistics is crucial for evaluating forecast performance, particularly through error metrics and seasonality. Error metrics, such as Mean Absolute Error (MAE) and Root Mean Square Error (RMSE), quantify the accuracy of forecasts by measuring the difference between predicted and actual values. A lower error indicates a more accurate model, guiding adjustments for improvement.\n\nSeasonality, a critical component in time-series data, refers to patterns that repeat at regular intervals due to seasonal factors. Recognizing seasonality helps in adjusting forecasts to account for predictable fluctuations, improving accuracy.\n\nBy understanding these concepts, you can identify trends, outliers, and cyclic behaviors in your data, thus enhancing decision-making. In essence, these statistical tools ensure your forecasts are reliable and aligned with real-world patterns, which is vital for optimizing business strategies and operations.",
+  "score": 33,
+  "met": 1,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "statistics",
+  "prompt": "plain",
+  "explanation": "Statistics is the science of collecting, organizing, analyzing, interpreting, and presenting data. Its fundamental purpose is to help us understand patterns, make informed decisions, and draw reliable conclusions about a larger population based on observations from a smaller sample. Essentially, it provides the tools to quantify uncertainty and extract meaningful insights from information, enabling better understanding and prediction in various fields.",
+  "score": 0,
+  "met": 0,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "grid",
+  "prompt": "plain",
+  "explanation": "Power-grid supply-demand refers to the balance between electricity production (supply) and consumption (demand) within a power grid. Maintaining this balance is crucial for grid stability. When demand exceeds supply, it can lead to power outages, while excess supply can waste resources. Utilities use demand response strategies, such as adjusting production levels and incentivizing reduced consumption during peak times, to manage this balance. Real-time monitoring and smart grid technologies enhance the efficiency and reliability of the grid by enabling better forecasting and responsive adjustments to fluctuations in supply and demand.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "sql",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "SQL queries are powerful tools for managing and retrieving data from databases. An INNER JOIN operation ensures that only those rows with matching keys in both tables are returned, effectively combining related data. The GROUP BY clause is used to aggregate rows that share common values in specified columns, allowing us to perform aggregate functions like COUNT, SUM, or AVG for each group, making it easier to summarize data.\n\nBefore any grouping happens, a WHERE clause can be applied to filter out rows based on specific conditions. This step is crucial because it determines which data is included in the aggregation, enabling more precise and relevant results.\n\nTo enhance performance, especially with larger datasets, using indexes on the columns involved in JOIN operations is advisable. Indexes significantly speed up query execution by quickly locating rows, minimizing the need for full table scans. This efficient data retrieval can greatly improve overall query speed and resource management.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "If you want to count orders per customer only for orders placed after Jan 1 2022, where should the date condition be placed in the query?",
+   "rightAnswer": "To count orders per customer only for orders placed after January 1, 2022, the date condition should be placed in the WHERE clause. This ensures that only orders meeting the date criteria are considered before grouping and counting by customer.",
+   "rightPassed": true,
+   "wrongAnswer": "To count orders per customer only for orders placed after Jan 1, 2022, you should include the date condition in the HAVING clause after the GROUP BY operation. This ensures that only the results for customers with orders after the specified date are counted, refining the aggregated data effectively.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "sql",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "SQL queries are essentially how we ask databases for specific information.\n\nAn **INNER JOIN** is used to combine rows from two different tables. Crucially, it only includes rows where there's a perfect match between the specified key columns in *both* tables. If a row in one table doesn't have a corresponding match in the other, it simply won't appear in the result.\n\nThe **GROUP BY** clause helps us summarize data. It gathers all rows that have the same value in a particular column into distinct groups. Once grouped, we can apply aggregate functions (like SUM, COUNT, or AVG) to each group, giving us a single summary result for every group.\n\nA **WHERE** clause acts as an initial filter. It removes rows that don't meet your specified conditions *before* any grouping or aggregation takes place. This ensures only the data you're interested in is processed.\n\nLastly, using **indexes** on columns frequently used in joins significantly speeds up your queries. An index is like a pre-sorted lookup table, allowing the database to quickly find matching rows without having to scan every single record.",
+  "score": 75,
+  "met": 3,
+  "total": 4,
+  "followUp": {
+   "question": "When selecting orders with WHERE status = 'shipped' then GROUP BY customer_id, which rows contribute to each customer's total amount?",
+   "rightAnswer": "The `WHERE` clause first filters the data, ensuring only orders with a `status` of 'shipped' are processed. Then, the `GROUP BY` clause gathers these remaining 'shipped' orders, grouping them by `customer_id`. Therefore, each customer's total amount will only include their orders that have been `shipped`.",
+   "rightPassed": true,
+   "wrongAnswer": "Initially, all orders for every customer are grouped together, and their total amount is calculated. The `WHERE status = 'shipped'` clause then filters these already aggregated customer totals, deciding which customers' summary data to display.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "python",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Pandas is a powerful Python library for data analysis, widely used for handling tabular data. A key feature is the `read_csv` function, which effortlessly loads data from CSV files into a DataFrame, automatically parsing delimiters. This makes it easy to work with datasets straight from files. Once the data is loaded, you can organize it using the `.groupby` method, which groups rows based on column values, allowing you to apply aggregate functions like sum or mean to these groups, making data analysis more intuitive.\n\nHandling missing data is seamless with `.fillna`, which lets you replace null values with specified constants or use methods like forward fill to propagate values, ensuring cleaner datasets. Additionally, pandas excels in performance with its support for vectorized operations. These operations allow you to perform computations on entire DataFrames without writing explicit Python loops, significantly speeding up data processing and enabling efficient data manipulation.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "How would you load a CSV with a 'sales' column containing missing values and then compute each region’s average sales after filling missing entries with the column’s mean?",
+   "rightAnswer": "To load the CSV into a DataFrame, use `df = pd.read_csv('yourfile.csv')`. Replace missing values in the 'sales' column with the column's mean using `df['sales'].fillna(df['sales'].mean(), inplace=True)`. Then, compute each region's average sales with `df.groupby('region')['sales'].mean()`.",
+   "rightPassed": true,
+   "wrongAnswer": "To load the CSV and handle missing values, you can use pandas' `read_csv` function to load the data and the `.fillna` method to replace missing values with a constant. Instead of using the column mean, you can replace the missing entries with NaN using `.fillna('NaN')`. Then, use `.groupby('region')['sales'].mean()` to calculate the average sales for each region.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "statistics",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Statistics is a field of mathematics that helps us collect, analyze, and interpret data. One fundamental concept is **mean absolute error (MAE)**, which evaluates the accuracy of predictions by averaging the absolute differences between predicted and observed values. It gives a clear measure of how far predictions are, on average, from actual outcomes. Another important idea is **seasonality**, which refers to regular, predictable patterns or fluctuations in a dataset over specific time periods, such as increased sales during holidays in a retail business. Lastly, **standard deviation** is a key measure that indicates how spread out data points are around the mean. A high standard deviation means data is widely dispersed, while a low standard deviation shows data is closer to the mean. Together, these concepts help us understand patterns, variability, and the reliability of predictions when working with data.",
+  "score": 67,
+  "met": 2,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "python",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Pandas is a core Python library for data analysis, built around its primary structure: the DataFrame, which is like a spreadsheet or SQL table.\n\nYou can effortlessly load tabular data into a DataFrame using the `read_csv()` function; it intelligently parses your CSV file, automatically handling delimiters.\n\nFor data summarization, the `.groupby()` method is invaluable. It lets you group rows based on common values in one or more columns, then apply aggregate functions (like sum, mean, or count) to each group.\n\nDealing with incomplete data is easy with `.fillna()`. This method allows you to replace missing values (NaNs) with a specific constant or using strategies like \"forward fill\" (`ffill`), which propagates the last valid observation.\n\nA major performance benefit comes from Pandas' vectorized operations. These operations apply functions across entire DataFrames or columns very efficiently, without requiring you to write slow, explicit Python `for` loops.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "How would you forward‑fill missing values in a 'sales' column for each 'store_id' group using the .groupby() and .fillna() methods you described?",
+   "rightAnswer": "First, you would group your DataFrame by the 'store_id' column. Then, select the 'sales' column within these groups and apply the `.fillna()` method with `method='ffill'` to forward-fill missing values for each individual store. Assign the result back to the 'sales' column to update your DataFrame.",
+   "rightPassed": true,
+   "wrongAnswer": "To forward-fill missing values in the 'sales' column for each 'store_id' group, you would apply `.fillna(method='ffill')` directly to the entire 'sales' column first. Then, you can use `.groupby('store_id')` to group and analyze the sales data, which will now have all NaNs filled based on the preceding values across the whole DataFrame.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "grid",
+  "prompt": "for-the-job",
+  "explanation": "The power grid supply-demand balance is crucial for ensuring reliable electricity delivery. Power generation must precisely match consumer demand at all times. This balance is achieved through the intricate coordination of various power sources, including fossil fuels, nuclear, renewables like wind and solar, and hydroelectric. \n\nKey components to understand are:\n\n1. **Load Forecasting:** Predicting future electricity demand to prepare adequate generation.\n2. **Regulation:** Adjusting output from generators in real-time to match demand fluctuations.\n3. **Spinning Reserve:** Backup capacity ready to be activated within minutes to handle sudden demand spikes or generation losses.\n4. **Demand Response:** Programs that incentivize consumers to reduce or shift their electricity usage during peak times, aiding balance.\n5. **Grid Reliability:** Maintaining stability and preventing outages requires continuous monitoring and adjustment of power flows.\n\nThese factors ensure the grid's performance, help in avoiding outages, and maintain the system’s reliability and efficiency. Understanding these dynamics is critical for analyzing grid operations and improving resilience strategies.",
+  "score": 5,
+  "met": 1,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "statistics",
+  "prompt": "for-the-job",
+  "explanation": "Understanding Statistics fundamentals is crucial for evaluating forecast performance. It starts with comprehending **measures of central tendency** (like the mean) and, more critically, **measures of dispersion** (like variance and standard deviation). These concepts are foundational for **error metrics** such as RMSE (Root Mean Squared Error) and MAE (Mean Absolute Error).\n\n**Specific facts that matter:**\n*   **RMSE** directly relates to standard deviation; it measures the typical magnitude of forecast errors, penalizing larger errors more heavily due to squaring them, indicating the model's overall spread of inaccuracy.\n*   **MAE** provides the average absolute difference, offering a straightforward view of error magnitude.\n*   **Seasonality** refers to predictable, recurring patterns in data over fixed periods (e.g., monthly, quarterly). Recognizing and quantifying this pattern is vital to distinguish actual forecast errors from regular, cyclical fluctuations that should be modeled.\n\nBy analyzing these metrics and understanding seasonal impacts, we can objectively assess a forecast model's reliability, identify systemic biases, and drive targeted improvements.",
+  "score": 67,
+  "met": 2,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "statistics",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Statistics helps us make sense of data. When evaluating predictions, the **Mean Absolute Error (MAE)** tells us, on average, how much our predictions missed the actual values. It calculates the absolute difference for each point (ignoring if it was too high or too low), then averages these differences to give an overall error magnitude.\n\nIn data observed over time, like monthly sales, **Seasonality** refers to predictable, repeating patterns or cycles. For instance, if sales consistently peak every December and dip every February, that's seasonality—a regular fluctuation tied to a specific period.\n\nLastly, the **Standard Deviation** is a crucial measure of data spread. It tells us how much individual data points typically deviate or vary from the average (mean) of the dataset. A small standard deviation means data points are clustered closely around the mean, showing consistency, while a large one indicates wider dispersion and more variability.",
+  "score": 67,
+  "met": 2,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "grid",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "In a power grid, the supply of electricity must continuously match the demand plus any transmission losses to keep the grid frequency stable. This balance is crucial for reliable operation. To achieve this, dispatch decisions focus on utilizing low-cost generation sources first, but they also must consider the limits of transmission infrastructure. If there is a mismatch and actual generation differs from what was scheduled, imbalance charges are applied to those responsible to encourage accurate forecasting and planning. Additionally, the grid maintains reserve capacity. This reserve is crucial for dealing with unforeseen situations like sudden outages or unexpected spikes in electricity demand, ensuring the grid remains stable and reliable.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "If a 20 MW generator trips unexpectedly in a system operating at its low-cost dispatch limit, what role does reserve capacity play in preventing frequency deviation?",
+   "rightAnswer": "If a 20 MW generator trips unexpectedly, reserve capacity steps in to quickly supply the lost power, preventing a drop in grid frequency. This reserve is crucial for maintaining stability, allowing the grid to continue operating smoothly despite sudden disruptions.",
+   "rightPassed": true,
+   "wrongAnswer": "Reserve capacity does not play a role in such situations because the system automatically reallocates the lost generation to nearby operating generators without impacting the frequency. The grid frequency remains stable due to the inherent flexibility of the transmission infrastructure, which quickly compensates for any loss of generation.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "grid",
+  "prompt": "plain",
+  "explanation": "Power-grid supply-demand refers to the critical, moment-to-moment balancing act between the amount of electricity being generated (supply) and the amount being consumed (demand) across an electrical grid. This balance must be maintained almost perfectly and instantaneously. If supply significantly exceeds demand, grid frequency and voltage can rise, potentially damaging equipment. Conversely, if demand exceeds supply, frequency and voltage drop, leading to brownouts, blackouts, and potential grid instability. Grid operators constantly monitor consumption patterns and adjust power plant output in real-time to ensure this delicate equilibrium, guaranteeing reliable electricity delivery.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "writing",
+  "prompt": "plain",
+  "explanation": "Technical writing is the process of creating clear, concise, and well-organized documents that convey complex information effectively to a targeted audience. It often involves producing manuals, guides, reports, and instructional materials that help users understand and operate technical products or processes. The goal is to simplify complex information, using precise language and supporting visuals like diagrams or charts to enhance comprehension. Technical writers must balance technical accuracy with accessibility, ensuring that content is user-friendly and meets the needs of both technical and non-technical readers.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "grid",
+  "prompt": "for-the-job",
+  "explanation": "The power grid operates on a fundamental principle: **generation must instantaneously match demand (load) plus system losses.** This constant equilibrium is crucial because **frequency directly reflects the balance.** If generation exceeds demand, frequency rises; if demand exceeds generation, frequency drops.\n\n**Specific facts that matter:**\n\n*   **Frequency Stability:** Maintaining frequency within tight operational limits (e.g., 50 or 60 Hz ±0.1 Hz) is paramount. Deviations impact equipment integrity and can cause failures.\n*   **Real-time Balancing:** Electricity cannot be easily stored at scale, necessitating continuous, real-time adjustments through generator dispatch, ramp rates, and ancillary services.\n*   **System Inertia:** The rotating mass of generators provides some short-term stability, but persistent imbalances overcome this, leading to critical frequency deviations.\n*   **Consequences of Imbalance:** Significant frequency deviations trigger automatic protective relays, leading to load shedding or generator trips to prevent equipment damage and cascading blackouts.\n\nUnderstanding these dynamics is vital for analyzing outage causes, assessing grid vulnerability, and evaluating system performance under various conditions.",
+  "score": 25,
+  "met": 1,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "writing",
+  "prompt": "for-the-job",
+  "explanation": "Technical writing is the practice of translating complex, technical information into clear, concise, and accessible content tailored to a specific audience. In this role, technical writing is crucial for producing metrics, reports, and documentation that enable non-analysts to understand, interpret, and act on data-driven insights without requiring specialized technical expertise. This involves organizing information logically, avoiding jargon, and using visuals or examples to enhance understanding.\n\nKey aspects include accuracy, clarity, and audience focus. For non-analysts, the priority is to present only the most relevant data and actionable insights, ensuring that the content supports decision-making rather than overwhelming readers with unnecessary technical details. Adopting a user-centered approach aligns the messaging with the knowledge level of the audience, enabling effective communication across departments. In summary, technical writing bridges the gap between technical experts and non-technical stakeholders, ensuring metrics and reports are both meaningful and impactful for decision-making.",
+  "score": 0,
+  "met": 0,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "writing",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Technical writing is about communicating complex information clearly and effectively. It uses plain language to replace jargon with common terms, making it easier for readers to understand. Information is organized logically through structured documents, which utilize headings, lists, and tables. This helps guide the reader and makes the content more accessible. Consistency in tense and the use of active voice ensure explanations are clear and direct, enhancing reader comprehension. Additionally, providing a summary at the beginning of the document gives readers a quick overview of the content, allowing them to grasp the main points before diving into details. This approach makes technical writing an essential tool for conveying information in fields like technology, engineering, and science.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "Using your advice on plain language and active voice, rewrite a short paragraph explaining how a GPS device determines location.",
+   "rightAnswer": "A GPS device determines your location by connecting to satellites orbiting Earth. It calculates your position based on the signals it receives, measuring the distance between you and multiple satellites. This process pinpoints your exact location on a map.",
+   "rightPassed": true,
+   "wrongAnswer": "A GPS device identifies its location by sending signals to satellites orbiting the Earth. These satellites respond by transmitting back the exact coordinates of the GPS device, pinpointing its position accurately.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "grid",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Imagine the power grid as a massive balancing act. For the lights to stay on and appliances to work properly, the electricity supplied must *exactly* match what everyone demands, plus any energy lost in transmission, at every single moment. This delicate balance maintains grid frequency, like a clock's steady ticking.\n\nOperators constantly dispatch power from generators, prioritizing the cheapest available sources first, but always ensuring transmission lines aren't overloaded. To keep everyone accountable, generators face financial penalties (imbalance charges) if they produce more or less power than they committed to. Crucially, extra generation capacity (reserves) is always kept ready. This acts as a safety net, instantly kicking in to prevent blackouts during sudden plant failures or unexpected surges in demand.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "If a 200 MW generator trips unexpectedly during peak demand, how many megawatts of reserve must be activated to maintain frequency, assuming total demand is 1,200 MW?",
+   "rightAnswer": "When a 200 MW generator trips, exactly 200 MW of reserve capacity must be activated. This instantly replaces the lost supply, maintaining the essential balance between electricity supplied and demanded to keep grid frequency stable.",
+   "rightPassed": true,
+   "wrongAnswer": "To maintain frequency, the grid only requires a fraction of the tripped generator's output from reserves. About 100 MW of reserve would be sufficient, as the grid's inherent inertia helps absorb some of the immediate shock.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "transactions",
+  "prompt": "plain",
+  "explanation": "Database transactions are sequences of operations performed as a single, indivisible unit of work, ensuring data integrity and consistency. They adhere to the ACID properties: Atomicity guarantees that all operations within a transaction are completed successfully or none at all; Consistency ensures that a transaction brings the database from one valid state to another; Isolation means that concurrently executing transactions do not interfere with each other; and Durability assures that once a transaction is committed, its changes are permanent, even in the event of a system failure. Transactions are essential for reliable data management in multi-user environments.",
+  "score": 33,
+  "met": 1,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "writing",
+  "prompt": "plain",
+  "explanation": "Technical writing is the practice of communicating complex or specialized information in a clear, concise, and accurate manner, primarily aimed at a specific audience. Its main goal is to enable readers to understand, use, or perform a task effectively, often by translating technical jargon into easily digestible content for documents like user manuals, reports, instructions, and specifications.",
+  "score": 25,
+  "met": 1,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "transactions",
+  "prompt": "for-the-job",
+  "explanation": "Database transactions are crucial for ensuring data integrity and consistency, especially when dealing with critical operations like saving invoices and their corresponding payments. A transaction is a sequence of database operations executed as a single logical unit. It adheres to the ACID properties: Atomicity, Consistency, Isolation, and Durability.\n\n1. **Atomicity** ensures that all operations within a transaction are completed successfully; otherwise, the transaction is aborted, and no changes are applied. This guarantees that an invoice and its payment are either both saved or not saved at all.\n\n2. **Consistency** ensures that a transaction takes the database from one valid state to another, preserving data integrity.\n\n3. **Isolation** means transactions are executed in isolation from one another, preventing concurrent transactions from interfering and causing inconsistencies.\n\n4. **Durability** guarantees that once a transaction is committed, it is permanently recorded, even in the event of a system failure.\n\nIn the context of invoices and payments, enforcing these properties ensures financial records are accurate and reliable.",
+  "score": 33,
+  "met": 1,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "writing",
+  "prompt": "for-the-job",
+  "explanation": "Technical writing is the specialized skill of transforming complex, often technical or analytical, information into clear, concise, and actionable content for a specific audience.\n\nFor this role, it's crucial because it bridges the gap between detailed analytical output and the understanding of non-analysts. **Specific facts that matter:**\n\n1.  **Audience-Centric Translation:** It involves meticulously understanding the non-analyst audience's needs and knowledge level to tailor explanations effectively.\n2.  **Jargon Demystification:** It systematically strips away technical jargon, explaining methodologies and metrics in plain language.\n3.  **Focus on \"So What\":** It prioritizes communicating the practical implications, insights, and actionable takeaways from data, rather than just presenting raw figures.\n4.  **Clarity and Structure:** It ensures reports and documentation are logically organized, easy to navigate, and unambiguous, preventing misinterpretation.\n\nUltimately, technical writing here empowers informed decision-making across the organization by making critical data accessible and understandable to everyone.",
+  "score": 25,
+  "met": 1,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "writing",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Technical writing is about communicating complex information clearly and efficiently to a specific audience. A fundamental aspect is using **plain language**, where specialized jargon is replaced with common terms to significantly improve reader comprehension. Documents are always meticulously **structured**; this means employing headings, bulleted lists, and tables to organize information logically and make it easy to navigate. To ensure explanations are clear and direct, writers maintain a **consistent tense** and favor the **active voice** over passive constructions. Finally, providing a concise **summary at the beginning** offers readers a quick overview of the content and its main points, allowing them to grasp the essence before diving into the details. This combined approach makes technical information accessible and useful.",
+  "score": 30,
+  "met": 2,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "transactions",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "A database transaction is a mechanism that groups multiple operations into a single unit of work, ensuring that either all operations are completed successfully or none at all. This property, known as atomicity, ensures that the database remains consistent even if a failure occurs during the transaction. If any statement within the transaction fails, a ROLLBACK command can be issued to undo all changes made so far, maintaining data integrity.\n\nTransactions are also governed by isolation levels, which control the visibility of changes made by a transaction. These isolation levels determine how and when the modifications made by one transaction become visible to other concurrent transactions, affecting performance and consistency. Higher isolation levels offer greater consistency by reducing phenomena like dirty reads, but may also lead to increased resource locking and reduced concurrency. Balancing isolation is key to optimizing transaction performance and maintaining the integrity of the database.",
+  "score": 100,
+  "met": 3,
+  "total": 3,
+  "followUp": {
+   "question": "Suppose a transaction updates a customer's balance, then attempts to insert a new order but fails; after issuing ROLLBACK, what is the balance value?",
+   "rightAnswer": "After issuing a ROLLBACK, the customer's balance will revert to its original value before the transaction began. This is because a ROLLBACK undoes all changes made during the transaction, ensuring atomicity and maintaining data integrity.",
+   "rightPassed": true,
+   "wrongAnswer": "If the transaction fails during the insertion of the new order and a ROLLBACK is issued, the customer's balance will remain updated because the update took place before the failure. The ROLLBACK will only undo the actions related to the failed statement, not earlier successful operations. As a result, the balance value will reflect the updated amount.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "transactions",
+  "prompt": "plain",
+  "explanation": "A database transaction is a **single, logical unit of work** that comprises one or more database operations. Its primary purpose is to **ensure data integrity and reliability** by enforcing the **'all or nothing'** principle: either all operations within the transaction successfully complete and are permanently saved to the database (a **commit**), or if any part fails, all changes are undone, reverting the database to its state before the transaction began (a **rollback**). This mechanism prevents partial updates and guarantees that the database always remains in a consistent and valid state.",
+  "score": 67,
+  "met": 2,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "abtest",
+  "prompt": "plain",
+  "explanation": "A/B test design is an experimental approach used to compare two versions of a variable to determine which performs better. It involves randomly splitting a target audience into two groups: the \"A\" group (control) receives the original version, while the \"B\" group (variant) receives the modified version. Key metrics are tracked to assess the impact of the change, ensuring that any observed differences are statistically significant rather than due to random chance. Proper A/B test design includes clear objectives, a defined hypothesis, adequate sample size, and a controlled environment to isolate the variable being tested, enabling data-driven decisions to optimize performance.",
+  "score": 33,
+  "met": 1,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "abtest",
+  "prompt": "for-the-job",
+  "explanation": "An A/B test is a randomized experiment that compares two variants (A and B) to determine which performs better on a specific metric. In product development, A/B testing is essential to make data-driven decisions about which changes should be implemented to optimize user experience, engagement, or revenue. \n\nTo design an A/B test, you first identify a clear hypothesis, select a key performance indicator (KPI) to measure success, and define your primary and secondary metrics. The user base is then randomly split into two groups: one experiences the control (variant A) and the other the test version (variant B). Statistical analysis is used to determine whether observed differences are significant and not due to random chance.\n\nKey considerations include ensuring a large enough sample size, avoiding biases in group assignment, and testing one variable at a time to isolate its impact. Well-designed A/B tests minimize risk and guide product decisions confidently.",
+  "score": 33,
+  "met": 1,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "transactions",
+  "prompt": "for-the-job",
+  "explanation": "Database transactions group multiple operations into a single, logical unit of work, guaranteeing data integrity. The core principle is **ACID properties**: **Atomicity**, Consistency, Isolation, and Durability.\n\nFor invoices and payments, **Atomicity** is crucial. It ensures that related operations – like debiting a customer's account *and* marking an invoice as paid – either *all succeed together* or *all fail together*. There's no partial update.\n\nSpecifically, if a system crash or error occurs mid-process, the transaction will automatically **ROLLBACK**, undoing all changes and leaving the database in its original consistent state. If all operations complete successfully, the changes are made permanent via **COMMIT**.\n\nThis \"all or nothing\" mechanism prevents scenarios where, for example, a payment is recorded but the corresponding invoice remains marked unpaid, leading to incorrect financial records and reconciliation nightmares. Transactions ensure our financial data is always accurate and reliable.",
+  "score": 0,
+  "met": 0,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "abtest",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "An A/B test is an experimental design used to compare two variants of a product or feature by randomly assigning participants to one of two groups: Group A or Group B. This randomization process is crucial because it minimizes selection bias, ensuring that any differences observed in outcomes are likely due to the variants themselves rather than external factors. Each group experiences a different variant, and a primary metric, such as conversion rate or user engagement, is predefined to measure the effectiveness of each variant. By analyzing this metric, researchers can determine which variant performs better, allowing data-driven decisions for product improvements or strategic changes.",
+  "score": 100,
+  "met": 3,
+  "total": 3,
+  "followUp": {
+   "question": "If an A/B test inadvertently places 70% of the most active users in Group B, how would that influence selection bias, and what does it imply for interpreting the primary metric?",
+   "rightAnswer": "If 70% of the most active users are placed in Group B, the randomization is compromised, introducing selection bias. This means any observed differences in the primary metric may not accurately reflect the true impact of the variants but instead be influenced by the unequal distribution of user activity levels. As a result, it would be difficult to draw reliable conclusions about which variant performs better.",
+   "rightPassed": true,
+   "wrongAnswer": "If 70% of the most active users are in Group B, it actually eliminates selection bias because it ensures that Group B is more likely to give reliable results. This distribution guarantees that any differences in the primary metric are accurate and reflect the true effectiveness of the variants. Therefore, having more active users in one group only improves the interpretability of the results.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "transactions",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Imagine a database transaction as a single, indivisible unit of work. It groups several database operations together, ensuring an \"all or nothing\" outcome, known as atomicity. This means either every single statement within the transaction completes successfully and their changes become permanent (committed), or if even one statement fails, none of the changes are saved.\n\nShould any operation within the transaction encounter an error, or if you decide to cancel, a `ROLLBACK` command is issued. This instantly undoes all modifications made since the transaction began, returning the database to its state before the transaction started.\n\nFinally, \"isolation levels\" are rules that control how much other concurrent users or processes can see of a transaction's intermediate, uncommitted data. This prevents one user's unfinished work from interfering with or being seen prematurely by another, maintaining data consistency and integrity.",
+  "score": 100,
+  "met": 3,
+  "total": 3,
+  "followUp": {
+   "question": "Suppose a transaction debits account A, credits account B, then fails on a constraint check; how does atomicity affect the state of both accounts?",
+   "rightAnswer": "Due to atomicity, if the transaction fails on a constraint check, none of its operations are saved. Both account A and account B will be rolled back to their original state, as if the transaction never occurred.",
+   "rightPassed": true,
+   "wrongAnswer": "Atomicity means that any operations completed before the constraint check failure are still committed. Therefore, account A would remain debited, while account B would not be credited since that part of the transaction was not fully finalized before the error.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "feedback",
+  "prompt": "plain",
+  "explanation": "Delivering constructive feedback involves providing specific, actionable insights aimed at helping someone improve their performance or behavior while maintaining respect and empathy. It starts with identifying the issue clearly and objectively, avoiding personal judgments. Balancing criticism with positive comments can help the recipient feel motivated rather than discouraged. Using \"I\" statements to express personal perspectives and focusing on observable behaviors rather than assumptions can ensure clarity. Ensuring the feedback is timely and discussing potential solutions or improvements can make the feedback more effective and collaborative.",
+  "score": 25,
+  "met": 1,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "abtest",
+  "prompt": "plain",
+  "explanation": "A/B testing design involves creating two distinct versions (A, the control, and B, the variation) of a single element, such as a webpage, email, or feature. Users are then randomly split into two groups, with one group exposed to version A and the other to version B, simultaneously. The core idea is to measure and compare the performance of each version against a specific, predefined metric (e.g., conversion rate, click-through rate, engagement) to statistically determine which design yields superior results and inform data-driven decisions.",
+  "score": 67,
+  "met": 2,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "feedback",
+  "prompt": "for-the-job",
+  "explanation": "Delivering constructive feedback is essential for improving agent behavior by offering targeted, actionable insights. It involves focusing on specific behaviors rather than personal attributes, ensuring feedback is clear and objective. This approach helps agents understand exactly what actions need adjustment and why. Specificity prevents misunderstandings and provides a clear path for improvement. \n\nEffective feedback should also be timely, given soon after the observed behavior, to ensure relevance and maximize impact. It's important to balance positive feedback with areas for improvement, fostering a supportive environment while motivating agents to adopt new strategies. The goal is to encourage growth and development, not to undermine confidence. Additionally, engaging in a two-way conversation allows agents to ask questions and feel involved in the improvement process. By mastering this technique, you can enhance agent performance, boost morale, and ultimately drive better results for the organization.",
+  "score": 50,
+  "met": 2,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "abtest",
+  "prompt": "for-the-job",
+  "explanation": "A/B testing is a crucial **controlled experiment** designed to evaluate the impact of a product change (the 'variant') against the existing experience (the 'control'). The process begins with forming a clear **hypothesis** – what specific change do we expect to see and on which **key performance indicator (KPI)**?\n\nUsers are then **randomly assigned** to either the control or variant group, ensuring both populations are statistically similar and any observed differences can be attributed to the change. We track the KPI for both groups over a defined period. The core design element is to determine if any performance difference between the groups is **statistically significant**, meaning it's highly unlikely to be due to chance. This provides **causal evidence** to confidently decide whether to ship the product change, preventing negative impacts and maximizing positive user and business outcomes.\n\n**Specific facts that matter:**\n\n*   **Controlled Experiment:** Isolate the impact of one variable.\n*   **Hypothesis:** A testable prediction.\n*   **Key Performance Indicator (KPI):** The metric used to measure success.\n*   **Random Assignment:** Ensures comparable control and variant groups.\n*   **Statistical Significance:** Determines if results are real or due to chance.\n*   **Causal Evidence:** Establishes a cause-and-effect relationship.",
+  "score": 33,
+  "met": 1,
+  "total": 3,
+  "followUp": null
+ },
+ {
+  "model": "openai/gpt-4o",
+  "skill": "feedback",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Delivering constructive feedback involves focusing on observable actions rather than personal traits, ensuring feedback remains objective and non-judgmental. By separating behavior from the person, we aim to address specific actions without making it personal, which encourages receptivity. Providing specific examples is crucial as it reduces ambiguity; the more concrete and detailed the example, the clearer the message, making change more likely. Timing is also key; giving feedback promptly after observing the behavior helps prevent memory distortion, ensuring both parties have a clear understanding of the events. Lastly, including a clear action item in your feedback paves the way for measurable improvement. This actionable step guides the person on how to improve, offering a specific path forward. Overall, effective constructive feedback is clear, specific, timely, and action-oriented, ultimately fostering growth and development.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "How would you apply your feedback guidelines to a colleague who constantly interrupts meetings, specifying observable behavior, an example, timing, plus an action step?",
+   "rightAnswer": "I'd address the colleague by pointing out that I've noticed they often speak over others during meetings, such as in yesterday's team discussion when they interrupted someone mid-sentence. I'd provide this feedback right after the meeting to ensure clarity, and suggest they try waiting for a natural pause before speaking to allow everyone a chance to contribute.",
+   "rightPassed": true,
+   "wrongAnswer": "To address a colleague who constantly interrupts meetings, simply tell them to stop talking so much whenever you notice it. It's fine to mention it any time, even days later, as the details aren't that important and they'll understand. Just asking them to be quiet should solve the issue.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "abtest",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "An A/B test is essentially a controlled experiment to compare two versions of something, like a webpage or an email. Participants are randomly assigned to one of two groups: one sees version A, and the other sees version B.\n\nThis random assignment is crucial because it ensures both groups are, on average, similar in every way except for the variant they experience. This significantly reduces \"selection bias,\" meaning any observed differences in behavior are reliably attributable to the specific variant (A or B), rather than pre-existing differences between the groups.\n\nBefore starting the test, we define a \"primary metric\" – a single, measurable outcome that determines which variant is more successful. For example, it could be click-through rate or conversion rate. By tracking this metric for both groups, we objectively identify the better-performing version.",
+  "score": 100,
+  "met": 3,
+  "total": 3,
+  "followUp": {
+   "question": "Which primary metric would you select to compare two email subject lines, and why is it appropriate?",
+   "rightAnswer": "I would select **Open Rate** as the primary metric. This is appropriate because the main purpose of an email subject line is to entice recipients to open the email, making it a direct measure of its effectiveness.",
+   "rightPassed": true,
+   "wrongAnswer": "The best primary metric to compare email subject lines is the email bounce rate. A lower bounce rate signifies that the subject line was highly effective in capturing attention and encouraging recipients to open and engage with the email content, making it a clear indicator of success.",
+   "wrongPassed": false
+  }
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "feedback",
+  "prompt": "plain",
+  "explanation": "Delivering constructive feedback involves providing specific, actionable observations about an individual's performance or behavior to help them understand their strengths and areas for development. The goal is to facilitate positive change and growth, focusing on the impact of their actions and offering concrete suggestions for improvement, rather than personal judgment. Given respectfully, timely, and often privately, it empowers the recipient to learn, adjust, and enhance their future contributions.",
+  "score": 25,
+  "met": 1,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "feedback",
+  "prompt": "for-the-job",
+  "explanation": "Delivering constructive feedback is crucial for driving agent improvement, transforming targeted criticism into actionable development. For this role, it means providing insights that refine agent behavior and elevate customer interactions.\n\nThe specific facts that matter are:\n\n1.  **Specificity:** Feedback must reference concrete examples (\"During the 2 PM call, your tone when discussing returns was abrupt\"), not vague generalizations.\n2.  **Impact:** Clearly articulate the effect of the behavior on the customer or business (\"This led to increased customer frustration and a lower CSAT score\").\n3.  **Actionability:** Offer clear, feasible steps for improvement (\"Next time, try phrases like 'Let's explore your options'\").\n4.  **Timeliness:** Deliver feedback promptly after the event for maximum relevance and retention.\n5.  **Focus on Behavior, Not Person:** Critique the action, not the individual, fostering a growth mindset over defensiveness.\n\nThis approach ensures agents understand *what* to change, *why* it matters, and *how* to implement improvements, directly enhancing performance and customer experience.",
+  "score": 25,
+  "met": 1,
+  "total": 4,
+  "followUp": null
+ },
+ {
+  "model": "google/gemini-2.5-flash",
+  "skill": "feedback",
+  "prompt": "after-seeing-missed-checkpoints",
+  "explanation": "Delivering constructive feedback effectively means focusing on *actions*, not the person. We describe specific behaviors observed, rather than making character judgments, which keeps the feedback objective and less personal. To ensure clarity, always provide concrete examples of what happened. This specificity removes ambiguity and helps the individual understand precisely what needs to change.\n\nTiming is also key; deliver feedback promptly after the behavior occurs. Delaying makes details vague and less impactful for both parties. Finally, truly effective feedback isn't just about pointing out issues; it offers a path forward. Include a clear, measurable action item. This provides a tangible next step, empowering the person to make specific improvements and track their progress effectively.",
+  "score": 100,
+  "met": 4,
+  "total": 4,
+  "followUp": {
+   "question": "Imagine a colleague repeatedly interrupts in meetings; using your guidelines, how would you structure feedback to address this behavior?",
+   "rightAnswer": "\"I've noticed that you've been frequently interrupting others during our team meetings; for example, you spoke over Sarah twice during today's budget discussion. Moving forward, please ensure you wait until others have finished speaking before contributing, which will help us all participate effectively.\"",
+   "rightPassed": true,
+   "wrongAnswer": "I would gather several examples over a few weeks and address it during their annual performance review. It's best to explain that their interruptions show a lack of respect for others' speaking turns and need to be corrected as a general attitude.",
+   "wrongPassed": false
+  }
+ }
+]

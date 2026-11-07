@@ -15,7 +15,7 @@ import { generateFollowUp, gradeExplanation, gradeFollowUp, quoteIsInText } from
 import { quotesInReply, startFetchTap, type TappedCall } from "../src/features/teachback/eval/fetchTap";
 import { summarize, type EvalCase, type ModelCall, type RunRecord } from "../src/features/teachback/eval/metrics";
 import { runPlantedQuotes } from "../src/features/teachback/eval/plantedQuotes";
-import { renderReport, type EvalSkill, type FollowUpRun } from "../src/features/teachback/eval/report";
+import { renderReport, type ChatbotRun, type EvalSkill, type FollowUpRun } from "../src/features/teachback/eval/report";
 import { askModelForMap, buildSkillMap } from "../src/features/skill-map/build";
 import { rawMapSchema } from "../src/features/skill-map/prompt";
 import { SAMPLE_POSTINGS } from "../src/shared/samplePostings";
@@ -29,6 +29,7 @@ const SKILLS_PATH = join(EVAL_DIR, "skills.json");
 const RESULTS_PATH = join(EVAL_DIR, "results.json");
 const FINDINGS_PATH = join(EVAL_DIR, "findings.md");
 const FOLLOWUPS_PATH = join(EVAL_DIR, "followups.json");
+const CHATBOT_PATH = join(EVAL_DIR, "chatbot.json");
 const REPORT_PATH = join("docs", "eval-results.md");
 
 const RUNS_PER_CASE = 3;
@@ -157,10 +158,11 @@ async function writeReport(cases: EvalCase[], skills: EvalSkill[], records: RunR
   const labelsCommit = execFileSync("git", ["log", "-1", "--format=%h", "--", CASES_PATH], { encoding: "utf8" }).trim();
   const findings = existsSync(FINDINGS_PATH) ? readFileSync(FINDINGS_PATH, "utf8") : "Not written yet.";
   const followUps = existsSync(FOLLOWUPS_PATH) ? readJson<FollowUpRun[]>(FOLLOWUPS_PATH) : [];
+  const chatbot = existsSync(CHATBOT_PATH) ? readJson<ChatbotRun[]>(CHATBOT_PATH) : [];
 
   writeFileSync(
     REPORT_PATH,
-    renderReport({ summary, skills, planted, followUps, labelsCommit: labelsCommit || "(not committed yet)", writtenAt: new Date().toISOString(), findings }),
+    renderReport({ summary, skills, planted, followUps, chatbot, labelsCommit: labelsCommit || "(not committed yet)", writtenAt: new Date().toISOString(), findings }),
   );
 
   console.log(`\nagreement ${summary.agreement.hits}/${summary.agreement.total}, false pass ${summary.falsePass.hits}/${summary.falsePass.total}, false fail ${summary.falseFail.hits}/${summary.falseFail.total}, errored runs ${summary.erroredRuns}, cost about $${summary.costUsd.toFixed(3)}`);

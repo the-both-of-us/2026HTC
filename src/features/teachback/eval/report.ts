@@ -18,11 +18,71 @@ export type FollowUpRun = {
   feedback: string;
 };
 
+/** A real chat model's answer through the real grader. Written by scripts/eval-chatbot.ts. */
+export type ChatbotRun = {
+  model: string;
+  skill: string;
+  prompt: string;
+  explanation: string;
+  score: number;
+  met: number;
+  total: number;
+  followUp: {
+    question: string;
+    rightAnswer: string;
+    rightPassed: boolean;
+    wrongAnswer: string;
+    wrongPassed: boolean;
+  } | null;
+};
+
+/** The reading of those runs, so the report never states more than they show. */
+export function summarizeChatbot(runs: ChatbotRun[]) {
+  const passedGrade = runs.filter((run) => run.followUp !== null);
+  const followUps = passedGrade.map((run) => run.followUp!);
+  return {
+    runs: runs.length,
+    passedGrade: passedGrade.length,
+    rightPassed: followUps.filter((item) => item.rightPassed).length,
+    wrongPassed: followUps.filter((item) => item.wrongPassed).length,
+  };
+}
+
+const SAW_CHECKPOINTS = "after-seeing-missed-checkpoints";
+
+function chatbotSection(runs: ChatbotRun[]): string {
+  if (runs.length === 0) return "Not run.";
+  const blind = summarizeChatbot(runs.filter((run) => run.prompt !== SAW_CHECKPOINTS));
+  const informed = summarizeChatbot(runs.filter((run) => run.prompt === SAW_CHECKPOINTS));
+  const models = [...new Set(runs.map((run) => run.model))].join(" and ");
+  return `Answers from ${models}, sent through the real grader and, at 70 or more, the real follow-up. The prompts are in \`scripts/eval-chatbot.ts\`, and each answer was graded once.
+
+- **Asked only what the map shows** (the skill's title, and why the job needs it): ${blind.passedGrade} of ${blind.runs} scored 70 or more.${blind.passedGrade ? ` The same model's correct follow-up answer then passed ${blind.rightPassed} of ${blind.passedGrade} times.` : ""}
+- **Given the checkpoints**, which a failed attempt's result screen shows: ${informed.passedGrade} of ${informed.runs} scored 70 or more. The same model's correct follow-up answer then passed ${informed.rightPassed} of ${informed.passedGrade} times, so **${informed.rightPassed} of ${informed.runs} would have been marked proven with no person understanding anything.**
+- **Answers written to be wrong:** when the model was told to answer the follow-up wrongly but confidently, ${blind.wrongPassed + informed.wrongPassed} of ${blind.passedGrade + informed.passedGrade} still passed.
+
+${table(
+  ["Model", "Skill", "Prompt", "Checkpoints met", "Score", "Right follow-up answer", "Wrong follow-up answer"],
+  runs.map((run) => [
+    run.model,
+    run.skill,
+    run.prompt,
+    `${run.met} of ${run.total}`,
+    run.score,
+    run.followUp ? (run.followUp.rightPassed ? "passed" : "stopped") : "not reached",
+    run.followUp ? (run.followUp.wrongPassed ? "**passed**" : "stopped") : "not reached",
+  ]),
+)}
+
+Every answer and question is in \`src/features/teachback/eval/chatbot.json\`. To repeat it: \`npx tsx scripts/eval-chatbot.ts\`.`;
+}
+
 type ReportInput = {
   summary: Summary;
   skills: EvalSkill[];
   planted: PlantedResult[];
   followUps: FollowUpRun[];
+  chatbot: ChatbotRun[];
   /** Commit that last changed cases.json. It predates the run if the labels were frozen first. */
   labelsCommit: string;
   writtenAt: string;
@@ -63,7 +123,7 @@ function disagreementEntry(result: Summary["results"][number]): string {
   return lines.join("\n");
 }
 
-export function renderReport({ summary: s, skills, planted, followUps, labelsCommit, writtenAt, findings }: ReportInput): string {
+export function renderReport({ summary: s, skills, planted, followUps, chatbot, labelsCommit, writtenAt, findings }: ReportInput): string {
   const disagreements = s.results.filter((result) => result.wrongRuns > 0);
   const rejections = s.results.flatMap((result) =>
     result.records.flatMap((record) => record.rejected.map((quote) => ({ id: result.evalCase.id, run: record.run, quote }))),
@@ -138,6 +198,10 @@ ${table(
   ["Case", "Run", "Follow-up question", "Result"],
   followUps.map((item) => [item.caseId, item.run, inline(item.question), item.passed ? "**passed**" : "stopped"]),
 )}` : "Not run."}
+
+## Real chatbot answers
+
+${chatbotSection(chatbot)}
 
 ## Quotes rejected in the live runs
 
