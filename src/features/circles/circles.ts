@@ -49,16 +49,19 @@ const circleKey = (code: string) => `circles/${code}`;
 const memberKey = (code: string, userId: string) => `circles/${code}/members/${userId}`;
 
 function checkName(name: string): string {
-  const trimmed = name.trim();
+  // Control and invisible characters go, so nobody can join as a blank name.
+  const trimmed = name.replace(/\p{C}/gu, "").trim();
   if (trimmed.length < 1 || trimmed.length > MAX_NAME_LENGTH) {
     throw new CircleError(`Please use a name between 1 and ${MAX_NAME_LENGTH} characters.`, 400);
   }
   return trimmed;
 }
 
+/** Codes are lower case, but a code typed in capitals still finds its circle. */
 async function getCircle(code: string): Promise<Circle | null> {
-  if (!CODE_PATTERN.test(code)) return null;
-  return getDoc<Circle>(circleKey(code));
+  const clean = code.toLowerCase();
+  if (!CODE_PATTERN.test(clean)) return null;
+  return getDoc<Circle>(circleKey(clean));
 }
 
 async function loadCircle(code: string): Promise<Circle> {
@@ -98,6 +101,7 @@ export async function startCircle(userId: string, mapId: string, name: string): 
     if (existing?.createdBy === userId && existing.sourceMapId === mapId) {
       const joinedAt = (await getDoc<Member>(memberKey(code, userId)))?.joinedAt ?? now;
       await putDoc(memberKey(code, userId), { name: ownerName, mapId, joinedAt } satisfies Member);
+      forget(code);
       return { code, title: existing.title };
     }
   }
@@ -118,6 +122,8 @@ export async function startCircle(userId: string, mapId: string, name: string): 
 export async function joinCircle(userId: string, code: string, name: string): Promise<{ mapId: string }> {
   const memberName = checkName(name);
   const circle = await loadCircle(code);
+  code = circle.code;
+  forget(code);
 
   const existing = await getDoc<Member>(memberKey(code, userId));
   if (existing && (await getSkillMap(existing.mapId))) {
@@ -142,19 +148,48 @@ function initials(name: string): string {
   return name
     .split(/\s+/)
     .slice(0, 2)
-    .map((word) => word.charAt(0).toUpperCase())
+    .map((word) => (Array.from(word)[0] ?? "").toUpperCase())
     .join("");
 }
 
-/** The circle as anyone with its link sees it. `viewerId` only decides isYou and yourMapId. */
-export async function getCircleView(code: string, viewerId: string | null): Promise<CircleView> {
+/** Everything a circle page needs, read from the store. It holds user ids, so it never leaves the server. */
+async function readCircle(code: string) {
   const circle = await loadCircle(code);
   const source = await getSkillMap(circle.sourceMapId);
   if (!source) throw new CircleError("This circle's map was deleted, so the circle has closed.", 404);
 
-  const rows = await listMembers(code);
+  const rows = await listMembers(circle.code);
   rows.sort((a, b) => a.member.joinedAt.localeCompare(b.member.joinedAt));
   const proved = await Promise.all(rows.map((row) => listProvedNodes(row.member.mapId, row.userId)));
+  return { circle, source, rows, proved };
+}
+
+/**
+ * A projector and every phone in the room poll the same circle every few seconds. Each server
+ * keeps one read per circle for CACHE_MS, so 30 screens cost about one store read, not 30.
+ */
+const CACHE_MS = 1500;
+const recentReads = new Map<string, { at: number; read: ReturnType<typeof readCircle> }>();
+
+function readCircleCached(code: string): ReturnType<typeof readCircle> {
+  const now = Date.now();
+  for (const [key, entry] of recentReads) if (now - entry.at >= CACHE_MS) recentReads.delete(key);
+  const hit = recentReads.get(code);
+  if (hit) return hit.read;
+  const read = readCircle(code);
+  recentReads.set(code, { at: now, read });
+  read.catch(() => forget(code));
+  return read;
+}
+
+/** After a join or a change, the next read goes to the store. */
+function forget(code: string): void {
+  recentReads.delete(code.toLowerCase());
+}
+
+/** The circle as anyone with its link sees it. `viewerId` only decides isYou and yourMapId. */
+export async function getCircleView(code: string, viewerId: string | null): Promise<CircleView> {
+  const { circle, source, rows, proved } = await readCircleCached(code.toLowerCase());
 
   const titles = new Map(source.nodes.map((node) => [node.id, node.title]));
   const provedBy: Record<string, string[]> = {};
@@ -171,7 +206,7 @@ export async function getCircleView(code: string, viewerId: string | null): Prom
 
   const you = rows.find((row) => row.userId === viewerId);
   return {
-    code,
+    code: circle.code,
     title: circle.title,
     map: { nodes: toPublicMap(source).nodes, sourceKind: source.sourceKind },
     members: rows.map((row, index) => ({
@@ -212,8 +247,10 @@ export async function deleteCircleData(userId: string): Promise<{ circles: numbe
     const memberKeys = keys.filter((key) => key.startsWith(`circles/${code}/members/`));
     await Promise.all(memberKeys.map((key) => deleteDoc(key)));
     await deleteDoc(circleKey(code));
+    forget(code);
     circles += 1;
   }
   await Promise.all(memberships.map((key) => deleteDoc(key)));
+  memberships.forEach((key) => forget(key.split("/")[1]));
   return { circles, memberships: memberships.length };
 }

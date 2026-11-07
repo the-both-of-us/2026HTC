@@ -10,7 +10,9 @@ export function CircleQr({ url, size = 240 }: { url: string; size?: number }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    await navigator.clipboard.writeText(url).catch(() => null);
+    // Only say "copied" when it was: some browsers block the clipboard.
+    const ok = await navigator.clipboard.writeText(url).then(() => true, () => false);
+    if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

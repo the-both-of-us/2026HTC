@@ -52,6 +52,20 @@ describe("study circles", () => {
     await expect(startCircle(randomUUID(), map.id, "Sam")).rejects.toThrow("Only the person who built");
     await expect(startCircle(map.ownerId, map.id, "   ")).rejects.toThrow("between 1 and 24");
     await expect(startCircle(map.ownerId, map.id, "x".repeat(25))).rejects.toThrow("between 1 and 24");
+    await expect(startCircle(map.ownerId, map.id, "\u200b\u0000")).rejects.toThrow("between 1 and 24");
+  });
+
+  it("finds a circle from a code typed in capitals, and gives an emoji name a whole initial", async () => {
+    const owner = randomUUID();
+    const map = await seedMap(owner);
+    const { code } = await startCircle(owner, map.id, "🦊 Fox");
+    await joinCircle(randomUUID(), code.toUpperCase(), "Sam");
+    await prove(map.id, owner, "gravity", "2026-11-07T11:00:00.000Z");
+
+    const view = await getCircleView(code.toUpperCase(), null);
+    expect(view.code).toBe(code);
+    expect(view.members).toHaveLength(2);
+    expect(view.provedBy.gravity).toEqual(["🦊F"]);
   });
 
   it("gives a joiner their own copy, and the same copy when they join again", async () => {

@@ -25,24 +25,38 @@ export function CircleScreen({ code }: { code: string }) {
 
   useEffect(() => {
     let stopped = false;
+    let busy = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // The next poll waits for this one to finish, and a hidden tab does not poll at all.
     async function poll() {
-      try {
-        const result = await fetchCircle(code);
-        if (stopped) return;
-        setLoad(result === "missing" ? { status: "missing" } : { status: "ready", view: result, now: Date.now() });
-        setStale(false);
-      } catch {
-        if (stopped) return;
-        // Keep showing the last good view; only an empty page turns into an error.
-        setLoad((current) => (current.status === "ready" ? current : { status: "failed" }));
-        setStale(true);
+      if (busy || stopped) return;
+      busy = true;
+      clearTimeout(timer);
+      if (!document.hidden) {
+        try {
+          const result = await fetchCircle(code);
+          if (!stopped) {
+            setLoad(result === "missing" ? { status: "missing" } : { status: "ready", view: result, now: Date.now() });
+            setStale(false);
+          }
+        } catch {
+          // Keep showing the last good view; only an empty page turns into an error.
+          if (!stopped) {
+            setLoad((current) => (current.status === "ready" ? current : { status: "failed" }));
+            setStale(true);
+          }
+        }
       }
+      busy = false;
+      if (!stopped) timer = setTimeout(poll, POLL_MS);
     }
+    const wake = () => void poll();
+    document.addEventListener("visibilitychange", wake);
     void poll();
-    const timer = setInterval(poll, POLL_MS);
     return () => {
       stopped = true;
-      clearInterval(timer);
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", wake);
     };
   }, [code, retry]);
 
@@ -139,7 +153,7 @@ function LoadedCircle({ view, now, stale }: { view: CircleView; now: number; sta
         <aside className="flex flex-col gap-5 lg:w-88 lg:shrink-0 lg:overflow-y-auto">
           <section aria-labelledby="circle-scan" className="hidden rounded-sheet border border-rule-strong bg-sheet/80 p-4 lg:block">
             <h2 id="circle-scan" className="mb-3 text-lg font-medium">Scan to join</h2>
-            <CircleQr url={circleUrl(view.code)} size={200} />
+            <CircleQr url={circleUrl(view.code)} size={256} />
           </section>
 
           <section aria-labelledby="circle-members" className="rounded-sheet border border-rule-strong bg-sheet/80 p-4">
