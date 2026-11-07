@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  deepgramProvider,
   elevenLabsProvider,
   geminiProvider,
   ProviderError,
@@ -137,6 +138,25 @@ describe("speakWithFailover", () => {
   });
 });
 
+describe("deepgramProvider", () => {
+  it("asks Flux for Hannah as MP3 and streams the body back", async () => {
+    const fetchFn = vi.fn(async () => audioResponse());
+    const provider = deepgramProvider({ apiKey: "k", fetchFn: fetchFn as unknown as FetchLike });
+    const audio = await provider.speak("Hello", signal);
+    expect(audio.contentType).toBe("audio/mpeg");
+    const [call] = bodiesOf(fetchFn);
+    expect(call.url).toBe("https://api.deepgram.com/v2/speak?model=flux-hannah-en&encoding=mp3");
+    expect(call.body).toEqual({ text: "Hello" });
+    expect(call.headers.Authorization).toBe("Token k");
+  });
+
+  it("throws a ProviderError with the status when Deepgram refuses", async () => {
+    const fetchFn = vi.fn(async () => new Response("{}", { status: 401 }));
+    const provider = deepgramProvider({ apiKey: "k", fetchFn: fetchFn as unknown as FetchLike });
+    await expect(provider.speak("Hello", signal)).rejects.toMatchObject({ status: 401, provider: "Deepgram" });
+  });
+});
+
 describe("providersFromEnv", () => {
   it("is empty without keys", () => {
     expect(providersFromEnv({} as NodeJS.ProcessEnv)).toEqual([]);
@@ -147,6 +167,11 @@ describe("providersFromEnv", () => {
     const env = { ELEVENLABS_API_KEY: "k", ELEVENLABS_VOICE_ID: "v", GEMINI_API_KEY: "g" } as unknown as NodeJS.ProcessEnv;
     expect(providersFromEnv(env).map((p) => p.name)).toEqual(["ElevenLabs", "Gemini"]);
     expect(providersFromEnv({ GEMINI_API_KEY: "g" } as unknown as NodeJS.ProcessEnv).map((p) => p.name)).toEqual(["Gemini"]);
+  });
+
+  it("puts Deepgram's voice ahead of the others when its key is set", () => {
+    const env = { DEEPGRAM_API_KEY: "d", ELEVENLABS_API_KEY: "k", ELEVENLABS_VOICE_ID: "v", GEMINI_API_KEY: "g" } as unknown as NodeJS.ProcessEnv;
+    expect(providersFromEnv(env).map((p) => p.name)).toEqual(["Deepgram", "ElevenLabs", "Gemini"]);
   });
 });
 

@@ -130,6 +130,38 @@ export function elevenLabsProvider(options: {
   };
 }
 
+/** The interviewer's voice. The owner picked Hannah from a side-by-side listen on 2026-11-07. */
+export const DEEPGRAM_VOICE = "flux-hannah-en";
+
+/**
+ * Deepgram's Flux voices, on the same account as the ears. The REST call streams MP3 back,
+ * so playback can start before the whole sentence is ready.
+ * https://developers.deepgram.com/docs/flux-tts/batch (checked 2026-11-07)
+ */
+export function deepgramProvider(options: {
+  apiKey: string;
+  voice?: string;
+  baseUrl?: string;
+  fetchFn?: FetchLike;
+}): TtsProvider {
+  const base = options.baseUrl ?? "https://api.deepgram.com";
+  const voice = options.voice ?? DEEPGRAM_VOICE;
+  const fetchFn = options.fetchFn ?? fetch;
+  return {
+    name: "Deepgram",
+    async speak(text, signal) {
+      const response = await fetchFn(`${base}/v2/speak?model=${encodeURIComponent(voice)}&encoding=mp3`, {
+        method: "POST",
+        headers: { Authorization: `Token ${options.apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal,
+      });
+      if (!response.ok || !response.body) throw new ProviderError("Deepgram", response.status);
+      return { body: response.body, contentType: "audio/mpeg" };
+    },
+  };
+}
+
 export const GEMINI_TTS_MODEL = "gemini-3.8-flash-tts";
 
 type GeminiStep = { type?: string; content?: { type?: string; data?: string }[] };
@@ -184,6 +216,15 @@ export function geminiProvider(options: { apiKey: string; baseUrl?: string; fetc
 /** The providers that have keys, best first. Empty means voice is off, and routes answer 503. */
 export function providersFromEnv(env: NodeJS.ProcessEnv = process.env): TtsProvider[] {
   const providers: TtsProvider[] = [];
+  if (env.DEEPGRAM_API_KEY) {
+    providers.push(
+      deepgramProvider({
+        apiKey: env.DEEPGRAM_API_KEY,
+        voice: env.DEEPGRAM_VOICE || undefined,
+        baseUrl: env.DEEPGRAM_API_BASE || undefined,
+      }),
+    );
+  }
   if (env.ELEVENLABS_API_KEY && env.ELEVENLABS_VOICE_ID) {
     providers.push(
       elevenLabsProvider({
@@ -208,6 +249,9 @@ let shared: { config: string; providers: TtsProvider[] } | null = null;
  */
 export function sharedProviders(env: NodeJS.ProcessEnv = process.env): TtsProvider[] {
   const config = JSON.stringify([
+    env.DEEPGRAM_API_KEY,
+    env.DEEPGRAM_VOICE,
+    env.DEEPGRAM_API_BASE,
     env.ELEVENLABS_API_KEY,
     env.ELEVENLABS_VOICE_ID,
     env.ELEVENLABS_MODEL_ID,

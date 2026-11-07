@@ -7,7 +7,7 @@ The spoken follow-up question. OryxLearn asks it out loud, the learner answers o
 ```
                      our server decides every word
                                   |
- question text -> GET /api/voice/speak -> ElevenLabs -> mp3 stream -> <audio> -> speaker
+ question text -> GET /api/voice/speak -> Deepgram Flux voice (Hannah) -> mp3 stream -> <audio> -> speaker
                                                                          |
                                                               AnalyserNode -> orb
 
@@ -23,7 +23,8 @@ A token is only minted for someone with something to say right now: an existing 
 ## Why these providers
 
 - **Deepgram Flux (ears).** It's built for conversation: it reports turns, not just words, and lets a button end a turn on demand. A pause doesn't lose anything.
-- **ElevenLabs (voice).** It's the difference between a person and text-to-speech. `eleven_v4_turbo` is tried first, because it's their real-time model.
+- **Deepgram Flux TTS (voice).** The interviewer speaks with `flux-hannah-en` on `POST /v2/speak`, the same account and key as the ears. The owner picked Hannah from eight voices on 2026-11-07; measured first audio was 0.33–0.52 s. Set `DEEPGRAM_VOICE` to change it.
+- **ElevenLabs (optional backup voice).** It's the difference between a person and text-to-speech. `eleven_v4_turbo` is tried first, because it's their real-time model.
 - **Cerebras (brain).** Unchanged. The same follow-up generation writes the words, so the voice can't wander or give away answers.
 - **Gemini (backup voice).** Optional. Used only if ElevenLabs fails and `GEMINI_API_KEY` is set.
 
