@@ -54,7 +54,7 @@ export function MixBarTall({ snapshot }: { snapshot: GridSnapshot }) {
               onClick={() => setActiveFamily(item.family)}
               onFocus={() => setActiveFamily(item.family)}
               onBlur={() => setActiveFamily(null)}
-              className="min-w-0.5 rounded-[4px] px-2 text-left text-sm leading-7 font-bold text-on-dark hover:brightness-115 motion-safe:transition-[flex-grow] motion-safe:duration-700"
+              className="min-w-0.5 rounded-[4px] px-2 text-left text-sm leading-7 font-medium text-on-dark hover:brightness-115 motion-safe:transition-[flex-grow] motion-safe:duration-700"
               style={{
                 flexGrow: item.share,
                 flexBasis: 0,

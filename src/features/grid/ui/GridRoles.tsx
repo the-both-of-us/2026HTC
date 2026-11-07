@@ -30,7 +30,7 @@ export function GridRoles() {
         {ROLES.map(({ title, icon: Icon, text }) => (
           <li key={title}>
             <Card className="flex h-full flex-col gap-2">
-              <h3 className="flex items-center gap-2 text-lg font-bold">
+              <h3 className="flex items-center gap-2 text-lg font-medium">
                 <Icon size={18} aria-hidden="true" />
                 {title}
               </h3>
@@ -41,7 +41,7 @@ export function GridRoles() {
       </ul>
       <Card className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-xl font-bold">Grid operations career path</h3>
+          <h3 className="text-xl font-medium">Grid operations career path</h3>
           <p className="text-sm text-ink-soft">
             Turn a sample grid analyst posting into a skill map, then prove each skill by teaching it back.
           </p>

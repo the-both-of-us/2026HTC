@@ -11,12 +11,12 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
       <header className="flex items-start justify-between gap-6 border-b border-rule pb-3">
         <div>
           <p className="font-semibold">OryxLearn evidence record</p>
-          <h1 className="mt-1 text-[22pt] leading-tight font-bold">{snapshot.displayName}</h1>
+          <h1 className="mt-1 text-[22pt] leading-tight font-medium">{snapshot.displayName}</h1>
           <p className="mt-0.5">
             {roleLead(snapshot.sourceKind)} {snapshot.roleTitle}
             {snapshot.roleSubtitle ? `, ${snapshot.roleSubtitle}` : ""}
           </p>
-          <p className="mt-2 text-[14pt] font-bold">
+          <p className="mt-2 text-[14pt] font-medium">
             {snapshot.skills.length} of {snapshot.totalSkills} skills proven
           </p>
           <p className="text-ink-soft">Published {formatDateTime(snapshot.publishedAt)}</p>
@@ -53,7 +53,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
                 <td className="py-1 pr-3 whitespace-nowrap">
                   {metCount(skill)} of {skill.checkpoints.length}, follow-up passed
                 </td>
-                <td className="py-1 text-right font-bold tabular-nums">{skill.score}</td>
+                <td className="py-1 text-right font-medium tabular-nums">{skill.score}</td>
               </tr>
             );
           })}

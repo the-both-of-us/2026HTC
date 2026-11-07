@@ -25,7 +25,7 @@ export function GridScreen() {
     <PageShell width="wide">
       <div className="flex flex-col gap-6">
         <header className="flex max-w-3xl flex-col gap-2">
-          <h1 className="text-3xl font-bold sm:text-4xl">Read the Grid</h1>
+          <h1 className="text-3xl font-medium sm:text-4xl">Read the Grid</h1>
           <p className="text-lg text-ink-soft">
             Learn to read Alberta&apos;s power system with live numbers from the public supply and demand
             report of the Alberta Electric System Operator (AESO).

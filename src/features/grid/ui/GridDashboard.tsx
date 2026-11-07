@@ -48,7 +48,7 @@ function Tile({ label, value, note }: { label: string; value: string; note: stri
   return (
     <div className="flex flex-col gap-0.5 rounded-control border border-rule p-3">
       <p className="text-sm text-ink-soft">{label}</p>
-      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-2xl font-medium">{value}</p>
       <p className="text-sm text-ink-soft">{note}</p>
     </div>
   );
@@ -58,7 +58,7 @@ function Section({ title, intro, children }: { title: string; intro?: ReactNode;
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold">{title}</h2>
+        <h2 className="text-2xl font-medium">{title}</h2>
         {intro && <p className="max-w-3xl text-base text-ink-soft">{intro}</p>}
       </div>
       {children}
@@ -156,7 +156,7 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
               <p className="text-base text-ink-soft">
                 {stale ? `At ${snapshot.asOfLabel.slice(-5)}, Alberta was using` : "Alberta is using"}
               </p>
-              <p className="text-5xl font-bold tracking-tight sm:text-6xl">
+              <p className="text-5xl font-medium tracking-tight sm:text-6xl">
                 {mw(snapshot.load)}{" "}
                 <span className="text-2xl font-semibold text-ink-soft sm:text-3xl">MW</span>
               </p>
@@ -211,11 +211,11 @@ export function GridDashboard({ initial }: { initial: GridReading }) {
           </Card>
           <div className="flex flex-col gap-5">
             <Card className="flex flex-col gap-2">
-              <h3 className="text-lg font-bold">Flows at the border</h3>
+              <h3 className="text-lg font-medium">Flows at the border</h3>
               <Interchange snapshot={snapshot} />
             </Card>
             <Card className="flex flex-col gap-3">
-              <h3 className="text-lg font-bold">Reading the report</h3>
+              <h3 className="text-lg font-medium">Reading the report</h3>
               <Terms />
             </Card>
           </div>

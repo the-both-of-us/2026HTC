@@ -22,7 +22,7 @@ export function ProofDocument({ snapshot, hash, url }: ProofDocumentProps) {
 
         <section aria-labelledby="skills-heading" className="flex flex-col gap-5">
           <div>
-            <h2 id="skills-heading" className="text-2xl font-bold">
+            <h2 id="skills-heading" className="text-2xl font-medium">
               The evidence
             </h2>
             <p className="mt-1 text-ink-soft">
@@ -49,7 +49,7 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
   return (
     <section aria-labelledby="person-name" className="flex flex-col gap-6">
       <div>
-        <h1 id="person-name" className="text-4xl font-bold tracking-tight break-words sm:text-5xl">
+        <h1 id="person-name" className="text-4xl font-medium tracking-tight break-words sm:text-5xl">
           {snapshot.displayName}
         </h1>
         <p className="mt-3 text-lg text-ink-soft">
@@ -61,7 +61,7 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
       <div className="flex flex-col gap-6 rounded-sheet border border-control-edge bg-sheet p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-5xl font-bold text-proven tabular-nums">{proven}</span>
+            <span className="text-5xl font-medium text-proven tabular-nums">{proven}</span>
             <span className="text-2xl font-semibold">of {plural(snapshot.totalSkills, "skill")} proven</span>
           </p>
           <div aria-hidden="true" className="mt-4 flex gap-1">
@@ -111,12 +111,12 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
 function ProvesAndDoesNot() {
   return (
     <section aria-labelledby="proves-heading">
-      <h2 id="proves-heading" className="text-2xl font-bold">
+      <h2 id="proves-heading" className="text-2xl font-medium">
         What this proves, and what it does not
       </h2>
       <div className="mt-4 grid gap-6 sm:grid-cols-2">
         <div>
-          <h3 className="font-bold">It shows</h3>
+          <h3 className="font-medium">It shows</h3>
           <ul className="mt-2 flex flex-col gap-2">
             <ClaimLine met>These explanations state the listed facts. Code confirmed each quote is in the text.</ClaimLine>
             <ClaimLine met>
@@ -127,7 +127,7 @@ function ProvesAndDoesNot() {
           </ul>
         </div>
         <div>
-          <h3 className="font-bold">It does not show</h3>
+          <h3 className="font-medium">It does not show</h3>
           <ul className="mt-2 flex flex-col gap-2">
             <ClaimLine>Who wrote it. The name was typed by the person, and accounts here are anonymous.</ClaimLine>
             <ClaimLine>
@@ -192,7 +192,7 @@ const CHECK_STEPS: { by: "AI" | "Code"; title: string; detail: string }[] = [
 function HowChecked() {
   return (
     <section aria-labelledby="checked-heading">
-      <h2 id="checked-heading" className="text-2xl font-bold">
+      <h2 id="checked-heading" className="text-2xl font-medium">
         How this was checked
       </h2>
       <p className="mt-1 text-ink-soft">The AI finds the words. Code decides what they are worth.</p>
@@ -200,7 +200,7 @@ function HowChecked() {
         {CHECK_STEPS.map((step) => (
           <li key={step.title} className="flex items-start gap-3">
             <span
-              className={`mt-0.5 inline-flex w-12 shrink-0 justify-center rounded-control border py-0.5 text-sm font-bold ${
+              className={`mt-0.5 inline-flex w-12 shrink-0 justify-center rounded-control border py-0.5 text-sm font-medium ${
                 step.by === "Code" ? "border-proven text-proven" : "border-control-edge text-ink-soft"
               }`}
             >
@@ -220,7 +220,7 @@ function HowChecked() {
 function Fingerprint({ proofId, hash }: { proofId: string; hash: string }) {
   return (
     <section aria-labelledby="fingerprint-heading" className="rounded-sheet border border-control-edge bg-sheet p-5 sm:p-6">
-      <h2 id="fingerprint-heading" className="text-2xl font-bold">
+      <h2 id="fingerprint-heading" className="text-2xl font-medium">
         Has this been changed?
       </h2>
       <p className="mt-2">

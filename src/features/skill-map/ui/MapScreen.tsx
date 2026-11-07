@@ -1,7 +1,7 @@
 "use client";
 
 import { PublishCourseButton } from "@/features/courses/client";
-import { LiveGridCard } from "@/features/grid/client";
+import { LiveGridCard, LiveGridStrip } from "@/features/grid/client";
 import { ShareProofButton } from "@/features/proof/client";
 import clsx from "clsx";
 import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
@@ -247,7 +247,10 @@ function LoadedMap({
           )}
         </header>
 
-        <ViewTabs view={view} onChange={setView} />
+        <div className="flex items-center justify-between border-b border-rule">
+          <ViewTabs view={view} onChange={setView} />
+          {map.energyRelated && <LiveGridStrip className="hidden lg:flex" />}
+        </div>
 
         <div className="relative flex min-h-[60dvh] flex-1 lg:min-h-0">
           <div
@@ -299,7 +302,8 @@ function LoadedMap({
         </div>
       </div>
 
-      {map.energyRelated && <LiveGridCard className="mx-4 mb-4 sm:mx-6 lg:mx-10" />}
+      {/* Below the map on a phone. On a large screen the map fills the window, so the strip above stands in. */}
+      {map.energyRelated && <LiveGridCard className="mx-4 mb-24 lg:hidden" />}
     </PageShell>
   );
 }
@@ -367,7 +371,7 @@ function ViewTabs({ view, onChange }: { view: View; onChange: (view: View) => vo
       role="tablist"
       aria-label="How to show the skills"
       onKeyDown={handleKeyDown}
-      className="flex gap-1 border-b border-rule px-2 sm:px-4"
+      className="flex gap-1 px-2 sm:px-4"
     >
       {TABS.map(({ view: tab, label, icon: Icon }) => (
         <button

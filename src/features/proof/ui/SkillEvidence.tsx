@@ -14,13 +14,13 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
     >
       <header className="flex items-start justify-between gap-4 border-b border-rule p-5 sm:p-6">
         <div className="min-w-0">
-          <h3 id={`skill-${skill.nodeId}-title`} className="text-2xl font-bold">
+          <h3 id={`skill-${skill.nodeId}-title`} className="text-2xl font-medium">
             {skill.title}
           </h3>
           <p className="mt-1 text-ink-soft">{skill.why}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-3xl font-bold text-proven tabular-nums">
+          <p className="text-3xl font-medium text-proven tabular-nums">
             {skill.score}
             <span className="sr-only"> out of 100</span>
           </p>
@@ -86,7 +86,7 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h4 className="mb-2 text-base font-bold">{title}</h4>
+      <h4 className="mb-2 text-base font-medium">{title}</h4>
       {children}
     </section>
   );
@@ -108,7 +108,7 @@ function Transcript({ skill }: { skill: ProofSkill }) {
             segment.text
           )}
           {segment.endsCheckpoints.map((number) => (
-            <sup key={number} className="ml-0.5 text-[0.7em] font-bold text-proven">
+            <sup key={number} className="ml-0.5 text-[0.7em] font-medium text-proven">
               <span className="sr-only">checkpoint </span>
               {number}
             </sup>

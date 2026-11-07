@@ -152,7 +152,7 @@ export function ReadTheGrid({ snapshot }: { snapshot: GridSnapshot }) {
         </ol>
 
         <div className="flex min-w-0 flex-col gap-4">
-          <h3 className="text-xl font-bold">{exercise.prompt}</h3>
+          <h3 className="text-xl font-medium">{exercise.prompt}</h3>
 
           <dl className="grid gap-2 sm:grid-cols-2">
             {exercise.figures.map((figure) => (

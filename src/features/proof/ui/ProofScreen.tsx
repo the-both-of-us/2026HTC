@@ -82,7 +82,7 @@ function Notice({ icon, title, children }: { icon: ReactNode; title: string; chi
   return (
     <div className="flex flex-col items-start gap-3 py-10">
       <span className="text-ink-soft">{icon}</span>
-      <h1 className="text-3xl font-bold">{title}</h1>
+      <h1 className="text-3xl font-medium">{title}</h1>
       <p className="max-w-prose text-lg text-ink-soft">{children}</p>
     </div>
   );

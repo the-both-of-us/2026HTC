@@ -8,6 +8,7 @@ The map screen. `MapScreen` is the only thing other code needs: import it from `
 - `SkillNodeView.tsx`, `SkillEdge.tsx`: one node, one line.
 - `SkillList.tsx`: the same skills as plain lists. The default on phones, and the screen reader route.
 - `SkillPanel.tsx`: a panel beside the map on large screens, a bottom sheet on phones. Hosts `TeachBackPanel` from `@/features/teachback/client`.
+- The grid card from `@/features/grid/client` shows only when the posting is energy related: one line beside the tabs on a large screen, and a card under the map on a phone.
 - `map.css`: all motion, inside `prefers-reduced-motion: no-preference`.
 
 Keyboard: Tab moves through skills row by row, arrow keys move between the Knowledge Map and All Skills tabs, Enter opens one, Escape closes the panel (not while typing). After a skill is proven, focus moves to the button for the next skill it opens.

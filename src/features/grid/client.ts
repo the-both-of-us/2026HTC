@@ -1,2 +1,2 @@
 export { isEnergyRelated } from "./energy";
-export { LiveGridCard } from "./ui/LiveGridCard";
+export { LiveGridCard, LiveGridStrip } from "./ui/LiveGridCard";
