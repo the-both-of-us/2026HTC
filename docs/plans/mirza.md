@@ -111,9 +111,9 @@ Worth considering later: **Adzuna** for "browse live Calgary jobs" on the landin
 
 These are in Abdu's paths, so Mirza doesn't edit them.
 
-- [ ] Move `Flashcard`, `QuizQuestion`, `ReviewCard`, `PublicCourse`, `PeerProfile` and `BattleRoom` out of `shared/types.ts` into their features. `PublicCourse.likedBy` is replaced by the like documents above.
-- [ ] Map reads check visibility: only the owner can read a map unless `courses/<mapId>` exists. Today anyone with the link can read it.
-- [ ] Add `skill-map` exports `copySkillMap(mapId, newOwnerId)` and `listMapsByOwner(ownerId)`.
+- [x] Move `Flashcard`, `QuizQuestion`, `ReviewCard`, `PublicCourse`, `PeerProfile` and `BattleRoom` out of `shared/types.ts` into their features. `PublicCourse.likedBy` is replaced by the like documents above.
+- [x] Map reads check visibility: only the owner can read a map unless `courses/<mapId>` exists. Today anyone with the link can read it.
+- [x] Add `skill-map` exports `copySkillMap(mapId, newOwnerId)` and `listMapsByOwner(ownerId)`.
 - [ ] `shared/identity.ts`: sign the cookie, add `getSession()` returning `{ userId, signedIn, displayName }`, and add a way to set the user id after sign-in.
 - [ ] Give Mirza ownership of `src/features/auth/` and `src/app/api/auth/` in `TEAM.md` and `CODEOWNERS`.
 - [ ] Add a Gemini route in `features/ai/routes.ts`, and a way for a caller to name a preferred route.

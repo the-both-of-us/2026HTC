@@ -21,10 +21,16 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 
 **From Mirza to Abdu (Sat Nov 7).** Flashcards and quiz are pushed. Courses is being built now, and these block parts of it:
 
-- [ ] `copySkillMap(mapId, newOwnerId): Promise<SkillMap>` exported from `@/features/skill-map`. It's for "Start this course": copy the map under a new id and owner, keep the nodes, and add `forkedFrom: mapId`. Until it exists, the course page shows "View the map" instead of "Start this course".
-- [ ] `listMapsByOwner(ownerId): Promise<SkillMap[]>` exported from `@/features/skill-map`, for "My courses" on the dashboard.
-- [ ] Private maps: `GET /api/maps/[id]` returns the map only to its owner, unless the course is published. Check with `isPublished(mapId)` from `@/features/courses`, which is coming in the courses commit. Right now anyone with a link can read any map.
+- [x] `copySkillMap(mapId, newOwnerId): Promise<SkillMap>` exported from `@/features/skill-map`. It's for "Start this course": copy the map under a new id and owner, keep the nodes, and add `forkedFrom: mapId`. Until it exists, the course page shows "View the map" instead of "Start this course".
+- [x] `listMapsByOwner(ownerId): Promise<SkillMap[]>` exported from `@/features/skill-map`, for "My courses" on the dashboard.
+- [x] Private maps: `GET /api/maps/[id]` returns the map only to its owner, unless the course is published. Check with `isPublished(mapId)` from `@/features/courses`, which is coming in the courses commit. Right now anyone with a link can read any map.
 - [ ] Put `<PublishCourseButton mapId={id} />` from `@/features/courses/client` in the map header. It shows nothing to people who don't own the map.
+
+**From Abdu to Mirza (Sat Nov 7).**
+
+- [ ] `POST /api/courses/[mapId]/start`: `copySkillMap` does not check who may read the original, so check `isPublished` (or the owner) first.
+- [ ] `/api/flashcards` and `/api/quiz` read any map by id. They should refuse a private map too, or its skills can be read through them.
+- [ ] Once `isPublished` is on main, tell Abdu: it replaces the small helper in `src/app/api/maps/[id]/access.ts`.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
@@ -60,6 +66,7 @@ Features import each other only through `index.ts` (server code) or `client.ts` 
 
 ```ts
 import { getSkillMap, deriveNodeStates } from "@/features/skill-map";   // getSkillMap(id), deriveNodeStates(map, progress)
+import { copySkillMap, listMapsByOwner } from "@/features/skill-map";   // copySkillMap(mapId, newOwnerId): Promise<SkillMap>, listMapsByOwner(ownerId): Promise<SkillMap[]>
 import { getProgress } from "@/features/teachback";                     // getProgress(mapId, ownerId)
 import { chatJSON, chatText, AiUnavailableError } from "@/features/ai"; // chatJSON({ prompt, schema, label })
 import { getDoc, putDoc, listDocs, deleteDoc } from "@/shared/store";   // keys like "flashcards/<mapId>/<nodeId>"
