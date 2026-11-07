@@ -65,6 +65,22 @@ What can still happen: a like that passed the "is it public?" check just before 
 - A sample that fails (often one failed store read) keeps its last known map id while it waits to retry, so its listing stays visible. If a sample's map id is not known at all (a fresh server whose first read failed), duplicates are not hidden for that run: a rare duplicate is better than a missing sample.
 - Sample courses are labelled "Sample" everywhere, with a note that they come from sample postings written for this demo, not real job ads.
 
+## Preparing the sample courses
+
+Run once, from the repo root, with the AI keys and the store settings (`S3_BUCKET` or `BLOB_READ_WRITE_TOKEN`) in `.env.local`:
+
+```sh
+npx tsx --env-file=.env.local src/features/courses/dev/prepareSamples.ts            # make and save
+npx tsx --env-file=.env.local src/features/courses/dev/prepareSamples.ts --dry-run  # only print the plan
+```
+
+It seeds the sample courses if needed (no AI call, the same as opening `/courses`), then makes and saves the flashcards and quiz for every skill, so the demo never waits on a model for them. Saved items are skipped, so it is safe to stop and run again. One call starts every 13 seconds for the gateway's rate limit: about 84 calls, roughly 18 minutes. Gemini is asked first if `GEMINI_API_KEY` is set. Each line shows progress (`[12/84] flashcards · Data Analyst, grid operations · SQL joins … saved 7 cards`), and the end shows made, already there and failed. A failure is logged and skipped, and the exit code is 1.
+
+- Without a store it refuses to run, since everything would be lost when it ends. `--dry-run` works without one.
+- `--only=flashcards` or `--only=quiz` does one kind. `--gap-ms=` changes the pacing.
+- It prints env names, never values, and never provider text.
+- Don't add `--conditions=react-server` here: the flashcards and quiz index files load next/link, which needs React's client build. `dev/allowServerOnly.ts` makes only `server-only` a no-op instead, on any Node from 20 up (it uses `registerHooks` on Node 22.15 and later, and require's cache before that). Errors the app logs while it runs print as their name only, so a store error can't show the access key id.
+
 ## Sign-in
 
 `session.ts` holds the one seam, using `isAuthConfigured()` from `@/features/auth` and identity's `getSession()`:
