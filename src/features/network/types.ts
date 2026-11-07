@@ -1,8 +1,121 @@
-/** A user's proven skills, used for matching. Demo profiles must say so on screen. */
-export type PeerProfile = {
-  ownerId: string;
+/** Types for the network. Only PublicProfile, Match, MyProfileView and NetworkView ever reach a browser. */
+
+/** One skill someone proved with a teach-back. Computed from their progress, never typed. */
+export type ProvenSkill = {
+  title: string;
+  /** The title of the map it was proved on. Never the map id. */
+  mapTitle: string;
+  /** `/proof/<id>` when the owner's live evidence page for that map shows this skill, else null. */
+  evidenceUrl: string | null;
+};
+
+/** What `network/profiles/<userId>` holds. Server only. */
+export type ProfileRecord = {
+  /** The owner's identity cookie. Never sent to a browser. */
+  userId: string;
+  /** A random id, the only id a browser ever sees. */
+  publicId: string;
   displayName: string;
   city: string;
-  provenSkills: string[];
-  isDemoProfile: boolean;
+  lookingFor: string;
+  /** An https link, or null. */
+  contactUrl: string | null;
+  joinedAt: string;
+  updatedAt: string;
+  isDemo: boolean;
+  /**
+   * Demo profiles only: their made-up skills, written by the seed (never by a person).
+   * Real profiles never have this; their skills are worked out from their progress.
+   */
+  demo?: DemoSkills;
+};
+
+export type DemoSkills = {
+  version: number;
+  proven: { title: string; mapTitle: string }[];
+  learning: string[];
+};
+
+/** Someone's skills as matching sees them. */
+export type SkillSet = {
+  proven: ProvenSkill[];
+  /** Titles of skills on their maps they have not proved yet (available or locked). */
+  learning: string[];
+  hasMaps: boolean;
+};
+
+/** Another person's profile, as anyone may see it. */
+export type PublicProfile = {
+  publicId: string;
+  displayName: string;
+  city: string;
+  lookingFor: string;
+  /** Always null on demo profiles. */
+  contactUrl: string | null;
+  isDemo: boolean;
+  provenSkills: ProvenSkill[];
+  joinedAt: string;
+};
+
+/** Another person, with why they match the viewer. */
+export type Match = {
+  profile: PublicProfile;
+  score: number;
+  /** Their proven skills that the viewer is still learning. */
+  mentorFor: string[];
+  /** Skills both are learning. */
+  sharedLearning: string[];
+  /** Skills both have proved. */
+  sharedProven: string[];
+  /** The same, in words: "Proved SQL joins, which you're learning." */
+  reasons: string[];
+};
+
+/** The viewer's own profile. */
+export type MyProfileView = {
+  publicId: string;
+  displayName: string;
+  city: string;
+  lookingFor: string;
+  contactUrl: string | null;
+  joinedAt: string;
+  updatedAt: string;
+  provenSkills: ProvenSkill[];
+  learning: string[];
+};
+
+/** What GET /api/network returns. */
+export type NetworkView = {
+  me: MyProfileView | null;
+  /** People who proved what the viewer is learning, best match first. */
+  mentors: Match[];
+  /** People learning the same skills, who are not already in mentors. */
+  peers: Match[];
+  /**
+   * Everyone else in the network, not already in mentors or peers. Those who proved a skill
+   * the viewer also proved come first, with that reason; then real people, then demo profiles.
+   */
+  everyone: Match[];
+  viewerHasMaps: boolean;
+  signedIn: boolean;
+  /** True when the viewer must sign in before joining (Auth0 is set up and they are a guest). */
+  signInRequired: boolean;
+  /** The viewer's own name from sign-in, to pre-fill the form. Never anyone else's. */
+  displayName: string | null;
+};
+
+/** The profile fields a person types. */
+export type ProfileInput = {
+  displayName: string;
+  city?: string | null;
+  lookingFor?: string | null;
+  contactUrl?: string | null;
+};
+
+/** The same fields after cleaning. */
+export type CleanProfile = {
+  displayName: string;
+  city: string;
+  lookingFor: string;
+  contactUrl: string | null;
 };

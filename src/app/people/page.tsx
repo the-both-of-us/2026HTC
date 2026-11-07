@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { NetworkScreen } from "@/features/network";
+import { NetworkScreen } from "@/features/network/client";
 
 export const metadata: Metadata = { title: "People" };
 
