@@ -15,6 +15,8 @@ export type SkillNodeData = {
   reveal: boolean;
   justProven: boolean;
   justUnlocked: boolean;
+  /** Initials of study circle members who proved this skill. */
+  avatars: string[];
 };
 
 export type SkillFlowNode = Node<SkillNodeData, "skill">;
@@ -35,7 +37,7 @@ const HANDLE_COLOURS: Record<NodeState, string> = {
 
 /** One skill on the map. Its edge, its status dot and its words all say its state. */
 export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
-  const { skill, state, layer, selected, reveal, justProven, justUnlocked } = data;
+  const { skill, state, layer, selected, reveal, justProven, justUnlocked, avatars } = data;
 
   return (
     // The handles sit on this outer box, which only ever fades. React Flow measures them
@@ -78,6 +80,7 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
           {skill.fromSource && <JobAsksTag kind={skill.citation?.kind} />}
         </p>
       </div>
+      {avatars.length > 0 && <Avatars initials={avatars} />}
       <Handle type="source" position={Position.Bottom} isConnectable={false} />
     </div>
   );
@@ -91,5 +94,31 @@ export function JobAsksTag({ kind }: { kind?: SourceKind }) {
       <Icon aria-hidden="true" size={11} />
       {kind === "pdf" ? "In your PDF" : "Job asks"}
     </span>
+  );
+}
+
+/** Up to four circle members' initials on the card's top edge, then "+n". */
+function Avatars({ initials }: { initials: string[] }) {
+  const shown = initials.slice(0, 4);
+  return (
+    <p
+      aria-label={`Proved by ${initials.length} in your circle`}
+      className="absolute -top-3 right-2 flex -space-x-1.5"
+    >
+      {shown.map((text, index) => (
+        <span
+          key={index}
+          aria-hidden="true"
+          className="flex size-6 items-center justify-center rounded-full border-2 border-paper bg-proven text-[10px] font-semibold text-paper"
+        >
+          {text}
+        </span>
+      ))}
+      {initials.length > shown.length && (
+        <span aria-hidden="true" className="flex size-6 items-center justify-center rounded-full border-2 border-paper bg-raised text-[10px] text-ink">
+          +{initials.length - shown.length}
+        </span>
+      )}
+    </p>
   );
 }

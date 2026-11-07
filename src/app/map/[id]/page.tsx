@@ -3,6 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { canReadMap } from "@/app/api/maps/[id]/access";
+import { findCircleForMap } from "@/features/circles";
+import { CircleBanner, StartCircleButton } from "@/features/circles/client";
 import { getSkillMap } from "@/features/skill-map";
 import { MapScreen, MapScreenLoading } from "@/features/skill-map/client";
 import { isVoiceReady } from "@/features/voice";
@@ -28,9 +30,27 @@ async function MapFromRoute({ params }: MapPageProps) {
   await connection();
   const { id } = await params;
   // Voice controls only appear once the server knows its voice key works.
-  const [isPrivate, voiceReady] = await Promise.all([isPrivateToSomeoneElse(id), isVoiceReady()]);
+  const [isPrivate, voiceReady, circle] = await Promise.all([isPrivateToSomeoneElse(id), isVoiceReady(), circleOf(id)]);
   if (isPrivate) return <PrivateMapNotice />;
-  return <MapScreen mapId={id} voiceReady={voiceReady} />;
+  return (
+    <MapScreen
+      mapId={id}
+      voiceReady={voiceReady}
+      banner={circle && <CircleBanner code={circle.code} title={circle.title} />}
+      ownerActions={<StartCircleButton mapId={id} />}
+    />
+  );
+}
+
+/** The study circle this map belongs to, for the banner. A failure only hides the banner. */
+async function circleOf(id: string): Promise<{ code: string; title: string } | null> {
+  try {
+    const userId = await readUserId();
+    return userId ? await findCircleForMap(id, userId) : null;
+  } catch (error) {
+    console.error("[map page] could not check for a study circle", error);
+    return null;
+  }
 }
 
 /**

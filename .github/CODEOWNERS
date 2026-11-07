@@ -1,5 +1,8 @@
 # Who owns what. See TEAM.md.
 *                                 @VVarrior1
+/src/features/circles/            @VVarrior1
+/src/app/circle/                  @VVarrior1
+/src/app/api/circles/             @VVarrior1
 /src/features/flashcards/         @MirzaHB
 /src/features/quiz/               @MirzaHB
 /src/features/courses/            @MirzaHB

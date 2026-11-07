@@ -8,6 +8,7 @@ export {
   getOwnAttempt,
   getProgress,
   getProgressView,
+  listProvedNodes,
   MAX_ANSWER_CHARACTERS,
   MAX_EXPLANATION_CHARACTERS,
   MIN_EXPLANATION_WORDS,

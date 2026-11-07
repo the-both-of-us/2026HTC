@@ -173,6 +173,12 @@ export async function getProgress(mapId: string, ownerId: string): Promise<MapPr
   };
 }
 
+/** The skills one user has proven on one map, with when, for a study circle's feed. No explanation text. */
+export async function listProvedNodes(mapId: string, ownerId: string): Promise<{ nodeId: string; provenAt: string }[]> {
+  const records = await listDocs<ProvenRecord>(`${progressKey(mapId, ownerId)}/`);
+  return records.map(({ nodeId, provenAt }) => ({ nodeId, provenAt }));
+}
+
 export type ProgressView = {
   mapId: string;
   proven: Record<string, string>;

@@ -60,6 +60,8 @@ type MapCanvasProps = {
   justProvenId: string | null;
   justUnlockedIds: string[];
   onSelect: (nodeId: string) => void;
+  /** A study circle's initials for each skill: who has proved it. */
+  avatars?: Record<string, string[]>;
 };
 
 export function MapCanvas(props: MapCanvasProps) {
@@ -79,6 +81,7 @@ function Canvas({
   justProvenId,
   justUnlockedIds,
   onSelect,
+  avatars,
 }: MapCanvasProps) {
   const flow = useReactFlow<SkillFlowNode, SkillFlowEdge>();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,10 +125,11 @@ function Canvas({
           reveal,
           justProven: justProvenId === skill.id,
           justUnlocked: justUnlockedIds.includes(skill.id),
+          avatars: avatars?.[skill.id] ?? [],
         },
       };
     });
-  }, [layout, skills, states, selectedId, reveal, justProvenId, justUnlockedIds, onSelect]);
+  }, [layout, skills, states, selectedId, reveal, justProvenId, justUnlockedIds, onSelect, avatars]);
 
   const edges = useMemo<SkillFlowEdge[]>(() => {
     const layerById = new Map(layout.nodes.map((placed) => [placed.id, placed.layer]));

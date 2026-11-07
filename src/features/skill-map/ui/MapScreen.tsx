@@ -28,8 +28,21 @@ type LoadState =
   | { status: "ready"; map: PublicSkillMap; proven: Record<string, string>; isOwner: boolean };
 
 /** The whole map screen: loads the map, then shows it. */
-/** voiceReady comes from the server, which checked that its voice key works. */
-export function MapScreen({ mapId, voiceReady = false }: { mapId: string; voiceReady?: boolean }) {
+/**
+ * voiceReady comes from the server, which checked that its voice key works.
+ * banner shows above the header (the study circle line), ownerActions beside the owner's buttons.
+ */
+export function MapScreen({
+  mapId,
+  voiceReady = false,
+  banner,
+  ownerActions,
+}: {
+  mapId: string;
+  voiceReady?: boolean;
+  banner?: ReactNode;
+  ownerActions?: ReactNode;
+}) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -80,7 +93,16 @@ export function MapScreen({ mapId, voiceReady = false }: { mapId: string; voiceR
     );
   }
 
-  return <LoadedMap map={load.map} initialProven={load.proven} isOwner={load.isOwner} voiceReady={voiceReady} />;
+  return (
+    <LoadedMap
+      map={load.map}
+      initialProven={load.proven}
+      isOwner={load.isOwner}
+      voiceReady={voiceReady}
+      banner={banner}
+      ownerActions={ownerActions}
+    />
+  );
 }
 
 /** A calm centred card for a screen with nothing to show yet. */
@@ -145,11 +167,15 @@ function LoadedMap({
   initialProven,
   isOwner,
   voiceReady,
+  banner,
+  ownerActions,
 }: {
   map: PublicSkillMap;
   initialProven: Record<string, string>;
   isOwner: boolean;
   voiceReady: boolean;
+  banner?: ReactNode;
+  ownerActions?: ReactNode;
 }) {
   const [proven, setProven] = useState(initialProven);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -222,6 +248,7 @@ function LoadedMap({
   return (
     <PageShell width="full">
       <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
+        {banner}
         <header className="flex flex-col gap-3 border-b border-rule px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex min-w-0 items-center gap-4">
             <TopicBadge title={map.title} />
@@ -247,6 +274,7 @@ function LoadedMap({
             <HowItWorksButton />
             {isOwner && (
               <>
+                {ownerActions}
                 <PublishCourseButton mapId={map.id} />
                 {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
                 {nextSkill && (
