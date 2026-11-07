@@ -1,6 +1,8 @@
 import clsx from "clsx";
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { LearningModeToggle } from "./LearningModeToggle";
 import { LogoMark } from "./LogoMark";
 import { SideNav } from "./SideNav";
 import { SkipLink } from "./SkipLink";
@@ -42,9 +44,15 @@ export function PageShell({ width = "wide", headerActions, footer, children }: P
         <Suspense fallback={<div className="min-h-14 lg:min-h-0" />}>
           <SideNav />
         </Suspense>
-        <p className="mt-auto hidden border-t border-rule px-4 py-4 text-sm text-ink-soft lg:block">
-          Learning as a guest. Your progress stays with this browser.
-        </p>
+        <div className="mt-auto hidden flex-col gap-2 border-t border-rule px-2 py-3 lg:flex">
+          <LearningModeToggle />
+          <p className="px-2 text-sm text-ink-soft">
+            Learning as a guest.{" "}
+            <Link href="/trust" className="text-accent-bright underline underline-offset-4">
+              What we store
+            </Link>
+          </p>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -57,8 +65,19 @@ export function PageShell({ width = "wide", headerActions, footer, children }: P
         >
           <Link href="/" className="flex items-center gap-2.5 text-lg font-medium lg:invisible">
             <LogoMark />
-            OryxLearn
+            {/* The smallest phones need the room for the buttons on the right. */}
+            <span className="max-[359px]:sr-only">OryxLearn</span>
           </Link>
+          <div className="flex items-center gap-1 lg:hidden">
+            <LearningModeToggle compact />
+            <Link
+              href="/trust"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-control text-ink-soft transition-control hover:bg-raised hover:text-ink"
+            >
+              <ShieldCheck aria-hidden="true" size={20} />
+              <span className="sr-only">Trust and your data</span>
+            </Link>
+          </div>
           {headerActions && <div className="flex items-center gap-3">{headerActions}</div>}
         </header>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { BookOpen, LayoutDashboard, Plus, RotateCcw, Swords, Users, Zap } from "lucide-react";
+import { BookOpen, LayoutDashboard, Plus, RotateCcw, ShieldCheck, Swords, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,9 +13,11 @@ const NAV_ITEMS = [
   { href: "/people", label: "People", icon: Users },
   { href: "/battle", label: "Battle", icon: Swords },
   { href: "/grid", label: "Grid", icon: Zap },
+  // Phones reach it from the top bar instead, so the pill keeps room for its icons.
+  { href: "/trust", label: "Trust", icon: ShieldCheck, largeOnly: true },
 ];
 
-/** Sidebar on large screens, a floating pill of icons on phones. */
+/** Sidebar on large screens, a floating pill of icons on phones. The pill's icons share its width, so it never runs off the screen. */
 export function SideNav() {
   const pathname = usePathname();
 
@@ -27,7 +29,7 @@ export function SideNav() {
         "lg:static lg:flex-col lg:justify-start lg:gap-1 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-3 lg:shadow-none lg:backdrop-blur-none",
       )}
     >
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {NAV_ITEMS.map(({ href, label, icon: Icon, largeOnly }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
         return (
           <Link
@@ -35,8 +37,9 @@ export function SideNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={clsx(
-              "flex min-h-11 min-w-11 items-center justify-center gap-2.5 rounded-full border text-sm font-medium transition-control",
-              "lg:justify-start lg:rounded-control lg:px-3",
+              "min-h-11 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-full border text-sm font-medium transition-control",
+              "lg:flex-none lg:justify-start lg:rounded-control lg:px-3",
+              largeOnly ? "hidden lg:flex" : "flex",
               active
                 ? "border-transparent bg-accent text-on-dark shadow-glow lg:border-accent/45 lg:bg-accent/15 lg:text-ink lg:shadow-none"
                 : "border-transparent text-ink-soft hover:bg-rule-strong/60 hover:text-ink",
