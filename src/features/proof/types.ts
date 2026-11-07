@@ -12,7 +12,9 @@ export type ProofCheckpoint = {
 export type ProofSource =
   | { status: "verified"; kind: SourceKind; quote: string; page: number | null }
   | { status: "unverified" }
-  | { status: "foundation" };
+  | { status: "foundation" }
+  /** The map came from a topic the person named, so there was no source to quote. */
+  | { status: "topic" };
 
 export type ProofSkill = {
   nodeId: string;

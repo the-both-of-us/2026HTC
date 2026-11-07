@@ -61,7 +61,9 @@ export function sourceName(source: Extract<ProofSource, { status: "verified" }>)
 
 /** Says the role came from what the person supplied, so it can't read as an employer's own record. */
 export function roleLead(sourceKind: SourceKind): string {
-  return sourceKind === "pdf" ? "Skills evidence for a PDF this person supplied:" : "Skills evidence for a posting this person supplied:";
+  if (sourceKind === "pdf") return "Skills evidence for a PDF this person supplied:";
+  if (sourceKind === "topic") return "Skills evidence for a topic this person named, mapped by AI:";
+  return "Skills evidence for a posting this person supplied:";
 }
 
 export type TextSegment = {

@@ -85,7 +85,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
           <p className="font-semibold">What it does not show</p>
           <p>
             It was not proctored, so it cannot rule out outside help. The name was typed by the person and is not a
-            checked identity. The person supplied the posting or PDF, and no employer was involved. This is not an
+            checked identity. The person supplied the posting, PDF or topic, and no employer was involved. This is not an
             accredited credential.
           </p>
         </div>

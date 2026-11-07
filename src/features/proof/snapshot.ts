@@ -1,6 +1,6 @@
 import type { GridSolve } from "@/features/grid";
 import { isUsableQuote } from "@/features/teachback";
-import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode } from "@/shared/types";
+import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode, type SourceKind } from "@/shared/types";
 import type { ProofGridSolve, ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
 type SnapshotInput = {
@@ -24,7 +24,7 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
   for (const node of map.nodes) {
     const attempt = attempts[node.id] ?? null;
     if (states[node.id] === "proven" && attempt && attemptProvesNode(attempt, map, node)) {
-      skills.push(toProofSkill(node, attempt));
+      skills.push(toProofSkill(node, attempt, map.sourceKind));
     } else {
       notYetProven.push(node.title);
     }
@@ -78,7 +78,7 @@ export function attemptProvesNode(attempt: Attempt, map: SkillMap, node: SkillNo
   );
 }
 
-function toProofSkill(node: SkillNode, attempt: Attempt): ProofSkill {
+function toProofSkill(node: SkillNode, attempt: Attempt, sourceKind: SourceKind): ProofSkill {
   return {
     nodeId: node.id,
     title: node.title,
@@ -98,12 +98,13 @@ function toProofSkill(node: SkillNode, attempt: Attempt): ProofSkill {
       feedback: attempt.followUp?.feedback ?? "",
     },
     integrity: { ...attempt.integrity },
-    source: toProofSource(node),
+    source: toProofSource(node, sourceKind),
     attemptedAt: attempt.createdAt,
   };
 }
 
-function toProofSource(node: SkillNode): ProofSource {
+function toProofSource(node: SkillNode, sourceKind: SourceKind): ProofSource {
+  if (sourceKind === "topic") return { status: "topic" };
   if (!node.citation) return node.fromSource ? { status: "unverified" } : { status: "foundation" };
   if (!node.citation.verified) return { status: "unverified" };
   return {

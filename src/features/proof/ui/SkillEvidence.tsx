@@ -176,6 +176,9 @@ function Signal({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 function SourceNote({ skill }: { skill: ProofSkill }) {
   const { source } = skill;
 
+  if (source.status === "topic") {
+    return <p className="text-ink-soft">AI-generated from a topic this person named. There was no source, so there is no citation.</p>;
+  }
   if (source.status === "foundation") {
     return <p className="text-ink-soft">The source does not name this directly. It is a foundation for something it does ask for.</p>;
   }

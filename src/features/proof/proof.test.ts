@@ -123,6 +123,15 @@ describe("buildSnapshot", () => {
     expect(text).not.toContain("PRIVATE POSTING TEXT");
   });
 
+  it("says a topic map's skills are AI-generated, and keeps a PDF citation's page", () => {
+    const topic = { ...makeMap(), sourceKind: "topic" as const };
+    expect(snapshotFor(topic, makeAttempt(topic, "joins")).skills[0].source).toEqual({ status: "topic" });
+
+    const citation = { kind: "pdf" as const, quote: "Strong SQL required", page: 3, verified: true };
+    const pdf = { ...makeMap(), sourceKind: "pdf" as const, nodes: [{ ...makeNode("joins"), citation }] };
+    expect(snapshotFor(pdf, makeAttempt(pdf, "joins")).skills[0].source).toEqual({ status: "verified", kind: "pdf", quote: "Strong SQL required", page: 3 });
+  });
+
   it("does not show a citation that code could not verify", () => {
     const unverified = { ...makeMap(), nodes: [{ ...makeNode("joins"), citation: { kind: "posting" as const, quote: "", verified: false } }] };
     const snapshot = snapshotFor(unverified, makeAttempt(unverified, "joins"));
