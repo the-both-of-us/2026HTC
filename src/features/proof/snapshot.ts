@@ -1,7 +1,7 @@
 import type { GridSolve } from "@/features/grid";
 import { isUsableQuote } from "@/features/teachback";
 import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode, type SourceKind } from "@/shared/types";
-import type { ProofGridSolve, ProofSkill, ProofSnapshot, ProofSource } from "./types";
+import type { ProofFinalInterview, ProofGridSolve, ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
 type SnapshotInput = {
   proofId: string;
@@ -13,6 +13,8 @@ type SnapshotInput = {
   attempts: Record<string, Attempt | null>;
   /** Grid questions the owner solved. Only passed for an energy map. */
   gridSolves?: GridSolve[];
+  /** The final interview's result, only when it was passed. */
+  finalInterview?: ProofFinalInterview | null;
 };
 
 /** Turns server data into the frozen document. Nothing in here comes from the browser. */
@@ -43,6 +45,13 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
     skills,
     notYetProven,
     ...(grid.length > 0 && { grid }),
+    ...(input.finalInterview && {
+      finalInterview: {
+        passedCount: input.finalInterview.passedCount,
+        spokenCount: input.finalInterview.spokenCount,
+        finishedAt: input.finalInterview.finishedAt,
+      },
+    }),
     publishedAt: input.publishedAt,
   };
 }
@@ -70,7 +79,10 @@ function toProofGridSolve(solve: GridSolve): ProofGridSolve {
 export function attemptProvesNode(attempt: Attempt, map: SkillMap, node: SkillNode): boolean {
   if (attempt.ownerId !== map.ownerId) return false;
   if (attempt.mapId !== map.id || attempt.nodeId !== node.id) return false;
-  if (attempt.status !== "proven" || attempt.followUp?.passed !== true) return false;
+  // "Catch the mistake" has no follow-up. Every other format must have passed one.
+  if (attempt.status !== "proven") return false;
+  if (attempt.format !== "catch" && attempt.followUp?.passed !== true) return false;
+  if (attempt.format === "catch" && !attempt.catch) return false;
   if (attempt.grade.score < PASS_SCORE) return false;
 
   return attempt.grade.checkpoints.every(
@@ -96,6 +108,9 @@ function toProofSkill(node: SkillNode, attempt: Attempt, sourceKind: SourceKind)
     integrity: { ...attempt.integrity },
     source: toProofSource(node, sourceKind),
     attemptedAt: attempt.createdAt,
+    ...(attempt.format && attempt.format !== "explain" && attempt.format !== "final" && { format: attempt.format }),
+    ...(attempt.format === "catch" && attempt.catch && { catch: attempt.catch }),
+    ...(attempt.format === "kid" && attempt.plainLanguage && { readingGrade: attempt.plainLanguage.readingGrade }),
   };
 }
 

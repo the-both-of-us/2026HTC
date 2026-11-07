@@ -1,5 +1,7 @@
 /** Calls to the attempts API. Every failure becomes a sentence a person can act on. */
 import type { Attempt, IntegritySignals } from "@/shared/types";
+import type { FinalView } from "../final";
+import type { TopicFormat } from "../formats";
 
 export type ApiResult =
   | { ok: true; attempt: Attempt }
@@ -47,6 +49,9 @@ export function submitExplanation(input: {
   nodeId: string;
   explanation: string;
   integrity: IntegritySignals;
+  /** Left out for "Explain it". "catch" also sends picks: the tapped sentences and corrections. */
+  format?: TopicFormat;
+  picks?: { sentence: number; correction: string }[];
 }): Promise<ApiResult> {
   return postJson("/api/attempts", input);
 }
@@ -75,4 +80,32 @@ export async function fetchProvenAttempt(mapId: string, nodeId: string): Promise
   } catch {
     return notLoaded;
   }
+}
+
+/** A GET or POST that returns JSON, or a sentence to show when it fails. */
+async function requestJson<T>(url: string, init: RequestInit = {}): Promise<{ ok: true; data: T } | { ok: false; message: string }> {
+  try {
+    const response = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    const body = await response.json().catch(() => null);
+    if (response.ok && body) return { ok: true, data: body as T };
+    return { ok: false, message: failureMessage(body, "That didn't load this time. Please try again.") };
+  } catch {
+    return { ok: false, message: "OryxLearn could not be reached. Check your connection, then try again." };
+  }
+}
+
+export type CatchViewData = { sentences: string[]; mistakeCount: number; revealed: boolean };
+
+/** A "Catch the mistake" round: the sentences and how many are wrong, never which. */
+export function fetchCatchRound(mapId: string, nodeId: string) {
+  const query = new URLSearchParams({ mapId, nodeId });
+  return requestJson<CatchViewData>(`/api/attempts/catch?${query}`);
+}
+
+export function fetchFinal(mapId: string) {
+  return requestJson<FinalView>(`/api/maps/${encodeURIComponent(mapId)}/final`);
+}
+
+export function startFinal(mapId: string) {
+  return requestJson<FinalView>(`/api/maps/${encodeURIComponent(mapId)}/final`, { method: "POST" });
 }

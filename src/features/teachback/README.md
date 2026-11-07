@@ -9,6 +9,21 @@ Grades a learner's explanation of a skill, asks a follow-up about what they wrot
 3. Below `PASS_SCORE` (65, so 3 of 4 or 2 of 3 checkpoints) the status is `not-yet`, and the learner can retry with a new attempt. Otherwise it is `needs-followup`, with a question from `generateFollowUp`.
 4. `POST /api/attempts/[id]/followup` calls `answerFollowUp`. A pass gives `proven` and updates `MapProgress`. A fail gives `not-yet`.
 
+## Four ways to prove a topic
+
+`assignFormats` (in `formats.ts`, plain code shared with the map) gives each topic a format from its place on the map, so it is the same every time and no topic shares one with the topic before it or one it builds on. The learner may swap to plain "Explain it" once per topic.
+
+- **Explain it**: the loop above.
+- **Catch the mistake** (`catch.ts`): the AI writes 5 to 8 sentences with 1 or 2 planted mistakes, each breaking a checkpoint. It is written once per topic and shared by every copy of a course (`catch/<mapId or forkedFrom>/<nodeId>`). The browser gets the sentences and how many are wrong, never which. Code checks the tapped sentence numbers against the planted ones; one AI call checks only the corrections on real mistakes. Each planted mistake is a checkpoint, met when fixed, and each correct sentence tapped costs 20, through `computeScore`. No follow-up: a pass proves the topic. One play per learner (`catch-revealed/<mapId>/<ownerId>/<nodeId>`), because the reveal shows the answers.
+- **Explain it to a 10-year-old**: the same grader, plus `readingGrade` (Flesch-Kincaid, worked out by code) must be 8 or lower.
+- **Say it in 30 seconds**: the same grader, with a clock in the browser. The evidence page says whether it was spoken or typed.
+
+The format is saved on the attempt (`format`, missing on older ones, which were all "explain") and on the progress record.
+
+## The final interview
+
+`final.ts`. Once every topic on a map is proven, `POST /api/maps/[id]/final` writes three questions that mix topics (one AI call) and saves each as an attempt with an open follow-up (`nodeId: "final-interview"`), so the voice interview and the follow-up route work unchanged. Two passes of three earn the course badge, which `publishProof` puts on the evidence page. A fail lets the learner ask for a fresh set. Stored at `final/<mapId>`.
+
 ## Why the model doesn't score
 
 Asking a model to "score this answer" gave fluent, empty text 55-85/100. So the model only points at evidence:
@@ -35,6 +50,8 @@ Asking a model to "score this answer" gave fluent, empty text 55-85/100. So the 
 | `POST /api/attempts/[id]/followup` `{answer}` | the attempt |
 | `GET /api/attempts/[id]` | the attempt, owner only |
 | `GET /api/maps/[id]/progress` | `{mapId, proven, states}`, owner only |
+| `GET /api/attempts/catch?mapId&nodeId` | `{sentences, mistakeCount, revealed}`, owner only |
+| `GET`, `POST /api/maps/[id]/final` | the final interview's state and questions, owner only |
 
 Errors are `{error: "a sentence for people"}` with a 400, 403, 404, 409, 500 or 503.
 

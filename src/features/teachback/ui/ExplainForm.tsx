@@ -1,12 +1,14 @@
 import { Mic, MicOff } from "lucide-react";
 import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MicLevel, useDictation, type FallbackReason } from "@/features/voice/client";
 import { Button, ErrorNotice, Field, Textarea } from "@/shared/ui";
+import { MAX_KID_GRADE, readingGrade } from "../formats";
 import { countWords } from "../learnerText";
 import { MIN_WORDS, wordCountMessage } from "./format";
 import { PendingNote } from "./PendingNote";
 import type { Integrity } from "./useIntegrity";
+import "./challenges.css";
 import { useSpeech, useSpeechSupported } from "./useSpeech";
 
 type ExplainFormProps = {
@@ -26,7 +28,12 @@ type ExplainFormProps = {
   onSubmit: () => void;
   /** The server checked its voice key works, so dictation goes through Deepgram. */
   voiceReady: boolean;
+  /** "kid" adds a live reading-level check, "timed" a 30-second clock. */
+  format?: "explain" | "kid" | "timed";
 };
+
+/** How long "Say it in 30 seconds" gives. */
+const CLOCK_SECONDS = 30;
 
 /** What to say when dictation stops by itself. What it heard is already in the box. */
 const DICTATION_STOPPED: Partial<Record<FallbackReason, string>> = {
@@ -52,6 +59,7 @@ export function ExplainForm({
   requestError,
   onSubmit,
   voiceReady,
+  format = "explain",
 }: ExplainFormProps) {
   const [tooShort, setTooShort] = useState(false);
   const [dictationError, setDictationError] = useState<string | null>(null);
@@ -91,7 +99,47 @@ export function ExplainForm({
     : speech.interim;
   const error = voiceReady ? dictationError : speech.error;
 
+  // "Say it in 30 seconds": the clock starts on the first word, typed or spoken, and the
+  // box locks when it runs out. Start over clears it for another go.
+  const timed = format === "timed";
+  const [clock, setClock] = useState<{ endsAt: number; left: number; stoppedAt?: number } | null>(null);
+  const clockRunning = clock !== null && clock.stoppedAt === undefined;
+  const timeUp = clock?.stoppedAt !== undefined;
+
+  const endsAt = clockRunning ? clock.endsAt : null;
+  const stopDictatingRef = useRef(stopDictating);
+  useEffect(() => {
+    stopDictatingRef.current = stopDictating;
+  });
+  useEffect(() => {
+    if (endsAt === null) return;
+    const timer = setInterval(() => {
+      const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      if (left > 0) return setClock((current) => current && { ...current, left });
+      stopDictatingRef.current();
+      setClock((current) => current && { ...current, left: 0, stoppedAt: 0 });
+    }, 250);
+    return () => clearInterval(timer);
+  }, [endsAt]);
+
+  function startClock() {
+    if (timed && clock === null) setClock({ endsAt: Date.now() + CLOCK_SECONDS * 1000, left: CLOCK_SECONDS });
+  }
+
+  function stopClock() {
+    if (listening) stopDictating();
+    setClock((current) => current && { ...current, stoppedAt: current.left });
+  }
+
+  function startOver() {
+    if (listening) stopDictating();
+    integrity.reset();
+    onTextChange(() => "");
+    setClock(null);
+  }
+
   function startDictating() {
+    startClock();
     setDictationError(null);
     dictationStartedAt.current = Date.now();
     if (voiceReady) dictation.start();
@@ -115,14 +163,23 @@ export function ExplainForm({
       return;
     }
     if (listening) return;
+    if (clockRunning) stopClock();
     onSubmit();
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       <h3 className="text-lg font-medium">
-        {revising ? "Revise your explanation" : `Explain ${skillTitle} as if to a new coworker.`}
+        {revising && !timed ? "Revise your explanation" : HEADINGS[format](skillTitle)}
       </h3>
+      {format === "kid" && (
+        <p className="-mt-2 text-sm text-ink-soft">
+          Short sentences, everyday words. Code checks the reading level: grade {MAX_KID_GRADE} or lower passes.
+        </p>
+      )}
+      {timed && (
+        <Clock seconds={clock?.left ?? CLOCK_SECONDS} running={clockRunning} spare={timeUp ? (clock?.stoppedAt ?? 0) : null} />
+      )}
 
       <Field
         id={inputId}
@@ -140,13 +197,14 @@ export function ExplainForm({
             aria-describedby={[control["aria-describedby"], countId].filter(Boolean).join(" ")}
             rows={5}
             value={text}
-            readOnly={pending}
+            readOnly={pending || timeUp}
             onPaste={integrity.recordPaste}
             onDrop={integrity.recordPaste}
             onChange={(event) => {
               const next = event.target.value;
               if (next.trim() === "") integrity.reset();
               else integrity.recordTyping();
+              startClock();
               setTooShort(false);
               onTextChange(() => next);
             }}
@@ -157,6 +215,7 @@ export function ExplainForm({
       <p id={countId} className="text-sm text-ink-soft tabular-nums">
         {wordCountMessage(words)}
       </p>
+      {format === "kid" && words > 0 && <ReadingLevel grade={readingGrade(text)} />}
 
       {listening && (
         <div
@@ -183,7 +242,17 @@ export function ExplainForm({
         <Button type="submit" pending={pending} disabled={listening}>
           {pending ? "Checking" : revising ? "Check again" : "Check my explanation"}
         </Button>
-        {canDictate && (
+        {timed && clockRunning && (
+          <Button variant="subtle" onClick={stopClock}>
+            Stop the clock
+          </Button>
+        )}
+        {timed && timeUp && !pending && (
+          <Button variant="subtle" onClick={startOver}>
+            Start over
+          </Button>
+        )}
+        {canDictate && !timeUp && (
           <Button
             variant="subtle"
             aria-pressed={listening}
@@ -201,5 +270,45 @@ export function ExplainForm({
       )}
       {requestError && !pending && <ErrorNotice message={requestError} onRetry={onSubmit} />}
     </form>
+  );
+}
+
+const HEADINGS = {
+  explain: (title: string) => `Explain ${title} as if to a curious friend.`,
+  kid: (title: string) => `Explain ${title} to a 10-year-old.`,
+  timed: (title: string) => `Say ${title} in 30 seconds. Go!`,
+};
+
+/** The live reading level for "Explain it to a 10-year-old". The server measures it again. */
+function ReadingLevel({ grade }: { grade: number }) {
+  const ok = grade <= MAX_KID_GRADE;
+  return (
+    <p className={`text-sm font-medium tabular-nums ${ok ? "text-proven" : "text-amber"}`}>
+      Reading level: grade {Math.round(grade)}. {ok ? "A 10-year-old could follow this." : "Try shorter sentences and smaller words."}
+    </p>
+  );
+}
+
+/** The 30-second clock. spare is set once it stopped: the seconds that were left. */
+function Clock({ seconds, running, spare }: { seconds: number; running: boolean; spare: number | null }) {
+  return (
+    <div className="flex items-center gap-3" role="timer" aria-live="off">
+      <span
+        className={`inline-flex min-w-20 justify-center rounded-control border px-3 py-1.5 text-2xl font-semibold tabular-nums ${
+          running && seconds <= 10 ? "clock-urgent border-amber text-amber" : "border-accent/50 text-accent-bright"
+        }`}
+      >
+        0:{String(seconds).padStart(2, "0")}
+      </span>
+      <span className="text-sm text-ink-soft">
+        {spare === null
+          ? running
+            ? "Keep going."
+            : "Starts on your first word. Talk, or type if you can't."
+          : spare > 0
+            ? `Done with ${spare} ${spare === 1 ? "second" : "seconds"} to spare.`
+            : "Time! Check it, or start over."}
+      </span>
+    </div>
   );
 }

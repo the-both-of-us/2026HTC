@@ -5,19 +5,47 @@ import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/share
 import {
   PASS_SCORE,
   type Attempt,
+  type CatchRecord,
+  type Grade,
   type IntegritySignals,
   type MapProgress,
   type NodeState,
+  type ProofFormat,
   type SkillMap,
   type SkillNode,
 } from "@/shared/types";
+import {
+  catchTranscript,
+  checkCatch,
+  hasRevealed,
+  loadCatchChallenge,
+  markRevealed,
+  MIN_CORRECTION_WORDS,
+  toCatchView,
+  type CatchChallenge,
+  type CatchPick,
+  type CatchView,
+} from "./catch";
+import {
+  createFinal,
+  FINAL_NODE_ID,
+  finalView,
+  getFinalRecord,
+  gradeFinalAnswer,
+  saveFinalRecord,
+  settle,
+  type FinalRecord,
+  type FinalView,
+} from "./final";
 import { generateFollowUp, gradeFollowUp } from "./followUp";
-import { gradeExplanation } from "./grading";
+import { assignFormats, MAX_KID_GRADE, readingGrade, type TopicFormat } from "./formats";
+import { computeScore, gradeExplanation } from "./grading";
 import { countWords } from "./learnerText";
 
 export const MIN_EXPLANATION_WORDS = 15;
 export const MAX_EXPLANATION_CHARACTERS = 6_000;
 export const MAX_ANSWER_CHARACTERS = 2_000;
+export const MAX_CORRECTION_CHARACTERS = 400;
 
 /** The browser reports this figure, so a forged one can only claim so much. */
 const MAX_ACTIVE_MS = 60 * 60 * 1000;
@@ -42,6 +70,10 @@ export type NewAttempt = {
   explanation: string;
   /** wordCount is left out: the server counts the words itself. */
   integrity: Omit<IntegritySignals, "wordCount">;
+  /** The topic's own format, or "explain" when the learner swapped. Missing means "explain". */
+  format?: TopicFormat;
+  /** Only for "catch": the sentences the learner tapped, with their corrections. */
+  picks?: CatchPick[];
 };
 
 /** Checks the learner may attempt this node, grades them, and asks a follow-up if they scored enough. */
@@ -58,13 +90,23 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
     throw new AttemptError("You have already proven this skill. Pick another one on the map.", 409);
   }
 
+  // Each topic has one format. "Explain it" is always allowed, because the learner may swap to it.
+  const format = input.format ?? "explain";
+  if (format !== "explain" && format !== assignFormats(map.nodes)[node.id]) {
+    throw new AttemptError("This topic uses a different format now. Reload the map, then try again.", 400);
+  }
+  if (format === "catch") return startCatch(userId, map, node, input);
+
   const explanation = input.explanation.trim();
   checkExplanationLength(explanation);
 
   const gradeStarted = performance.now();
   const grade = await gradeExplanation(node, explanation);
   const gradeMs = Math.round(performance.now() - gradeStarted);
-  const status = grade.score < PASS_SCORE ? "not-yet" : "needs-followup";
+  // A 10-year-old's version must also read simply. Code measures that, not the AI.
+  const level = format === "kid" ? readingGrade(explanation) : null;
+  const plainLanguage = level === null ? null : { readingGrade: level, passed: level <= MAX_KID_GRADE };
+  const status = grade.score < PASS_SCORE || plainLanguage?.passed === false ? "not-yet" : "needs-followup";
   const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade) : null;
 
   const attempt: Attempt = {
@@ -83,9 +125,151 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
     status,
     createdAt: new Date().toISOString(),
     timing: { gradeMs, followUpMs: null },
+    // "explain" is left out, as on attempts saved before formats existed.
+    ...(format !== "explain" && { format }),
+    ...(plainLanguage && { plainLanguage }),
   };
   await saveAttempt(attempt);
   return attempt;
+}
+
+/**
+ * A "Catch the mistake" round. Code checks the tapped sentences against the planted ones,
+ * and the AI only checks the corrections. There is no follow-up: a pass proves the topic.
+ * The round is played once. Afterwards the answers are known, so the learner explains instead.
+ */
+async function startCatch(userId: string, map: SkillMap, node: SkillNode, input: NewAttempt): Promise<Attempt> {
+  if (await hasRevealed(map.id, userId, node.id)) {
+    throw new AttemptError("You've seen where the mistakes were, so explain this one in your own words instead.", 409);
+  }
+  const challenge = await loadCatchChallenge(map, node);
+  const picks = cleanPicks(input.picks ?? [], challenge);
+
+  const gradeStarted = performance.now();
+  const record = await checkCatch(node, challenge, picks);
+  const gradeMs = Math.round(performance.now() - gradeStarted);
+  await markRevealed(map.id, userId, node.id);
+
+  const grade = catchGrade(node, challenge, record.picks);
+  const explanation = catchTranscript(picks);
+  const attempt: Attempt = {
+    id: randomUUID(),
+    mapId: map.id,
+    nodeId: node.id,
+    ownerId: userId,
+    explanation,
+    integrity: {
+      ...input.integrity,
+      activeMs: Math.min(input.integrity.activeMs, MAX_ACTIVE_MS),
+      wordCount: countWords(explanation),
+    },
+    grade,
+    followUp: null,
+    status: grade.score >= PASS_SCORE ? "proven" : "not-yet",
+    createdAt: new Date().toISOString(),
+    timing: { gradeMs, followUpMs: null },
+    format: "catch",
+    catch: record,
+  };
+  if (attempt.status === "proven") await markProven(map.id, userId, node.id, attempt.id, "catch");
+  await saveAttempt(attempt);
+  return attempt;
+}
+
+/**
+ * Scored with the same formula as an explanation, so the evidence page can re-check it:
+ * each planted mistake is a checkpoint, met when the learner fixed it (their correction is
+ * the quote), and each correct sentence they tapped counts as one error, minus 20.
+ */
+export function catchGrade(node: SkillNode, challenge: CatchChallenge, picks: CatchRecord["picks"]): Grade {
+  const planted = new Set(challenge.mistakes.map((mistake) => mistake.sentence));
+  const checkpoints = challenge.mistakes.map((mistake) => {
+    const fix = picks.find((pick) => pick.sentence === mistake.sentence && pick.fixed);
+    return { checkpoint: node.checkpoints[mistake.checkpoint] ?? mistake.why, quote: fix?.correction ?? null, met: !!fix };
+  });
+  const misconceptions = picks
+    .filter((pick) => !planted.has(pick.sentence))
+    .map((pick) => `Marked sentence ${pick.sentence} as a mistake, but it was correct.`);
+  const met = checkpoints.filter((result) => result.met).length;
+  return { score: computeScore(met, checkpoints.length, misconceptions.length), checkpoints, misconceptions, rejectedQuotes: 0 };
+}
+
+/** One correction per sentence, each with a few words, on sentences that exist. */
+function cleanPicks(picks: CatchPick[], challenge: CatchChallenge): CatchPick[] {
+  const bySentence = new Map<number, CatchPick>();
+  for (const pick of picks) {
+    if (!Number.isInteger(pick.sentence) || pick.sentence < 1 || pick.sentence > challenge.sentences.length) {
+      throw new AttemptError("One of those sentences isn't in this explanation. Reload the map, then try again.", 400);
+    }
+    const correction = pick.correction.replace(/\s+/g, " ").trim();
+    if (countWords(correction) < MIN_CORRECTION_WORDS) {
+      throw new AttemptError(`Say what's wrong with sentence ${pick.sentence} in at least ${MIN_CORRECTION_WORDS} words.`, 400);
+    }
+    if (correction.length > MAX_CORRECTION_CHARACTERS) {
+      throw new AttemptError(`Please keep each correction under ${MAX_CORRECTION_CHARACTERS} characters.`, 400);
+    }
+    bySentence.set(pick.sentence, { sentence: pick.sentence, correction });
+  }
+  if (bySentence.size === 0) throw new AttemptError("Tap the sentence you think is wrong, then say what's true.", 400);
+  return [...bySentence.values()].sort((a, b) => a.sentence - b.sentence);
+}
+
+/** The sentences of this topic's catch round, without which ones are wrong. */
+export async function getCatchView(
+  userId: string,
+  mapId: string,
+  nodeId: string,
+): Promise<CatchView & { revealed: boolean }> {
+  const map = await loadOwnMap(mapId, userId);
+  const node = findNode(map, nodeId);
+  const progress = await getProgress(map.id, userId);
+  if (deriveNodeStates(map, progress)[node.id] === "locked") {
+    throw new AttemptError("This skill is still locked. Prove the skills it depends on first.", 403);
+  }
+  if (assignFormats(map.nodes)[node.id] !== "catch") {
+    throw new AttemptError("This topic uses a different format.", 400);
+  }
+  const [challenge, revealed] = await Promise.all([loadCatchChallenge(map, node), hasRevealed(map.id, userId, node.id)]);
+  return { ...toCatchView(challenge), revealed };
+}
+
+/** Where the course's final interview stands for its owner. */
+export async function getFinalInterview(userId: string, mapId: string): Promise<FinalView> {
+  const map = await loadOwnMap(mapId, userId);
+  return loadFinalView(map, userId);
+}
+
+/**
+ * Starts the final interview once every topic is proven. Asking again while it is under way
+ * returns the same questions, and after a fail it writes new ones.
+ */
+export async function startFinalInterview(userId: string, mapId: string): Promise<FinalView> {
+  const map = await loadOwnMap(mapId, userId);
+  const current = await loadFinalView(map, userId);
+  if (current.state === "locked") {
+    throw new AttemptError("Prove every topic on this map first. Then the final interview opens.", 403);
+  }
+  if (current.state === "in-progress" || current.state === "passed") return current;
+
+  const { record, attempts } = await createFinal(map, userId);
+  await Promise.all(attempts.map(saveAttempt));
+  await saveFinalRecord(record);
+  return finalView(record, attempts, true);
+}
+
+/** For the evidence page: the final interview's result, only when it was passed. */
+export async function getPassedFinal(mapId: string): Promise<FinalRecord["result"] | null> {
+  const record = await getFinalRecord(mapId);
+  return record?.result?.passed ? record.result : null;
+}
+
+async function loadFinalView(map: SkillMap, userId: string): Promise<FinalView> {
+  const progress = await getProgress(map.id, userId);
+  const states = deriveNodeStates(map, progress);
+  const allProven = map.nodes.every((node) => states[node.id] === "proven");
+  const record = await getFinalRecord(map.id);
+  const attempts = record ? await Promise.all(record.attemptIds.map(getAttempt)) : [];
+  return finalView(record, attempts, allProven);
 }
 
 /** How the follow-up was answered. The browser reports it, like the explanation's integrity signals. */
@@ -107,14 +291,17 @@ export async function answerFollowUp(
   }
 
   const map = await loadOwnMap(attempt.mapId, userId);
-  const node = findNode(map, attempt.nodeId);
+  const isFinal = attempt.nodeId === FINAL_NODE_ID;
+  const node = isFinal ? null : findNode(map, attempt.nodeId);
 
   // One answer per attempt, even if several arrive at the same moment.
   await claimAnswer(attempt.id);
   try {
     const trimmedAnswer = answer.trim();
     const followUpStarted = performance.now();
-    const result = await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer);
+    const result = node
+      ? await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer)
+      : await gradeFinalAnswer(map, attempt.followUp.question, trimmedAnswer);
     const followUpMs = Math.round(performance.now() - followUpStarted);
 
     const finished: Attempt = {
@@ -136,14 +323,23 @@ export async function answerFollowUp(
 
     // Progress goes first. If saving the attempt then fails, the learner can simply
     // answer again, which would not be possible the other way round.
-    if (result.passed) await markProven(attempt.mapId, userId, node.id, attempt.id);
+    if (result.passed && node) await markProven(attempt.mapId, userId, node.id, attempt.id, attempt.format ?? "explain");
     await saveAttempt(finished);
+    if (isFinal) await settleFinal(map.id);
     return finished;
   } catch (error) {
     // Nothing was decided, so give the learner their retry back.
     await deleteDoc(answerClaimKey(attempt.id)).catch(() => undefined);
     throw error;
   }
+}
+
+/** After each final interview answer: once all three are in, the result is saved. */
+async function settleFinal(mapId: string): Promise<void> {
+  const record = await getFinalRecord(mapId);
+  if (!record || record.result) return;
+  const settled = settle(record, await Promise.all(record.attemptIds.map(getAttempt)));
+  if (settled !== record) await saveFinalRecord(settled);
 }
 
 /** Returns the attempt, or null. The id comes from a URL, so it must look like one of ours. */
@@ -205,10 +401,14 @@ export async function deleteLearnerData(userId: string): Promise<{ attempts: num
   const attempts = (await listDocs<Attempt>("attempts/")).filter((attempt) => attempt.ownerId === userId);
   // Progress keys are progress/<mapId>/<ownerId>/<nodeId>, so the key says whose it is.
   const progressKeys = (await listKeys("progress/")).filter((key) => key.split("/")[2] === userId);
+  const finals = (await listDocs<FinalRecord>("final/")).filter((record) => record.ownerId === userId);
+  const revealedKeys = (await listKeys("catch-revealed/")).filter((key) => key.split("/")[2] === userId);
 
   await Promise.all([
+    ...finals.map((record) => deleteDoc(`final/${record.mapId}`)),
     ...attempts.flatMap((attempt) => [deleteDoc(`attempts/${attempt.id}`), deleteDoc(answerClaimKey(attempt.id))]),
     ...progressKeys.map((key) => deleteDoc(key)),
+    ...revealedKeys.map((key) => deleteDoc(key)),
   ]);
   return { attempts: attempts.length, provenSkills: progressKeys.length };
 }
@@ -235,6 +435,9 @@ export function toLearnerView(attempt: Attempt): LearnerAttempt {
     status: attempt.status,
     createdAt: attempt.createdAt,
     ...(attempt.timing && { timing: attempt.timing }),
+    ...(attempt.format && { format: attempt.format }),
+    ...(attempt.plainLanguage && { plainLanguage: attempt.plainLanguage }),
+    ...(attempt.catch && { catch: attempt.catch }),
   };
   if (attempt.status !== "needs-followup") return view;
 
@@ -278,10 +481,16 @@ function checkExplanationLength(explanation: string): void {
 }
 
 /** One document per proven skill, so two skills proven at the same moment can't overwrite each other. */
-type ProvenRecord = { nodeId: string; attemptId: string; provenAt: string };
+type ProvenRecord = { nodeId: string; attemptId: string; provenAt: string; format?: ProofFormat };
 
-async function markProven(mapId: string, ownerId: string, nodeId: string, attemptId: string): Promise<void> {
-  const record: ProvenRecord = { nodeId, attemptId, provenAt: new Date().toISOString() };
+async function markProven(
+  mapId: string,
+  ownerId: string,
+  nodeId: string,
+  attemptId: string,
+  format: ProofFormat,
+): Promise<void> {
+  const record: ProvenRecord = { nodeId, attemptId, provenAt: new Date().toISOString(), format };
   await putDoc(`${progressKey(mapId, ownerId)}/${nodeId}`, record);
 }
 

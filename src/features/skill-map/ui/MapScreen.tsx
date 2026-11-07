@@ -6,6 +6,7 @@ import { HowItWorksButton } from "@/features/landing/client";
 import { ProgramCrumb } from "@/features/programs/client";
 import { ShareProofButton } from "@/features/proof/client";
 import { ProofReward, RelightCheck, StreakNudge, useMapHabits, type ProofRewardData } from "@/features/streaks/client";
+import { FinalInterview } from "@/features/teachback/client";
 import clsx from "clsx";
 import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -309,6 +310,10 @@ function LoadedMap({
             )}
           </div>
         </header>
+
+        {isOwner && (
+          <FinalInterview mapId={map.id} provenCount={provenCount} topicCount={map.nodes.length} voiceReady={voiceReady} />
+        )}
 
         <div className="flex items-center justify-between border-b border-rule">
           <ViewTabs view={view} onChange={setView} />

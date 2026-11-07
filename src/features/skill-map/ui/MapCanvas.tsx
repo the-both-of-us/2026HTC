@@ -12,6 +12,7 @@ import {
   type Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/base.css";
+import { assignFormats } from "@/features/teachback/client";
 import { Maximize, Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
@@ -101,6 +102,7 @@ function Canvas({
 
   const nodes = useMemo<SkillFlowNode[]>(() => {
     const skillById = new Map(skills.map((skill) => [skill.id, skill]));
+    const formats = assignFormats(skills);
     return layout.nodes.flatMap((placed) => {
       const skill = skillById.get(placed.id);
       if (!skill) return [];
@@ -134,6 +136,7 @@ function Canvas({
           avatars: avatars?.[skill.id] ?? [],
           dim: dim?.[skill.id] ?? 0,
           featured: featuredId === skill.id,
+          format: formats[skill.id],
         },
       };
     });

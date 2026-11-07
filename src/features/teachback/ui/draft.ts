@@ -11,6 +11,8 @@ export type Draft = {
   /** Only while a follow-up is waiting for its answer. */
   openAttempt: Attempt | null;
   integrity: SavedIntegrity;
+  /** The learner swapped this topic's format for plain "Explain it". Allowed once. */
+  swapped?: boolean;
 };
 
 function draftKey(mapId: string, nodeId: string): string {

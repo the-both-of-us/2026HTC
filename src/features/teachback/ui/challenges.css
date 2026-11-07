@@ -1,0 +1,86 @@
+/*
+ * Motion for the proving formats: the catch reveal, the clean-sweep stamp, the 30-second
+ * clock and the course badge. Like the rest of the app, it only runs for people who have
+ * not asked for reduced motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  /* The reveal: each sentence flips in, one after another. */
+  @keyframes reveal-row {
+    from {
+      opacity: 0;
+      transform: rotateX(70deg) translateY(-6px);
+    }
+  }
+
+  .reveal-row {
+    animation: reveal-row 420ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  /* "Clean sweep" lands like a rubber stamp. */
+  @keyframes stamp {
+    0% {
+      opacity: 0;
+      transform: scale(2.2) rotate(-12deg);
+    }
+    70% {
+      opacity: 1;
+      transform: scale(0.94) rotate(-4deg);
+    }
+    100% {
+      transform: scale(1) rotate(-4deg);
+    }
+  }
+
+  .catch-stamp {
+    animation: stamp 480ms cubic-bezier(0.3, 1.4, 0.5, 1) 700ms both;
+  }
+
+  /* The last ten seconds of the clock pulse. */
+  @keyframes clock-pulse {
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  .clock-urgent {
+    animation: clock-pulse 1s ease-in-out infinite;
+  }
+
+  /* The course badge rises in, and bits of colour burst out from it. */
+  @keyframes badge-rise {
+    from {
+      opacity: 0;
+      transform: scale(0.4) rotate(-20deg);
+    }
+  }
+
+  .badge-rise {
+    animation: badge-rise 700ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+
+  @keyframes burst {
+    from {
+      opacity: 1;
+      transform: translate(0, 0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translate(var(--burst-x), var(--burst-y)) scale(0.4);
+    }
+  }
+
+  .burst-bit {
+    animation: burst 1100ms cubic-bezier(0.1, 0.7, 0.3, 1) both;
+  }
+}
+
+.burst-bit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+}

@@ -101,6 +101,22 @@ export type FollowUp = {
 
 export type AttemptStatus = "needs-followup" | "proven" | "not-yet";
 
+/**
+ * How a skill was proved. "explain" is the original teach-back, "catch" is finding the AI's
+ * planted mistakes, "kid" is explaining to a 10-year-old, "timed" is saying it in 30 seconds.
+ * "final" marks a question in a course's final interview, which is not tied to one skill.
+ */
+export type ProofFormat = "explain" | "catch" | "kid" | "timed" | "final";
+
+/** A finished "Catch the mistake" round, kept on its attempt. Sentence numbers start at 1. */
+export type CatchRecord = {
+  sentences: string[];
+  /** Where the AI planted its mistakes, and what was wrong with each. */
+  planted: { sentence: number; why: string }[];
+  /** The sentences the learner tapped, with their correction. fixed is false for a correct sentence. */
+  picks: { sentence: number; correction: string; fixed: boolean }[];
+};
+
 export type Attempt = {
   id: string;
   mapId: string;
@@ -117,6 +133,12 @@ export type Attempt = {
    * quotes plus code checking them and computing the score. Missing on attempts saved before Nov 7.
    */
   timing?: { gradeMs: number; followUpMs: number | null };
+  /** Missing on attempts saved before formats existed, which were all "explain". */
+  format?: ProofFormat;
+  /** Only for "kid": the Flesch-Kincaid reading grade code measured, and whether it was plain enough. */
+  plainLanguage?: { readingGrade: number; passed: boolean };
+  /** Only for "catch". */
+  catch?: CatchRecord;
 };
 
 /** Progress for one user on one map. */

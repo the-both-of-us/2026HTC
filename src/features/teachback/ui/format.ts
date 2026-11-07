@@ -39,6 +39,11 @@ export function scoreBreakdown(attempt: Attempt, checkpointTotal: number): strin
   return `${met}, minus ${20 * errors} for ${plural(errors, "factual error")}.`;
 }
 
+/** "Explain it to a 10-year-old" with a passing score, but too hard to read. */
+function tooHardToRead(attempt: Attempt): boolean {
+  return attempt.plainLanguage?.passed === false && attempt.grade.score >= PASS_SCORE;
+}
+
 /** True when the score passed but the learner did not pass the follow-up question. */
 function failedFollowUp(attempt: Attempt): boolean {
   return attempt.followUp?.passed === false;
@@ -48,6 +53,7 @@ export function verdictTitle(attempt: Attempt): string {
   if (attempt.status === "proven") return "Proven";
   if (attempt.status === "needs-followup") return "Passing score. One question left.";
   if (failedFollowUp(attempt)) return "Not yet. That answer left a gap.";
+  if (tooHardToRead(attempt)) return "So close. Now make it simpler.";
 
   const missed = attempt.grade.checkpoints.length - metCount(attempt.grade);
   if (missed > 0) return `Not yet. ${plural(missed, "checkpoint")} to add.`;
@@ -63,6 +69,9 @@ export function nextStepSentence(attempt: Attempt): string {
   }
   if (failedFollowUp(attempt)) {
     return "Strengthen that part of your explanation and check again. You will get a new question.";
+  }
+  if (tooHardToRead(attempt)) {
+    return `Your facts are right, but it reads at grade ${Math.round(attempt.plainLanguage!.readingGrade)}. Use shorter sentences and everyday words, then check again.`;
   }
 
   const missed = attempt.grade.checkpoints.length - metCount(attempt.grade);

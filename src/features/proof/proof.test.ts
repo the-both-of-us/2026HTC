@@ -228,6 +228,43 @@ describe("attemptProvesNode", () => {
   });
 });
 
+describe("proving formats on the record", () => {
+  const map = makeMap();
+  const node = map.nodes[0];
+  const record = {
+    sentences: ["Joins combine tables.", "An inner join keeps every row."],
+    planted: [{ sentence: 2, why: "An inner join keeps only matching rows." }],
+    picks: [{ sentence: 2, correction: "It keeps only matching rows.", fixed: true }],
+  };
+  const caught = makeAttempt(map, "joins", {
+    format: "catch",
+    catch: record,
+    followUp: null,
+    explanation: "Sentence 2: It keeps only matching rows.",
+    grade: {
+      score: 100,
+      checkpoints: [{ checkpoint: "Inner join keeps only matches", quote: "It keeps only matching rows.", met: true }],
+      misconceptions: [],
+      rejectedQuotes: 0,
+    },
+  });
+
+  it("accepts a caught mistake with no follow-up, and shows the round", () => {
+    expect(attemptProvesNode(caught, map, node)).toBe(true);
+    const skill = buildSnapshot({ ...snapshotInput(map, caught), attempts: { joins: caught } }).skills[0];
+    expect(skill.format).toBe("catch");
+    expect(skill.catch?.planted).toEqual(record.planted);
+  });
+
+  it("still needs a follow-up for every other format", () => {
+    expect(attemptProvesNode({ ...caught, format: "kid", catch: undefined }, map, node)).toBe(false);
+  });
+
+  it("leaves format out for Explain it, so older records keep their fingerprint", () => {
+    expect(snapshotFor(map, makeAttempt(map, "joins")).skills[0]).not.toHaveProperty("format");
+  });
+});
+
 describe("the fingerprint", () => {
   const map = makeMap();
   const attempt = makeAttempt(map, "joins");

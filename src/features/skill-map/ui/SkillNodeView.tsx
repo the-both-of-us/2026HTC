@@ -2,6 +2,7 @@ import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import clsx from "clsx";
 import { Briefcase, FileText, Lock, Star } from "lucide-react";
 import type { CSSProperties } from "react";
+import { FormatBadge, type TopicFormat } from "@/features/teachback/client";
 import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { NODE_STATE_LABELS, StateMark } from "@/shared/ui";
 import { NODE_HEIGHT, NODE_WIDTH } from "./layout";
@@ -21,6 +22,8 @@ export type SkillNodeData = {
   dim: number;
   /** Today's topic of the day. */
   featured: boolean;
+  /** How this topic is proved: see assignFormats. */
+  format?: TopicFormat;
 };
 
 export type SkillFlowNode = Node<SkillNodeData, "skill">;
@@ -44,7 +47,7 @@ const DIM_CLASSES = ["", "opacity-80 saturate-50", "opacity-60 saturate-25", "op
 
 /** One skill on the map. Its edge, its status dot and its words all say its state. */
 export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
-  const { skill, state, layer, selected, reveal, justProven, justUnlocked, avatars, dim, featured } = data;
+  const { skill, state, layer, selected, reveal, justProven, justUnlocked, avatars, dim, featured, format } = data;
   const fading = state === "proven" && dim > 0;
 
   return (
@@ -87,13 +90,17 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
         </div>
         <p className="flex items-center justify-between gap-2 text-[13px] leading-none">
           <span>{fading ? "Fading, relight it" : NODE_STATE_LABELS[state]}</span>
-          {featured && state === "available" && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber">
-              <Star aria-hidden="true" size={11} />
-              Today
-            </span>
-          )}
-          {skill.fromSource && <JobAsksTag kind={skill.citation?.kind} />}
+          <span className="flex items-center gap-1">
+            {featured && state === "available" && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber">
+                <Star aria-hidden="true" size={11} />
+                Today
+              </span>
+            )}
+            {format && state !== "proven" && <FormatBadge format={format} compact />}
+            {/* The panel still says so. On the card, today's topic needs the room. */}
+            {skill.fromSource && !(featured && state === "available") && <JobAsksTag kind={skill.citation?.kind} />}
+          </span>
         </p>
       </div>
       {avatars.length > 0 && <Avatars initials={avatars} />}

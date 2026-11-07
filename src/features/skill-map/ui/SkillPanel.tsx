@@ -1,7 +1,7 @@
 import { FlashcardsTab } from "@/features/flashcards/client";
 import { ShareProofButton } from "@/features/proof/client";
 import { QuizTab } from "@/features/quiz/client";
-import { TeachBackPanel } from "@/features/teachback/client";
+import { assignFormats, FormatBadge, TeachBackPanel } from "@/features/teachback/client";
 import clsx from "clsx";
 import { BadgeCheck, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
@@ -62,6 +62,7 @@ export function SkillPanel({
   const dependants = skills.filter((other) => other.prerequisites.includes(skill.id));
   const allProven = skills.every((other) => states[other.id] === "proven");
   const provenCount = skills.filter((other) => states[other.id] === "proven").length;
+  const format = assignFormats(skills)[skill.id];
   // These tabs are typed for a full SkillNode, but only show its title and citation. Their
   // routes load the checkpoints on the server, so the browser never needs them.
   const studySkill = { ...skill, checkpoints: [] };
@@ -132,6 +133,7 @@ export function SkillPanel({
               </h2>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={state} />
+                <FormatBadge format={format} compact />
                 {skill.fromSource ? (
                   <JobAsksTag kind={skill.citation?.kind} />
                 ) : (
@@ -216,6 +218,7 @@ export function SkillPanel({
                 node={skill}
                 state={state}
                 voiceReady={voiceReady}
+                format={format}
                 onProven={onProven}
                 nextStep={nextStep}
                 evidenceAction={provenCount > 0 && <ShareProofButton mapId={mapId} provenCount={provenCount} />}

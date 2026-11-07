@@ -6,10 +6,13 @@ import { VoiceInterview, type InputMethod, type VoiceVerdict } from "@/features/
 import type { Attempt, NodeState, PublicSkillNode } from "@/shared/types";
 import { ErrorNotice, Spinner } from "@/shared/ui";
 import { fetchAttempt, fetchProvenAttempt, submitExplanation, submitFollowUp } from "./api";
+import { FORMAT_LABELS, type TopicFormat } from "../formats";
 import { AttemptResult } from "./AttemptResult";
+import { CatchResult, CatchRound } from "./CatchRound";
 import { clearDraft, loadDraft, saveDraft } from "./draft";
 import { ExplainForm } from "./ExplainForm";
 import { FollowUpForm } from "./FollowUpForm";
+import { FormatBadge } from "./FormatBadge";
 import { resultAnnouncement } from "./format";
 import { useIntegrity } from "./useIntegrity";
 
@@ -25,6 +28,8 @@ export type TeachBackPanelProps = {
   evidenceAction?: ReactNode;
   /** The server checked its voice key works. Without it, the follow-up is a plain typed form. */
   voiceReady?: boolean;
+  /** How this topic is proved. See assignFormats. */
+  format?: TopicFormat;
 };
 
 /** The teach-back for one skill. Switching skills starts this panel afresh. */
@@ -32,7 +37,7 @@ export function TeachBackPanel(props: TeachBackPanelProps) {
   return <Panel key={`${props.mapId}/${props.node.id}`} {...props} />;
 }
 
-function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceReady = false }: TeachBackPanelProps) {
+function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceReady = false, format = "explain" }: TeachBackPanelProps) {
   // This panel only mounts after a click in the browser, so sessionStorage is safe to read here.
   const [draft] = useState(() => loadDraft(mapId, node.id));
   const [text, setText] = useState(draft?.text ?? "");
@@ -41,6 +46,9 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
   const [requestError, setRequestError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const integrity = useIntegrity(draft?.integrity);
+  // The topic's format, unless the learner swapped to plain "Explain it" (once per topic).
+  const [swapped, setSwapped] = useState(draft?.swapped ?? false);
+  const active: TopicFormat = swapped ? "explain" : format;
 
   // Keep what the learner has so far, so clicking another skill or reloading loses nothing.
   useEffect(() => {
@@ -49,8 +57,9 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
       text,
       openAttempt: attempt?.status === "needs-followup" ? attempt : null,
       integrity: integrity.toSave(),
+      swapped,
     });
-  }, [mapId, node.id, state, text, attempt, integrity]);
+  }, [mapId, node.id, state, text, attempt, integrity, swapped]);
 
   const resultHeading = useRef<HTMLHeadingElement>(null);
   const followUpArea = useRef<HTMLDivElement>(null);
@@ -100,7 +109,9 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
       startedAfterMs.current = undefined;
     }
     setAttempt(next);
-    setAnnouncement(resultAnnouncement(next, node.title, node.checkpointCount));
+    // A catch round's checkpoints are its planted mistakes, not the topic's checkpoints.
+    const total = next.format === "catch" ? next.grade.checkpoints.length : node.checkpointCount;
+    setAnnouncement(resultAnnouncement(next, node.title, total));
     if (next.status === "proven") {
       clearDraft(mapId, node.id);
       onProven(node.id);
@@ -118,6 +129,7 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
       nodeId: node.id,
       explanation,
       integrity: integrity.signalsFor(explanation),
+      ...(active !== "explain" && { format: active }),
     });
 
     setPending(false);
@@ -161,7 +173,7 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
     const finished = await sendFollowUp(attemptId, answer, inputMethod);
     // Throwing keeps the words in the interview, with a way to send them again.
     if (!finished) throw new Error("The answer was not sent.");
-    saveDraft(mapId, node.id, { text, openAttempt: null, integrity: integrity.toSave() });
+    saveDraft(mapId, node.id, { text, openAttempt: null, integrity: integrity.toSave(), swapped });
     spokenResult.current = finished;
     return { passed: finished.status === "proven", feedback: finished.followUp?.feedback ?? null };
   }
@@ -175,7 +187,7 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
   function finishFollowUp(finished: Attempt) {
     // This panel may have closed while grading ran, and only the draft outlives it.
     // Without this, coming back would show a question that can't be answered again.
-    saveDraft(mapId, node.id, { text, openAttempt: null, integrity: integrity.toSave() });
+    saveDraft(mapId, node.id, { text, openAttempt: null, integrity: integrity.toSave(), swapped });
     showResult(finished);
   }
 
@@ -184,6 +196,12 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
       {announcement}
     </div>
   );
+
+  function swapToExplain() {
+    setSwapped(true);
+    setAttempt(null);
+    setRequestError(null);
+  }
 
   // A proven skill with no result in memory: this panel was opened after the fact.
   if (state === "proven" && attempt?.status !== "proven") {
@@ -195,11 +213,44 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
     );
   }
 
+  const catchResult = attempt?.format === "catch";
+  const formatHeader = !(attempt?.status === "proven") && (
+    <div className="flex flex-col items-start gap-2">
+      <FormatBadge format={active} />
+      <p className="text-sm text-ink-soft">{FORMAT_LABELS[active].prompt}</p>
+      {/* One swap per topic, and only before a follow-up question is waiting. */}
+      {format !== "explain" && !swapped && attempt?.status !== "needs-followup" && !catchResult && (
+        <button
+          type="button"
+          onClick={swapToExplain}
+          className="cursor-pointer text-sm text-accent-bright underline underline-offset-4"
+        >
+          Not feeling it? Swap to plain &ldquo;Explain it&rdquo; (once per topic)
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-8">
       {liveRegion}
+      {formatHeader}
 
-      {attempt && (
+      {attempt && catchResult && (
+        <CatchResult
+          attempt={attempt}
+          headingRef={resultHeading}
+          nextStep={nextStep}
+          evidenceAction={evidenceAction}
+          onExplainInstead={swapToExplain}
+        />
+      )}
+
+      {active === "catch" && !attempt && (
+        <CatchRound mapId={mapId} nodeId={node.id} integrity={integrity} onResult={showResult} onExplainInstead={swapToExplain} />
+      )}
+
+      {attempt && !catchResult && (
         <AttemptResult
           attempt={attempt}
           skillTitle={node.title}
@@ -235,8 +286,9 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
         </AttemptResult>
       )}
 
-      {(!attempt || attempt.status === "not-yet") && (
+      {active !== "catch" && (!attempt || attempt.status === "not-yet") && (
         <ExplainForm
+          format={active}
           mapId={mapId}
           nodeId={node.id}
           skillTitle={node.title}
@@ -281,6 +333,10 @@ function ProvenSummary({
       current = false;
     };
   }, [mapId, node.id, loadCount]);
+
+  if (attempt?.format === "catch") {
+    return <CatchResult attempt={attempt} headingRef={heading} evidenceAction={evidenceAction} />;
+  }
 
   if (attempt) {
     return (

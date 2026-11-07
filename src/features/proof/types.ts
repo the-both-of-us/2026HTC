@@ -1,4 +1,4 @@
-import type { IntegritySignals, SourceKind } from "@/shared/types";
+import type { CatchRecord, IntegritySignals, SourceKind } from "@/shared/types";
 
 /** One checkpoint as it appears on the evidence page. */
 export type ProofCheckpoint = {
@@ -40,7 +40,19 @@ export type ProofSkill = {
   integrity: IntegritySignals;
   source: ProofSource;
   attemptedAt: string;
+  /**
+   * How it was proved. Left out for "Explain it", so records published before formats
+   * existed keep their fingerprint. A "catch" skill has no follow-up: its fields are empty.
+   */
+  format?: "catch" | "kid" | "timed";
+  /** Only for "catch": the AI's sentences, where its mistakes were, and what the person tapped. */
+  catch?: CatchRecord;
+  /** Only for "kid": the reading grade code measured. */
+  readingGrade?: number;
 };
+
+/** A passed final interview: three questions mixing the course's topics, two needed to pass. */
+export type ProofFinalInterview = { passedCount: number; spokenCount: number; finishedAt: string };
 
 /** A "Read the Grid" question the person answered correctly, checked by code on the server. */
 export type ProofGridSolve = {
@@ -76,6 +88,8 @@ export type ProofSnapshot = {
    * set empty, so a record published before this field existed keeps the same fingerprint.
    */
   grid?: ProofGridSolve[];
+  /** Only once the final interview was passed. Left out otherwise, like grid. */
+  finalInterview?: ProofFinalInterview;
   publishedAt: string;
 };
 
