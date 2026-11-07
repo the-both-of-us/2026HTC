@@ -78,16 +78,17 @@ Every skeleton screen is a working placeholder at its URL, so you can replace th
 
 ## Mirza's work, in order
 
-Each step is done when it works in the running app with no raw errors on screen.
+Each step is done when it works in the running app with no raw errors on screen. The details, data shapes, cloud choices and the list of things Mirza needs from Abdu are in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
-1. **`flashcards`:** generate cards per node with `chatJSON` and save them. Flip with Space, including a keyboard-only path. Show a citation when the card has one.
-2. **`quiz`:** generate multiple-choice questions per node, answer with keys 1-4, and explain every answer.
-3. **`courses`:** publish a map, browse, like (once per user), and start someone's course. Seed it with real, useful courses, never "Test Course 1".
-4. **`network`:** match by proven skills. The Prompt 2 "networks" part depends on this. Any demo profile must be visibly labelled as a demo.
-5. **`dashboard`:** your maps, what's proven, what's due, and your streak.
-6. **`review`:** a spaced repetition queue of due flashcards using SM-2.
-7. **`battle` (stretch):** scan a QR code and play a live quiz. Polling every 1-2 seconds is fine.
-8. **`docs/submission/`:** the Devpost text and the 2-5 minute video script. Start by 10 PM tonight.
+1. **`flashcards`:** generate cards per node with `chatJSON` and save them, so each node costs one AI call at most. Generate the sample postings' cards in advance. Flip with Space, including a keyboard-only path. Show a citation only when it is verified.
+2. **`quiz`:** generate multiple-choice questions per node, saved and generated in advance the same way. Answer with keys 1-4, and explain every answer.
+3. **`courses`:** every map is a private course until its owner publishes it. Browse, like (once per user, signed in), and start someone's course, which copies it to you. Seed it with real, useful courses, never "Test Course 1".
+4. **`auth`:** optional sign-in and sign-out with Auth0 (an MLH category). Never a login wall. Signing in keeps your courses on every device. Signing out starts a fresh guest.
+5. **`network`:** match by proven skills. The Prompt 2 "networks" part depends on this. Any demo profile must be visibly labelled as a demo.
+6. **`dashboard`:** your courses (private and public), what's proven, what's due, and your streak.
+7. **`review`:** a spaced repetition queue of due flashcards using SM-2.
+8. **`battle` (stretch):** scan a QR code and play a live quiz. Polling every 1-2 seconds is fine.
+9. **`docs/submission/`:** the Devpost text, the AI disclosure, the MLH categories we use, and a video script that fits the 3-minute presentation. Start by 10 PM tonight.
 
 ## Timeline
 
