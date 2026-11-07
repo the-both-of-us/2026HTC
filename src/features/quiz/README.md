@@ -71,3 +71,7 @@ When a button press removes the focused control (making a quiz, an error, trying
 ## Delete my data
 
 `deleteForMaps(mapIds)` removes the saved items for those maps. "Delete my data" calls it with the user's own map ids, before deleting the maps. Ids that aren't UUIDs are ignored, and it can run twice.
+
+## Model
+
+Generation asks **Gemini** first (`preferredRoute: "gemini"`), then the usual route order if Gemini has no key or fails. Gemini is slower than the other routes, but each skill waits for it once, since the result is saved.

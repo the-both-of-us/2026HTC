@@ -1,4 +1,4 @@
-import { chatJSON } from "@/features/ai";
+import { chatJSON, type RouteName } from "@/features/ai";
 import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
@@ -19,6 +19,13 @@ export const REQUEST_TIMEOUT_MS = 15_000;
  * maxDuration, so the learner gets our sentence and not a platform timeout page.
  */
 export const GENERATION_DEADLINE_MS = 45_000;
+
+/**
+ * Gemini is asked first (an MLH prize category). It is slower than the other routes, which
+ * suits this call: the result is saved, so each skill waits for it once. Without
+ * GEMINI_API_KEY the route is skipped and the usual order answers.
+ */
+export const PREFERRED_ROUTE: RouteName = "gemini";
 
 type SavedQuiz = { items: QuizQuestion[]; createdAt: string };
 
@@ -96,6 +103,7 @@ async function loadOrGenerate({ map, node, key }: Found, options: CreateOptions)
       schema: rawQuizSchema,
       maxTokens: 2000,
       timeoutMs: REQUEST_TIMEOUT_MS,
+      preferredRoute: PREFERRED_ROUTE,
     }),
   );
 
