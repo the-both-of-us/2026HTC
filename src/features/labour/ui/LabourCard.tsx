@@ -6,7 +6,7 @@ export function LabourCard({ snapshot }: { snapshot: LabourSnapshot | null }) {
   if (!snapshot) return null;
   const { alberta, canada, calgary } = snapshot.unemployment;
   return (
-    <Card aria-label="Labour market snapshot">
+    <Card role="group" aria-label="Labour market snapshot">
       <p className="text-sm text-ink-soft">Unemployment rate, {snapshot.referencePeriod}</p>
       <p className="mt-2 text-xl text-ink">
         Alberta <strong>{alberta.value}%</strong>, Canada <strong>{canada.value}%</strong>
@@ -21,7 +21,8 @@ export function LabourCard({ snapshot }: { snapshot: LabourSnapshot | null }) {
         <a className="underline" href={snapshot.source.url}>
           {snapshot.source.name}
         </a>
-        , seasonally adjusted. Retrieved {snapshot.retrievedAt.slice(0, 10)}
+        , seasonally adjusted{calgary ? "; Calgary is a three-month moving average" : ""}. Retrieved{" "}
+        {snapshot.retrievedAt.slice(0, 10)}
         {snapshot.stale ? " (last saved copy, Statistics Canada did not respond)" : ""}.
       </p>
     </Card>
