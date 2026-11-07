@@ -1,0 +1,207 @@
+{
+  "sampleId": "junior-backend",
+  "generatedAt": "2026-11-07T22:38:18.482Z",
+  "plan": {
+    "isLearnable": true,
+    "isBroad": true,
+    "title": "Junior Backend Developer",
+    "summary": "Prepare to build, test, and maintain backend services for real-world scheduling software.",
+    "courses": [
+      {
+        "slug": "programming-fundamentals-typescript",
+        "title": "Programming Fundamentals with TypeScript",
+        "summary": "Learn core programming concepts and TypeScript syntax to write clear code.",
+        "requires": []
+      },
+      {
+        "slug": "git-collaborative-workflows",
+        "title": "Git Version Control and Collaboration",
+        "summary": "Master branching, pull requests, and code‑review practices for team development.",
+        "requires": [
+          "programming-fundamentals-typescript"
+        ]
+      },
+      {
+        "slug": "nodejs-rest-api",
+        "title": "Building REST APIs with Node.js",
+        "summary": "Create robust HTTP endpoints, understand methods, status codes, and caching headers.",
+        "requires": [
+          "programming-fundamentals-typescript",
+          "git-collaborative-workflows"
+        ]
+      },
+      {
+        "slug": "postgresql-databases",
+        "title": "PostgreSQL Database Design and SQL",
+        "summary": "Design tables, write migrations, index queries, and use joins and aggregates effectively.",
+        "requires": [
+          "programming-fundamentals-typescript"
+        ]
+      },
+      {
+        "slug": "testing-transactions-logging",
+        "title": "Testing, Transactions, and Logging",
+        "summary": "Write automated tests, use database transactions safely, and trace production errors.",
+        "requires": [
+          "nodejs-rest-api",
+          "postgresql-databases"
+        ]
+      },
+      {
+        "slug": "auth-validation-deployment",
+        "title": "Authentication, Validation, and Deployment Basics",
+        "summary": "Implement secure authentication, input validation, and get started with Docker and job queues.",
+        "requires": [
+          "testing-transactions-logging"
+        ]
+      }
+    ]
+  },
+  "courses": {
+    "programming-fundamentals-typescript": {
+      "isTopic": true,
+      "title": "Programming fundamentals with TypeScript",
+      "nodes": [
+        {
+          "id": "variables-data-types",
+          "title": "Variables and data types",
+          "why": "to store and manipulate values in a program",
+          "prerequisites": [],
+          "checkpoints": [
+            "A variable declaration creates a named memory location that can hold a value.",
+            "JavaScript primitive types include number, string, boolean, null, undefined, and symbol.",
+            "Assigning a value of a different type to a variable does not change its type because JavaScript variables are dynamically typed.",
+            "Using const creates a read‑only binding, so the variable cannot be reassigned."
+          ]
+        },
+        {
+          "id": "control-flow",
+          "title": "Control flow statements",
+          "why": "to direct execution based on conditions and loops",
+          "prerequisites": [
+            "variables-data-types"
+          ],
+          "checkpoints": [
+            "An if statement evaluates a boolean expression and executes the consequent block only when true.",
+            "A for loop repeats a block a known number of times, initializing a loop variable, testing a condition, and updating the variable each iteration.",
+            "A while loop repeats as long as its condition evaluates to true, checking the condition before each iteration.",
+            "Using break exits the nearest enclosing loop, so code after the loop continues execution."
+          ]
+        },
+        {
+          "id": "functions-scope",
+          "title": "Functions and scope",
+          "why": "to encapsulate reusable logic and manage variable visibility",
+          "prerequisites": [
+            "control-flow"
+          ],
+          "checkpoints": [
+            "A function definition creates a callable object with its own lexical scope.",
+            "Parameters are local variables initialized with the arguments passed at call time.",
+            "Variables declared with let or const inside a function are not accessible outside that function.",
+            "Returning undefined occurs when a function reaches its end without an explicit return statement."
+          ]
+        },
+        {
+          "id": "typescript-basic-types",
+          "title": "TypeScript basic types",
+          "why": "to add static type information to variables and functions",
+          "prerequisites": [
+            "variables-data-types",
+            "functions-scope"
+          ],
+          "checkpoints": [
+            "TypeScript adds type annotations like : number to variable declarations.",
+            "When a value's type does not match its annotation, the compiler emits an error.",
+            "The any type disables type checking, so any value is assignable to it.",
+            "Union types combine multiple possible types using the pipe symbol."
+          ]
+        },
+        {
+          "id": "interfaces-aliases",
+          "title": "Interfaces and type aliases",
+          "why": "to define custom object shapes for compile‑time checking",
+          "prerequisites": [
+            "typescript-basic-types"
+          ],
+          "checkpoints": [
+            "An interface declares named properties and their types for an object.",
+            "A type alias can name any type, including unions and intersections.",
+            "An object must have at least the properties required by an interface, otherwise the compiler errors.",
+            "Optional properties are marked with ?, so they are omitted without error."
+          ]
+        },
+        {
+          "id": "classes-inheritance",
+          "title": "Classes and inheritance",
+          "why": "to model objects with behavior and reuse code through extensions",
+          "prerequisites": [
+            "interfaces-aliases"
+          ],
+          "checkpoints": [
+            "A class defines a constructor and member methods that become part of its prototype.",
+            "The extends keyword creates a subclass that inherits members from its parent class.",
+            "Super must be called in a subclass constructor before accessing this.",
+            "Private fields declared with # are inaccessible outside the class, causing a compile‑time error if accessed."
+          ]
+        },
+        {
+          "id": "generics",
+          "title": "Generics in TypeScript",
+          "why": "to write reusable components that work with multiple types",
+          "prerequisites": [
+            "classes-inheritance"
+          ],
+          "checkpoints": [
+            "A generic type parameter is declared in angle brackets after the identifier.",
+            "When a generic function is called, the type argument is inferred from the provided arguments.",
+            "Specifying a type argument explicitly overrides inference.",
+            "Using a generic constraint with extends limits the permitted types."
+          ]
+        },
+        {
+          "id": "modules",
+          "title": "Modules and imports",
+          "why": "to organize code into separate files and manage dependencies",
+          "prerequisites": [
+            "generics"
+          ],
+          "checkpoints": [
+            "An import statement brings exported bindings from another module into the current scope.",
+            "Exported values are declared with export keyword, making them accessible to other modules.",
+            "Default export allows a module to expose a single primary value without curly braces.",
+            "Circular imports cause runtime undefined values because modules are evaluated sequentially."
+          ]
+        },
+        {
+          "id": "error-handling",
+          "title": "Error handling with try/catch",
+          "why": "to manage exceptions and keep the program running",
+          "prerequisites": [
+            "modules"
+          ],
+          "checkpoints": [
+            "A try block executes code that may throw an exception.",
+            "When an exception is thrown, control transfers to the matching catch block.",
+            "The finally block runs after try or catch, regardless of whether an exception occurred.",
+            "Throwing a non‑Error object still triggers catch, but stack traces are missing."
+          ]
+        },
+        {
+          "id": "tsconfig",
+          "title": "TypeScript configuration",
+          "why": "to compile source files with consistent compiler options",
+          "prerequisites": [
+            "error-handling"
+          ],
+          "checkpoints": [
+            "The tsconfig.json file defines the root files and compiler options for the project.",
+            "Setting target specifies the JavaScript version that the output will conform to.",
+            "Strict mode enables a set of type‑checking options that catch common mistakes.",
+            "Excluding node_modules prevents the compiler from processing third‑party libraries."
+          ]
+        }
+      ]
+    }
+  }
+}

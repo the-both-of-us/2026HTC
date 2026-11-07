@@ -26,6 +26,17 @@ const MODES = [
 type Mode = (typeof MODES)[number]["id"];
 const nounOf = (mode: Mode) => MODES.find((item) => item.id === mode)?.noun ?? "posting";
 
+/**
+ * How big to make it. A broad goal, such as a whole job or "web development", becomes a
+ * program of courses. "Decide for me" asks the AI, using the rubric in the programs feature.
+ */
+const SHAPES = [
+  { id: "auto", label: "Decide for me" },
+  { id: "program", label: "Full program" },
+  { id: "course", label: "One course" },
+] as const;
+type Shape = (typeof SHAPES)[number]["id"];
+
 const couldNotBuild = (mode: Mode) =>
   `The map could not be built this time. Your ${nounOf(mode)} is still here, so you can try again.`;
 const couldNotConnect = (mode: Mode) =>
@@ -55,6 +66,7 @@ const DEFAULT_LOOK = { ...SAMPLE_LOOKS["data-analyst-grid"], icon: Briefcase };
 export function PostingForm({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("posting");
+  const [shape, setShape] = useState<Shape>("auto");
   const [text, setText] = useState("");
   const [topic, setTopic] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -122,9 +134,10 @@ export function PostingForm({ children }: { children: ReactNode }) {
       setFieldError("That is too short to be a full posting. Paste all of it, including the requirements.");
       return null;
     }
-    const body = buildMode === "topic" ? { text: value, kind: "topic" } : { text: value };
+    const body = buildMode === "topic" ? { text: value, kind: "topic", shape } : { text: value, shape };
     return {
-      url: "/api/maps",
+      // One course goes straight to the map builder. Anything else may become a program.
+      url: shape === "course" ? "/api/maps" : "/api/programs",
       init: { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
     };
   }
@@ -145,7 +158,9 @@ export function PostingForm({ children }: { children: ReactNode }) {
       const response = await fetch(request.url, { ...request.init, signal: abort.signal });
       const body = await response.json().catch(() => null);
 
-      if (!response.ok || typeof body?.id !== "string") {
+      // A program answers with programId, a single map with id (or mapId from the programs route).
+      const mapId = body?.id ?? body?.mapId;
+      if (!response.ok || (typeof mapId !== "string" && typeof body?.programId !== "string")) {
         // The API writes its `error` field as a sentence meant for people.
         setRequestError(typeof body?.error === "string" ? body.error : couldNotBuild(buildMode));
         setPending(false);
@@ -153,7 +168,7 @@ export function PostingForm({ children }: { children: ReactNode }) {
       }
 
       // Stay in the loading state until the map page replaces this one.
-      router.push(`/map/${body.id}`);
+      router.push(typeof body.programId === "string" ? `/program/${body.programId}` : `/map/${mapId}`);
     } catch {
       if (!abort.signal.aborted) setRequestError(couldNotConnect(buildMode));
       setPending(false);
@@ -284,6 +299,29 @@ export function PostingForm({ children }: { children: ReactNode }) {
           </Field>
         )}
 
+        {mode !== "pdf" && (
+          <div role="group" aria-label="How big to make it" className="relative flex flex-wrap items-center gap-2">
+            <span className="text-sm text-ink-soft">Size:</span>
+            {SHAPES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={shape === item.id}
+                disabled={pending}
+                onClick={() => setShape(item.id)}
+                className={clsx(
+                  "cursor-pointer rounded-full border px-3 py-1 text-sm transition-control disabled:cursor-default",
+                  shape === item.id
+                    ? "border-violet/60 bg-violet/12 text-ink"
+                    : "border-rule-strong text-ink-soft hover:border-ink-soft hover:text-ink",
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loadedSample && (
           <p className="relative flex flex-wrap items-center gap-2 text-sm text-ink-soft">
             <Badge tone="sample">Sample text</Badge>
@@ -305,7 +343,7 @@ export function PostingForm({ children }: { children: ReactNode }) {
           </Button>
         </div>
 
-        {pending && <BuildStatus seconds={seconds} mode={mode} />}
+        {pending && <BuildStatus seconds={seconds} mode={mode} planning={mode !== "pdf" && shape !== "course"} />}
 
         {requestError && <ErrorNotice message={requestError} onRetry={() => buildMap(mode, text)} />}
       </form>
@@ -378,7 +416,7 @@ const WORKING_ON: Record<Mode, string> = {
   topic: "Working out the skills in this topic and what each one depends on.",
 };
 
-function BuildStatus({ seconds, mode }: { seconds: number; mode: Mode }) {
+function BuildStatus({ seconds, mode, planning }: { seconds: number; mode: Mode; planning: boolean }) {
   const isSlow = seconds >= SLOW_AFTER_SECONDS;
 
   return (
@@ -389,7 +427,9 @@ function BuildStatus({ seconds, mode }: { seconds: number; mode: Mode }) {
         <p role="status" className="font-medium">
           {isSlow
             ? `Still working.${mode === "topic" ? "" : ` A long ${nounOf(mode)} takes longer.`} You can keep waiting or cancel.`
-            : WORKING_ON[mode]}
+            : planning
+              ? "Working out whether this needs a full program of courses, then laying it out."
+              : WORKING_ON[mode]}
         </p>
         <p className="text-sm text-ink-soft tabular-nums" aria-hidden="true">
           {seconds} {seconds === 1 ? "second" : "seconds"} so far. This usually takes a few seconds.

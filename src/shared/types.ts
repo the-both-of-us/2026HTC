@@ -49,6 +49,19 @@ export type SkillMap = {
   createdAt: string;
   /** Set on a copy: the id of the map it was started from. */
   forkedFrom?: string;
+  /** Set when this map is one course of a program, so its header can link back. */
+  program?: ProgramLink;
+};
+
+/** Where a course map sits in its program. Fixed when the course is built. */
+export type ProgramLink = {
+  id: string;
+  title: string;
+  /** 1-based position of this course in the program. */
+  courseNumber: number;
+  courseCount: number;
+  /** Titles of the courses that open once half of this one is proved. */
+  unlocks: string[];
 };
 
 export type IntegritySignals = {

@@ -2,6 +2,7 @@ import { deleteCircleData } from "@/features/circles";
 import { isPublished, unpublishCourse } from "@/features/courses";
 import { deleteGridSolves } from "@/features/grid";
 import { deleteUserData as deleteNetworkProfile } from "@/features/network";
+import { deleteProgramsByOwner } from "@/features/programs";
 import { deleteProofsByOwner } from "@/features/proof";
 import { deleteUserData as deleteReviewData } from "@/features/review";
 import { deleteSkillMap, listMapsByOwner } from "@/features/skill-map";
@@ -37,7 +38,7 @@ export const NOTHING_DELETED: DeletedCounts = {
 
 /**
  * Deletes everything one person made: their public people profile, evidence pages, course listings, attempts,
- * proven skills, grid answers, study circles and maps. Public things go first, so they stop showing straight away.
+ * proven skills, grid answers, study circles, programs and maps. Public things go first, so they stop showing straight away.
  * Maps go last, because the steps before look things up through them.
  *
  * Every step only touches records whose owner is this user, so nobody else's work changes.
@@ -58,6 +59,7 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
   const { reviewRecords } = await deleteReviewData(userId);
   // Before the maps, so no circle points at a map that is gone.
   const { memberships } = await deleteCircleData(userId);
+  await deleteProgramsByOwner(userId);
   await Promise.all(maps.map((map) => deleteSkillMap(map.id)));
 
   return {

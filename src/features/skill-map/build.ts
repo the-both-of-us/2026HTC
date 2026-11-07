@@ -3,9 +3,12 @@ import { chatJSON } from "@/features/ai";
 import { HttpError } from "@/shared/http";
 import type { SkillMap, SourceKind } from "@/shared/types";
 import {
+  buildCoursePrompt,
   buildMapPrompt,
   buildPdfPrompt,
   buildTopicPrompt,
+  COURSE_SYSTEM_PROMPT,
+  type CourseContext,
   MAP_SYSTEM_PROMPT,
   PDF_SYSTEM_PROMPT,
   rawMapSchema,
@@ -13,6 +16,7 @@ import {
   rawTopicMapSchema,
   TOPIC_SYSTEM_PROMPT,
   type RawSkillMap,
+  type RawTopicNode,
 } from "./prompt";
 import { cleanText, validateNodes } from "./validate";
 
@@ -99,6 +103,24 @@ export async function askModelForTopicMap(topic: string): Promise<RawSkillMap> {
     maxTokens: 12_000,
     timeoutMs: 55_000,
   });
+  return topicReplyToRaw(reply);
+}
+
+/** One course of a program. Like a topic, nothing can be quoted. */
+export async function askModelForCourseMap(course: CourseContext): Promise<RawSkillMap> {
+  const reply = await chatJSON({
+    label: "skill-map-course",
+    system: COURSE_SYSTEM_PROMPT,
+    prompt: buildCoursePrompt(course),
+    schema: rawTopicMapSchema,
+    maxTokens: 10_000,
+    timeoutMs: 55_000,
+  });
+  return topicReplyToRaw(reply);
+}
+
+/** A topic or course reply has no quotes, so every node is a foundation with no citation. */
+export function topicReplyToRaw(reply: { isTopic: boolean; title: string; nodes: RawTopicNode[] }): RawSkillMap {
   const nodes = reply.nodes.map((node) => ({ ...node, fromSource: false, quote: null }));
   return { isJobPosting: reply.isTopic, title: reply.title, subtitle: "", nodes };
 }

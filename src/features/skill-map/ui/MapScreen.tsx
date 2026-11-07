@@ -3,6 +3,7 @@
 import { PublishCourseButton } from "@/features/courses/client";
 import { LiveGridCard, LiveGridStrip } from "@/features/grid/client";
 import { HowItWorksButton } from "@/features/landing/client";
+import { ProgramCrumb } from "@/features/programs/client";
 import { ShareProofButton } from "@/features/proof/client";
 import clsx from "clsx";
 import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
@@ -253,6 +254,7 @@ function LoadedMap({
           <div className="flex min-w-0 items-center gap-4">
             <TopicBadge title={map.title} />
             <div className="min-w-0">
+              {map.program && <ProgramCrumb program={map.program} proven={provenCount} total={map.nodes.length} />}
               <div className="flex items-baseline gap-3">
                 <h1 className="truncate text-xl leading-tight font-medium sm:text-2xl" title={map.title}>
                   {map.title}

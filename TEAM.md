@@ -10,9 +10,9 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 | | **Abdu** (`VVarrior1`) | **Mirza** (`MirzaHB`) |
 |---|---|---|
-| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
-| **Pages** (`src/app/`) | `page.tsx`, `layout.tsx`, `globals.css`, `map/`, `proof/`, `grid/`, `circle/` | `dashboard/`, `courses/`, `review/`, `people/`, `battle/` |
-| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
+| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles`, `programs` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
+| **Pages** (`src/app/`) | `page.tsx`, `layout.tsx`, `globals.css`, `map/`, `proof/`, `grid/`, `circle/`, `program/` | `dashboard/`, `courses/`, `review/`, `people/`, `battle/` |
+| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/`, `programs/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
 | **Everything else** | `src/shared/`, config files, `SPEC.md`, `CLAUDE.md`, deploys | `docs/submission/` (Devpost, AI disclosure, video script) |
 
 ## Open requests
@@ -86,6 +86,10 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
   - **Abdu: done (b345c47).** Reworded to "Most scripts" with the exception.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
+
+**From Abdu to Mirza (Sat Nov 7, evening): programs are on main** (`src/features/programs`, Abdu's). A broad goal, such as a job or "web development", now becomes a program of 4 to 8 courses at `/program/<id>`, each course a normal map built when it's opened.
+
+- [ ] **List the learner's programs in `/courses`** (a "Your programs" row above the public courses, or on the dashboard if you prefer). Call it from a server component or route: `import { listMyPrograms } from "@/features/programs"`, then `await listMyPrograms(userId)` gives `{ id, title, summary, courseCount, href }[]`, newest first, with no owner id. Link each row to `href`. Programs are private, so show them only to their owner, never in the public list. A course map inside a program has `program` set (`{ id, title, courseNumber, courseCount }`), so "My courses" can group by it if you like.
 
 ## Get started (Mirza)
 

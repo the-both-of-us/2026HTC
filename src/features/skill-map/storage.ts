@@ -12,7 +12,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * act as them. sourceText is left out because no reader of the map needs it.
  * Checkpoint text is left out because it is the answer key: see PublicSkillNode.
  */
-export type PublicSkillMap = Pick<SkillMap, "id" | "title" | "subtitle" | "sourceKind" | "createdAt"> & {
+export type PublicSkillMap = Pick<SkillMap, "id" | "title" | "subtitle" | "sourceKind" | "createdAt" | "program"> & {
   nodes: PublicSkillNode[];
   /** True when the posting is energy related, so the map can show the live grid card. */
   energyRelated: boolean;
@@ -27,6 +27,7 @@ export function toPublicMap(map: SkillMap): PublicSkillMap {
     nodes: map.nodes.map(({ checkpoints, ...node }) => ({ ...node, checkpointCount: checkpoints.length })),
     energyRelated: isEnergyRelated(map.sourceText),
     createdAt: map.createdAt,
+    program: map.program,
   };
 }
 
@@ -52,6 +53,8 @@ export async function copySkillMap(mapId: string, newOwnerId: string): Promise<S
 
   const copy: SkillMap = {
     ...source,
+    // A copy leaves its program behind: the program is private to the person who planned it.
+    program: undefined,
     id: randomUUID(),
     ownerId: newOwnerId,
     createdAt: new Date().toISOString(),

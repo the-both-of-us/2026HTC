@@ -3,6 +3,9 @@
 /src/features/circles/            @VVarrior1
 /src/app/circle/                  @VVarrior1
 /src/app/api/circles/             @VVarrior1
+/src/features/programs/           @VVarrior1
+/src/app/program/                 @VVarrior1
+/src/app/api/programs/            @VVarrior1
 /src/features/flashcards/         @MirzaHB
 /src/features/quiz/               @MirzaHB
 /src/features/courses/            @MirzaHB
