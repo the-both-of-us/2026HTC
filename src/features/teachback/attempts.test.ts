@@ -44,6 +44,8 @@ function modelGrades(quality: "full" | "half") {
     ],
     factualErrors: quality === "full" ? [] : ["They said X, but Y is true."],
   });
+  // The second check confirms the flagged error.
+  if (quality === "half") mockChatJSON.mockResolvedValueOnce({ confirmed: [1] });
 }
 
 function modelAsks() {
@@ -88,7 +90,7 @@ describe("status transitions", () => {
     expect(attempt.grade.score).toBe(30);
     expect(attempt.status).toBe("not-yet");
     expect(attempt.followUp).toBeNull();
-    expect(mockChatJSON).toHaveBeenCalledOnce();
+    expect(mockChatJSON).toHaveBeenCalledTimes(2);
   });
 
   it("not-yet returns the misconceptions and missed checkpoints", async () => {
@@ -409,6 +411,7 @@ describe("what is stored and sent", () => {
       ],
       factualErrors: ["A false claim."],
     });
+    mockChatJSON.mockResolvedValueOnce({ confirmed: [1] });
     modelAsks();
     const attempt = await startAttempt(OWNER, newAttempt());
     expect(attempt.status).toBe("needs-followup");

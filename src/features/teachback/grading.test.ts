@@ -204,11 +204,45 @@ describe("gradeExplanation", () => {
       ],
       factualErrors: ["They said X, but Y is true.", "   "],
     });
+    modelReplies({ confirmed: [1] });
 
     const grade = await gradeExplanation(node, explanation);
 
     expect(grade.score).toBe(80);
     expect(grade.misconceptions).toEqual(["They said X, but Y is true."]);
+  });
+
+  it("deducts only the errors a second check confirms", async () => {
+    modelReplies({
+      checkpoints: [{ number: 1, quote: "only keeps rows that match in both tables" }],
+      factualErrors: ["They said A, but B is true.", "They said C, but D is true."],
+    });
+    modelReplies({ confirmed: [2] });
+
+    const grade = await gradeExplanation(node, explanation);
+
+    expect(mockChatJSON).toHaveBeenCalledTimes(2);
+    expect(grade.misconceptions).toEqual(["They said C, but D is true."]);
+    expect(grade.score).toBe(5);
+  });
+
+  it("keeps the flagged errors if the second check fails", async () => {
+    modelReplies({
+      checkpoints: [{ number: 1, quote: "only keeps rows that match in both tables" }],
+      factualErrors: ["They said A, but B is true."],
+    });
+    mockChatJSON.mockRejectedValueOnce(new Error("timeout"));
+
+    const grade = await gradeExplanation(node, explanation);
+
+    expect(grade.misconceptions).toEqual(["They said A, but B is true."]);
+    expect(grade.score).toBe(5);
+  });
+
+  it("makes no second call when nothing was flagged", async () => {
+    modelReplies({ checkpoints: [], factualErrors: [] });
+    await gradeExplanation(node, explanation);
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
   });
 
   it("treats a checkpoint the model skipped as not met, and matches replies by number, not order", async () => {

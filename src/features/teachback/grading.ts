@@ -13,9 +13,17 @@ For each checkpoint, return the number of the checkpoint and either a quote or n
 - Plain, informal or clumsy wording does count, when the specific fact is really there. Different words for the same idea count: "a false positive" states the same fact as "wrongly rejecting the null hypothesis".
 - Look for the main fact only. A side detail in the checkpoint, such as an example after "like" or "such as" or a number after "typically", is not required.
 
-Also list factualErrors: statements in the learner's text that are clearly false, one short sentence each, saying what they claimed and what is true. Something missing is not an error. Vague or informal wording is not an error. Return an empty list if nothing is false.
+Also list factualErrors: statements in the learner's text that are clearly false, one short sentence each, saying what they claimed and what is true. Judge each statement in the context of this skill: a statement that is true for this skill's subject is not an error, even if it would be false elsewhere. Something missing is not an error. Vague or informal wording is not an error. Return an empty list if nothing is false.
 
 ${LEARNER_TEXT_RULE}`;
+
+const CHECKER_SYSTEM = `Another grader flagged statements in a learner's explanation as false. Check each one again, in the context of the named skill.
+
+Return the numbers of the flags that are right: the learner really stated it, and it is false for this skill's subject. A flag is wrong if the learner's statement is correct here (for example, for a heat pump the heat delivered does equal the work put in plus the heat taken from outside), if it is only vague or incomplete, or if the learner never said it.
+
+${LEARNER_TEXT_RULE}`;
+
+const checkerReplySchema = z.object({ confirmed: z.array(z.number().int()) });
 
 const graderReplySchema = z.object({
   checkpoints: z.array(z.object({ number: z.number().int(), quote: z.string().nullable() })),
@@ -50,7 +58,7 @@ export async function gradeExplanation(node: SkillNode, explanation: string): Pr
     return { checkpoint, quote, met: true };
   });
 
-  const misconceptions = cleanErrors(reply.factualErrors);
+  const misconceptions = await confirmErrors(node, explanation, cleanErrors(reply.factualErrors));
   const met = checkpoints.filter((result) => result.met).length;
 
   return {
@@ -86,6 +94,27 @@ export function copiesCheckpoint(checkpoint: string, explanation: string): boole
 
 function wordsOf(text: string): string[] {
   return normalizeForMatch(text).match(/[\p{L}\p{N}]+/gu) ?? [];
+}
+
+/**
+ * Each error costs 20 points, so a second call checks every flag before it counts. The first
+ * grader called correct heat-pump physics false three times out of three. If the check
+ * fails, the flags stand, so a timeout can't wave a false claim through.
+ */
+async function confirmErrors(node: SkillNode, explanation: string, errors: string[]): Promise<string[]> {
+  if (errors.length === 0) return errors;
+  try {
+    const reply = await chatJSON({
+      label: "teachback-check-errors",
+      system: CHECKER_SYSTEM,
+      prompt: `Skill: ${node.title}\n\nFlagged statements:\n${numberedList(errors)}\n\n${wrapLearnerText(explanation)}`,
+      schema: checkerReplySchema,
+      timeoutMs: 15_000,
+    });
+    return errors.filter((_, index) => reply.confirmed.includes(index + 1));
+  } catch {
+    return errors;
+  }
 }
 
 /** Each error costs 20 points, so a repeat or a "None" must not count as one. */
