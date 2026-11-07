@@ -84,6 +84,21 @@ export function resultAnnouncement(
   return `${verdictTitle(attempt)} ${score} ${nextStepSentence(attempt)}`;
 }
 
+/** What "Read this result aloud" says: the announcement, then every checkpoint and correction. */
+export function resultReadAloud(attempt: Attempt, skillTitle: string, checkpointTotal: number): string {
+  const lines = [resultAnnouncement(attempt, skillTitle, checkpointTotal)];
+  for (const checkpoint of attempt.grade.checkpoints) {
+    lines.push(`${checkpoint.met ? "Met" : "Missed"}: ${checkpoint.checkpoint}.`);
+  }
+  for (const item of attempt.grade.misconceptions) lines.push(`To correct: ${item}`);
+  if (attempt.status === "needs-followup" && attempt.followUp) {
+    lines.push(`The follow-up question: ${attempt.followUp.question}`);
+  } else if (attempt.followUp?.feedback) {
+    lines.push(attempt.followUp.feedback);
+  }
+  return lines.join(" ");
+}
+
 export function formatDuration(ms: number): string {
   const seconds = Math.round(ms / 1000);
   if (seconds < 1) return "under a second";

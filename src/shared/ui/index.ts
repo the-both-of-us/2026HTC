@@ -9,3 +9,7 @@ export { LogoMark } from "./LogoMark";
 export { PageShell } from "./PageShell";
 export { Spinner } from "./Spinner";
 export { NODE_STATE_LABELS, StateMark } from "./StateMark";
+export { InlineText } from "./InlineText";
+export { LearningModeToggle, useLearningMode } from "./LearningModeToggle";
+export { prefersReducedMotion } from "./learningMode";
+export { ReadAloudButton, toSpeakable } from "./ReadAloudButton";

@@ -3,7 +3,16 @@ import { Check, CircleDashed, MessageCircleQuestion, Timer } from "lucide-react"
 import type { ReactNode, Ref } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import type { Attempt, CheckpointResult } from "@/shared/types";
-import { integritySentence, metCount, nextStepSentence, scoreBreakdown, secondsText, verdictTitle } from "./format";
+import { InlineText, ReadAloudButton } from "@/shared/ui";
+import {
+  integritySentence,
+  metCount,
+  nextStepSentence,
+  resultReadAloud,
+  scoreBreakdown,
+  secondsText,
+  verdictTitle,
+} from "./format";
 
 type AttemptResultProps = {
   attempt: Attempt;
@@ -32,6 +41,14 @@ export function AttemptResult({
 }: AttemptResultProps) {
   const { grade } = attempt;
   const breakdown = scoreBreakdown(attempt, checkpointTotal);
+  // Only shows in Accessible learning mode.
+  const readAloud = (
+    <ReadAloudButton
+      what="this result"
+      text={resultReadAloud(attempt, skillTitle, checkpointTotal)}
+      className="self-start"
+    />
+  );
 
   // Proven keeps the quotes one click away, so the verdict, the next step and every
   // checkpoint share one view.
@@ -44,6 +61,7 @@ export function AttemptResult({
           attempt={attempt}
           showNextStep={!nextStep}
         />
+        {readAloud}
         {nextStep}
         {evidenceAction}
         <ScoreScale score={grade.score} breakdown={breakdown} />
@@ -52,7 +70,7 @@ export function AttemptResult({
         {attempt.followUp?.feedback && (
           <p>
             <span className="font-medium text-proven">Follow-up passed.</span>{" "}
-            {attempt.followUp.feedback}
+            <InlineText text={attempt.followUp.feedback} />
           </p>
         )}
         <Misconceptions items={grade.misconceptions} />
@@ -94,6 +112,7 @@ export function AttemptResult({
           <p className="text-ink-soft">{nextStepSentence(attempt)}</p>
         </div>
       </div>
+      {readAloud}
       <ScoreScale score={grade.score} breakdown={breakdown} />
       <TimingChip attempt={attempt} />
       <CheckpointBar attempt={attempt} total={checkpointTotal} />
@@ -180,7 +199,7 @@ function CheckpointsAtAGlance({ attempt, total }: { attempt: Attempt; total: num
             <CheckpointMark met={checkpoint.met} size={17} />
             <span>
               <span className="sr-only">{checkpoint.met ? "Met: " : "Missed: "}</span>
-              {checkpoint.checkpoint}
+              <InlineText text={checkpoint.checkpoint} />
             </span>
           </li>
         ))}
@@ -221,7 +240,9 @@ function Misconceptions({ items }: { items: string[] }) {
       <h4 className="font-medium">{items.length === 1 ? "One thing to correct" : "Things to correct"}</h4>
       <ul className="flex flex-col gap-2">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item}>
+            <InlineText text={item} />
+          </li>
         ))}
       </ul>
     </section>
@@ -239,9 +260,15 @@ function FollowUpRecord({ attempt }: { attempt: Attempt }) {
         {followUp.passed ? "Follow-up question, passed" : "Follow-up question, not passed"}
         {followUp.inputMethod === "voice" && <span className="font-normal text-ink-soft"> · answered aloud</span>}
       </h4>
-      <p>{followUp.question}</p>
+      <p>
+        <InlineText text={followUp.question} />
+      </p>
       <p className="border-l-2 border-control-edge pl-3 text-ink-soft">{followUp.answer}</p>
-      {!followUp.passed && followUp.feedback && <p>{followUp.feedback}</p>}
+      {!followUp.passed && followUp.feedback && (
+        <p>
+          <InlineText text={followUp.feedback} />
+        </p>
+      )}
     </section>
   );
 }
@@ -338,7 +365,7 @@ function CheckpointRow({ result }: { result: CheckpointResult }) {
           <span className={clsx("font-medium", result.met ? "text-proven" : "text-amber")}>
             {result.met ? "Met." : "Missed."}
           </span>{" "}
-          {result.checkpoint}
+          <InlineText text={result.checkpoint} />
         </p>
         {result.quote && (
           <p>

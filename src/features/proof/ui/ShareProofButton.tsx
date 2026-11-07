@@ -170,8 +170,11 @@ function NameForm({ name, provenCount, wasWithdrawn, updating, pending, onNameCh
       </p>
       <Field id={fieldId} label="Name to show" hint="Employers will see this exactly as you type it.">
         {(control) => (
+          // The form appears once the check for an existing page finishes, so focus goes
+          // straight to the one thing to fill in, and keyboard users never land on nothing.
           <input
             {...control}
+            autoFocus
             required
             maxLength={60}
             autoComplete="name"

@@ -54,7 +54,7 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
       <Handle type="target" position={Position.Top} isConnectable={false} />
       <div
         className={clsx(
-          "flex size-full flex-col justify-between rounded-sheet border-[1.5px] px-3 py-2.5 transition-control hover:-translate-y-0.5",
+          "flex size-full flex-col justify-between rounded-sheet border-[1.5px] px-[12px] py-[10px] transition-control hover:-translate-y-0.5",
           CARD_CLASSES[state],
           selected && "ring-2 ring-ink ring-offset-2 ring-offset-paper",
           reveal && "card-reveal",
@@ -68,12 +68,12 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
             size={state === "proven" ? 17 : 14}
             className={clsx("shrink-0", state === "proven" ? "mt-[1px]" : "mt-[3px]", justProven && "mark-land")}
           />
-          <p title={skill.title} className="line-clamp-2 min-w-0 flex-1 text-[0.9375rem] leading-[1.25] font-medium">
+          <p title={skill.title} className="line-clamp-2 min-w-0 flex-1 text-[15px] leading-[1.25] font-medium">
             {skill.title}
           </p>
           {state === "locked" && <Lock aria-hidden="true" size={14} className="mt-[3px] shrink-0" />}
         </div>
-        <p className="flex items-center justify-between gap-2 text-[0.8125rem] leading-none">
+        <p className="flex items-center justify-between gap-2 text-[13px] leading-none">
           <span>{NODE_STATE_LABELS[state]}</span>
           {skill.fromSource && <JobAsksTag kind={skill.citation?.kind} />}
         </p>

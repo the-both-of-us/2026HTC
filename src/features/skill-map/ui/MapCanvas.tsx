@@ -16,7 +16,7 @@ import { Maximize, Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
-import { StateMark } from "@/shared/ui";
+import { prefersReducedMotion, StateMark } from "@/shared/ui";
 import "./map.css";
 import { layoutGraph, NODE_HEIGHT, NODE_WIDTH } from "./layout";
 import { SkillEdge, type SkillFlowEdge } from "./SkillEdge";
@@ -46,9 +46,9 @@ const MINIMAP_COLOURS: Record<NodeState, string> = {
   proven: "#5baa7a",
 };
 
-/** A movement should take no time for people who prefer reduced motion. */
+/** A movement should take no time for people who prefer reduced motion, or use Learning Mode. */
 function motionMs(ms: number): number {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms;
+  return prefersReducedMotion() ? 0 : ms;
 }
 
 type MapCanvasProps = {
@@ -147,13 +147,13 @@ function Canvas({
   }, [layout, states, justProvenId, reveal]);
 
   // On a phone the whole map would be too small to read, so start at the first skill
-  // the learner can act on and let them pan.
+  // the learner can act on, at full size so the words stay readable, and let them pan.
   useEffect(() => {
     if (!ready || !window.matchMedia(PHONE_SCREEN).matches) return;
     const first =
       layout.nodes.find((placed) => states[placed.id] === "available") ?? layout.nodes[0];
     if (first) {
-      flow.setCenter(first.x + NODE_WIDTH / 2, first.y + NODE_HEIGHT / 2, { zoom: 0.85 });
+      flow.setCenter(first.x + NODE_WIDTH / 2, first.y + NODE_HEIGHT / 2, { zoom: 1 });
     }
     // Only when the map first appears: later progress must not move the view.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,69 +200,75 @@ function Canvas({
   const handleNodeClick: NodeMouseHandler<SkillFlowNode> = (_event, node) => onSelect(node.id);
 
   return (
-    <div ref={containerRef} className="relative size-full">
-      <ReactFlow<SkillFlowNode, SkillFlowEdge>
-        aria-label="Skill map. Use Tab to move between skills and Enter to open one."
-        className="skill-map-flow"
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={NODE_TYPES}
-        edgeTypes={EDGE_TYPES}
-        onNodeClick={handleNodeClick}
-        onInit={() => setReady(true)}
-        fitView
-        fitViewOptions={FIT_VIEW}
-        minZoom={0.35}
-        maxZoom={1.5}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
-        edgesFocusable={false}
-        panOnScroll
-        zoomOnDoubleClick={false}
-        deleteKeyCode={null}
-        selectionKeyCode={null}
-        panActivationKeyCode={null}
-        multiSelectionKeyCode={null}
-        ariaLabelConfig={ARIA_LABELS}
-        attributionPosition="top-right"
-      >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} color="#27324a" />
-
-        <Panel
-          position="bottom-left"
-          className="flex flex-col divide-y divide-rule-strong rounded-control border border-rule-strong bg-raised/95 shadow-panel"
+    <div className="flex size-full flex-col">
+      {/* On a phone the legend sits above the map, so it never covers a skill. */}
+      <div className="flex justify-center border-b border-rule px-2 py-2 sm:hidden">
+        <Legend sourceKind={sourceKind} />
+      </div>
+      <div ref={containerRef} className="relative min-h-0 flex-1">
+        <ReactFlow<SkillFlowNode, SkillFlowEdge>
+          aria-label="Skill map. Use Tab to move between skills and Enter to open one."
+          className="skill-map-flow"
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={NODE_TYPES}
+          edgeTypes={EDGE_TYPES}
+          onNodeClick={handleNodeClick}
+          onInit={() => setReady(true)}
+          fitView
+          fitViewOptions={FIT_VIEW}
+          minZoom={0.35}
+          maxZoom={1.5}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          edgesFocusable={false}
+          panOnScroll
+          zoomOnDoubleClick={false}
+          deleteKeyCode={null}
+          selectionKeyCode={null}
+          panActivationKeyCode={null}
+          multiSelectionKeyCode={null}
+          ariaLabelConfig={ARIA_LABELS}
+          attributionPosition="top-right"
         >
-          <ZoomButton label="Zoom in" onClick={() => flow.zoomIn({ duration: motionMs(150) })}>
-            <Plus aria-hidden="true" size={18} />
-          </ZoomButton>
-          <ZoomButton label="Zoom out" onClick={() => flow.zoomOut({ duration: motionMs(150) })}>
-            <Minus aria-hidden="true" size={18} />
-          </ZoomButton>
-          <ZoomButton
-            label="Show whole map"
-            onClick={() => flow.fitView({ ...FIT_VIEW, duration: motionMs(PAN_MS) })}
+          <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} color="#27324a" />
+
+          <Panel
+            position="bottom-left"
+            className="flex flex-col divide-y divide-rule-strong rounded-control border border-rule-strong bg-raised/95 shadow-panel"
           >
-            <Maximize aria-hidden="true" size={16} />
-          </ZoomButton>
-        </Panel>
+            <ZoomButton label="Zoom in" onClick={() => flow.zoomIn({ duration: motionMs(150) })}>
+              <Plus aria-hidden="true" size={18} />
+            </ZoomButton>
+            <ZoomButton label="Zoom out" onClick={() => flow.zoomOut({ duration: motionMs(150) })}>
+              <Minus aria-hidden="true" size={18} />
+            </ZoomButton>
+            <ZoomButton
+              label="Show whole map"
+              onClick={() => flow.fitView({ ...FIT_VIEW, duration: motionMs(PAN_MS) })}
+            >
+              <Maximize aria-hidden="true" size={16} />
+            </ZoomButton>
+          </Panel>
 
-        <Panel position="bottom-center" className="w-max max-w-[15.5rem] sm:max-w-none">
-          <Legend sourceKind={sourceKind} />
-        </Panel>
+          <Panel position="bottom-center" className="hidden w-max sm:block">
+            <Legend sourceKind={sourceKind} />
+          </Panel>
 
-        <MiniMap<SkillFlowNode>
-          position="bottom-right"
-          pannable
-          zoomable
-          style={{ width: 150, height: 96 }}
-          bgColor="#0c1018"
-          maskColor="rgb(7 10 16 / 0.72)"
-          maskStrokeColor="#2a3446"
-          nodeBorderRadius={18}
-          nodeColor={(node) => MINIMAP_COLOURS[node.data.state]}
-        />
-      </ReactFlow>
+          <MiniMap<SkillFlowNode>
+            position="bottom-right"
+            pannable
+            zoomable
+            style={{ width: 150, height: 96 }}
+            bgColor="#0c1018"
+            maskColor="rgb(7 10 16 / 0.72)"
+            maskStrokeColor="#2a3446"
+            nodeBorderRadius={18}
+            nodeColor={(node) => MINIMAP_COLOURS[node.data.state]}
+          />
+        </ReactFlow>
+      </div>
     </div>
   );
 }

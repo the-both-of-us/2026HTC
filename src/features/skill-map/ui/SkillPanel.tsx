@@ -7,7 +7,7 @@ import { BadgeCheck, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { Citation, NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
-import { Badge, Button, NODE_STATE_LABELS, StateMark } from "@/shared/ui";
+import { Badge, Button, InlineText, NODE_STATE_LABELS, ReadAloudButton, StateMark } from "@/shared/ui";
 import { JobAsksTag } from "./SkillNodeView";
 
 /** What just changed, shown under the verdict after a skill is proven. */
@@ -98,7 +98,9 @@ export function SkillPanel({
 
   return (
     <>
-      {/* On phones the sheet covers most of the screen. Tapping above it closes it. */}
+      {/* On phones the sheet covers most of the screen. Tapping above it closes it.
+          On large screens the panel is position: relative, so screen-reader-only text deep
+          inside it is clipped by its scrolling instead of making the whole page taller. */}
       <div aria-hidden="true" onClick={onClose} className="fixed inset-0 z-20 bg-black/60 lg:hidden" />
 
       <section
@@ -106,7 +108,7 @@ export function SkillPanel({
         aria-labelledby="skill-panel-title"
         className={clsx(
           "panel-open fixed inset-x-0 bottom-0 z-30 max-h-[88dvh] overflow-y-auto rounded-t-2xl border-t border-rule-strong bg-sheet shadow-panel",
-          "lg:static lg:max-h-none lg:w-[28rem] lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l",
+          "lg:relative lg:max-h-none lg:w-[28rem] lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l",
         )}
       >
         {/* The extra bottom padding keeps the end of the sheet clear of the phone's nav pill. */}
@@ -129,6 +131,8 @@ export function SkillPanel({
                   <Badge>{sourceKind === "topic" ? "AI-generated" : "Foundation"}</Badge>
                 )}
               </div>
+              {/* Only in Accessible learning mode. */}
+              <ReadAloudButton what="this skill" text={skillReadAloud(skill)} />
             </div>
             <button
               type="button"
@@ -143,7 +147,9 @@ export function SkillPanel({
           {/* Just proven: the verdict moves up, so the payoff is the first thing in view. */}
           {!ownNotice && (
             <>
-              <p className="text-ink-soft">{skill.why}</p>
+              <p className="text-ink-soft">
+                <InlineText text={skill.why} />
+              </p>
 
               <section className="rounded-sheet border border-rule-strong bg-raised/50 p-4">
                 <h3 className="mb-2 text-sm font-medium text-ink-soft">Where this came from</h3>
@@ -276,6 +282,12 @@ function CitationBlock({
   }
 
   return <p>OryxLearn has no quote from the {source} for this skill. Check the {source} yourself.</p>;
+}
+
+/** What "Read this skill aloud" says: the name, why it matters, and a verified quote. */
+function skillReadAloud(skill: PublicSkillNode): string {
+  const quote = skill.citation?.verified ? ` The ${SOURCE_NAME[skill.citation.kind]} says: ${skill.citation.quote}` : "";
+  return `${skill.title}. ${skill.why}${quote}`;
 }
 
 /** "A", "A and B", "A, B and C". */

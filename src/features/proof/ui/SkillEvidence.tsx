@@ -1,6 +1,7 @@
 import { Circle, CircleCheck, Clock, ClipboardCheck, ClipboardPaste, Keyboard, Mic, WholeWord } from "lucide-react";
 import type { ReactNode } from "react";
 import { PASS_SCORE } from "@/shared/types";
+import { InlineText } from "@/shared/ui";
 import type { ProofSkill } from "../types";
 import { followUpMethodLine, formatDateTime, highlightSegments, integrityLines, plural, scoreLine, sourceName } from "./format";
 
@@ -43,7 +44,9 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
               <p className="font-semibold">{skill.factualErrors.length === 1 ? "Factual error found" : "Factual errors found"}</p>
               <ul className="mt-1 list-disc pl-5 text-ink-soft">
                 {skill.factualErrors.map((error, index) => (
-                  <li key={index}>{error}</li>
+                  <li key={index}>
+                    <InlineText text={error} />
+                  </li>
                 ))}
               </ul>
             </div>
@@ -58,14 +61,16 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
 
         <Section title="Live follow-up question">
           <p className="text-sm text-ink-soft">Written after they submitted, from their own words. It had to be passed.</p>
-          <p className="mt-3 font-semibold">{skill.followUp.question}</p>
+          <p className="mt-3 font-semibold">
+            <InlineText text={skill.followUp.question} />
+          </p>
           <p className="mt-3 border-l-2 border-control-edge pl-3.5 whitespace-pre-wrap">{skill.followUp.answer}</p>
           <FollowUpMethod followUp={skill.followUp} />
           {skill.followUp.feedback && (
             <p className="mt-3 flex items-start gap-2 text-sm text-ink-soft">
               <CircleCheck size={18} aria-hidden="true" className="mt-px shrink-0 text-proven" />
               <span>
-                <span className="font-semibold text-ink">Passed.</span> {skill.followUp.feedback}
+                <span className="font-semibold text-ink">Passed.</span> <InlineText text={skill.followUp.feedback} />
               </span>
             </p>
           )}
@@ -132,7 +137,7 @@ function Checkpoints({ skill }: { skill: ProofSkill }) {
           )}
           <div className="min-w-0">
             <p className={result.met ? undefined : "text-ink-soft"}>
-              <span className="font-semibold">{index + 1}.</span> {result.checkpoint}
+              <span className="font-semibold">{index + 1}.</span> <InlineText text={result.checkpoint} />
             </p>
             {result.quote ? (
               <p className="mt-1 text-sm">

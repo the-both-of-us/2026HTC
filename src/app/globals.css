@@ -145,6 +145,36 @@
   }
 }
 
+/*
+ * Accessible Learning Mode (src/shared/ui/learningMode.ts): Lexend, larger text and roomier
+ * spacing, and no motion at all. Every size is in rem, so a larger root size scales the page.
+ */
+html[data-learning-mode] {
+  --font-sans: var(--font-lexend), system-ui, sans-serif;
+  --font-display: var(--font-lexend), system-ui, sans-serif;
+  --font-serif: var(--font-lexend), system-ui, sans-serif;
+  /* Taller lines for every text size, unless an element sets its own leading. */
+  --text-sm--line-height: 1.7;
+  --text-base--line-height: 1.8;
+  --text-lg--line-height: 1.75;
+  --text-xl--line-height: 1.55;
+  font-size: 112.5%;
+}
+
+html[data-learning-mode] body {
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  word-spacing: 0.06em;
+}
+
+html[data-learning-mode] *,
+html[data-learning-mode] ::before,
+html[data-learning-mode] ::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
 /* Motion is opt-in: nothing below runs for people who prefer reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes spin-steps {

@@ -11,6 +11,10 @@
 .skill-map-flow .react-flow__node {
   cursor: pointer;
   border-radius: var(--radius-sheet);
+  /* Cards have a fixed size, so their text is in px and ignores Learning Mode's wider
+     spacing. The map's own zoom makes them bigger. */
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
 /* The handles are small dots on the card's edge. Nobody can drag them. */

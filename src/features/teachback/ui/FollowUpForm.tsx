@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Button, ErrorNotice, Field, Textarea } from "@/shared/ui";
+import { Button, ErrorNotice, Field, InlineText, Textarea } from "@/shared/ui";
 import { PendingNote } from "./PendingNote";
 
 type FollowUpFormProps = {
@@ -44,7 +44,7 @@ export function FollowUpForm({
       className="flex flex-col gap-4 rounded-sheet border border-accent bg-available-surface p-4 shadow-glow"
     >
       <h3 id={questionId} className="text-lg leading-snug font-medium">
-        {question}
+        <InlineText text={question} />
       </h3>
 
       <Field
