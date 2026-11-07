@@ -115,9 +115,9 @@ These are in Abdu's paths, so Mirza doesn't edit them.
 - [x] Map reads check visibility: only the owner can read a map unless `courses/<mapId>` exists. Today anyone with the link can read it.
 - [x] Add `skill-map` exports `copySkillMap(mapId, newOwnerId)` and `listMapsByOwner(ownerId)`.
 - [x] `shared/identity.ts`: sign the cookie, add `getSession()` returning `{ userId, signedIn, displayName }`, and add a way to set the user id after sign-in.
-- [ ] Give Mirza ownership of `src/features/auth/` and `src/app/api/auth/` in `TEAM.md` and `CODEOWNERS`.
-- [ ] Add a Gemini route in `features/ai/routes.ts`, and a way for a caller to name a preferred route.
+- [x] Give Mirza ownership of `src/features/auth/` and `src/app/api/auth/` in `TEAM.md` and `CODEOWNERS`.
+- [ ] Add a Gemini route in `features/ai/routes.ts` (done), and a way for a caller to name a preferred route (coming: `preferredRoute` on `chatJSON` and `chatText`).
 - [x] Move `parseBody` and `errorResponse` from teachback into `src/shared/http.ts`, since every route needs them.
-- [ ] Add `import "server-only"` to server feature `index.ts` files.
-- [ ] AWS move: S3 store driver, Bedrock route, container deploy. Update `.env.example` and the Vercel notes in `TEAM.md`.
+- [ ] Add `import "server-only"` to server feature `index.ts` files. `ai` and `skill-map` are done, and `teachback` is coming. Mirza can add it to his own the same way.
+- [x] AWS move: S3 store driver, Bedrock route, container deploy. Update `.env.example` and the Vercel notes in `TEAM.md`.
 - [ ] Register the GoDaddy domain and point it at the deployment.

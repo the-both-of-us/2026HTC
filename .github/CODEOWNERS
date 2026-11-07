@@ -7,6 +7,7 @@
 /src/features/dashboard/          @MirzaHB
 /src/features/review/             @MirzaHB
 /src/features/battle/             @MirzaHB
+/src/features/auth/               @MirzaHB
 /src/app/dashboard/               @MirzaHB
 /src/app/courses/                 @MirzaHB
 /src/app/review/                  @MirzaHB
@@ -18,4 +19,5 @@
 /src/app/api/network/             @MirzaHB
 /src/app/api/review/              @MirzaHB
 /src/app/api/battle/              @MirzaHB
+/src/app/api/auth/                @MirzaHB
 /docs/submission/                 @MirzaHB

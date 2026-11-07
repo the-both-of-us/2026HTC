@@ -10,9 +10,9 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 | | **Abdu** (`VVarrior1`) | **Mirza** (`MirzaHB`) |
 |---|---|---|
-| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour` | `flashcards`, `quiz`, `courses`, `network`, `dashboard`, `review`, `battle` |
+| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
 | **Pages** (`src/app/`) | `page.tsx`, `layout.tsx`, `globals.css`, `map/`, `proof/`, `grid/` | `dashboard/`, `courses/`, `review/`, `people/`, `battle/` |
-| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/` | `flashcards/`, `quiz/`, `courses/`, `network/`, `review/`, `battle/` |
+| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
 | **Everything else** | `src/shared/`, config files, `SPEC.md`, `CLAUDE.md`, deploys | `docs/submission/` (Devpost, AI disclosure, video script) |
 
 ## Open requests
@@ -46,7 +46,13 @@ npm run dev
 
 - **AI key:** you need your own for AI features. A Groq key works: create one at https://console.groq.com/keys and set `GROQ_API_KEY` in `.env.local`. Never commit it. `.env*` is ignored by git.
 - **Storage:** with no Blob token, data lives in memory and is lost on restart. That's fine for local work.
+- **After pulling, if `package.json` changed:** run `npm install --legacy-peer-deps`. Two new packages came in on Nov 7: `server-only` and `@aws-sdk/client-s3`.
+- **`SESSION_SECRET`:** leave it empty locally, since a development secret is built in. Old unsigned cookies now count as no cookie, so maps you made before Nov 7 under an old cookie won't open for you. Build a new one.
 - **Live site:** https://proofline-tan.vercel.app . Abdu deploys.
+
+## Hosting
+
+AWS (ECS Express Mode, S3) is the primary target once it's verified. Until then, Vercel stays the live fallback at https://proofline-tan.vercel.app . Abdu deploys, with `scripts/deploy-aws.sh`. The store picks its driver from the environment: `S3_BUCKET` means S3, `BLOB_READ_WRITE_TOKEN` means Blob, otherwise memory. Pushes to `main` by Abdu also go live on Vercel straight away.
 
 **Using an AI coding tool?** Start it with: "Read `TEAM.md`, `CLAUDE.md` and `SPEC.md`. I'm Mirza. Only edit paths Mirza owns."
 
