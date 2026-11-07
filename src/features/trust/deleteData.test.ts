@@ -77,7 +77,7 @@ describe("deleteUserData", () => {
   it("removes the user's maps, attempts, claims, progress, evidence pages, course listings and grid answers", async () => {
     const counts = await deleteUserData(me.userId);
 
-    expect(counts).toEqual({ maps: 1, attempts: 1, provenSkills: 1, evidencePages: 1, courses: 1, gridAnswers: 1 });
+    expect(counts).toEqual({ maps: 1, attempts: 1, provenSkills: 1, evidencePages: 1, courses: 1, gridAnswers: 1, circles: 0 });
     expect(await getSkillMap(me.map.id)).toBeNull();
     expect(await getAttempt(me.attempt.id)).toBeNull();
     expect(await getDoc(`attempts/${me.attempt.id}/claim`)).toBeNull();

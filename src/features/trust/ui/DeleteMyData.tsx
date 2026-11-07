@@ -144,6 +144,7 @@ export function deletedSentence(deleted: DeletedCounts): string {
     plural(deleted.evidencePages, "evidence page"),
     plural(deleted.courses, "published course"),
     plural(deleted.gridAnswers, "grid answer"),
+    plural(deleted.circles, "study circle"),
   ];
   return `Deleted ${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}.`;
 }

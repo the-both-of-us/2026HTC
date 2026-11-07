@@ -55,6 +55,11 @@ export function TrustScreen() {
               questions you answered correctly.
             </li>
             <li>
+              <strong className="font-medium">Study circles:</strong> the name you gave the circle
+              and which copy of the map is yours. Other members see your name, which skills you
+              proved and when, never what you wrote.
+            </li>
+            <li>
               <strong className="font-medium">Only in this browser:</strong> unsent drafts, and the
               Accessible learning mode setting.
             </li>
@@ -169,7 +174,7 @@ export function TrustScreen() {
         <Section title="Delete my data" id="delete">
           <p>
             Deletes your maps, attempts, scores, proven skills and grid answers from our storage, takes down any
-            evidence page or course you published, and starts this browser as a new guest. If someone
+            evidence page or course you published, takes you out of every study circle (and closes the ones you started), and starts this browser as a new guest. If someone
             started a copy of a course you published, their copy is theirs and stays.
           </p>
           <p className="text-ink-soft">
