@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { HttpError } from "@/shared/http";
 import { AiUnavailableError } from "@/features/ai";
 import { FlashcardsError } from "./errors";
 import { flashcardsErrorResponse, parseFlashcardsBody, parseFlashcardsQuery } from "./http";
@@ -89,4 +90,16 @@ describe("parseFlashcardsBody", () => {
       expect(error).toMatchObject({ status: 400 });
     },
   );
+});
+
+describe("flashcardsErrorResponse with shared errors", () => {
+  it("passes a shared HttpError through with its own status and sentence, unlogged", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const sentence = "We can't save your work right now because of a problem on our side. Please try again later.";
+    const response = flashcardsErrorResponse(new HttpError(sentence, 503));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: sentence });
+    expect(log).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
 });

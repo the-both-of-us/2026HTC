@@ -1,10 +1,9 @@
+import { HttpError } from "@/shared/http";
+
 /** A problem we can explain to the user. The message is safe to show them. */
-export class CoursesError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
+export class CoursesError extends HttpError {
+  constructor(message: string, status: number) {
+    super(message, status);
     this.name = "CoursesError";
   }
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HttpError } from "@/shared/http";
 import { CoursesError } from "./errors";
 import type { CourseSort } from "./types";
 
@@ -51,7 +52,8 @@ export function parseMapIdParam(mapId: string): string {
 
 /** Turns any error into a human sentence. Technical details only go to the server log. */
 export function coursesErrorResponse(error: unknown): Response {
-  if (error instanceof CoursesError) {
+  // Our own errors, and shared ones such as identity's 503 when signing is not set up.
+  if (error instanceof HttpError) {
     return Response.json({ error: error.message }, { status: error.status });
   }
   console.error("[courses] request failed", error);

@@ -2,14 +2,12 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { SkillNode } from "@/shared/types";
 import type { QuizQuestion } from "./types";
+import { HttpError } from "@/shared/http";
 
 /** A quiz error carries a sentence for people and the HTTP status to send with it. */
-export class QuizError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
+export class QuizError extends HttpError {
+  constructor(message: string, status: number) {
+    super(message, status);
     this.name = "QuizError";
   }
 }

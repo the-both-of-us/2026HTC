@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { HttpError } from "@/shared/http";
 import { CoursesError } from "./errors";
 import { coursesErrorResponse, parseListQuery, parseMapIdParam, parsePublishBody } from "./http";
 
@@ -101,5 +102,17 @@ describe("coursesErrorResponse", () => {
     expect(log).toHaveBeenCalledTimes(1);
     expect(String(log.mock.calls[0][0])).toMatch(/^\[courses\]/);
     expect(log.mock.calls[0]).toContain(raw);
+  });
+});
+
+describe("coursesErrorResponse with shared errors", () => {
+  it("passes a shared HttpError through with its own status and sentence, unlogged", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const sentence = "We can't save your work right now because of a problem on our side. Please try again later.";
+    const response = coursesErrorResponse(new HttpError(sentence, 503));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: sentence });
+    expect(log).not.toHaveBeenCalled();
+    log.mockRestore();
   });
 });

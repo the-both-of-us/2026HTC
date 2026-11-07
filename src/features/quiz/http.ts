@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HttpError } from "@/shared/http";
 import { AiUnavailableError } from "@/features/ai";
 import { QuizError } from "./validate";
 
@@ -33,7 +34,8 @@ export async function parseBody(request: Request): Promise<QuizRequest> {
 
 /** Turns any error into a human sentence. Technical details only go to the server log. */
 export function quizErrorResponse(error: unknown): Response {
-  if (error instanceof QuizError) {
+  // Our own errors, and shared ones such as identity's 503 when signing is not set up.
+  if (error instanceof HttpError) {
     return Response.json({ error: error.message }, { status: error.status });
   }
   if (error instanceof AiUnavailableError) {
