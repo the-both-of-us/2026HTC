@@ -151,7 +151,7 @@ describe("PDF maps", () => {
     nodes: [
       rawNode("tables", { fromSource: true, quote: "spreadsheets and tidy tables", page: 1 }),
       rawNode("sql", { fromSource: true, quote: "write SQL queries", page: 2, prerequisites: ["tables"] }),
-      // A real quote, but the model named the wrong page: it must not count as verified.
+      // A real quote, but the model named the wrong page: it cites the page it is really on.
       rawNode("reports", { fromSource: true, quote: "build reports", page: 1, prerequisites: ["sql"] }),
       rawNode("charts"),
       rawNode("stats"),
@@ -172,7 +172,7 @@ describe("PDF maps", () => {
       page: 2,
       verified: true,
     });
-    expect(map.nodes.find((n) => n.id === "reports")?.citation).toEqual({ kind: "pdf", quote: "", verified: false });
+    expect(map.nodes.find((n) => n.id === "reports")?.citation).toEqual({ kind: "pdf", quote: "build reports", page: 2, verified: true });
     expect(await getSkillMap(map.id)).toEqual(map);
   });
   it("does not call the model for a PDF with no text", async () => {

@@ -198,15 +198,15 @@ describe("quote checks", () => {
     // Too short to trust without its spaces.
     expect(quoteOnPdfPage("time", "a tim\ne")).toBe(false);
   });
-  it("does not verify a PDF quote that is real but on another page", () => {
-    const citation = buildCitation(node("a", { fromSource: true, quote: "Strong SQL joins", page: 1 }), pdf, "pdf");
-    expect(citation).toEqual({ kind: "pdf", quote: "", verified: false });
-  });
-  it("does not verify a PDF quote with no page, or a page past the end", () => {
-    for (const page of [null, 0, 3]) {
+  it("cites the page the quote is really on when the model named another one", () => {
+    for (const page of [1, null, 0, 3]) {
       const citation = buildCitation(node("a", { fromSource: true, quote: "Strong SQL joins", page }), pdf, "pdf");
-      expect(citation?.verified).toBe(false);
+      expect(citation).toEqual({ kind: "pdf", quote: "Strong SQL joins", page: 2, verified: true });
     }
+  });
+  it("does not verify a PDF quote that is on no page", () => {
+    const citation = buildCitation(node("a", { fromSource: true, quote: "Weak SQL joins", page: 2 }), pdf, "pdf");
+    expect(citation).toEqual({ kind: "pdf", quote: "", verified: false });
   });
   it("gives a topic no citation and no node from the source, whatever the model said", () => {
     const [result] = validateNodes([node("a", { fromSource: true, quote: "Strong SQL" })], "SQL", "topic");

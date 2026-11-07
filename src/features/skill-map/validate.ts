@@ -150,7 +150,7 @@ export function ensureRoot(nodes: RawNode[]): RawNode[] {
 
 /**
  * Foundations have no citation. A node from the source always has one, but its quote
- * is kept only if code found it in the source, or for a PDF on the page it names.
+ * is kept only if code found it in the source. For a PDF it cites the page code found it on.
  * Otherwise the UI can say it is unverified.
  */
 export function buildCitation(node: RawNode, source: string, kind: SourceKind): Citation | null {
@@ -159,12 +159,15 @@ export function buildCitation(node: RawNode, source: string, kind: SourceKind): 
 
   const quote = node.quote?.trim() ?? "";
   if (kind === "pdf") {
-    // The quote must be on the page the model named, not just somewhere in the PDF.
-    const page = node.page ?? 0;
-    const pageText = page >= 1 ? (source.split(PAGE_BREAK)[page - 1] ?? "") : "";
-    return quoteOnPdfPage(quote, pageText)
-      ? { kind, quote, page, verified: true }
-      : { kind, quote: "", verified: false };
+    // Cite the page the quote is really on. Models often name the wrong page, so check
+    // the named page first, then the others.
+    const pages = source.split(PAGE_BREAK);
+    const named = (node.page ?? 0) - 1;
+    const order = [named, ...pages.keys()].filter((index) => index >= 0 && index < pages.length);
+    const found = order.find((index) => quoteOnPdfPage(quote, pages[index]));
+    return found === undefined
+      ? { kind, quote: "", verified: false }
+      : { kind, quote, page: found + 1, verified: true };
   }
   return quoteAppearsIn(quote, source)
     ? { kind, quote, verified: true }
