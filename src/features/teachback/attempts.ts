@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
 import { HttpError } from "@/shared/http";
-import { getDoc, putDoc } from "@/shared/store";
+import { claimDoc, deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
 import {
   PASS_SCORE,
   type Attempt,
@@ -18,6 +18,13 @@ import { countWords } from "./learnerText";
 export const MIN_EXPLANATION_WORDS = 15;
 export const MAX_EXPLANATION_CHARACTERS = 6_000;
 export const MAX_ANSWER_CHARACTERS = 2_000;
+
+/** The browser reports this figure, so a forged one can only claim so much. */
+const MAX_ACTIVE_MS = 60 * 60 * 1000;
+/** Twice the follow-up route's maxDuration. A claim this old belongs to a server that died. */
+const ABANDONED_CLAIM_MS = 2 * 60 * 1000;
+/** The model's reason for a fail is never shown: it often states the answer, which could be pasted back. */
+const NOT_PASSED_FEEDBACK = "That answer did not show it.";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -64,7 +71,11 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
     nodeId: node.id,
     ownerId: userId,
     explanation,
-    integrity: { ...input.integrity, wordCount: countWords(explanation) },
+    integrity: {
+      ...input.integrity,
+      activeMs: Math.min(input.integrity.activeMs, MAX_ACTIVE_MS),
+      wordCount: countWords(explanation),
+    },
     grade,
     followUp: question ? { question, answer: null, passed: null, feedback: null } : null,
     status,
@@ -87,20 +98,33 @@ export async function answerFollowUp(userId: string, attemptId: string, answer: 
   const map = await loadOwnMap(attempt.mapId, userId);
   const node = findNode(map, attempt.nodeId);
 
-  const trimmedAnswer = answer.trim();
-  const result = await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer);
+  // One answer per attempt, even if several arrive at the same moment.
+  await claimAnswer(attempt.id);
+  try {
+    const trimmedAnswer = answer.trim();
+    const result = await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer);
 
-  const finished: Attempt = {
-    ...attempt,
-    followUp: { ...attempt.followUp, answer: trimmedAnswer, passed: result.passed, feedback: result.feedback },
-    status: result.passed ? "proven" : "not-yet",
-  };
+    const finished: Attempt = {
+      ...attempt,
+      followUp: {
+        ...attempt.followUp,
+        answer: trimmedAnswer,
+        passed: result.passed,
+        feedback: result.passed ? result.feedback : NOT_PASSED_FEEDBACK,
+      },
+      status: result.passed ? "proven" : "not-yet",
+    };
 
-  // Progress goes first. If saving the attempt then fails, the learner can simply
-  // answer again, which would not be possible the other way round.
-  if (result.passed) await markProven(attempt.mapId, userId, node.id, attempt.id);
-  await saveAttempt(finished);
-  return finished;
+    // Progress goes first. If saving the attempt then fails, the learner can simply
+    // answer again, which would not be possible the other way round.
+    if (result.passed) await markProven(attempt.mapId, userId, node.id, attempt.id);
+    await saveAttempt(finished);
+    return finished;
+  } catch (error) {
+    // Nothing was decided, so give the learner their retry back.
+    await deleteDoc(answerClaimKey(attempt.id)).catch(() => undefined);
+    throw error;
+  }
 }
 
 /** Returns the attempt, or null. The id comes from a URL, so it must look like one of ours. */
@@ -119,7 +143,15 @@ export async function getOwnAttempt(userId: string, attemptId: string): Promise<
 
 /** Returns one user's progress on one map, or null if they have proven nothing yet. */
 export async function getProgress(mapId: string, ownerId: string): Promise<MapProgress | null> {
-  return getDoc<MapProgress>(progressKey(mapId, ownerId));
+  const records = await listDocs<ProvenRecord>(`${progressKey(mapId, ownerId)}/`);
+  if (records.length === 0) return null;
+
+  return {
+    mapId,
+    ownerId,
+    proven: Object.fromEntries(records.map((record) => [record.nodeId, record.attemptId])),
+    updatedAt: records.map((record) => record.provenAt).sort().at(-1) as string,
+  };
 }
 
 export type ProgressView = {
@@ -202,15 +234,30 @@ function checkExplanationLength(explanation: string): void {
   }
 }
 
+/** One document per proven skill, so two skills proven at the same moment can't overwrite each other. */
+type ProvenRecord = { nodeId: string; attemptId: string; provenAt: string };
+
 async function markProven(mapId: string, ownerId: string, nodeId: string, attemptId: string): Promise<void> {
-  const progress = await getProgress(mapId, ownerId);
-  const updated: MapProgress = {
-    mapId,
-    ownerId,
-    proven: { ...progress?.proven, [nodeId]: attemptId },
-    updatedAt: new Date().toISOString(),
-  };
-  await putDoc(progressKey(mapId, ownerId), updated);
+  const record: ProvenRecord = { nodeId, attemptId, provenAt: new Date().toISOString() };
+  await putDoc(`${progressKey(mapId, ownerId)}/${nodeId}`, record);
+}
+
+/** Lets one caller grade this attempt's answer. Anyone else gets a 409 until it finishes. */
+async function claimAnswer(attemptId: string): Promise<void> {
+  const key = answerClaimKey(attemptId);
+  const claim = { claimedAt: new Date().toISOString() };
+  if (await claimDoc(key, claim)) return;
+
+  const existing = await getDoc<typeof claim>(key);
+  const abandoned = existing !== null && Date.now() - Date.parse(existing.claimedAt) > ABANDONED_CLAIM_MS;
+  if (abandoned) await deleteDoc(key);
+  if (abandoned && (await claimDoc(key, claim))) return;
+
+  throw new AttemptError("This answer is already being checked. Give it a few seconds, then try again.", 409);
+}
+
+function answerClaimKey(attemptId: string): string {
+  return `attempts/${attemptId}/claim`;
 }
 
 async function saveAttempt(attempt: Attempt): Promise<void> {

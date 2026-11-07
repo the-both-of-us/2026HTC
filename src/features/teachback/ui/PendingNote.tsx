@@ -13,7 +13,7 @@ export function PendingNote({ message }: { message: string }) {
   }, []);
 
   return (
-    <p className="text-ink-soft">
+    <p className="rounded-control bg-raised/60 px-3.5 py-2.5 text-sm text-ink-soft">
       {message}
       {seconds >= SHOW_SECONDS_AFTER && ` ${seconds} seconds so far.`}
     </p>

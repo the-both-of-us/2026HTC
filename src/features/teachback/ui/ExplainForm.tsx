@@ -1,3 +1,4 @@
+import { Mic, MicOff } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { Button, ErrorNotice, Field, Textarea } from "@/shared/ui";
@@ -62,7 +63,7 @@ export function ExplainForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <h3 className="text-xl font-semibold">
+      <h3 className="text-lg font-medium">
         {revising ? "Revise your explanation" : `Explain ${skillTitle} as if to a new coworker.`}
       </h3>
 
@@ -76,11 +77,11 @@ export function ExplainForm({
           <Textarea
             {...control}
             aria-describedby={[control["aria-describedby"], countId].filter(Boolean).join(" ")}
-            ruled
-            rows={7}
+            rows={5}
             value={text}
             readOnly={pending}
             onPaste={integrity.recordPaste}
+            onDrop={integrity.recordPaste}
             onChange={(event) => {
               const next = event.target.value;
               if (next.trim() === "") integrity.reset();
@@ -112,6 +113,7 @@ export function ExplainForm({
             disabled={pending}
             onClick={speech.listening ? speech.stop : speech.start}
           >
+            {speech.listening ? <MicOff aria-hidden="true" size={17} /> : <Mic aria-hidden="true" size={17} />}
             {speech.listening ? "Stop listening" : "Speak instead"}
           </Button>
         )}

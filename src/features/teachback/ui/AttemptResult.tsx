@@ -1,7 +1,11 @@
-import type { Ref } from "react";
+import clsx from "clsx";
+import { BadgeCheck, Check, CircleDashed, MessageCircleQuestion } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode, Ref } from "react";
+import { buttonClasses } from "@/shared/ui";
 import { PASS_SCORE } from "@/shared/types";
 import type { Attempt, CheckpointResult } from "@/shared/types";
-import { integritySentence, nextStepSentence, scoreBreakdown, verdictTitle } from "./format";
+import { integritySentence, metCount, nextStepSentence, scoreBreakdown, verdictTitle } from "./format";
 
 type AttemptResultProps = {
   attempt: Attempt;
@@ -10,6 +14,10 @@ type AttemptResultProps = {
   checkpointTotal: number;
   /** Receives keyboard focus when a new result arrives. */
   headingRef: Ref<HTMLHeadingElement>;
+  /** The open follow-up question. It goes right under the score, so nobody has to scroll to find it. */
+  children?: ReactNode;
+  /** What this proof opened. It goes right under the verdict, so the two share one view. */
+  nextStep?: ReactNode;
 };
 
 /** The result screen: the verdict, the score, then the evidence behind the score. */
@@ -18,29 +26,43 @@ export function AttemptResult({
   skillTitle,
   checkpointTotal,
   headingRef,
+  children,
+  nextStep,
 }: AttemptResultProps) {
   const { grade } = attempt;
   const breakdown = scoreBreakdown(attempt, checkpointTotal);
 
-  // Proven keeps the detail one click away, so the banner and the next step share one view.
+  // Proven keeps the quotes one click away, so the verdict, the next step and every
+  // checkpoint share one view.
   if (attempt.status === "proven") {
     return (
       <div className="flex flex-col gap-5">
-        <ProvenBanner skillTitle={skillTitle} headingRef={headingRef} attempt={attempt} />
+        <ProvenBanner
+          skillTitle={skillTitle}
+          headingRef={headingRef}
+          attempt={attempt}
+          showNextStep={!nextStep}
+        />
+        {nextStep}
+        <Link href={`/proof/${attempt.mapId}`} className={buttonClasses("secondary")}>
+          <BadgeCheck aria-hidden="true" size={17} />
+          See your evidence page
+        </Link>
         <ScoreScale score={grade.score} breakdown={breakdown} />
+        <CheckpointsAtAGlance attempt={attempt} total={checkpointTotal} />
         {attempt.followUp?.feedback && (
           <p>
-            <span className="font-semibold text-forest">Follow-up passed.</span>{" "}
+            <span className="font-medium text-proven">Follow-up passed.</span>{" "}
             {attempt.followUp.feedback}
           </p>
         )}
         <Misconceptions items={grade.misconceptions} />
         <IntegrityNote attempt={attempt} />
-        <details>
-          <summary className="min-h-10 cursor-pointer py-2 font-semibold underline decoration-1 underline-offset-4 hover:decoration-2">
-            Show checkpoints and follow-up
+        <details className="rounded-control border border-rule-strong">
+          <summary className="flex min-h-11 cursor-pointer items-center px-3 font-medium transition-control hover:bg-raised">
+            Show your words and the follow-up
           </summary>
-          <div className="mt-3 flex flex-col gap-6">
+          <div className="flex flex-col gap-5 p-3 pt-2">
             <Checkpoints attempt={attempt} />
             <FollowUpRecord attempt={attempt} />
           </div>
@@ -49,32 +71,124 @@ export function AttemptResult({
     );
   }
 
+  const waitingOnFollowUp = attempt.status === "needs-followup";
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1.5">
-        <h3 ref={headingRef} tabIndex={-1} className="text-2xl font-semibold">
-          {verdictTitle(attempt)}
-        </h3>
-        <p className="text-ink-soft">{nextStepSentence(attempt)}</p>
+    <div className="flex flex-col gap-5">
+      <div
+        className={clsx(
+          "flex items-start gap-3.5 rounded-sheet border p-4",
+          waitingOnFollowUp
+            ? "border-accent/60 bg-available-surface"
+            : "border-dashed border-amber/60 bg-amber/5",
+        )}
+      >
+        {waitingOnFollowUp ? (
+          <MessageCircleQuestion aria-hidden="true" size={26} className="mt-0.5 shrink-0 text-accent-bright" />
+        ) : (
+          <CircleDashed aria-hidden="true" size={26} className="mt-0.5 shrink-0 text-amber" />
+        )}
+        <div className="flex min-w-0 flex-col gap-1">
+          <h3 ref={headingRef} tabIndex={-1} className="text-xl font-medium">
+            {verdictTitle(attempt)}
+          </h3>
+          <p className="text-ink-soft">{nextStepSentence(attempt)}</p>
+        </div>
       </div>
       <ScoreScale score={grade.score} breakdown={breakdown} />
+      <CheckpointBar attempt={attempt} total={checkpointTotal} />
+      {children}
+      <FollowUpRecord attempt={attempt} />
       <Checkpoints attempt={attempt} />
       <Misconceptions items={grade.misconceptions} />
-      <FollowUpRecord attempt={attempt} />
       <IntegrityNote attempt={attempt} />
     </div>
   );
 }
 
-function Checkpoints({ attempt }: { attempt: Attempt }) {
+/**
+ * One segment per checkpoint: solid green with a tick for met, dashed amber for missed.
+ * While a follow-up is open the server hides the rest, so those segments stay plain.
+ */
+function CheckpointBar({ attempt, total }: { attempt: Attempt; total: number }) {
+  const { checkpoints } = attempt.grade;
+  const met = metCount(attempt.grade);
+  const missed = checkpoints.length - met;
+  const hidden = Math.max(0, total - checkpoints.length);
+  const ordered = [...checkpoints].sort((a, b) => Number(b.met) - Number(a.met));
+
   return (
-    <section className="flex flex-col gap-1">
-      <h4 className="font-semibold">What your explanation covered</h4>
-      <p className="text-sm text-ink-soft">
-        Highlights are your exact words, checked by code against what you wrote.
+    <div className="flex flex-col gap-1.5">
+      <div aria-hidden="true" className="flex gap-1">
+        {ordered.map((checkpoint) => (
+          <span
+            key={checkpoint.checkpoint}
+            className={clsx(
+              "flex h-5 flex-1 items-center justify-center rounded-md",
+              checkpoint.met
+                ? "bg-proven text-on-proven"
+                : "border-[1.5px] border-dashed border-amber bg-amber/10",
+            )}
+          >
+            {checkpoint.met && <Check size={13} strokeWidth={3.5} />}
+          </span>
+        ))}
+        {Array.from({ length: hidden }, (_, index) => (
+          <span key={index} className="h-5 flex-1 rounded-md border border-rule-strong bg-raised" />
+        ))}
+      </div>
+      <p className="text-sm tabular-nums">
+        <span className="font-medium text-proven">{met} met</span>
+        {missed > 0 && (
+          <>
+            {", "}
+            <span className="font-medium text-amber">{missed} missed</span>
+          </>
+        )}
+        {hidden > 0 && <span className="text-ink-soft">, {hidden} shown after your answer</span>}
       </p>
-      <ul className="mt-1 divide-y divide-rule">
+    </div>
+  );
+}
+
+/** The bar plus one short line per checkpoint. Used when the result needs to stay compact. */
+function CheckpointsAtAGlance({ attempt, total }: { attempt: Attempt; total: number }) {
+  return (
+    <section className="flex flex-col gap-2.5">
+      <h4 className="sr-only">Checkpoints</h4>
+      <CheckpointBar attempt={attempt} total={total} />
+      <ul className="flex flex-col gap-1.5">
         {attempt.grade.checkpoints.map((checkpoint) => (
+          <li key={checkpoint.checkpoint} className="flex gap-2 text-sm">
+            <CheckpointMark met={checkpoint.met} size={17} />
+            <span>
+              <span className="sr-only">{checkpoint.met ? "Met: " : "Missed: "}</span>
+              {checkpoint.checkpoint}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function Checkpoints({ attempt }: { attempt: Attempt }) {
+  // What is missing is what the learner needs next, so it comes first until they pass.
+  const ordered = [...attempt.grade.checkpoints].sort((a, b) =>
+    attempt.status === "proven" ? Number(b.met) - Number(a.met) : Number(a.met) - Number(b.met),
+  );
+
+  return (
+    <section className="flex flex-col gap-2">
+      <div>
+        <h4 className="font-medium">What your explanation covered</h4>
+        <p className="text-sm text-ink-soft">
+          Highlights are your exact words, checked by code against what you wrote.
+          {attempt.status === "not-yet" && " Repeating a checkpoint word for word earns nothing, so say it your own way."}
+        </p>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {ordered.map((checkpoint) => (
           <CheckpointRow key={checkpoint.checkpoint} result={checkpoint} />
         ))}
       </ul>
@@ -86,8 +200,8 @@ function Misconceptions({ items }: { items: string[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-2 border-l-4 border-danger pl-4">
-      <h4 className="font-semibold">{items.length === 1 ? "One thing to correct" : "Things to correct"}</h4>
+    <section className="flex flex-col gap-2 rounded-control border border-danger/60 bg-danger-surface p-3.5">
+      <h4 className="font-medium">{items.length === 1 ? "One thing to correct" : "Things to correct"}</h4>
       <ul className="flex flex-col gap-2">
         {items.map((item) => (
           <li key={item}>{item}</li>
@@ -104,10 +218,10 @@ function FollowUpRecord({ attempt }: { attempt: Attempt }) {
 
   return (
     <section className="flex flex-col gap-2">
-      <h4 className="font-semibold">
+      <h4 className="font-medium">
         {followUp.passed ? "Follow-up question, passed" : "Follow-up question, not passed"}
       </h4>
-      <p className="font-display">{followUp.question}</p>
+      <p>{followUp.question}</p>
       <p className="border-l-2 border-control-edge pl-3 text-ink-soft">{followUp.answer}</p>
       {!followUp.passed && followUp.feedback && <p>{followUp.feedback}</p>}
     </section>
@@ -117,7 +231,8 @@ function FollowUpRecord({ attempt }: { attempt: Attempt }) {
 function IntegrityNote({ attempt }: { attempt: Attempt }) {
   return (
     <p className="text-sm text-ink-soft">
-      On your evidence page: {lowerFirst(integritySentence(attempt.integrity))}
+      {attempt.status === "proven" ? "On your evidence page: " : "How you wrote this: "}
+      {lowerFirst(integritySentence(attempt.integrity))}
     </p>
   );
 }
@@ -126,75 +241,65 @@ function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
+/** The payoff: the big green moment a learner works for. */
 function ProvenBanner({
   attempt,
   skillTitle,
   headingRef,
+  showNextStep,
 }: {
   attempt: Attempt;
   skillTitle: string;
   headingRef: Ref<HTMLHeadingElement>;
+  showNextStep: boolean;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-sheet bg-proven-surface p-5 text-on-proven">
-      <svg
-        width={56}
-        height={56}
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className="animate-stamp shrink-0"
-      >
-        <path
-          d="M12 2.5 22.5 21h-21z"
-          fill="var(--color-on-proven)"
-          stroke="var(--color-on-proven)"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <circle cx="12" cy="14.5" r="2.6" fill="var(--color-proven)" />
-      </svg>
-      <div className="flex min-w-0 flex-col gap-1">
-        <h3 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold">
-          {verdictTitle(attempt)}
-        </h3>
-        <p className="font-semibold">{skillTitle}</p>
-        <p className="text-sm">{nextStepSentence(attempt)}</p>
+    <div className="flex flex-col gap-3 rounded-sheet border border-proven/70 bg-proven-surface p-5 shadow-glow-green">
+      <div className="flex items-center gap-4">
+        <span className="animate-tick flex size-14 shrink-0 items-center justify-center rounded-full bg-proven text-on-proven">
+          <Check aria-hidden="true" size={32} strokeWidth={3} />
+        </span>
+        <div className="flex min-w-0 flex-col">
+          <h3 ref={headingRef} tabIndex={-1} className="font-serif text-5xl font-semibold">
+            {verdictTitle(attempt)}
+          </h3>
+          <p className="font-medium">{skillTitle}</p>
+        </div>
       </div>
+      {showNextStep && <p className="text-sm text-ink-soft">{nextStepSentence(attempt)}</p>}
     </div>
   );
 }
 
-/** The score on a map-style scale bar, with the pass mark always visible. */
+/** The score on a bar, with the pass mark always visible. */
 function ScoreScale({ score, breakdown }: { score: number; breakdown: string }) {
   const passed = score >= PASS_SCORE;
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="flex items-center gap-3">
-        <span className="font-display text-4xl font-semibold tabular-nums">{score}</span>
-        <span className="min-w-0 text-ink-soft">out of 100. {breakdown}</span>
+      <p className="flex items-baseline gap-2.5">
+        <span className="text-4xl font-semibold tabular-nums">{score}</span>
+        <span className="min-w-0 text-sm text-ink-soft">out of 100. {breakdown}</span>
       </p>
       {/* The numbers above say all this in words, so the bar is hidden from screen readers. */}
       <div aria-hidden="true">
-        <div className="relative h-4 border-2 border-ink bg-sheet">
+        <div className="relative h-2.5 rounded-full bg-rule-strong">
           <div
-            className={passed ? "h-full bg-forest" : "h-full bg-contour"}
+            className={clsx("animate-bar h-full rounded-full", passed ? "bg-proven" : "bg-amber")}
             style={{ width: `${score}%` }}
           />
           <div
-            className="absolute -top-1.5 -bottom-1.5 w-1.5 -translate-x-1/2 border-x border-sheet bg-ink"
+            className="absolute -top-1 -bottom-1 w-0.5 -translate-x-1/2 rounded-full bg-ink"
             style={{ left: `${PASS_SCORE}%` }}
           />
         </div>
-        <div className="relative mt-2 h-5 text-sm text-ink-soft tabular-nums">
-          <span className="absolute left-0">0</span>
+        <div className="relative mt-1.5 h-5 text-sm text-ink-soft tabular-nums">
           <span
-            className="absolute -translate-x-1/2 font-semibold text-ink"
+            className="absolute -translate-x-1/2 whitespace-nowrap"
             style={{ left: `${PASS_SCORE}%` }}
           >
             {PASS_SCORE} to pass
           </span>
-          <span className="absolute right-0">100</span>
         </div>
       </div>
     </div>
@@ -203,11 +308,16 @@ function ScoreScale({ score, breakdown }: { score: number; breakdown: string }) 
 
 function CheckpointRow({ result }: { result: CheckpointResult }) {
   return (
-    <li className="flex gap-3 py-3">
-      <CheckpointMark met={result.met} />
+    <li
+      className={clsx(
+        "flex gap-3 rounded-control border p-3",
+        result.met ? "border-proven/40 bg-proven-surface/70" : "border-dashed border-amber/55 bg-amber/5",
+      )}
+    >
+      <CheckpointMark met={result.met} size={20} />
       <div className="flex min-w-0 flex-col gap-1.5">
         <p>
-          <span className={result.met ? "font-semibold text-forest" : "font-semibold text-contour"}>
+          <span className={clsx("font-medium", result.met ? "text-proven" : "text-amber")}>
             {result.met ? "Met." : "Missed."}
           </span>{" "}
           {result.checkpoint}
@@ -215,7 +325,7 @@ function CheckpointRow({ result }: { result: CheckpointResult }) {
         {result.quote && (
           <p>
             <span className="sr-only">Your words: </span>
-            <mark className="animate-highlight bg-highlight box-decoration-clone px-1 py-0.5 text-ink">
+            <mark className="animate-highlight rounded-sm bg-highlight box-decoration-clone px-1 py-0.5 text-ink">
               &ldquo;{result.quote}&rdquo;
             </mark>
           </p>
@@ -226,16 +336,16 @@ function CheckpointRow({ result }: { result: CheckpointResult }) {
 }
 
 /** A filled tick for met and a dashed ring for missed, so the two differ without colour. */
-function CheckpointMark({ met }: { met: boolean }) {
+function CheckpointMark({ met, size }: { met: boolean; size: number }) {
   return (
-    <svg width={22} height={22} viewBox="0 0 24 24" aria-hidden="true" className="mt-0.5 shrink-0">
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className="mt-0.5 shrink-0">
       {met ? (
         <>
-          <circle cx="12" cy="12" r="11" fill="var(--color-forest)" />
+          <circle cx="12" cy="12" r="11" fill="var(--color-proven)" />
           <path
             d="m6.5 12.5 3.8 3.8 7.2-8"
             fill="none"
-            stroke="var(--color-on-dark)"
+            stroke="var(--color-on-proven)"
             strokeWidth="2.6"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -247,7 +357,7 @@ function CheckpointMark({ met }: { met: boolean }) {
           cy="12"
           r="9.5"
           fill="none"
-          stroke="var(--color-contour)"
+          stroke="var(--color-amber)"
           strokeWidth="2.5"
           strokeDasharray="4 3.2"
         />

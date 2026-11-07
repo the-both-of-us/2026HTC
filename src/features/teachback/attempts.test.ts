@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { chatJSON } from "@/features/ai";
-import { putDoc } from "@/shared/store";
+import { getDoc, putDoc } from "@/shared/store";
 import type { Attempt, IntegritySignals, SkillMap, SkillNode } from "@/shared/types";
 import { answerFollowUp, getAttempt, getProgress, getProgressView, startAttempt, toLearnerView, type NewAttempt } from "./attempts";
 
@@ -61,6 +61,7 @@ async function reachFollowUp(nodeId = "first"): Promise<Attempt> {
 }
 
 beforeEach(async () => {
+  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   mockChatJSON.mockReset();
 
@@ -132,6 +133,25 @@ describe("status transitions", () => {
     expect(view.states).toEqual({ first: "proven", second: "available" });
   });
 
+  it("2 of 3 checkpoints reaches the follow-up", async () => {
+    const node = { ...makeNode("first", []), checkpoints: ["One fact", "Two fact", "Three fact"] };
+    await putDoc(`maps/${mapId}`, { ...(await getDoc(`maps/${mapId}`) as SkillMap), nodes: [node] });
+    mockChatJSON.mockResolvedValueOnce({
+      checkpoints: [
+        { number: 1, quote: "keeps only rows that match in both tables" },
+        { number: 2, quote: "keeps every left row" },
+        { number: 3, quote: null },
+      ],
+      factualErrors: [],
+    });
+    modelAsks();
+
+    const attempt = await startAttempt(OWNER, newAttempt());
+
+    expect(attempt.grade.score).toBe(67);
+    expect(attempt.status).toBe("needs-followup");
+  });
+
   it("a failed follow-up gives not-yet and leaves the node unproven", async () => {
     const attempt = await reachFollowUp();
     modelJudges(false);
@@ -174,6 +194,76 @@ describe("status transitions", () => {
     await answerFollowUp(OWNER, attempt.id, "A real answer.");
 
     await expect(startAttempt(OWNER, newAttempt())).rejects.toMatchObject({ status: 409 });
+  });
+});
+
+describe("sending several answers at once", () => {
+  it("grades one and refuses the rest, so a later fail can't overwrite a pass", async () => {
+    const attempt = await reachFollowUp();
+    mockChatJSON.mockClear();
+    modelJudges(true);
+
+    const results = await Promise.allSettled(
+      [1, 2, 3, 4, 5].map((n) => answerFollowUp(OWNER, attempt.id, `Answer ${n}.`)),
+    );
+
+    expect(mockChatJSON).toHaveBeenCalledOnce();
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(4);
+    expect((await getAttempt(attempt.id))?.status).toBe("proven");
+    expect((await getProgress(mapId, OWNER))?.proven).toEqual({ first: attempt.id });
+  });
+
+  it("gives the retry back if the model call fails", async () => {
+    const attempt = await reachFollowUp();
+    mockChatJSON.mockRejectedValueOnce(new Error("The model is down."));
+    await expect(answerFollowUp(OWNER, attempt.id, "An answer.")).rejects.toThrow("The model is down.");
+
+    modelJudges(true);
+    const finished = await answerFollowUp(OWNER, attempt.id, "An answer.");
+
+    expect(finished.status).toBe("proven");
+  });
+
+  it("takes over a claim left behind by a server that died", async () => {
+    const attempt = await reachFollowUp();
+    const longAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    await putDoc(`attempts/${attempt.id}/claim`, { claimedAt: longAgo });
+
+    modelJudges(true);
+    const finished = await answerFollowUp(OWNER, attempt.id, "An answer.");
+
+    expect(finished.status).toBe("proven");
+  });
+
+  it("refuses while a recent claim is still open", async () => {
+    const attempt = await reachFollowUp();
+    await putDoc(`attempts/${attempt.id}/claim`, { claimedAt: new Date().toISOString() });
+
+    await expect(answerFollowUp(OWNER, attempt.id, "An answer.")).rejects.toMatchObject({ status: 409 });
+  });
+});
+
+describe("two skills proven at the same moment", () => {
+  it("keeps both", async () => {
+    await putDoc(`maps/${mapId}`, {
+      id: mapId,
+      ownerId: OWNER,
+      title: "Test map",
+      subtitle: "",
+      sourceKind: "posting",
+      sourceText: "",
+      nodes: [makeNode("first", []), makeNode("other", [])],
+      createdAt: new Date().toISOString(),
+    });
+    const a = await reachFollowUp("first");
+    const b = await reachFollowUp("other");
+    modelJudges(true);
+    modelJudges(true);
+
+    await Promise.all([answerFollowUp(OWNER, a.id, "An answer."), answerFollowUp(OWNER, b.id, "An answer.")]);
+
+    expect((await getProgress(mapId, OWNER))?.proven).toEqual({ first: a.id, other: b.id });
   });
 });
 
@@ -231,6 +321,24 @@ describe("what is stored and sent", () => {
     const attempt = await startAttempt(OWNER, newAttempt({ integrity: claimed }));
 
     expect(attempt.integrity.wordCount).toBe(EXPLANATION.split(" ").length);
+  });
+
+  it("caps the active time a browser can claim", async () => {
+    modelGrades("half");
+
+    const attempt = await startAttempt(OWNER, newAttempt({ integrity: { ...integrity, activeMs: 999_999_999 } }));
+
+    expect(attempt.integrity.activeMs).toBe(60 * 60 * 1000);
+  });
+
+  it("never stores the model's reason for a failed follow-up, which could be pasted back as the answer", async () => {
+    const attempt = await reachFollowUp();
+    mockChatJSON.mockResolvedValueOnce({ passed: false, feedback: "You need to say the row stays, with NULLs." });
+
+    const finished = await answerFollowUp(OWNER, attempt.id, "Not sure.");
+
+    expect(finished.followUp?.feedback).toBe("That answer did not show it.");
+    expect(JSON.stringify(await getAttempt(attempt.id))).not.toContain("the row stays");
   });
 
   it("never sends ownerId, which is the identity cookie", async () => {

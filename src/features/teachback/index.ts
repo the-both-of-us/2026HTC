@@ -13,5 +13,6 @@ export {
 } from "./attempts";
 export type { LearnerAttempt, NewAttempt, ProgressView } from "./attempts";
 export { generateFollowUp, gradeFollowUp } from "./followUp";
-export { computeScore, gradeExplanation, quoteIsInText } from "./grading";
+export { computeScore, gradeExplanation } from "./grading";
 export { errorResponse, followUpBody, newAttemptBody, parseBody } from "./http";
+export { integritySentence } from "./ui/format";
