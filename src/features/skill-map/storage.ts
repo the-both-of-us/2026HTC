@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { isEnergyRelated } from "@/features/grid";
 import { deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
 import type { PublicSkillNode, SkillMap } from "@/shared/types";
 import { SkillMapError } from "./build";
+import { isEnergyRelated } from "./energy";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

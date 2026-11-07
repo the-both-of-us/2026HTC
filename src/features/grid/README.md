@@ -10,7 +10,7 @@
 - `metrics.ts`: totals and formatting. `live.ts`: how the browser moves from one reading to the next.
 - `ui/`: `GridScreen` renders `/grid`. `LiveGridCard` is the small card for a skill map.
 
-**Using it elsewhere:** `import { LiveGridCard, isEnergyRelated } from "@/features/grid/client"`. `isEnergyRelated(postingText)` decides whether a map should show the card.
+**Using it elsewhere:** `import { LiveGridCard, LiveGridStrip } from "@/features/grid/client"`. Whether a map shows them is decided in `skill-map`, by `isEnergyRelated(postingText)`.
 
 **Facts we checked against the report:** positive interchange means exporting (generation minus interchange equals load), and report times are Alberta time, UTC-6.
 
