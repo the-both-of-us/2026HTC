@@ -67,3 +67,7 @@ When a button press removes the focused control (making a quiz, an error, trying
 ## Tests
 
 `npm test -- quiz` mocks the model. `quiz.test.ts` covers saving and reuse, one call for concurrent requests, the deadline, unknown maps and nodes, and who may read a private or published map (including that a stranger can't join the owner's in-flight generation).
+
+## Delete my data
+
+`deleteForMaps(mapIds)` removes the saved items for those maps. "Delete my data" calls it with the user's own map ids, before deleting the maps. Ids that aren't UUIDs are ignored, and it can run twice.

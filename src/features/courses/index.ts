@@ -9,3 +9,5 @@ export { startCourse } from "./start";
 export type { StartResult } from "./start";
 export { toPublicCourse } from "./types";
 export type { CourseDetail, CourseSkill, CourseSort, LikeResult, PublicCourse } from "./types";
+export { deleteUserData } from "./deleteData";
+export type { DeletedCourseData } from "./deleteData";

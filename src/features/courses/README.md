@@ -93,3 +93,7 @@ The order of checks is unchanged: a missing map is a 404 and someone else's map 
 ## Tests
 
 `npm test -- courses` runs the feature's tests and `src/app/api/courses/routes.test.ts`. The AI is mocked, and the seeding tests assert it is never called.
+
+## Delete my data
+
+`deleteUserData(userId, ownMapIds)` removes the user's likes (and recounts those courses) and their "started this course" records. Given the user's own map ids, it also clears the likes and starts other people left on those maps, since the maps are deleted next. Listings go through `unpublishCourse`. Only UUID ids are accepted, only this user's records change, and it can run twice.

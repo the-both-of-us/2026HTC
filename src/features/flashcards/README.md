@@ -62,3 +62,7 @@ Every action also has a visible button: **Show answer** or **Show question**, **
 ## Tests
 
 `npm test -- flashcards` mocks the model. It covers validation, the prompt's tags, saving and reuse, one call for concurrent requests, the 45 second deadline, unknown maps and nodes, who may read a private or published map (including that a stranger can't join the owner's in-flight generation), the HTTP errors and parsing (`http.test.ts`), the client's error sentences (`ui/api.test.ts`) and the deck's key handling.
+
+## Delete my data
+
+`deleteForMaps(mapIds)` removes the saved items for those maps. "Delete my data" calls it with the user's own map ids, before deleting the maps. Ids that aren't UUIDs are ignored, and it can run twice.
