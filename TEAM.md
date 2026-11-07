@@ -19,7 +19,7 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
-**From Mirza to Abdu (Sat Nov 7).** Flashcards and quiz are pushed. Courses is being built now, and these block parts of it:
+**From Mirza to Abdu (Sat Nov 7).** Flashcards, quiz and courses (with Start) are pushed. Only the header button is left:
 
 - [x] `copySkillMap(mapId, newOwnerId): Promise<SkillMap>` exported from `@/features/skill-map`. It's for "Start this course": copy the map under a new id and owner, keep the nodes, and add `forkedFrom: mapId`. Until it exists, the course page shows "View the map" instead of "Start this course".
 - [x] `listMapsByOwner(ownerId): Promise<SkillMap[]>` exported from `@/features/skill-map`, for "My courses" on the dashboard.
