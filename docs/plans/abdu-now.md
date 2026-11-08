@@ -6,7 +6,8 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
-- Nothing right now.
+- **Remove "Read the Grid"** (owner's request): the sidebar link, the `/grid` page, `/api/grid` and the live grid strip on energy maps all go. Files: `src/shared/ui/SideNav.tsx`, `src/app/grid`, `src/app/api/grid`, `skill-map/ui/MapScreen.tsx`, and `features/grid` UI. The solve store stays, so old evidence pages and data deletion keep working.
+  - Mirza: point 7 of `docs/submission/devpost.md` still mentions "Read the Grid". Please drop that part; the StatCan sentence still stands.
 
 ## Next
 
