@@ -40,6 +40,7 @@ THE LESSON
 - mistakes: 3 common mistakes, each with a one or two sentence fix.
 - checks: exactly 2 questions a learner can answer in a sentence or two, each with a short answer.
 - Wrap code names inside sentences in backticks, like \`LEFT JOIN\`.
+- Format with light Markdown inside the strings. Put **double asterisks** round the 3 to 5 key terms, the first time each appears. Where steps or parallel items read better as a list, write a short lead-in line, then one item per line starting with "- " (or "1. " for steps in order), separated by \\n; at most two lists in the lesson. You may end one idea paragraph with a line starting with "> Tip: " that gives one practical tip. No headings, tables, links or images.
 
 RULES
 - The checkpoints say what a good explanation must cover. Teach every one of them, but in your own words and with your own examples. Never copy a checkpoint or any run of 6 or more of its words: learners will later explain this skill themselves, and the lesson must not hand them the answer key to paste.

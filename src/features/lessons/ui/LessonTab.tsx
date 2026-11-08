@@ -1,11 +1,21 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import {
+  CircleCheck,
+  CircleHelp,
+  CircleX,
+  Clock,
+  FlaskConical,
+  Lightbulb,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { PublicSkillNode } from "@/shared/types";
-import { Button, ErrorNotice, InlineText, ReadAloudButton } from "@/shared/ui";
+import { Button, ErrorNotice, ReadAloudButton } from "@/shared/ui";
 import type { Lesson } from "../types";
 import { fetchLesson } from "./api";
+import { HighlightedCode, MdBlocks, MdInline, plainText, unfence } from "./LessonMarkdown";
 
 export type LessonTabProps = {
   mapId: string;
@@ -71,53 +81,55 @@ function LessonBody({ mapId, skill, onReady, afterLesson }: LessonTabProps) {
         <ReadAloudButton what="this lesson" text={lessonAloud(skill.title, lesson)} />
       </div>
 
-      <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">The idea</h4>
+      <Section icon={Lightbulb} tone="idea" title="The idea">
         {lesson.idea.map((paragraph, index) => (
-          <p key={index}>
-            <InlineText text={paragraph} />
-          </p>
+          <MdBlocks key={index} text={paragraph} />
         ))}
-      </section>
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">An example</h4>
-        <p>
-          <InlineText text={lesson.example.intro} />
-        </p>
+      <Section icon={FlaskConical} tone="example" title="An example">
+        <MdBlocks text={lesson.example.intro} />
         {lesson.example.code && (
           // Focusable, so a keyboard can scroll a long line of code sideways.
-          <pre tabIndex={0} aria-label="Code example" className="overflow-x-auto rounded-control border border-rule-strong bg-paper p-4 font-mono text-sm leading-6 lg:in-data-[reading-page]:text-base lg:in-data-[reading-page]:leading-7">
-            <code>{lesson.example.code}</code>
+          <pre
+            tabIndex={0}
+            aria-label="Code example"
+            className="overflow-x-auto rounded-control border border-rule-strong border-l-4 border-l-read-example bg-paper p-4 font-mono text-sm leading-6 lg:in-data-[reading-page]:text-base lg:in-data-[reading-page]:leading-7"
+          >
+            <HighlightedCode code={unfence(lesson.example.code)} />
           </pre>
         )}
-        <p>
-          <InlineText text={lesson.example.after} />
-        </p>
-      </section>
+        <MdBlocks text={lesson.example.after} />
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">Common mistakes</h4>
+      <Section icon={TriangleAlert} tone="mistakes" title="Common mistakes">
         <ul className="flex flex-col gap-3">
           {lesson.mistakes.map((item, index) => (
-            <li key={index} className="border-l-2 border-rule-strong pl-3">
-              <p className="font-medium">
-                <InlineText text={item.mistake} />
+            <li key={index} className="flex flex-col gap-2 rounded-control border border-rule-strong bg-sheet p-4">
+              <p className="flex gap-2.5 font-medium">
+                <CircleX aria-hidden="true" size={18} className="mt-[0.3em] shrink-0 text-danger" />
+                <span>
+                  <span className="sr-only">Mistake: </span>
+                  <MdInline text={item.mistake} />
+                </span>
               </p>
-              <p className="text-ink-soft">
-                <InlineText text={item.fix} />
+              <p className="flex gap-2.5 text-ink-soft">
+                <CircleCheck aria-hidden="true" size={18} className="mt-[0.3em] shrink-0 text-proven" />
+                <span>
+                  <span className="sr-only">Fix: </span>
+                  <MdInline text={item.fix} />
+                </span>
               </p>
             </li>
           ))}
         </ul>
-      </section>
+      </Section>
 
-      <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">Check yourself</h4>
+      <Section icon={CircleHelp} tone="checks" title="Check yourself">
         {lesson.checks.map((check, index) => (
           <CheckQuestion key={index} question={check.question} answer={check.answer} />
         ))}
-      </section>
+      </Section>
 
       {afterLesson}
 
@@ -131,20 +143,55 @@ function LessonBody({ mapId, skill, onReady, afterLesson }: LessonTabProps) {
   );
 }
 
+const TONES = {
+  idea: "bg-read-key/15 text-read-key",
+  example: "bg-read-example/15 text-read-example",
+  mistakes: "bg-danger/12 text-danger",
+  checks: "bg-read-tip/15 text-read-tip",
+} as const;
+
+/** A lesson section: its heading carries a coloured mark, so each kind of part is easy to find again. */
+function Section({
+  icon: Icon,
+  tone,
+  title,
+  children,
+}: {
+  icon: LucideIcon;
+  tone: keyof typeof TONES;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h4 className="flex items-center gap-2.5 font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">
+        <span
+          aria-hidden="true"
+          className={`flex size-8 shrink-0 items-center justify-center rounded-full ${TONES[tone]}`}
+        >
+          <Icon size={17} />
+        </span>
+        {title}
+      </h4>
+      {children}
+    </section>
+  );
+}
+
 function CheckQuestion({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-col items-start gap-2 rounded-control border border-rule-strong bg-raised/50 p-4">
+    <div className="flex flex-col items-start gap-2 rounded-control border border-rule-strong border-l-4 border-l-read-tip bg-raised/50 p-4">
       <p className="font-medium">
-        <InlineText text={question} />
+        <MdInline text={question} />
       </p>
       <Button variant="subtle" size="sm" aria-expanded={open} onClick={() => setOpen(!open)}>
         {open ? "Hide answer" : "Show answer"}
       </Button>
       {open && (
-        <p className="text-ink-soft">
-          <InlineText text={answer} />
-        </p>
+        <div className="flex flex-col gap-2 text-ink-soft">
+          <MdBlocks text={answer} />
+        </div>
       )}
     </div>
   );
@@ -167,13 +214,13 @@ function LessonSkeleton() {
 function lessonAloud(title: string, lesson: Lesson): string {
   return [
     `${title}. The idea.`,
-    ...lesson.idea,
+    ...lesson.idea.map(plainText),
     "An example.",
-    lesson.example.intro,
-    lesson.example.after,
+    plainText(lesson.example.intro),
+    plainText(lesson.example.after),
     "Common mistakes.",
-    ...lesson.mistakes.map((item) => `${item.mistake} ${item.fix}`),
+    ...lesson.mistakes.map((item) => `${plainText(item.mistake)} ${plainText(item.fix)}`),
     "Check yourself.",
-    ...lesson.checks.map((item) => item.question),
+    ...lesson.checks.map((item) => plainText(item.question)),
   ].join(" ");
 }

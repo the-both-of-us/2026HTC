@@ -164,6 +164,34 @@ export function SkillPanel({
     </div>
   );
 
+  // "Built on", or what a locked skill waits for.
+  const prerequisites = skill.prerequisites.length > 0 && (
+    <section>
+      <h3 className="mb-2 text-sm font-medium text-ink-soft">
+        {state === "locked" ? "This skill opens once these are proven" : "Built on"}
+      </h3>
+      <ul className="flex flex-col gap-1.5">
+        {skill.prerequisites.map((id) => (
+          <li key={id}>
+            <button
+              type="button"
+              onClick={() => onSelect(id)}
+              className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-control border border-rule-strong bg-raised/50 px-3 py-2 text-left transition-control hover:border-control-edge hover:bg-raised"
+            >
+              <StateMark state={states[id] ?? "locked"} size={15} className="shrink-0" />
+              <span className="min-w-0 flex-1">{titleOf(id)}</span>
+              <span className="shrink-0 text-sm text-ink-soft">
+                {NODE_STATE_LABELS[states[id] ?? "locked"]}
+              </span>
+              <ChevronRight aria-hidden="true" size={16} className="shrink-0 text-ink-soft" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  
+  );
+
   return (
     <>
       {/* On phones the sheet covers most of the screen. Tapping above it closes it.
@@ -190,23 +218,36 @@ export function SkillPanel({
           className={clsx(
             "flex flex-col gap-5 p-5 pb-24 lg:pb-6",
             // A wide reading page with larger text, so it uses the screen without long, small lines.
-            fullPage && "mx-auto w-full max-w-5xl lg:gap-7 lg:px-10 lg:pt-10 lg:pb-16",
+            fullPage && "mx-auto w-full max-w-5xl lg:gap-7 lg:px-10 lg:pt-5 lg:pb-16",
           )}
         >
-          <header className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col items-start gap-2">
+          <header
+            className={clsx(
+              "flex items-start justify-between gap-3",
+              // Full page: one slim row that stays at the top while you read.
+              fullPage &&
+                "sticky top-0 z-10 -mx-5 -mt-5 items-center border-b border-rule bg-sheet/95 px-5 py-2.5 backdrop-blur lg:-mx-10 lg:px-10",
+            )}
+          >
+            <div
+              className={clsx(
+                "flex min-w-0",
+                fullPage ? "flex-wrap items-center gap-x-3 gap-y-1.5" : "flex-col items-start gap-2",
+              )}
+            >
               <h2
                 id="skill-panel-title"
                 ref={headingRef}
                 tabIndex={-1}
                 className={clsx(
                   "text-xl leading-snug font-medium outline-none",
-                  fullPage && "lg:text-[2rem] lg:leading-tight",
+                  fullPage && "text-lg lg:text-2xl lg:leading-tight",
                 )}
               >
                 {skill.title}
               </h2>
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Phones in full page keep the reading bar to one line: the badges are for the map view. */}
+              <div className={clsx("flex flex-wrap items-center gap-2", fullPage && "max-sm:hidden")}>
                 <Badge tone={state} />
                 {unlockedEarly && state === "available" && <Badge>Unlocked early</Badge>}
                 <FormatBadge format={format} compact />
@@ -248,45 +289,54 @@ export function SkillPanel({
           {/* Just proven: the verdict moves up, so the payoff is the first thing in view. */}
           {!ownNotice && (
             <>
-              <p className={clsx("text-ink-soft", fullPage && "lg:text-xl")}>
-                <InlineText text={skill.why} />
-              </p>
+              {fullPage ? (
+                // Full page: the skill's background folds into one line, so the lesson starts near the top.
+                <details className="group rounded-sheet border border-rule-strong bg-raised/50">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 text-ink-soft [&::-webkit-details-marker]:hidden">
+                    <ChevronRight
+                      aria-hidden="true"
+                      size={16}
+                      className="shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none"
+                    />
+                    <span className="shrink-0 font-medium text-ink">About this skill</span>
+                    <span className="min-w-0 truncate group-open:hidden">
+                      <InlineText text={skill.why} />
+                    </span>
+                  </summary>
+                  <div className="flex flex-col gap-5 px-4 pb-4">
+                    <p className="text-ink-soft lg:text-xl">
+                      <InlineText text={skill.why} />
+                    </p>
+                    <section>
+                      <h3 className="mb-2 text-sm font-medium text-ink-soft">Where this came from</h3>
+                      <CitationBlock
+                        citation={skill.citation}
+                        sourceKind={sourceKind}
+                        fromSource={skill.fromSource}
+                        leadsTo={dependants.map((other) => other.title)}
+                      />
+                    </section>
+                    {state !== "locked" && prerequisites}
+                  </div>
+                </details>
+              ) : (
+                <>
+                <p className={clsx("text-ink-soft", fullPage && "lg:text-xl")}>
+                  <InlineText text={skill.why} />
+                </p>
 
-              <section className="rounded-sheet border border-rule-strong bg-raised/50 p-4">
-                <h3 className="mb-2 text-sm font-medium text-ink-soft">Where this came from</h3>
-                <CitationBlock
-                  citation={skill.citation}
-                  sourceKind={sourceKind}
-                  fromSource={skill.fromSource}
-                  leadsTo={dependants.map((other) => other.title)}
-                />
-              </section>
-
-              {skill.prerequisites.length > 0 && (
-                <section>
-                  <h3 className="mb-2 text-sm font-medium text-ink-soft">
-                    {state === "locked" ? "This skill opens once these are proven" : "Built on"}
-                  </h3>
-                  <ul className="flex flex-col gap-1.5">
-                    {skill.prerequisites.map((id) => (
-                      <li key={id}>
-                        <button
-                          type="button"
-                          onClick={() => onSelect(id)}
-                          className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-control border border-rule-strong bg-raised/50 px-3 py-2 text-left transition-control hover:border-control-edge hover:bg-raised"
-                        >
-                          <StateMark state={states[id] ?? "locked"} size={15} className="shrink-0" />
-                          <span className="min-w-0 flex-1">{titleOf(id)}</span>
-                          <span className="shrink-0 text-sm text-ink-soft">
-                            {NODE_STATE_LABELS[states[id] ?? "locked"]}
-                          </span>
-                          <ChevronRight aria-hidden="true" size={16} className="shrink-0 text-ink-soft" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                <section className="rounded-sheet border border-rule-strong bg-raised/50 p-4">
+                  <h3 className="mb-2 text-sm font-medium text-ink-soft">Where this came from</h3>
+                  <CitationBlock
+                    citation={skill.citation}
+                    sourceKind={sourceKind}
+                    fromSource={skill.fromSource}
+                    leadsTo={dependants.map((other) => other.title)}
+                  />
                 </section>
+                </>
               )}
+              {(!fullPage || state === "locked") && prerequisites}
 
               {/* Nothing is written for a locked skill: no lesson, cards or quiz until it opens. */}
               {state === "locked" ? (

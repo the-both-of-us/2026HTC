@@ -60,8 +60,9 @@ beforeEach(() => {
 });
 
 describe("lesson prompt and audience", () => {
+  // The hash changed on purpose once: lessons now ask for light Markdown (the Read tab renders it).
   it("is byte for byte the old prompt with no audience", () => {
-    expect(hash(LESSON_SYSTEM_PROMPT)).toBe("df575865a7ad690a");
+    expect(hash(LESSON_SYSTEM_PROMPT)).toBe("bd96d3eb0e8ccefc");
     expect(lessonSystemPrompt(undefined)).toBe(LESSON_SYSTEM_PROMPT);
     expect(lessonSystemPrompt("")).toBe(LESSON_SYSTEM_PROMPT);
     expect(hash(buildLessonPrompt({ title: "T" }, { ...NODE, title: "Counting to 100", why: "w", checkpoints: ["a b", "c d"], id: "n" }))).toBe(

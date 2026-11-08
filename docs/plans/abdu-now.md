@@ -2,7 +2,7 @@
 
 Mirza: this file is the live plan for Abdu's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Mirza to Abdu" in TEAM.md.
 
-Last updated: Sat Nov 7, late night.
+Last updated: Sun Nov 8, just after midnight.
 
 ## Working on now
 
@@ -10,7 +10,6 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
-- **Read tab as formatted Markdown, plus a slimmer reading header** (owner's request): lessons render light Markdown (bold key terms, lists, tip callouts, colour-coded sections, highlighted code), and new lessons are asked to use it; old saved lessons still read fine. In full page, the skill's header becomes one slim sticky row and "why / where this came from / built on" fold into one "About this skill" line. Touches `features/lessons` (new `ui/LessonMarkdown.tsx`, `prompt.ts`), `skill-map/ui/SkillPanel.tsx`, `app/globals.css` (reading colour tokens). Not touching `features/reels` (Mirza's votes).
 
 ## Next
 
@@ -19,6 +18,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Read tab: lessons render light Markdown (bold key terms with a marker stroke, "- " and "1. " lists, a "> Tip:" callout, highlighted code) and each section has its own colour (idea teal, example violet, mistakes red with green fixes, checks amber), with tokens per theme in `globals.css`. New lessons are asked for it (lesson prompt hash updated); the 42 saved sample lessons got bold terms, a few lists and tips. Full page: the skill header is one slim sticky row (badges hidden on phones) and why / where it came from / built on fold into "About this skill". Also put Mirza's reel votes live (`be23fb1`) and fixed its test, which failed in the last minute of every hour (`now` and `now + 1 min` crossed the hourly claim).
 - Hero seal, take 2: typing pushes it up to 420°/s (was 150), and it eases back over about a second. The faster it turns, the brighter a soft halo and a band of light that sweeps round the rim (`--color-shine` per theme; still under reduced motion). Checked in Chrome, light and dark.
 - Put Mirza's reels relevance fix (`3e29d2e`) live on Vercel. Typecheck, lint and the reels tests pass on main.
 - Feed sound: M (or the button) turns sound on or off, and the choice lasts for the tab's session (sessionStorage). With sound on, the next Shorts load unmuted. If the browser refuses sound before any click (say, after a reload), the Short plays muted and the first click or key press turns sound on, with no pause. The player also corrects itself if YouTube reports the wrong mute state. Checked in Chrome: M, three Shorts in a row, a reload, then a click.

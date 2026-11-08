@@ -63,6 +63,17 @@
   --color-available-surface: #f7f9f5;
   --color-proven: #00675e; /* foil teal darkened for text */
   --color-shine: #6fd6c4; /* the hero seal's glow while you type; decoration only */
+  --color-read-key: #00675e; /* Read tab: key terms, list markers, the idea section */
+  --color-read-mark: #c4e6da; /* marker stroke under key terms */
+  --color-read-code: #5a2fb8;
+  --color-read-example: #5a2fb8;
+  --color-read-tip: #7d5300;
+  --color-read-tip-surface: #f3ead3;
+  --color-code-keyword: #5a2fb8;
+  --color-code-string: #00675e;
+  --color-code-number: #b81e68;
+  --color-code-comment: #55685f;
+  --color-code-call: #0d4b8f;
   --color-proven-surface: #d3e6df;
   --color-on-proven: #f7f9f5;
 
@@ -228,6 +239,17 @@ html[data-theme="dark"] {
   --color-available-surface: #172c27;
   --color-proven: #55b9a6;
   --color-shine: #7ee8d4;
+  --color-read-key: #6fd0bd; /* Read tab: key terms, list markers, the idea section */
+  --color-read-mark: #22504a; /* marker stroke under key terms */
+  --color-read-code: #c4b0ff;
+  --color-read-example: #b9a2ff;
+  --color-read-tip: #e3c27a;
+  --color-read-tip-surface: #2b2a1d;
+  --color-code-keyword: #c4b0ff;
+  --color-code-string: #7fd8c4;
+  --color-code-number: #f59ac2;
+  --color-code-comment: #8aa39a;
+  --color-code-call: #8cc4ff;
   --color-proven-surface: #183a32;
   --color-on-proven: #12241f;
   --color-forest: #b5cbbf;
@@ -272,6 +294,17 @@ html[data-theme="dark"] {
     --color-available-surface: #172c27;
     --color-proven: #55b9a6;
     --color-shine: #7ee8d4;
+    --color-read-key: #6fd0bd; /* Read tab: key terms, list markers, the idea section */
+    --color-read-mark: #22504a; /* marker stroke under key terms */
+    --color-read-code: #c4b0ff;
+    --color-read-example: #b9a2ff;
+    --color-read-tip: #e3c27a;
+    --color-read-tip-surface: #2b2a1d;
+    --color-code-keyword: #c4b0ff;
+    --color-code-string: #7fd8c4;
+    --color-code-number: #f59ac2;
+    --color-code-comment: #8aa39a;
+    --color-code-call: #8cc4ff;
     --color-proven-surface: #183a32;
     --color-on-proven: #12241f;
     --color-forest: #b5cbbf;
@@ -342,6 +375,17 @@ html[data-theme="eye"] {
   --color-available-surface: #f6eedb;
   --color-proven: #3f6a33;
   --color-shine: #d9c27a;
+  --color-read-key: #3f6a33; /* Read tab: key terms, list markers, the idea section */
+  --color-read-mark: #e0d6a8; /* marker stroke under key terms */
+  --color-read-code: #8a3a2b;
+  --color-read-example: #6b4a8a;
+  --color-read-tip: #7a5212;
+  --color-read-tip-surface: #eedcb6;
+  --color-code-keyword: #8a3a2b;
+  --color-code-string: #3f6a33;
+  --color-code-number: #a3452f;
+  --color-code-comment: #7a6a4f;
+  --color-code-call: #2f5a7a;
   --color-proven-surface: #dfe3c4;
   --color-on-proven: #f6eedb;
   --color-forest: #3a3125;
@@ -485,4 +529,11 @@ html[data-learning-mode] ::after {
       color 140ms ease-out,
       transform 140ms ease-out;
   }
+}
+
+/* A key term in a lesson: a marker stroke under the lower part of the word. */
+.md-key {
+  background-image: linear-gradient(transparent 60%, var(--color-read-mark) 60%);
+  border-radius: 2px;
+  padding-inline: 1px;
 }

@@ -232,7 +232,8 @@ describe("getSkillReels", () => {
   });
 
   it("saves nothing when YouTube fails, and tries at most once an hour", async () => {
-    const now = Date.now();
+    // Early in an hour, so now and now + 1 minute share the hourly claim (it failed in the last minute of each hour).
+    const now = Math.floor(Date.now() / 3_600_000) * 3_600_000 + 60_000;
     const failing = mockYouTube(ONE, { searchStatus: 403 });
     expect(await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key", now })).toEqual([]);
     expect(await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key", now: now + 60_000 })).toEqual([]);
