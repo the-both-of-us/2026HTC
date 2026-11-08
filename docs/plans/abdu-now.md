@@ -19,6 +19,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Put Mirza's UI refresh live (`81f2769`: Dashboard, Courses and the course page, a seal per course); the Programs section on /courses is kept; typecheck, lint and tests pass.
 - Put Mirza's calmer map header live (`ce29cab`: only title and progress while a skill is open; Publish only while private); typecheck, lint and tests pass.
 - Share whole programs: the owner shares from the program page (same name and sign-in rules as courses) and gets a link; anyone can open a shared program and press "Start this program" for their own copy (courses the owner already built are copied, the rest build on demand); shared programs list above courses in `/courses`. Someone else's private program is now the same 404 as a missing one. New `program-listings/<id>`, `program-starts/<id>/<user>`; routes `/api/programs/[id]/share`, `/api/programs/[id]/start`, `/api/programs/public`. Small touches in Mirza's `courses` (exports, a message option, the Programs section), noted in TEAM.md.
 - Put Mirza's Quick videos redesign live (`449aef2`: modern row, full-screen viewer); typecheck, lint and tests pass.
