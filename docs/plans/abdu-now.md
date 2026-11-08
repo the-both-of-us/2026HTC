@@ -14,7 +14,6 @@ Last updated: Sat Nov 7, evening.
   - `features/voice`: dictation keyterms from every topic title on the map, plus common tech terms.
   - `features/teachback`: a full final-interview run, all 3 questions through to the badge.
 - **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
-- **UI audit fixes, part 1** (me): readable labels on the /grid mix bar (`features/grid/ui/MixBar.tsx`), and in Dark the landing's sample band becomes a dark raised band instead of a pale slab (`src/app/globals.css`). The audit's map-card items wait for the polish agent.
 
 ## Next
 
@@ -24,6 +23,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- UI audit fixes, part 1: /grid mix bar labels readable (5 to 6.8:1), and the Dark sample band is dark, not a pale slab.
 - Final live check with real AI on production: Explain it, Catch, Age 10, 30 seconds (typed fallback) all pass in 1 to 2 s, and the final interview's first question passes. Fixes in `d1de1c9`. Judge README (`19bc763`).
 - Sign in is now a real button: solid at the top of the sidebar footer, outlined in the phone top bar.
 - Dark theme softened (`b250273`).

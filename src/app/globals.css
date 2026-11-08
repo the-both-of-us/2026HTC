@@ -280,6 +280,24 @@ html[data-theme="dark"] {
 }
 
 /*
+ * In Dark, an ink band (class "on-ink" with bg-ink) would invert into a pale slab under a
+ * dark page. Inside the band, ink becomes a raised dark surface and on-ink text stays light.
+ * Contrast: #cdd6cf on #1e3530 8.8, #9fb3aa on #1e3530 5.9.
+ */
+html[data-theme="dark"] .on-ink {
+  --color-ink: #1e3530;
+  --color-on-ink: #cdd6cf;
+  --color-on-ink-soft: #9fb3aa;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .on-ink {
+    --color-ink: #1e3530;
+    --color-on-ink: #cdd6cf;
+    --color-on-ink-soft: #9fb3aa;
+  }
+}
+
+/*
  * Eye comfort: a warm, low-blue sepia paper (no pure white), slightly softer ink, roomier
  * lines and letters, and no motion. Contrast (WCAG AA, checked): ink on paper 10.2, on sheet
  * 11.0, on raised 9.1, on tint 7.7, on highlight 8.6; ink-soft on paper 6.1, on sheet 6.6, on
