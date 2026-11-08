@@ -13,6 +13,6 @@ The habit loop around learning: a reason to come back tomorrow, with no dark pat
 
 Storage: one document per learner, `streaks/<userId>`. `deleteStreak` runs from "Delete my data".
 
-**Hook point:** `recordProved(userId, { mapId, nodeId, attemptId })` from `@/features/streaks`. Call it once a topic is proved (today: `POST /api/attempts/[id]/followup`). It counts each attempt id once and never throws.
+**Hook point:** `recordProved(userId, { mapId, nodeId, attemptId })` from `@/features/streaks`. Call it once a topic is proved (today: `POST /api/attempts/[id]/followup`, and `POST /api/attempts` for a "Catch the mistake" pass). It counts each attempt id once and never throws.
 
 Pure rules live in `rules.ts` and `race.ts`; `streaks.ts` does the store reads. Tests: `npm test -- streaks`.
