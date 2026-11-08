@@ -6,6 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
+- Full-page skill reading: a wider column and bigger text (title, summary, lesson body). Files: `skill-map/ui/SkillPanel.tsx` (full-page column only) and `lessons/ui/LessonTab.tsx` (text sizes that grow only in full page). Both Abdu's; the side panel is unchanged.
 - Nothing new yet: waiting on the owner. Candidates: "Ask for help" requests and an anonymous-profile option on People (undecided).
 
 ## Next
