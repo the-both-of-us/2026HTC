@@ -1,5 +1,6 @@
 /** Test helpers. Not exported from index.ts. */
 import { randomUUID } from "node:crypto";
+import { saveSkillMap } from "@/features/skill-map";
 import { putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 
@@ -29,7 +30,7 @@ export async function saveMap(ownerId: string, overrides: Partial<SkillMap> = {}
     createdAt: new Date().toISOString(),
     ...overrides,
   };
-  await putDoc(`maps/${map.id}`, map);
+  await saveSkillMap(map);
   return map;
 }
 

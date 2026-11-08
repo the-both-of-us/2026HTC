@@ -9,8 +9,42 @@ export type CourseClaim = { mapId: string; claimedAt: string };
 const programKey = (id: string) => `programs/${id}`;
 const claimKey = (programId: string, slug: string) => `program-courses/${programId}/${slug}`;
 
+/**
+ * The owner index: `programs-by-owner/<ownerId>/<programId>` exists for every program,
+ * so one person's programs are found by listing their own keys, never by reading all.
+ */
+const OWNER_ID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
+const ownerIndexPrefix = (ownerId: string) => `programs-by-owner/${ownerId}/`;
+const ownerIndexKey = (ownerId: string, programId: string) => `${ownerIndexPrefix(ownerId)}${programId}`;
+/** Present once every program saved before the index existed has an entry. */
+const OWNER_INDEX_READY_KEY = "indexes/programs-by-owner-v1";
+
+async function indexProgram(program: Pick<Program, "id" | "ownerId">): Promise<void> {
+  if (!OWNER_ID_PATTERN.test(program.ownerId)) {
+    console.warn("[programs] a program's owner id cannot go in a key, so the program is not indexed");
+    return;
+  }
+  await putDoc(ownerIndexKey(program.ownerId, program.id), { programId: program.id });
+}
+
+let catchingUp: Promise<void> | null = null;
+
+/** Indexes programs saved before the index existed, once per store. See skill-map's storage. */
+async function ensureOwnerIndex(): Promise<void> {
+  if (await getDoc(OWNER_INDEX_READY_KEY)) return;
+  catchingUp ??= (async () => {
+    const programs = await listDocs<Program>("programs/");
+    await Promise.all(programs.map(indexProgram));
+    await putDoc(OWNER_INDEX_READY_KEY, { indexedAt: new Date().toISOString(), programs: programs.length });
+  })().finally(() => {
+    catchingUp = null;
+  });
+  await catchingUp;
+}
+
 export async function saveProgram(program: Program): Promise<void> {
   await putDoc(programKey(program.id), program);
+  await indexProgram(program);
 }
 
 /** Returns the program, or null. The id comes from a URL, so it must look like one of ours. */
@@ -54,11 +88,25 @@ export async function withClaims(program: Program): Promise<Program> {
   return { ...program, courses };
 }
 
-/** One user's programs, newest first. It reads every program, which is fine at this size. */
+/**
+ * One user's programs, newest first. Reads only this owner's index entries and their
+ * programs. A stale entry is removed or skipped, so the index can only narrow the answer.
+ */
 export async function listProgramsByOwner(ownerId: string): Promise<Program[]> {
-  const programs = await listDocs<Program>("programs/");
+  if (!OWNER_ID_PATTERN.test(ownerId)) return [];
+  await ensureOwnerIndex();
+
+  const prefix = ownerIndexPrefix(ownerId);
+  const ids = (await listKeys(prefix)).map((key) => key.slice(prefix.length)).filter((id) => UUID_PATTERN.test(id));
+  const programs = await Promise.all(
+    ids.map(async (id) => {
+      const program = await getDoc<Program>(programKey(id));
+      if (!program) await deleteDoc(ownerIndexKey(ownerId, id));
+      return program;
+    }),
+  );
   return programs
-    .filter((program) => program.ownerId === ownerId)
+    .filter((program): program is Program => program !== null && program.ownerId === ownerId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
@@ -86,6 +134,7 @@ export async function deleteProgramsByOwner(ownerId: string): Promise<number> {
     const keys = await listKeys(`program-courses/${program.id}/`);
     await Promise.all(keys.map((key) => deleteDoc(key)));
     await deleteDoc(programKey(program.id));
+    await deleteDoc(ownerIndexKey(ownerId, program.id));
   }
   return programs.length;
 }

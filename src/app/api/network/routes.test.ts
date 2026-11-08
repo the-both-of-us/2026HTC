@@ -5,6 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getUserId } from "@/shared/identity";
+import { saveSkillMap } from "@/features/skill-map";
 import { putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 import { DELETE, GET, PUT } from "./route";
@@ -58,8 +59,8 @@ beforeEach(async () => {
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   bosMap = makeMap(BO, [["joins", "SQL joins"]]);
   anasMap = makeMap(ANA, [["joins", "SQL joins"]]);
-  await putDoc(`maps/${bosMap.id}`, bosMap);
-  await putDoc(`maps/${anasMap.id}`, anasMap);
+  await saveSkillMap(bosMap);
+  await saveSkillMap(anasMap);
   await putDoc(`progress/${bosMap.id}/${BO}/joins`, { nodeId: "joins", attemptId: randomUUID(), provenAt: new Date().toISOString() });
 });
 

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
+import { deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
 import type { PublicSkillNode, SkillMap } from "@/shared/types";
 import { SkillMapError } from "./build";
 import { isEnergyRelated } from "./energy";
@@ -31,8 +31,49 @@ export function toPublicMap(map: SkillMap): PublicSkillMap {
   };
 }
 
+/**
+ * The owner index: `maps-by-owner/<ownerId>/<mapId>` exists for every map, so one
+ * person's maps are found by listing their own keys, never by reading every map.
+ * Owner ids go into a key, so only plain ids (a UUID, or a fixed seed id) are indexed.
+ */
+const OWNER_ID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
+const ownerIndexPrefix = (ownerId: string) => `maps-by-owner/${ownerId}/`;
+const ownerIndexKey = (ownerId: string, mapId: string) => `${ownerIndexPrefix(ownerId)}${mapId}`;
+/** Present once every map saved before the index existed has an entry. */
+const OWNER_INDEX_READY_KEY = "indexes/maps-by-owner-v1";
+
+type OwnerIndexEntry = { mapId: string };
+
+async function indexMap(map: Pick<SkillMap, "id" | "ownerId">): Promise<void> {
+  if (!OWNER_ID_PATTERN.test(map.ownerId)) {
+    console.warn("[skill-map] a map's owner id cannot go in a key, so the map is not indexed");
+    return;
+  }
+  await putDoc(ownerIndexKey(map.ownerId, map.id), { mapId: map.id } satisfies OwnerIndexEntry);
+}
+
+let catchingUp: Promise<void> | null = null;
+
+/**
+ * Indexes maps saved before the index existed. It reads every map, but only once per
+ * store: after it finishes, a marker says so, and every later save indexes its own map.
+ * Writing an entry twice changes nothing, so two servers catching up at once is harmless.
+ */
+async function ensureOwnerIndex(): Promise<void> {
+  if (await getDoc(OWNER_INDEX_READY_KEY)) return;
+  catchingUp ??= (async () => {
+    const maps = await listDocs<SkillMap>("maps/");
+    await Promise.all(maps.map(indexMap));
+    await putDoc(OWNER_INDEX_READY_KEY, { indexedAt: new Date().toISOString(), maps: maps.length });
+  })().finally(() => {
+    catchingUp = null;
+  });
+  await catchingUp;
+}
+
 export async function saveSkillMap(map: SkillMap): Promise<void> {
   await putDoc(`maps/${map.id}`, map);
+  await indexMap(map);
 }
 
 /** Returns the full map, or null. The id comes from a URL, so it must look like one of ours. */
@@ -64,15 +105,32 @@ export async function copySkillMap(mapId: string, newOwnerId: string): Promise<S
   return copy;
 }
 
-/** One user's maps, newest first. It reads every map, which is fine at this size. */
+/**
+ * One user's maps, newest first. Lists only this owner's index keys and reads only
+ * those maps. An entry whose map is gone is removed; one whose map now names another
+ * owner is skipped, so the index can only ever narrow the answer, never widen it.
+ */
 export async function listMapsByOwner(ownerId: string): Promise<SkillMap[]> {
-  const maps = await listDocs<SkillMap>("maps/");
+  if (!OWNER_ID_PATTERN.test(ownerId)) return [];
+  await ensureOwnerIndex();
+
+  const prefix = ownerIndexPrefix(ownerId);
+  const mapIds = (await listKeys(prefix)).map((key) => key.slice(prefix.length)).filter((id) => UUID_PATTERN.test(id));
+  const maps = await Promise.all(
+    mapIds.map(async (mapId) => {
+      const map = await getDoc<SkillMap>(`maps/${mapId}`);
+      if (!map) await deleteDoc(ownerIndexKey(ownerId, mapId));
+      return map;
+    }),
+  );
   return maps
-    .filter((map) => map.ownerId === ownerId)
+    .filter((map): map is SkillMap => map !== null && map.ownerId === ownerId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function deleteSkillMap(id: string): Promise<void> {
   if (!UUID_PATTERN.test(id)) return;
+  const map = await getDoc<SkillMap>(`maps/${id}`);
   await deleteDoc(`maps/${id}`);
+  if (map && OWNER_ID_PATTERN.test(map.ownerId)) await deleteDoc(ownerIndexKey(map.ownerId, id));
 }

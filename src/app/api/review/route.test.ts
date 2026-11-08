@@ -2,6 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getUserId } from "@/shared/identity";
+import { saveSkillMap } from "@/features/skill-map";
 import { putDoc } from "@/shared/store";
 import { GET, POST } from "./route";
 
@@ -18,7 +19,7 @@ const asUser = (id: string) => vi.mocked(getUserId).mockResolvedValue(id);
 async function saveMapWithDeck(ownerId: string): Promise<{ mapId: string; cardId: string }> {
   const mapId = randomUUID();
   const cardId = randomUUID();
-  await putDoc(`maps/${mapId}`, {
+  await saveSkillMap({
     id: mapId,
     ownerId,
     title: "Payroll clerk",

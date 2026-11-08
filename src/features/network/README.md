@@ -20,7 +20,7 @@ Skills are **never stored or typed**. They are worked out on each request from t
 - **Evidence link:** `/proof/<id>` when the owner's own evidence page for that map (`getOwnProofForMap`) is live and shows that skill. A skill proved after the page was published gets no link, because the page doesn't show it. A revoked page, or a record that isn't the owner's, gets none.
 - **Learning:** titles of available or locked nodes, minus anything already proved on any map in a close wording.
 
-Everyone's skills are worked out afresh on every listing, so a skill proved a moment ago shows and a revoked evidence page loses its link at once. Nothing is cached between requests (fine at hackathon scale, since `listMapsByOwner` reads every map).
+Everyone's skills are worked out afresh on every listing, so a skill proved a moment ago shows and a revoked evidence page loses its link at once. Nothing is cached between requests. Each person costs one listing of their own index keys plus a read of each of their maps, never a read of everyone's maps (see skill-map's owner index).
 
 ## API
 

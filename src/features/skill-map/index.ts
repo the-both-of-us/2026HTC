@@ -13,5 +13,5 @@ export { generateCourseMap, generatePdfSkillMap, generateSkillMap } from "./gene
 export type { CourseContext } from "./prompt";
 export { MAX_PDF_BYTES, MAX_PDF_PAGES } from "./pdf";
 export { deriveNodeStates } from "./states";
-export { copySkillMap, deleteSkillMap, getSkillMap, listMapsByOwner, toPublicMap } from "./storage";
+export { copySkillMap, deleteSkillMap, getSkillMap, listMapsByOwner, saveSkillMap, toPublicMap } from "./storage";
 export type { PublicSkillMap } from "./storage";

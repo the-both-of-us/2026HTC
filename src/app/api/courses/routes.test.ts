@@ -5,7 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getUserId } from "@/shared/identity";
-import { putDoc } from "@/shared/store";
+import { saveSkillMap } from "@/features/skill-map";
 import type { SkillMap } from "@/shared/types";
 import { GET as getCourseRoute, DELETE as unpublishRoute } from "./[mapId]/route";
 import { DELETE as unlikeRoute, PUT as likeRoute } from "./[mapId]/like/route";
@@ -51,7 +51,7 @@ beforeEach(async () => {
     ],
     createdAt: new Date().toISOString(),
   };
-  await putDoc(`maps/${mapId}`, map);
+  await saveSkillMap(map);
 });
 
 function publishRequest(payload: unknown): Request {

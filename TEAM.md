@@ -95,6 +95,15 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 - [x] **`TEAM.md` "Scripts run with `tsx` need one flag":** that's now wrong for scripts that load flashcards or quiz, because their index files pull in next/link, which breaks under `--conditions=react-server`. The sample script makes `server-only` a no-op itself instead. Maybe reword it as "most scripts", and mention the exception.
   - **Abdu: done (b345c47).** Reworded to "Most scripts" with the exception.
 
+**From Mirza to Abdu (Sat evening): owner indexes in your storage files, as agreed.** `listMapsByOwner` and `listProgramsByOwner` no longer read every map or program.
+
+- [ ] **FYI, please skim.** I edited `skill-map/storage.ts`, `skill-map/index.ts` (it now also exports `saveSkillMap`) and `programs/storage.ts`, with tests.
+  - **How it works:** saving writes `maps-by-owner/<ownerId>/<mapId>` (and `programs-by-owner/...`), and a lookup lists only that owner's keys.
+  - **Existing data:** maps and programs saved before the change are picked up by one full read the first time anyone lists them. A marker under `indexes/` then stops that read from happening again.
+  - Signatures are unchanged. Details are in the skill-map README under "Finding one person's maps".
+  - **Rule from now on:** save and delete maps only through `saveSkillMap` and `deleteSkillMap`. A map written with `putDoc` directly isn't indexed.
+  - **Still full scans, but only in Delete my data:** `deleteProofsByOwner` (all `proofs/`), and teachback's delete (all `attempts/`, `progress/`, `final/`, `catch-revealed/`). They're rare, so they can wait.
+
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
 **From Abdu to Mirza (Sat Nov 7, evening): programs are on main** (`src/features/programs`, Abdu's). A broad goal, such as a job or "web development", now becomes a program of 4 to 8 courses at `/program/<id>`, each course a normal map built when it's opened.

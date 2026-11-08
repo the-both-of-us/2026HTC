@@ -23,7 +23,7 @@ const mine = await listMapsByOwner(ownerId);                             // newe
 2. **Get model output**: saved output if the text is exactly a sample posting (`fixtures/`), otherwise one model call (`prompt.ts`). Each source sits between tags (`<posting>`, `<topic>`, or `<document>` with one `<page number="N">` per page), any copy of those tags inside it is removed, and the model is told to treat it as data and ignore any instructions inside. All three prompts share the checkpoint rules.
 3. **Validate in code** (`validate.ts`), whatever the model said: clean ids, no repeats, 3 or 4 checkpoints (the prompt asks for 4), at most 14 nodes (requirements are kept over foundations), no broken links, no loops, at least one root, and every quote checked against the posting.
 4. **Reject junk** (`build.ts`): if the model says it is not a posting (or the PDF teaches no skills, or the topic is not something to study), or there are under 5 nodes, or no quote checked out, the user gets a 422 with a sentence. A topic has nothing to quote, so only the node count applies.
-5. **Save** to `maps/<id>` in the store.
+5. **Save** to `maps/<id>` in the store, with `saveSkillMap`, which also writes the owner index entry `maps-by-owner/<ownerId>/<mapId>`.
 
 ## Citations
 
@@ -31,6 +31,14 @@ A quote counts as verified only if code finds it in the posting (`@/shared/quote
 
 - **PDF:** the model also names a page, and the quote must be on that page. A real quote on the wrong page is unverified. PDF text breaks lines wherever the page did, even mid-word, so a PDF quote of 12 or more letters also counts if it matches with spaces ignored (`quoteOnPdfPage`). The map keeps its pages in `sourceText`, split by `PAGE_BREAK` (a form feed), so the check can be run again. The UI then shows "Verified quote from the PDF, page 2".
 - **Topic:** there is no source, so every node has `citation: null` and `fromSource: false`, whatever the model says. The map header and each skill say it is AI-generated from a topic, with no citations.
+
+## Finding one person's maps
+
+`listMapsByOwner(ownerId)` lists the keys under `maps-by-owner/<ownerId>/` and reads only those maps, so its cost grows with that person's maps, not with the whole store. Always save and delete through `saveSkillMap` and `deleteSkillMap`, which keep the index in step; a map written with `putDoc` directly is not indexed.
+
+- **Catching up:** maps saved before the index existed are indexed by one full read of `maps/`, the first time anyone lists maps. The marker `indexes/maps-by-owner-v1` then says it is done, and the full read never happens again.
+- **Stale entries:** an entry whose map is gone is removed when it is next read. An entry whose map names another owner is skipped, so the index can only narrow an answer, never widen it.
+- Owner ids go into a key, so only plain ids (a UUID, or a fixed seed id such as `oryxlearn-sample-courses`) are indexed.
 
 ## Reading a map
 

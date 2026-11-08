@@ -6,9 +6,11 @@
  * total in `likes/<mapId>/_count` instead, so a like can never write an old copy of the
  * listing back over an unpublish or a republish that happened while it ran.
  */
-import { getDoc, listDocs, putDoc } from "@/shared/store";
+import { getDoc, listKeys, putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 import type { CourseListing } from "./types";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function listingKey(mapId: string): string {
   return `courses/${mapId}`;
@@ -29,17 +31,15 @@ export async function getListing(mapId: string): Promise<CourseListing | null> {
   return getDoc<CourseListing>(listingKey(mapId));
 }
 
-function isLikeDoc(value: unknown): boolean {
-  return typeof (value as { userId?: unknown } | null)?.userId === "string";
-}
-
 /**
- * How many like documents a course has. Map ids are a fixed length, so the prefix matches
- * one course only. The `_count` document under the same prefix is not a like, so it is skipped.
+ * How many likes a course has, counted from the keys alone, so no like is downloaded.
+ * Map ids are a fixed length, so the prefix matches one course only. Each like's key
+ * ends in the liker's id (a UUID), so the `_count` document is never counted.
  */
 export async function countLikes(mapId: string): Promise<number> {
-  const docs = await listDocs<unknown>(`likes/${mapId}/`);
-  return docs.filter(isLikeDoc).length;
+  const prefix = `likes/${mapId}/`;
+  const keys = await listKeys(prefix);
+  return keys.filter((key) => UUID_PATTERN.test(key.slice(prefix.length))).length;
 }
 
 /** Saves the running like total. Never touches the listing. */

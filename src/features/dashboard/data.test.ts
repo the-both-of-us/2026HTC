@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getReviewSummary, listReviewActivity } from "@/features/review";
 import { listProvedNodes } from "@/features/teachback";
+import { saveSkillMap } from "@/features/skill-map";
 import { putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 import { assembleDashboard, loadDashboard, type MapFacts } from "./data";
@@ -111,7 +112,7 @@ describe("loadDashboard", () => {
     const older = map({ title: "Older" });
     const newer = map({ title: "Newer", createdAt: "2026-11-05T12:00:00.000Z" });
     const theirs = map({ title: "Theirs", ownerId: randomUUID() });
-    for (const m of [older, newer, theirs]) await putDoc(`maps/${m.id}`, m);
+    for (const m of [older, newer, theirs]) await saveSkillMap(m);
     await putDoc(`courses/${older.id}`, { mapId: older.id });
     vi.mocked(listProvedNodes).mockImplementation(async (mapId) =>
       mapId === newer.id ? [{ nodeId: "a", provenAt: "2026-11-06T12:00:00.000Z" }] : [],
@@ -127,7 +128,7 @@ describe("loadDashboard", () => {
   });
 
   it("still shows the maps when review cannot be read", async () => {
-    await putDoc(`maps/${map().id}`, { ...map(), title: "Mine" });
+    await saveSkillMap({ ...map(), title: "Mine" });
     vi.mocked(getReviewSummary).mockRejectedValue(new Error("store down"));
     vi.mocked(listReviewActivity).mockRejectedValue(new Error("store down"));
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});

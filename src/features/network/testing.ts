@@ -1,5 +1,6 @@
 /** Test helpers. Not exported from index.ts. */
 import { randomUUID } from "node:crypto";
+import { saveSkillMap } from "@/features/skill-map";
 import { putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { resetDemoStateForTests } from "./demo";
@@ -26,7 +27,7 @@ export async function saveMap(ownerId: string, nodes: SkillNode[], title = "Data
     nodes,
     createdAt: new Date().toISOString(),
   };
-  await putDoc(`maps/${map.id}`, map);
+  await saveSkillMap(map);
   return map;
 }
 
