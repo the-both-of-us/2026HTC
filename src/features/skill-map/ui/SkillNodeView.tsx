@@ -36,8 +36,8 @@ export type MapAvatar = { initials: string; name: string };
 export type SkillFlowNode = Node<SkillNodeData, "skill">;
 
 const CARD_CLASSES: Record<NodeState, string> = {
-  locked:
-    "border-dashed border-locked/70 bg-locked-surface text-ink/85 hover:border-ink-soft hover:text-ink",
+  // Locked reads as clearly as the rest (AA): the dashed edge and the lock say it, not fading.
+  locked: "border-dashed border-locked bg-locked-surface text-ink hover:border-ink",
   available:
     "border-ink bg-sheet text-ink hover:bg-paper-hi",
   proven: "border-proven bg-sheet text-ink hover:bg-paper-hi",
@@ -117,7 +117,9 @@ function FullNodeView({ data }: NodeProps<SkillFlowNode>) {
             )}
             {format && state !== "proven" && <FormatBadge format={format} compact />}
             {/* The panel still says so. On the card, today's topic needs the room. */}
-            {skill.fromSource && !(featured && state === "available") && <JobAsksTag kind={skill.citation?.kind} />}
+            {skill.fromSource && !(featured && state === "available") && (
+              <JobAsksTag kind={skill.citation?.kind} compact={Boolean(format && state !== "proven")} />
+            )}
           </span>
         </p>
       </div>
@@ -189,13 +191,28 @@ function CompactNodeView({ data }: NodeProps<SkillFlowNode>) {
   );
 }
 
-/** A small tag on a skill the posting or PDF names. Foundations have none. */
-export function JobAsksTag({ kind }: { kind?: SourceKind }) {
+/**
+ * A small tag on a skill the posting or PDF names. Foundations have none. `compact` says just
+ * "Source" (or "Notes"), so it fits beside a format chip inside a card; the full words are in
+ * the tooltip and for screen readers.
+ */
+export function JobAsksTag({ kind, compact = false }: { kind?: SourceKind; compact?: boolean }) {
   const Icon = kind === "pdf" ? FileText : Briefcase;
+  const full = kind === "pdf" ? "In your notes" : "In the source";
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-control border border-dashed border-amber px-1.5 py-0.5 text-xs leading-none font-medium text-amber">
+    <span
+      title={compact ? full : undefined}
+      className="inline-flex shrink-0 items-center gap-1 rounded-control border border-dashed border-amber px-1.5 py-0.5 text-xs leading-none font-medium text-amber"
+    >
       <Icon aria-hidden="true" size={11} />
-      {kind === "pdf" ? "In your notes" : "In the source"}
+      {compact ? (
+        <>
+          <span aria-hidden="true">{kind === "pdf" ? "Notes" : "Source"}</span>
+          <span className="sr-only">{full}</span>
+        </>
+      ) : (
+        full
+      )}
     </span>
   );
 }
