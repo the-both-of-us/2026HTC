@@ -2,13 +2,11 @@
 
 Mirza: this file is the live plan for Abdu's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Mirza to Abdu" in TEAM.md.
 
-Last updated: Sat Nov 7, late evening.
+Last updated: Sat Nov 7, night.
 
 ## Working on now
 
-- **Age-appropriate material** (agent, owner's request): "grade 1 math" made a first topic about counting to 100 that taught one-to-one correspondence, which is far too advanced for grade 1. A topic, program or PDF that names a grade, age or level ("grade 1 math", "for kids", "complete beginner") now sets an audience. The audience is saved on the map, and every course in the program inherits it. Topics, checkpoints, lessons and teach-back grading are then pitched at that level. Adult topics are unchanged.
-  - Files: `features/skill-map` (prompts, build, types), `features/programs` (the plan prompt; courses inherit), `features/lessons` (the prompt), `features/teachback` (grading and follow-ups at the audience's level), plus one optional `audience` field in `shared/types.ts`.
-  - Mirza: flashcards and quiz can read `map.audience` too. I'll leave you a note in TEAM.md once it lands.
+- Nothing right now.
 
 ## Next
 
@@ -17,6 +15,7 @@ Last updated: Sat Nov 7, late evening.
 
 ## Done today (latest first)
 
+- Age-appropriate material (`63c7fa3`): a topic, PDF or program that names a grade, age or school level ("grade 1 math", "for kids", "high school chemistry") gets an audience on the map, which program courses inherit and older maps work out from their title and program. Topics, checkpoints, lessons (200 to 350 words for young children, no code) and teach-back grading are pitched at it; with no audience every prompt is byte for byte the old one (hash tests). Checked on a production build with real AI: "grade 1 math" planned 5 grade 1 strands, the first course's topics and checkpoints are child-level, the lesson has no jargon, and a childlike explanation passed (75). "SQL window functions" has no audience. Mirza: see TEAM.md for flashcards and quiz.
 - Put Mirza's tidier map header in a circle (`01cd256`) live on Vercel. Typecheck, lint and the circles and skill-map tests pass on main.
 - Put Mirza's wider full-page skill reading (`cdf9dbb`) live on Vercel. Typecheck, lint and the lessons, skill-map, flashcards and quiz tests pass on main.
 - Put Mirza's calmer People page (`78353a5`) live on Vercel. Typecheck, lint and the network tests pass on main.
