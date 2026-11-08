@@ -107,21 +107,22 @@ function ResourceRow({ item }: { item: ResourceItem }) {
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-start gap-1.5 font-medium text-accent-bright underline underline-offset-4"
+            title={item.title}
+            className="inline-flex items-start gap-1.5 leading-snug font-medium text-accent-bright underline underline-offset-4"
           >
-            <span className="min-w-0">{item.title}</span>
-            <ExternalLink aria-hidden="true" size={14} className="mt-1.5 shrink-0" />
+            <span className="line-clamp-2 min-w-0">{item.title}</span>
+            <ExternalLink aria-hidden="true" size={14} className="mt-1 shrink-0" />
             <span className="sr-only">(opens in a new tab)</span>
           </a>
-          {item.by && <p className="text-sm text-ink-soft">{item.by}</p>}
+          {item.by && <p className="truncate text-sm text-ink-soft">{item.by}</p>}
           {item.summary && <p className="line-clamp-2 text-sm text-ink-soft">{item.summary}</p>}
+          {item.videoId && !playing && (
+            <Button variant="subtle" size="sm" onClick={() => setPlaying(true)} className="mt-1 self-start">
+              <Play aria-hidden="true" size={14} />
+              Play here
+            </Button>
+          )}
         </div>
-        {item.videoId && !playing && (
-          <Button variant="subtle" onClick={() => setPlaying(true)} className="shrink-0">
-            <Play aria-hidden="true" size={16} />
-            Play here
-          </Button>
-        )}
       </div>
       {item.videoId && playing && (
         <iframe
