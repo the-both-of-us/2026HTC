@@ -7,8 +7,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { Seal } from "@/shared/ui";
 import { likesLabel, skillsLabel } from "./courseView";
 
-/** Cover colours for cards: ink, teal and violet, each readable under on-ink text in every theme. */
-const TONES = ["--color-ink", "--color-proven", "--color-read-example"] as const;
+/** Cover colours: soft sage, mist and sand, each with ink text and ink seal lines in every theme. */
+const TONES = ["--color-cover-1", "--color-cover-2", "--color-cover-3"] as const;
 
 /** The same course always gets the same colour. */
 function toneFor(fingerprint: string): string {
@@ -19,8 +19,8 @@ function toneFor(fingerprint: string): string {
 
 /**
  * A course's cover: a band with the course's own seal, drawn from its id, so every course looks
- * different and always the same. On-ink lines only: foil is for proven things. `tone="auto"`
- * picks the band's colour from the id too (cards); the default is ink, for heroes with text.
+ * different and always the same. Ink lines only: foil is for proven things. `tone="auto"`
+ * picks the tint from the id too (cards); heroes use the sage tint.
  */
 export function CourseCover({
   fingerprint,
@@ -36,17 +36,22 @@ export function CourseCover({
   sealClassName?: string;
   children?: ReactNode;
 }) {
-  const cover = { "--cover": `var(${tone === "auto" ? toneFor(fingerprint) : "--color-ink"})` } as CSSProperties;
+  // A soft tint with ink on it. Text inside that asks for on-ink colours gets ink, so heroes need no changes.
+  const cover = {
+    "--cover": `var(${tone === "auto" ? toneFor(fingerprint) : "--color-cover-1"})`,
+    "--color-on-ink": "var(--color-ink)",
+    "--color-on-ink-soft": "var(--color-ink-2)",
+  } as CSSProperties;
   return (
-    <div className={clsx("relative isolate overflow-hidden bg-(--cover) text-on-ink", className)} style={cover}>
+    <div className={clsx("relative isolate overflow-hidden bg-(--cover) text-ink", className)} style={cover}>
       <div
         aria-hidden="true"
         className={clsx(
-          "absolute top-1/2 -z-10 -translate-y-1/2 opacity-90 transition-transform duration-700 ease-out motion-safe:group-hover:rotate-12",
+          "absolute top-1/2 -z-10 -translate-y-1/2 opacity-45 transition-transform duration-700 ease-out motion-safe:group-hover:rotate-12",
           sealClassName ?? "-right-10 size-56",
         )}
       >
-        <Seal fingerprint={fingerprint} state="on-ink" detail="mid" />
+        <Seal fingerprint={fingerprint} state="ink" detail="mid" />
       </div>
       {/* Keeps whatever sits on the left readable over the seal's lines. */}
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-(--cover) via-(--cover)/75 to-(--cover)/10" />
@@ -91,7 +96,7 @@ export function CourseCard({
       className="group flex h-full flex-col overflow-hidden rounded-xl border border-rule-strong bg-sheet shadow-sm transition duration-200 hover:border-control-edge hover:shadow-lg motion-safe:hover:-translate-y-0.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <CourseCover fingerprint={fingerprint} tone="auto" className="flex h-24 items-end px-5 pb-3">
-        {coverLabel && <span className="text-xs font-semibold tracking-wide text-on-ink-soft uppercase">{coverLabel}</span>}
+        {coverLabel && <span className="rounded-full bg-sheet/80 px-2.5 py-0.5 text-xs font-semibold text-ink">{coverLabel}</span>}
       </CourseCover>
       <div className="flex flex-1 flex-col gap-1 p-5">
         <Heading className="line-clamp-2 text-lg leading-snug font-semibold break-words">{title}</Heading>

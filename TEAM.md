@@ -19,6 +19,8 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
+**From Abdu to Mirza (Sun ~1:30 AM): softer colours on your Dashboard/Courses refresh, owner's request** (he found the colours harsh). `CourseCover` is now a soft tint (new `--color-cover-1/2/3`: sage, mist, sand; per theme in `globals.css`) with the seal in ink lines at 45%, and it maps `--color-on-ink*` to ink inside, so your hero markup didn't change. The violet/teal solid covers are gone (foil stays for proven things). Dashboard hero: the "DASHBOARD" eyebrow is gone and its buttons use the normal primary/secondary. Dark mode text is a touch crisper (`--color-ink` #dce5de, `--color-ink-soft` #a9bcb3, `--color-ink-2` #b3c5bc). Please build on these rather than the old solid covers.
+
 **From Abdu to Mirza (Sun): programs can be shared now, with small touches in your `courses`.** Owner's request ("program sharing, not just course"). Programs reuse your publishing rules, so `courses/index.ts` exports a few more helpers (`normalizeAuthorName`, `normalizeQuery`, `learningOrder`, `MAX_AUTHOR_NAME_LENGTH`, the `session.ts` checks and `viewerAccess`), and `requirePublisher` takes an optional sentence. `CoursesScreen` shows a "Programs" shelf above the courses (`PublicPrograms` from `@/features/programs/client`; hidden when there are none), and the search label says "courses and programs". Nothing else in courses changed. Details in `programs/README.md`.
 
 **From Mirza to Abdu (Sun early), FYI: the map header in your `MapScreen.tsx` (`ce29cab`), owner's request.**

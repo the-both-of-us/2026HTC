@@ -10,7 +10,6 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
-- **Softer colours on the new UI and the feed** (owner's request: "clean up" the Dashboard/Courses refresh): course-card banners in palette tints instead of solid violet/lavender, a lighter top band on Dashboard and the course page, a softer feed card frame and crisper dark-mode text. Touches Mirza's `features/courses/ui/**`, `features/dashboard/ui/**` (noted in TEAM.md), my `features/feed/ui/FeedScreen.tsx`, `globals.css`.
 - **Model router and a Settings page** (owner's request): each map is rated for difficulty and stakes when it's built; gpt-oss-120b stays the fast default, harder or higher-stakes courses step up to Claude Haiku, Sonnet, then Opus per task; answer checks stay fast. New `/settings` (appearance, accessibility, AI speed and per-task overrides); the theme and learning-mode controls move there from the sidebar. Touches `features/ai`, `skill-map` (rating), `lessons`, `shared/ui/PageShell.tsx` + sidebar, new `features/settings`, `app/settings`.
 
 
@@ -22,6 +21,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Softer colours: course covers are soft sage, mist and sand tints with ink seal lines (no more solid violet/lavender), the Dashboard and course heroes are light tints with normal buttons, the feed card has a soft rounded edge instead of a hard ink frame (interest name in teal, body in offset ink), and dark mode text is a little crisper. Checked in Chrome, light and dark.
 - Put Mirza's UI refresh live (`81f2769`: Dashboard, Courses and the course page, a seal per course); the Programs section on /courses is kept; typecheck, lint and tests pass.
 - Put Mirza's calmer map header live (`ce29cab`: only title and progress while a skill is open; Publish only while private); typecheck, lint and tests pass.
 - Share whole programs: the owner shares from the program page (same name and sign-in rules as courses) and gets a link; anyone can open a shared program and press "Start this program" for their own copy (courses the owner already built are copied, the rest build on demand); shared programs list above courses in `/courses`. Someone else's private program is now the same 404 as a missing one. New `program-listings/<id>`, `program-starts/<id>/<user>`; routes `/api/programs/[id]/share`, `/api/programs/[id]/start`, `/api/programs/public`. Small touches in Mirza's `courses` (exports, a message option, the Programs section), noted in TEAM.md.

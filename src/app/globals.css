@@ -63,6 +63,9 @@
   --color-available-surface: #f7f9f5;
   --color-proven: #00675e; /* foil teal darkened for text */
   --color-shine: #6fd6c4; /* the hero seal's glow while you type; decoration only */
+  --color-cover-1: #d7e6de; /* course covers: soft sage, mist and sand under ink lines */
+  --color-cover-2: #dbe3e8;
+  --color-cover-3: #e9e3d4;
   --color-read-key: #00675e; /* Read tab: key terms, list markers, the idea section */
   --color-read-mark: #c4e6da; /* marker stroke under key terms */
   --color-read-code: #5a2fb8;
@@ -207,7 +210,7 @@
  */
 html[data-theme="dark"] {
   --color-paper-hi: #172c27;
-  --color-ink-2: #9fb3aa;
+  --color-ink-2: #b3c5bc;
   --color-tint: #284540;
   --color-foil-a: #3fc4b1;
   --color-foil-b: #a68cf2;
@@ -222,8 +225,8 @@ html[data-theme="dark"] {
   --color-rule: #284540;
   --color-rule-strong: #4f6e66;
   --color-control-edge: #7f9a91;
-  --color-ink: #cdd6cf;
-  --color-ink-soft: #9fb3aa;
+  --color-ink: #dce5de;
+  --color-ink-soft: #a9bcb3;
   --color-on-dark: #12241f;
   --color-accent: #b5cbbf;
   --color-accent-bright: #98c2b4;
@@ -239,6 +242,9 @@ html[data-theme="dark"] {
   --color-available-surface: #172c27;
   --color-proven: #55b9a6;
   --color-shine: #7ee8d4;
+  --color-cover-1: #1d3832; /* course covers: soft sage, mist and sand under ink lines */
+  --color-cover-2: #1f2f37;
+  --color-cover-3: #282c33;
   --color-read-key: #6fd0bd; /* Read tab: key terms, list markers, the idea section */
   --color-read-mark: #22504a; /* marker stroke under key terms */
   --color-read-code: #c4b0ff;
@@ -262,7 +268,7 @@ html[data-theme="dark"] {
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) {
     --color-paper-hi: #172c27;
-    --color-ink-2: #9fb3aa;
+    --color-ink-2: #b3c5bc;
     --color-tint: #284540;
     --color-foil-a: #3fc4b1;
     --color-foil-b: #a68cf2;
@@ -277,8 +283,8 @@ html[data-theme="dark"] {
     --color-rule: #284540;
     --color-rule-strong: #4f6e66;
     --color-control-edge: #7f9a91;
-    --color-ink: #cdd6cf;
-    --color-ink-soft: #9fb3aa;
+    --color-ink: #dce5de;
+    --color-ink-soft: #a9bcb3;
     --color-on-dark: #12241f;
     --color-accent: #b5cbbf;
     --color-accent-bright: #98c2b4;
@@ -294,6 +300,9 @@ html[data-theme="dark"] {
     --color-available-surface: #172c27;
     --color-proven: #55b9a6;
     --color-shine: #7ee8d4;
+    --color-cover-1: #1d3832; /* course covers: soft sage, mist and sand under ink lines */
+    --color-cover-2: #1f2f37;
+    --color-cover-3: #282c33;
     --color-read-key: #6fd0bd; /* Read tab: key terms, list markers, the idea section */
     --color-read-mark: #22504a; /* marker stroke under key terms */
     --color-read-code: #c4b0ff;
@@ -375,6 +384,9 @@ html[data-theme="eye"] {
   --color-available-surface: #f6eedb;
   --color-proven: #3f6a33;
   --color-shine: #d9c27a;
+  --color-cover-1: #e2dcc2; /* course covers: soft sage, mist and sand under ink lines */
+  --color-cover-2: #dad6c6;
+  --color-cover-3: #ead9b9;
   --color-read-key: #3f6a33; /* Read tab: key terms, list markers, the idea section */
   --color-read-mark: #e0d6a8; /* marker stroke under key terms */
   --color-read-code: #8a3a2b;

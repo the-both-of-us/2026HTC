@@ -395,12 +395,14 @@ export function FeedScreen() {
   );
 }
 
-const frame = "flex w-full flex-col border-[1.5px] border-ink bg-sheet";
+// A soft edge and a little lift, rather than a hard ink frame: the card should feel like a page, not a box.
+const frame =
+  "flex w-full flex-col rounded-2xl border border-rule-strong bg-sheet shadow-[0_1px_2px_rgb(0_0_0/0.05),0_12px_32px_-16px_rgb(0_0_0/0.25)]";
 
 function Meta({ interest, subtopic }: { interest: string; subtopic: string }) {
   return (
     <p className="text-sm leading-snug text-ink-soft">
-      <span className="font-semibold text-ink">{interest}</span>
+      <span className="font-semibold text-read-key">{interest}</span>
       {subtopic && subtopic.toLowerCase() !== interest.toLowerCase() && (
         <>
           <br />
@@ -517,7 +519,7 @@ function TopicCard({ card, rail, onDeeper }: { card: FeedItem & { kind: "card" }
       <div className="flex min-h-0 flex-1 items-end gap-3 pt-6">
         <div className="min-w-0 flex-1 self-center">
           <h2 className="text-[1.75rem] leading-[1.08] font-bold font-stretch-[112%] sm:text-3xl">{card.title}</h2>
-          <p className="mt-4 text-lg text-ink">{card.body}</p>
+          <p className="mt-4 text-lg leading-relaxed text-ink-2">{card.body}</p>
         </div>
         <div className="-mr-2">{rail}</div>
       </div>

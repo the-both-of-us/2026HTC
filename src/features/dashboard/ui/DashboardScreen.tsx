@@ -153,11 +153,9 @@ async function DashboardContent() {
   );
 }
 
-/** Buttons on the ink band: the colours turn around, so they read on it in either theme. */
-const onInkPrimary =
-  "inline-flex min-h-11 items-center gap-2 rounded-control bg-on-ink px-5 font-semibold text-ink transition-colors hover:bg-on-ink/90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-on-ink";
-const onInkSecondary =
-  "inline-flex min-h-11 items-center gap-2 rounded-control px-5 font-semibold text-on-ink shadow-[inset_0_0_0_1.5px_var(--color-on-ink-soft)] transition-colors hover:bg-on-ink/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-on-ink";
+/** The hero is a soft tint with ink text, so the usual buttons read on it. */
+const onInkPrimary = buttonClasses("primary");
+const onInkSecondary = clsx(buttonClasses("secondary"), "bg-sheet/70");
 
 /** A greeting, one line on where things stand, and the one thing to do next. */
 function Hero({ name, data, latest }: { name: string | null; data: DashboardData | null; latest: CourseRow | null }) {
@@ -179,7 +177,6 @@ function Hero({ name, data, latest }: { name: string | null; data: DashboardData
       className="flex flex-col gap-3 rounded-2xl px-6 py-8 sm:px-10 sm:py-10"
       sealClassName="-right-20 size-[24rem] max-sm:-right-40 max-sm:opacity-60"
     >
-      <p className="text-sm font-semibold tracking-wide text-on-ink-soft uppercase">Dashboard</p>
       <h1 className="max-w-2xl text-3xl leading-tight font-medium tracking-tight break-words sm:text-[2.5rem]">{title}</h1>
       <p className="max-w-xl text-lg text-on-ink-soft">{line}</p>
       <div className="mt-3 flex flex-wrap gap-3">
