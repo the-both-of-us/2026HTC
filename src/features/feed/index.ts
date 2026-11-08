@@ -9,5 +9,6 @@ export { deleteFeedData, setReaction } from "./reactions";
 export type { Reaction } from "./reactions";
 export { deleteComment, listComments, postComment } from "./comments";
 export { parseFormat } from "./format";
+export { looksEducational } from "./shorts";
 export { checkInterestBody, commentBody, deleteCommentBody, eventBody, reactionBody, saveInterestsBody } from "./http";
 export type { FeedCard, FeedComment, FeedFormat, FeedItem, FeedPage, FeedShort, Interest } from "./types";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { PublicSkillNode } from "@/shared/types";
 import { Button, ErrorNotice, InlineText, ReadAloudButton } from "@/shared/ui";
 import type { Lesson } from "../types";
@@ -12,6 +12,8 @@ export type LessonTabProps = {
   skill: PublicSkillNode;
   /** Shown as "Prove <skill>" at the end, when the learner can prove this skill. */
   onReady?: () => void;
+  /** Shown after the lesson, before "Prove <skill>", once the lesson has loaded (the skill's Shorts). */
+  afterLesson?: ReactNode;
 };
 
 type Phase = { kind: "loading" } | { kind: "ready"; lesson: Lesson } | { kind: "error"; message: string };
@@ -22,7 +24,7 @@ export function LessonTab(props: LessonTabProps) {
   return <LessonBody key={`${props.mapId}/${props.skill.id}`} {...props} />;
 }
 
-function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
+function LessonBody({ mapId, skill, onReady, afterLesson }: LessonTabProps) {
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -116,6 +118,8 @@ function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
           <CheckQuestion key={index} question={check.question} answer={check.answer} />
         ))}
       </section>
+
+      {afterLesson}
 
       {onReady && (
         <div className="flex flex-col items-start gap-2 border-t border-rule pt-5">

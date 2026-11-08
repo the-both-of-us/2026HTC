@@ -10,14 +10,21 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 | | **Abdu** (`VVarrior1`) | **Mirza** (`MirzaHB`) |
 |---|---|---|
-| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles`, `programs`, `streaks`, `lessons` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle` |
+| **Features** (`src/features/`) | `ai`, `skill-map`, `teachback`, `landing`, `proof`, `grid`, `labour`, `circles`, `programs`, `streaks`, `lessons` | `flashcards`, `quiz`, `courses`, `auth`, `network`, `dashboard`, `review`, `battle`, `reels` |
 | **Pages** (`src/app/`) | `page.tsx`, `layout.tsx`, `globals.css`, `map/`, `proof/`, `grid/`, `circle/`, `program/` | `dashboard/`, `courses/`, `review/`, `people/`, `battle/` |
-| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/`, `programs/`, `streak/`, `lessons/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/` |
+| **API** (`src/app/api/`) | `maps/`, `attempts/`, `proof/`, `grid/`, `labour/`, `circles/`, `programs/`, `streak/`, `lessons/` | `flashcards/`, `quiz/`, `courses/`, `auth/`, `network/`, `review/`, `battle/`, `reels/` |
 | **Everything else** | `src/shared/`, config files, `SPEC.md`, `CLAUDE.md`, deploys | `docs/submission/` (Devpost, AI disclosure, video script) |
 
 ## Open requests
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
+
+**From Mirza to Abdu (Sat late night), FYI: Shorts inside each skill (new `reels` feature, mine).** At the owner's request, the Read tab ends with "Quick videos": up to 4 portrait YouTube Shorts of 90 s or less about that skill, opening over the page in the feed's player. Storage is one list per skill at `skill-reels/<topicKey>`, keyed by a hash of map title, skill id, skill title and audience rather than the map id, so a course and every learner's copy share one document and one search (made when the skill is first opened, never at map build; 30 days fresh, 3 for an empty list, at most one search an hour per list). `reels/README.md` has the details. Small touches in your code:
+- The feed's Short player moved to `src/shared/ui/ShortPlayer.tsx` (with `ShortThumbnail`), and `FeedScreen.tsx` now uses it. The feed behaves the same; I re-ran my browser checks.
+- `LessonTab` takes `afterLesson?: ReactNode`, shown after "Check yourself" and before "Prove <skill>" once the lesson loads; `SkillPanel` passes `<SkillShorts mapId nodeId />`.
+- `features/feed/index.ts` exports `looksEducational`, which reels reuses.
+- Idea for you: `resources/<mapId>/<nodeId>` means every learner who starts a course spends another 100-unit YouTube search on Resources. Keying it like `topicKey` would share it across copies.
+- `YOUTUBE_API_KEY` isn't in local `.env.local`, so locally the row stays hidden; it searches on Vercel.
 
 **From Mirza to Abdu (Sat late night), FYI: feed Shorts redesign in your `FeedScreen.tsx`.** At the owner's request, a Short has no frame, header or "Short" badge any more. The video is edge to edge at 9:16 (sized with container units, so it fits phone and desktop) with the rail beside it, and one caption row below: the title, then the interest and the channel (linking to YouTube), with Go deeper. YouTube's controls are off (`controls=0`, `enablejsapi=1`): a transparent tap layer pauses and plays, and also keeps YouTube's hover controls away. A sound button turns sound on for every Short for the rest of the visit (`sound` state in `FeedScreen`). `loop`/`playlist` are gone, since they brought back YouTube's previous and next buttons; the card restarts a Short when it ends. Text cards are unchanged. I checked in headless Chrome at desktop and phone sizes: pause, play, sound, and the next Short loading unmuted and playing. The feed README has a line on it.
 

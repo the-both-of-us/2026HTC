@@ -1,10 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowUpRight, Bookmark, Heart, MessageCircle, Play, Share2, SlidersHorizontal, Volume2, VolumeX } from "lucide-react";
+import { ArrowUpRight, Bookmark, Heart, MessageCircle, Share2, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { buttonClasses, ErrorNotice, PageShell, prefersReducedMotion, Spinner } from "@/shared/ui";
+import { buttonClasses, ErrorNotice, PageShell, prefersReducedMotion, ShortPlayer, Spinner } from "@/shared/ui";
 import { FEED_FORMATS, parseFormat, type FeedFormat } from "../format";
 import type { FeedItem, FeedPage, FeedShort, Interest } from "../types";
 import { CommentsPanel } from "./CommentsPanel";
@@ -499,35 +499,9 @@ function TopicCard({ card, rail, onDeeper }: { card: FeedItem & { kind: "card" }
   );
 }
 
-const YOUTUBE = "https://www.youtube-nocookie.com";
 /** Room under the video for the caption, and beside it for the rail. */
 const CAPTION_HEIGHT = "4.5rem";
 const RAIL_WIDTH = "3.25rem";
-
-/**
- * The embed without YouTube's own controls: our buttons drive it through the player API. No
- * loop=1: that needs playlist=<id>, which brings back YouTube's previous and next buttons, so the
- * card restarts the video itself when it ends.
- */
-function embedSrc(videoId: string) {
-  const params = new URLSearchParams({
-    autoplay: "1",
-    mute: "1",
-    controls: "0",
-    playsinline: "1",
-    rel: "0",
-    iv_load_policy: "3",
-    disablekb: "1",
-    fs: "0",
-    enablejsapi: "1",
-    origin: window.location.origin,
-  });
-  return `${YOUTUBE}/embed/${videoId}?${params}`;
-}
-
-/** A round button over the video, readable on any frame. */
-const overlayButton =
-  "flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 /**
  * An educational Short, edge to edge at 9:16 with the rail beside it. The player loads only near
@@ -547,12 +521,9 @@ function ShortCard({
   onDeeper: () => void;
 }) {
   const box = useRef<HTMLDivElement>(null);
-  const player = useRef<HTMLIFrameElement>(null);
   const [visible, setVisible] = useState(false);
   const [started, setStarted] = useState(false);
   const [calm, setCalm] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const soundOn = useRef(sound);
 
   useEffect(() => {
     const element = box.current;
@@ -564,55 +535,6 @@ function ShortCard({
   }, []);
 
   const { videoId, title, channel } = item.short;
-  // Autoplay muted while on screen, unless motion is reduced: then only after a tap.
-  const playing = visible && (!calm || started);
-
-  const send = useCallback((message: object) => {
-    player.current?.contentWindow?.postMessage(JSON.stringify(message), YOUTUBE);
-  }, []);
-  const command = useCallback((func: string, args: unknown[] = []) => send({ event: "command", func, args }), [send]);
-
-  // The player says when it is ready and when it pauses or plays (also from a tap on the video).
-  useEffect(() => {
-    if (!playing) return;
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== YOUTUBE || event.source !== player.current?.contentWindow) return;
-      let data: { event?: string; info?: { playerState?: number } | number } | null = null;
-      try {
-        data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-      } catch {
-        return;
-      }
-      if (data?.event === "onReady" && soundOn.current) command("unMute");
-      const state = typeof data?.info === "number" ? data.info : data?.info?.playerState;
-      if (state === 1) setPaused(false);
-      if (state === 2) setPaused(true);
-      if (state === 0) {
-        command("seekTo", [0, true]);
-        command("playVideo");
-      }
-    }
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, [playing, command]);
-
-  // Turning sound on or off applies to the Short on screen at once.
-  useEffect(() => {
-    soundOn.current = sound;
-    if (playing) command(sound ? "unMute" : "mute");
-  }, [sound, playing, command]);
-
-  const onLoad = () => {
-    setPaused(false);
-    // Ask for the player's events; it answers with onReady, then each state change.
-    send({ event: "listening", id: item.id, channel: "widget" });
-    if (soundOn.current) command("unMute");
-  };
-
-  const togglePause = () => {
-    command(paused ? "playVideo" : "pauseVideo");
-    setPaused(!paused);
-  };
 
   const sized = {
     "--short-w": `min(calc(100cqw - ${RAIL_WIDTH}), calc((100cqh - ${CAPTION_HEIGHT}) * 9 / 16))`,
@@ -622,61 +544,20 @@ function ShortCard({
     <article className="flex min-w-0 flex-1 items-center justify-center [container-type:size]" style={sized}>
       <div className="flex flex-col" style={{ width: `calc(var(--short-w) + ${RAIL_WIDTH})` }}>
         <div className="flex items-end gap-1">
-          <div ref={box} className="relative aspect-[9/16] w-(--short-w) shrink-0 overflow-hidden rounded-lg bg-black">
-            {playing ? (
-              <>
-                <iframe
-                  ref={player}
-                  src={embedSrc(videoId)}
-                  title={`YouTube video: ${title}`}
-                  onLoad={onLoad}
-                  allow="autoplay; encrypted-media; picture-in-picture"
-                  className="absolute inset-0 size-full"
-                />
-                {/* Tap to pause or play, like reels. Covering the player also keeps YouTube's hover controls away. */}
-                <button
-                  type="button"
-                  onClick={togglePause}
-                  aria-label={paused ? `Play "${title}"` : `Pause "${title}"`}
-                  className={clsx(
-                    "absolute inset-0 flex cursor-pointer items-center justify-center focus-visible:outline-3 focus-visible:-outline-offset-4 focus-visible:outline-white",
-                    paused && "bg-black/20",
-                  )}
-                >
-                  {paused && (
-                    <span className="flex size-16 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
-                      <Play aria-hidden="true" size={28} className="ml-1 fill-current" />
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSound(!sound)}
-                  aria-label={sound ? "Sound on. Turn it off" : "Sound off. Turn it on"}
-                  aria-pressed={sound}
-                  className={clsx(overlayButton, "absolute top-3 right-3")}
-                >
-                  {sound ? <Volume2 aria-hidden="true" size={20} /> : <VolumeX aria-hidden="true" size={20} />}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setStarted(true);
-                  onSound(true);
-                }}
-                aria-label={`Play "${title}"`}
-                className="absolute inset-0 flex cursor-pointer items-center justify-center"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" loading="lazy" className="absolute inset-0 size-full object-cover opacity-85" />
-                <span className="relative flex size-16 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
-                  <Play aria-hidden="true" size={28} className="ml-1 fill-current" />
-                </span>
-              </button>
-            )}
-          </div>
+          <ShortPlayer
+            boxRef={box}
+            videoId={videoId}
+            title={title}
+            // Autoplay muted while on screen, unless motion is reduced: then only after a tap.
+            playing={visible && (!calm || started)}
+            onStart={() => {
+              setStarted(true);
+              onSound(true);
+            }}
+            sound={sound}
+            onSound={onSound}
+            className="w-(--short-w) rounded-lg"
+          />
           <div className="pb-1">{rail}</div>
         </div>
         <div className="flex items-center gap-3 pt-3" style={{ height: CAPTION_HEIGHT }}>

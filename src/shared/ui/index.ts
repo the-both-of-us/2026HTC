@@ -13,6 +13,8 @@ export { InlineText } from "./InlineText";
 export { LearningModeToggle, useLearningMode } from "./LearningModeToggle";
 export { prefersReducedMotion } from "./learningMode";
 export { ReadAloudButton, toSpeakable } from "./ReadAloudButton";
+export { ShortPlayer, ShortThumbnail } from "./ShortPlayer";
+export type { ShortPlayerProps } from "./ShortPlayer";
 export { Tabs, tabId } from "./Tabs";
 export type { TabItem } from "./Tabs";
 export { Seal, SealBlank, sha256Hex } from "./seal";

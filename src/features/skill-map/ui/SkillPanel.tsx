@@ -2,6 +2,7 @@ import { FlashcardsTab } from "@/features/flashcards/client";
 import { LessonTab } from "@/features/lessons/client";
 import { ShareProofButton } from "@/features/proof/client";
 import { QuizTab } from "@/features/quiz/client";
+import { SkillShorts } from "@/features/reels/client";
 import { ResourcesTab } from "@/features/resources/client";
 import { assignFormats, FormatBadge, TeachBackPanel } from "@/features/teachback/client";
 import clsx from "clsx";
@@ -105,7 +106,14 @@ export function SkillPanel({
         {
           id: "read",
           label: "Read",
-          content: <LessonTab mapId={mapId} skill={skill} onReady={canProve ? goToTeachBack : undefined} />,
+          content: (
+            <LessonTab
+              mapId={mapId}
+              skill={skill}
+              onReady={canProve ? goToTeachBack : undefined}
+              afterLesson={<SkillShorts mapId={mapId} nodeId={skill.id} />}
+            />
+          ),
         },
         ...(state === "locked"
           ? []
