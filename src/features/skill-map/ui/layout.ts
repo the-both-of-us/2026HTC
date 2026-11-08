@@ -42,16 +42,43 @@ export type GraphLayout = {
 
 export const NODE_WIDTH = 232;
 export const NODE_HEIGHT = 84;
-/** Space between rows, where the curved lines run. */
-const ROW_GAP = 56;
-/** Space between two nodes in a row. */
-const NODE_GAP = 22;
-/** Space next to a waypoint, which is only a line and needs less room than a node. */
-const WAYPOINT_GAP = 16;
-/** Space between groups of nodes that no line connects. */
-const GROUP_GAP = 48;
-/** Groups beside each other wrap below this width, so the map stays readable on a laptop. */
-const MAX_SHELF_WIDTH = 1300;
+
+/** Card size and the gaps around cards. */
+export type LayoutMetrics = {
+  nodeWidth: number;
+  nodeHeight: number;
+  /** Space between rows, where the curved lines run. */
+  rowGap: number;
+  /** Space between two nodes in a row. */
+  nodeGap: number;
+  /** Space next to a waypoint, which is only a line and needs less room than a node. */
+  waypointGap: number;
+  /** Space between groups of nodes that no line connects. */
+  groupGap: number;
+  /** Groups beside each other wrap below this width, so the map stays readable on a laptop. */
+  maxShelfWidth: number;
+};
+
+export const DEFAULT_METRICS: LayoutMetrics = {
+  nodeWidth: NODE_WIDTH,
+  nodeHeight: NODE_HEIGHT,
+  rowGap: 56,
+  nodeGap: 22,
+  waypointGap: 16,
+  groupGap: 48,
+  maxShelfWidth: 1300,
+};
+
+/** Smaller title-only cards, so a whole map fits one screen (a study circle on a projector). */
+export const COMPACT_METRICS: LayoutMetrics = {
+  nodeWidth: 156,
+  nodeHeight: 72,
+  rowGap: 34,
+  nodeGap: 12,
+  waypointGap: 10,
+  groupGap: 32,
+  maxShelfWidth: 900,
+};
 const SWEEPS = 8;
 const HEIGHT_PASSES = 8;
 
@@ -60,7 +87,7 @@ type Link = { from: string; to: string };
 /** One thing in a row: a real node, or a waypoint on a line that skips rows. */
 type Item = { id: string; isWaypoint: boolean };
 
-export function layoutGraph(input: LayoutInput[]): GraphLayout {
+export function layoutGraph(input: LayoutInput[], metrics: LayoutMetrics = DEFAULT_METRICS): GraphLayout {
   const links = withoutShortcuts(input);
   const layerOf = assignLayers(input, links);
 
@@ -75,15 +102,15 @@ export function layoutGraph(input: LayoutInput[]): GraphLayout {
   for (const group of connectedGroups(input, links)) {
     const groupIds = new Set(group.map((node) => node.id));
     const groupLinks = links.filter((link) => groupIds.has(link.from));
-    const placed = placeGroup(group, groupLinks, shelfLayers(group, layerOf));
+    const placed = placeGroup(group, groupLinks, shelfLayers(group, layerOf), metrics);
 
     const minX = Math.min(...placed.nodes.map((node) => node.x));
-    const groupWidth = Math.max(...placed.nodes.map((node) => node.x)) + NODE_WIDTH - minX;
-    const groupHeight = Math.max(...placed.nodes.map((node) => node.y)) + NODE_HEIGHT;
+    const groupWidth = Math.max(...placed.nodes.map((node) => node.x)) + metrics.nodeWidth - minX;
+    const groupHeight = Math.max(...placed.nodes.map((node) => node.y)) + metrics.nodeHeight;
 
-    if (left > 0 && left + groupWidth > MAX_SHELF_WIDTH) {
+    if (left > 0 && left + groupWidth > metrics.maxShelfWidth) {
       left = 0;
-      top = shelfBottom + GROUP_GAP;
+      top = shelfBottom + metrics.groupGap;
     }
 
     const shiftX = left - minX;
@@ -94,7 +121,7 @@ export function layoutGraph(input: LayoutInput[]): GraphLayout {
         waypoints: edge.waypoints.map((point) => ({ x: point.x + shiftX, y: point.y + top })),
       });
     }
-    left += groupWidth + GROUP_GAP;
+    left += groupWidth + metrics.groupGap;
     shelfBottom = Math.max(shelfBottom, top + groupHeight);
   }
 
@@ -109,16 +136,16 @@ function shelfLayers(group: LayoutInput[], layerOf: Map<string, number>): Map<st
 }
 
 /** Rows, order and sideways positions for one connected group of nodes. */
-function placeGroup(input: LayoutInput[], links: Link[], layerOf: Map<string, number>): GraphLayout {
+function placeGroup(input: LayoutInput[], links: Link[], layerOf: Map<string, number>, m: LayoutMetrics): GraphLayout {
   const { rows, segments, waypointIds } = buildRows(input, links, layerOf);
   orderRows(rows, segments);
-  const centreX = assignCentres(rows, segments);
+  const centreX = assignCentres(rows, segments, m);
 
   const nodes: PlacedNode[] = input.map((node) => ({
     id: node.id,
     layer: at(layerOf, node.id),
-    x: at(centreX, node.id) - NODE_WIDTH / 2,
-    y: rowY(at(layerOf, node.id)),
+    x: at(centreX, node.id) - m.nodeWidth / 2,
+    y: rowY(at(layerOf, node.id), m),
   }));
 
   const edges = links.map((link) => ({
@@ -128,8 +155,8 @@ function placeGroup(input: LayoutInput[], links: Link[], layerOf: Map<string, nu
       const x = at(centreX, id);
       // The line crosses the whole row in a straight run, as tall as a node.
       return [
-        { x, y: rowY(layer) },
-        { x, y: rowY(layer) + NODE_HEIGHT },
+        { x, y: rowY(layer, m) },
+        { x, y: rowY(layer, m) + m.nodeHeight },
       ];
     }),
   }));
@@ -211,8 +238,8 @@ function countCrossings(rows: Item[][], segments: Link[]): number {
   return crossings;
 }
 
-function rowY(layer: number): number {
-  return layer * (NODE_HEIGHT + ROW_GAP);
+function rowY(layer: number, m: LayoutMetrics): number {
+  return layer * (m.nodeHeight + m.rowGap);
 }
 
 function linkKey(link: Link): string {
@@ -372,19 +399,19 @@ function neighbourMap(segments: Link[], key: "from" | "to", value: "from" | "to"
 }
 
 /** The gap that keeps two neighbouring items in a row from touching, centre to centre. */
-function spacing(a: Item, b: Item): number {
-  if (a.isWaypoint && b.isWaypoint) return WAYPOINT_GAP;
-  if (a.isWaypoint || b.isWaypoint) return NODE_WIDTH / 2 + WAYPOINT_GAP;
-  return NODE_WIDTH + NODE_GAP;
+function spacing(a: Item, b: Item, m: LayoutMetrics): number {
+  if (a.isWaypoint && b.isWaypoint) return m.waypointGap;
+  if (a.isWaypoint || b.isWaypoint) return m.nodeWidth / 2 + m.waypointGap;
+  return m.nodeWidth + m.nodeGap;
 }
 
 /** Moves each row's items towards their neighbours' centres, keeping order and spacing. */
-function assignCentres(rows: Item[][], segments: Link[]): Map<string, number> {
+function assignCentres(rows: Item[][], segments: Link[], m: LayoutMetrics): Map<string, number> {
   const centreX = new Map<string, number>();
   for (const row of rows) {
     let x = 0;
     row.forEach((item, index) => {
-      if (index > 0) x += spacing(row[index - 1], item);
+      if (index > 0) x += spacing(row[index - 1], item, m);
       centreX.set(item.id, x);
     });
   }
@@ -408,7 +435,7 @@ function assignCentres(rows: Item[][], segments: Link[]): Map<string, number> {
       // Left to right: go where you want, unless that would overlap the item before.
       const placed: number[] = [];
       row.forEach((item, i) => {
-        placed.push(i === 0 ? wanted[0] : Math.max(wanted[i], placed[i - 1] + spacing(row[i - 1], item)));
+        placed.push(i === 0 ? wanted[0] : Math.max(wanted[i], placed[i - 1] + spacing(row[i - 1], item, m)));
       });
       // Pushing only ever moves items right, so move the row back left to compensate.
       const drift = mean(placed.map((x, i) => x - wanted[i]));

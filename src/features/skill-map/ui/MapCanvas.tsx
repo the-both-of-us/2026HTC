@@ -19,9 +19,9 @@ import type { KeyboardEvent, ReactNode } from "react";
 import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { prefersReducedMotion, StateMark } from "@/shared/ui";
 import "./map.css";
-import { layoutGraph, NODE_HEIGHT, NODE_WIDTH } from "./layout";
+import { COMPACT_METRICS, DEFAULT_METRICS, layoutGraph, NODE_HEIGHT, NODE_WIDTH } from "./layout";
 import { SkillEdge, type SkillFlowEdge } from "./SkillEdge";
-import { JobAsksTag, SkillNodeView, type SkillFlowNode } from "./SkillNodeView";
+import { JobAsksTag, SkillNodeView, type MapAvatar, type SkillFlowNode } from "./SkillNodeView";
 
 const LARGE_SCREEN = "(min-width: 1024px)";
 const PHONE_SCREEN = "(max-width: 640px)";
@@ -36,6 +36,14 @@ const FIT_VIEW = {
   padding: { top: "28px", right: "28px", bottom: "118px", left: "68px" },
   maxZoom: 1,
 } as const;
+
+/** A compact map always shows all of itself, with room under the last row for initials. */
+const COMPACT_FIT_VIEW = {
+  padding: { top: "16px", right: "16px", bottom: "30px", left: "16px" },
+  maxZoom: 1.15,
+} as const;
+/** Below this, a compact map's titles would read under 14px, so a phone pans instead. */
+const MIN_COMPACT_ZOOM = 0.66;
 
 const NODE_TYPES = { skill: SkillNodeView };
 const EDGE_TYPES = { skill: SkillEdge };
@@ -72,8 +80,13 @@ type MapCanvasProps = {
   /** Skills opened with "Unlock anyway" before what they build on was proven. */
   unlockedEarly?: Set<string>;
   onSelect: (nodeId: string) => void;
-  /** A study circle's initials for each skill: who has proved it. */
-  avatars?: Record<string, string[]>;
+  /** A study circle's members for each skill: who has proved it. */
+  avatars?: Record<string, MapAvatar[]>;
+  /**
+   * Read-only, title-only cards that fit the whole map on screen, for a study circle. Nothing
+   * opens, so cards are not buttons.
+   */
+  compact?: boolean;
 };
 
 export function MapCanvas(props: MapCanvasProps) {
@@ -97,6 +110,7 @@ function Canvas({
   unlockedEarly,
   onSelect,
   avatars,
+  compact = false,
 }: MapCanvasProps) {
   const flow = useReactFlow<SkillFlowNode, SkillFlowEdge>();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -106,7 +120,9 @@ function Canvas({
 
   // Where things go depends only on the map's structure, never on progress, so
   // proving a skill never moves anything.
-  const layout = useMemo(() => layoutGraph(skills), [skills]);
+  const metrics = compact ? COMPACT_METRICS : DEFAULT_METRICS;
+  const fitOptions = compact ? COMPACT_FIT_VIEW : FIT_VIEW;
+  const layout = useMemo(() => layoutGraph(skills, metrics), [skills, metrics]);
 
   const nodes = useMemo<SkillFlowNode[]>(() => {
     const skillById = new Map(skills.map((skill) => [skill.id, skill]));
@@ -119,8 +135,11 @@ function Canvas({
         id: skill.id,
         type: "skill" as const,
         position: { x: placed.x, y: placed.y },
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
+        width: metrics.nodeWidth,
+        height: metrics.nodeHeight,
+        ...(compact
+          ? { focusable: false, ariaRole: "group" as const, domAttributes: { "aria-roledescription": "skill" } }
+          : {
         // No aria-label: a button is named by its text, so it says exactly what it shows.
         ariaRole: "button" as const,
         domAttributes: {
@@ -133,6 +152,7 @@ function Canvas({
             }
           },
         },
+            }),
         data: {
           skill,
           state,
@@ -146,10 +166,11 @@ function Canvas({
           featured: featuredId === skill.id,
           unlockedEarly: unlockedEarly?.has(skill.id) ?? false,
           format: formats[skill.id],
+          compact,
         },
       };
     });
-  }, [layout, skills, states, selectedId, reveal, justProvenId, justUnlockedIds, dim, featuredId, unlockedEarly, onSelect, avatars]);
+  }, [layout, metrics, compact, skills, states, selectedId, reveal, justProvenId, justUnlockedIds, dim, featuredId, unlockedEarly, onSelect, avatars]);
 
   const edges = useMemo<SkillFlowEdge[]>(() => {
     const layerById = new Map(layout.nodes.map((placed) => [placed.id, placed.layer]));
@@ -173,8 +194,39 @@ function Canvas({
   // On a phone, or when a long map only fits at a size too small to read, start at the first
   // skill the learner can act on, at a readable size, and let them pan.
   useEffect(() => {
+    if (!ready || !compact) return;
+    const container = containerRef.current;
+    if (!container) return;
+    // A compact map fits itself again whenever its box changes size, unless that would make
+    // its titles too small: then it shows its top rows at a readable size and pans.
+    const fit = () => {
+      const { width, height } = container.getBoundingClientRect();
+      const bounds = layout.nodes.reduce(
+        (box, placed) => ({
+          right: Math.max(box.right, placed.x + metrics.nodeWidth),
+          bottom: Math.max(box.bottom, placed.y + metrics.nodeHeight),
+        }),
+        { right: 0, bottom: 0 },
+      );
+      const fitsAt = Math.min((width - 32) / bounds.right, (height - 46) / bounds.bottom);
+      if (fitsAt >= MIN_COMPACT_ZOOM) {
+        flow.fitView(COMPACT_FIT_VIEW);
+        return;
+      }
+      const zoom = 0.8;
+      const first = layout.nodes[0];
+      const centreX = first ? first.x + metrics.nodeWidth / 2 : bounds.right / 2;
+      flow.setViewport({ x: width / 2 - centreX * zoom, y: 18, zoom });
+    };
+    fit();
+    const observer = new ResizeObserver(() => fit());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [ready, compact, layout, metrics, flow]);
+
+  useEffect(() => {
     const phone = window.matchMedia(PHONE_SCREEN).matches;
-    if (!ready || (!phone && flow.getViewport().zoom >= MIN_READABLE_ZOOM)) return;
+    if (compact || !ready || (!phone && flow.getViewport().zoom >= MIN_READABLE_ZOOM)) return;
     const first =
       layout.nodes.find((placed) => states[placed.id] === "available") ?? layout.nodes[0];
     if (phone && first) flow.setCenter(first.x + NODE_WIDTH / 2, first.y + NODE_HEIGHT / 2, { zoom: 1 });
@@ -194,7 +246,7 @@ function Canvas({
   // The effect runs after the panel is on screen, so clientWidth is already the new width.
   useEffect(() => {
     const container = containerRef.current;
-    if (!ready || !container) return;
+    if (!ready || !container || compact) return;
     if (!window.matchMedia(LARGE_SCREEN).matches) return;
 
     if (!selectedId) {
@@ -225,20 +277,22 @@ function Canvas({
       },
       { duration: motionMs(PAN_MS) },
     );
-  }, [selectedId, ready, layout, flow]);
+  }, [selectedId, ready, layout, flow, compact]);
 
   const handleNodeClick: NodeMouseHandler<SkillFlowNode> = (_event, node) => onSelect(node.id);
 
   return (
     <div className="flex size-full flex-col">
       {/* On a phone the legend sits above the map, so it never covers a skill. */}
-      <div className="flex justify-center border-b border-rule px-2 py-2 sm:hidden">
-        <Legend sourceKind={sourceKind} />
-      </div>
+      {!compact && (
+        <div className="flex justify-center border-b border-rule px-2 py-2 sm:hidden">
+          <Legend sourceKind={sourceKind} />
+        </div>
+      )}
       <div ref={containerRef} className="relative min-h-0 flex-1">
         <ReactFlow<SkillFlowNode, SkillFlowEdge>
           aria-label="Skill map. Use Tab to move between skills and Enter to open one."
-          className="skill-map-flow"
+          className={compact ? "skill-map-flow skill-map-compact" : "skill-map-flow"}
           nodes={nodes}
           edges={edges}
           nodeTypes={NODE_TYPES}
@@ -246,8 +300,8 @@ function Canvas({
           onNodeClick={handleNodeClick}
           onInit={() => setReady(true)}
           fitView
-          fitViewOptions={FIT_VIEW}
-          minZoom={0.35}
+          fitViewOptions={fitOptions}
+          minZoom={compact ? 0.2 : 0.35}
           maxZoom={1.5}
           nodesDraggable={false}
           nodesConnectable={false}
@@ -266,7 +320,11 @@ function Canvas({
 
           <Panel
             position="bottom-left"
-            className="flex flex-col divide-y divide-rule-strong rounded-control border border-rule-strong bg-sheet"
+            className={
+              compact
+                ? "hidden"
+                : "flex flex-col divide-y divide-rule-strong rounded-control border border-rule-strong bg-sheet"
+            }
           >
             <ZoomButton label="Zoom in" onClick={() => flow.zoomIn({ duration: motionMs(150) })}>
               <Plus aria-hidden="true" size={18} />
@@ -282,11 +340,13 @@ function Canvas({
             </ZoomButton>
           </Panel>
 
-          <Panel position="bottom-center" className="hidden w-max sm:block">
-            <Legend sourceKind={sourceKind} />
-          </Panel>
+          {!compact && (
+            <Panel position="bottom-center" className="hidden w-max sm:block">
+              <Legend sourceKind={sourceKind} />
+            </Panel>
+          )}
 
-          <MiniMap<SkillFlowNode>
+          {!compact && <MiniMap<SkillFlowNode>
             position="bottom-right"
             pannable
             zoomable
@@ -296,7 +356,7 @@ function Canvas({
             maskStrokeColor="var(--color-rule-strong)"
             nodeBorderRadius={18}
             nodeColor={(node) => MINIMAP_COLOURS[node.data.state]}
-          />
+          />}
         </ReactFlow>
       </div>
     </div>
