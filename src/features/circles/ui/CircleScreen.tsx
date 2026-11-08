@@ -5,8 +5,7 @@ import { CircleRace } from "@/features/streaks/client";
 import { PartyPopper, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { NodeState } from "@/shared/types";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button, buttonClasses, ErrorNotice, Field, PageShell, Spinner, TextInput } from "@/shared/ui";
 import type { CircleView } from "../circles";
 import { circleUrl, fetchCircle, joinCircle } from "./api";
@@ -102,14 +101,8 @@ export function CircleScreen({ code }: { code: string }) {
 /** `now` is when this view arrived, so times move on with each poll. */
 function LoadedCircle({ view, now, stale }: { view: CircleView; now: number; stale: boolean }) {
   const total = view.map.nodes.length;
-  // Read-only: a skill shows as proven once anyone in the circle has proved it.
-  const states = useMemo(
-    () =>
-      Object.fromEntries(
-        view.map.nodes.map((node) => [node.id, view.provedBy[node.id] ? "proven" : "available"]),
-      ) as Record<string, NodeState>,
-    [view.map.nodes, view.provedBy],
-  );
+  // Read-only: proven once anyone in the circle has proved it, else open or locked for the viewer.
+  const states = view.states;
 
   return (
     <PageShell width="full">

@@ -46,7 +46,8 @@ export type VerifyReply =
       recomputedHash: string;
       quotes: { verified: number; total: number };
       scores: { matching: number; total: number };
-      canonical: string;
+      /** Missing for an older record whose exact text would show a catch round. */
+      canonical?: string;
     }
   | { state: "revoked"; revokedAt: string };
 

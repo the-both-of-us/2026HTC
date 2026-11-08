@@ -1,5 +1,6 @@
 import { createHash, createHmac } from "node:crypto";
 import { computeScore, isUsableQuote } from "@/features/teachback";
+import { isFullCatch } from "./redact";
 import type { ProofCheckResult, ProofSnapshot } from "./types";
 
 /**
@@ -46,10 +47,13 @@ export function checkSnapshot(snapshot: ProofSnapshot, storedHash: string, store
 
   for (const skill of snapshot.skills) {
     const met = skill.checkpoints.filter((result) => result.met);
-    quotes.total += met.length;
-    quotes.verified += met.filter(
-      (result) => result.quote !== null && isUsableQuote(result.quote, skill.explanation),
-    ).length;
+    // A counts-only "catch" skill keeps no quotes (they would give the answers away).
+    if (!(skill.catch && !isFullCatch(skill.catch))) {
+      quotes.total += met.length;
+      quotes.verified += met.filter(
+        (result) => result.quote !== null && isUsableQuote(result.quote, skill.explanation),
+      ).length;
+    }
 
     const expected = computeScore(met.length, skill.checkpoints.length, skill.factualErrors.length);
     if (expected === skill.score) scores.matching += 1;

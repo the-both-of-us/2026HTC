@@ -253,7 +253,10 @@ describe("proving formats on the record", () => {
     expect(attemptProvesNode(caught, map, node)).toBe(true);
     const skill = buildSnapshot({ ...snapshotInput(map, caught), attempts: { joins: caught } }).skills[0];
     expect(skill.format).toBe("catch");
-    expect(skill.catch?.planted).toEqual(record.planted);
+    // Only counts are kept: the planted sentences are shared by every copy of a course.
+    expect(skill.catch).toEqual({ plantedCount: 1, caughtCount: 1, wrongTaps: 0 });
+    expect(JSON.stringify(skill)).not.toContain("An inner join keeps every row");
+    expect(skill.explanation).toBe("");
   });
 
   it("still needs a follow-up for every other format", () => {

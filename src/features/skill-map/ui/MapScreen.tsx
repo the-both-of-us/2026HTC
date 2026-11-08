@@ -267,7 +267,7 @@ function LoadedMap({
             <div className="min-w-0">
               {map.program && <ProgramCrumb program={map.program} proven={provenCount} total={map.nodes.length} />}
               <div className="flex items-baseline gap-3">
-                <h1 className="truncate text-xl leading-tight font-medium sm:text-2xl" title={map.title}>
+                <h1 className="line-clamp-2 min-w-0 text-xl leading-tight font-medium break-words sm:text-2xl" title={map.title}>
                   {map.title}
                 </h1>
                 {map.subtitle && (

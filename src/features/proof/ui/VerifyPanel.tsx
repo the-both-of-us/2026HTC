@@ -33,7 +33,7 @@ export function VerifyPanel({ proofId, fingerprint }: VerifyPanelProps) {
       }
       setChecked({
         reply,
-        browserHash: await sha256InBrowser(reply.canonical),
+        browserHash: reply.canonical ? await sha256InBrowser(reply.canonical) : null,
         checkedAt: new Date().toLocaleTimeString("en-CA", { timeStyle: "short" }),
       });
     } catch (problem) {
@@ -101,7 +101,7 @@ function CheckResults({ checked, fingerprint }: { checked: CheckedRecord; finger
         compare the fingerprint with your saved copy. The owner can update their page, which makes a new fingerprint and
         keeps no history.
       </p>
-      {browserHash && <OneCharacterDemo canonical={reply.canonical} fingerprint={fingerprint} />}
+      {browserHash && reply.canonical && <OneCharacterDemo canonical={reply.canonical} fingerprint={fingerprint} />}
     </div>
   );
 }

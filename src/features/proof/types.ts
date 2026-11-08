@@ -8,6 +8,12 @@ export type ProofCheckpoint = {
   quote: string | null;
 };
 
+/**
+ * What a "Catch the mistake" skill shows publicly: counts only. A round is shared by every copy
+ * of a course, so the planted sentences, their numbers and the reasons must never be public.
+ */
+export type ProofCatch = { plantedCount: number; caughtCount: number; wrongTaps: number };
+
 /** Where the skill came from. A quote only appears here if code found it in the source. */
 export type ProofSource =
   | { status: "verified"; kind: SourceKind; quote: string; page: number | null }
@@ -45,8 +51,12 @@ export type ProofSkill = {
    * existed keep their fingerprint. A "catch" skill has no follow-up: its fields are empty.
    */
   format?: "catch" | "kid" | "timed";
-  /** Only for "catch": the AI's sentences, where its mistakes were, and what the person tapped. */
-  catch?: CatchRecord;
+  /**
+   * Only for "catch". New records hold counts only (ProofCatch). Records published before Nov 8
+   * still hold the full round (CatchRecord) so their fingerprint stays valid, but it is never
+   * shown or sent: toPublicSnapshot turns it into counts first.
+   */
+  catch?: ProofCatch | CatchRecord;
   /** Only for "kid": the reading grade code measured. */
   readingGrade?: number;
 };

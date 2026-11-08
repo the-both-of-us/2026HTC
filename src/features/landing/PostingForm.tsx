@@ -17,9 +17,9 @@ const SLOW_AFTER_SECONDS = 20;
 
 /** The three things a map can be built from. */
 const MODES = [
+  { id: "topic", label: "Name a topic", noun: "topic" },
   { id: "posting", label: "Paste a posting", noun: "posting" },
   { id: "pdf", label: "Upload a PDF", noun: "PDF" },
-  { id: "topic", label: "Name a topic", noun: "topic" },
 ] as const;
 type Mode = (typeof MODES)[number]["id"];
 const nounOf = (mode: Mode) => MODES.find((item) => item.id === mode)?.noun ?? "posting";
@@ -47,7 +47,7 @@ const couldNotConnect = (mode: Mode) =>
  */
 export function PostingForm({ children, figures }: { children: ReactNode; figures?: ReactNode }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("posting");
+  const [mode, setMode] = useState<Mode>("topic");
   const [shape, setShape] = useState<Shape>("auto");
   const [text, setText] = useState("");
   const [topic, setTopic] = useState("");

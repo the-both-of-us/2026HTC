@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { copySkillMap, deleteSkillMap, getSkillMap, toPublicMap, type PublicSkillMap } from "@/features/skill-map";
+import { copySkillMap, deriveNodeStates, deleteSkillMap, getSkillMap, toPublicMap, type PublicSkillMap } from "@/features/skill-map";
 import { listProvedNodes } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
+import type { NodeState } from "@/shared/types";
 import { claimDoc, deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
 
 /**
@@ -32,6 +33,11 @@ export type CircleView = {
   feed: CircleActivity[];
   /** Initials of the members who proved each skill, for the map. */
   provedBy: Record<string, string[]>;
+  /**
+   * What each skill looks like on the shared map: proven once anyone proved it, otherwise open
+   * or locked by the viewer's own progress (a visitor who has not joined has proved nothing).
+   */
+  states: Record<string, NodeState>;
   /** The viewer's own copy, only when they are a member. */
   yourMapId: string | null;
 };
@@ -205,6 +211,11 @@ export async function getCircleView(code: string, viewerId: string | null): Prom
   feed.sort((a, b) => b.at.localeCompare(a.at));
 
   const you = rows.find((row) => row.userId === viewerId);
+  const yourProven = Object.fromEntries(
+    (you ? proved[rows.indexOf(you)] : []).filter(({ nodeId }) => titles.has(nodeId)).map(({ nodeId }) => [nodeId, "x"]),
+  );
+  const states = deriveNodeStates(source, { proven: yourProven });
+  for (const nodeId of Object.keys(provedBy)) if (nodeId in states) states[nodeId] = "proven";
   return {
     code: circle.code,
     title: circle.title,
@@ -216,6 +227,7 @@ export async function getCircleView(code: string, viewerId: string | null): Prom
     })),
     feed: feed.slice(0, 30),
     provedBy,
+    states,
     yourMapId: you?.member.mapId ?? null,
   };
 }

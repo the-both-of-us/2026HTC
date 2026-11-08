@@ -13,7 +13,7 @@
         "example": {
           "intro": "Let’s count how many numbers in a list are both even and greater than ten. The code shows variables, an if statement, a for loop, a function, and how scope keeps the count variable separate from the loop index.",
           "code": "def is_even_and_gt_ten(num):\n    # Returns True if num is even and larger than 10\n    return num % 2 == 0 and num > 10\n\nnumbers = [5, 12, 14, 9, 22, 7]\ncount = 0\nfor n in numbers:\n    if is_even_and_gt_ten(n):\n        count += 1\nprint('Total:', count)",
-          "after": "The function `is_even_and_gt_ten` encapsulates the test, so the loop body stays clear. The variable `count` lives outside the loop, so its final value is available after the loop finishes. The loop variable `n` only exists inside the `for` block, showing how scope limits its visibility."
+          "after": "The function `is_even_and_gt_ten` encapsulates the test, so the loop body stays clear. The variable `count` lives outside the loop, so its final value is available after the loop finishes. The variable `num` inside `is_even_and_gt_ten` exists only while that function runs, which shows how function scope keeps names separate."
         },
         "mistakes": [
           {
@@ -92,7 +92,7 @@
         "example": {
           "intro": "Let’s see these ideas in a tiny script. We will define a constant configuration object, a mutable counter, an async function that pretends to fetch a number after a short delay, and a small object that inherits a greeting method from its prototype. The script will call the async function, wait for the result, update the counter, and finally display a message that uses the inherited method.",
           "code": "const config = { timeout: 100 };\nlet counter = 0;\n\nasync function fetchNumber() {\n  return new Promise((resolve) => {\n    setTimeout(() => resolve(42), config.timeout);\n  });\n}\n\nconst proto = {\n  greet() {\n    return `Hello, the number is ${this.number}`;\n  }\n};\n\nconst child = Object.create(proto);\nchild.number = null;\n\n(async () => {\n  const result = await fetchNumber();\n  child.number = result;\n  counter += result;\n  console.log(child.greet());\n  console.log('Counter is', counter);\n})();",
-          "after": "The code shows that the `const` object never changes – trying to assign a new value would throw an error, while the `let` variable `counter` can be updated after the promise resolves. The `async` declaration makes `fetchNumber` return a `Promise`, and the `await` keyword pauses execution of that function until the timer callback runs, illustrating how the `event loop` handles the `setTimeout` after the current stack clears. Finally, the call to `child.greet()` works because `greet` lives on the prototype, demonstrating inheritance."
+          "after": "The code shows that the `const` binding `config` always points at the same object – trying to assign it a new value would throw an error, while the `let` variable `counter` can be updated after the promise resolves. The `async` declaration makes `fetchNumber` return a `Promise`, and the `await` keyword pauses execution of that function until the timer callback runs, illustrating how the `event loop` handles the `setTimeout` after the current stack clears. Finally, the call to `child.greet()` works because `greet` lives on the prototype, demonstrating inheritance."
         },
         "mistakes": [
           {

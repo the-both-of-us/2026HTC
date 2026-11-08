@@ -111,6 +111,26 @@ describe("study circles", () => {
     ]);
   });
 
+  it("shows locked, open and proven by the viewer's own prerequisites", async () => {
+    // A circle's read is cached for a moment, so each case gets its own circle.
+    const fresh = await seedMap(randomUUID());
+    const first = await startCircle(fresh.ownerId, fresh.id, "Abdu");
+    const visitor = { gravity: "available", horizon: "locked" };
+    expect((await getCircleView(first.code, fresh.ownerId)).states).toEqual(visitor);
+    expect((await getCircleView(first.code, null)).states).toEqual(visitor);
+
+    const owner = randomUUID();
+    const map = await seedMap(owner);
+    const { code } = await startCircle(owner, map.id, "Abdu");
+    const sam = randomUUID();
+    await joinCircle(sam, code, "Sam");
+    await prove(map.id, owner, "gravity", "2026-11-07T11:00:00.000Z");
+    // Proven on the shared map, but Sam hasn't proved gravity, so horizon stays locked for Sam.
+    expect((await getCircleView(code, sam)).states).toEqual({ gravity: "proven", horizon: "locked" });
+    expect((await getCircleView(code, owner)).states).toEqual({ gravity: "proven", horizon: "available" });
+    expect((await getCircleView(code, null)).states).toEqual({ gravity: "proven", horizon: "locked" });
+  });
+
   it("never sends a user id or the answer key", async () => {
     const owner = randomUUID();
     const map = await seedMap(owner);

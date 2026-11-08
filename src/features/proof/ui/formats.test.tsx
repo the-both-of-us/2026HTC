@@ -44,8 +44,10 @@ describe("how a skill was proved, on the evidence page", () => {
 
   it("shows a caught mistake's round instead of a follow-up", () => {
     const html = renderToStaticMarkup(<SkillEvidence skill={caught} />);
-    expect(html).toContain("Planted mistake: It needs sunlight.");
-    expect(html).toContain("Caught it");
+    // Counts only, even if a full round (an older record) reaches the component.
+    expect(html).toContain("Caught 1 of 1 planted mistake.");
+    expect(html).not.toContain("They do it at night");
+    expect(html).not.toContain("It needs sunlight.");
     expect(html).not.toContain("Live follow-up question");
   });
 });

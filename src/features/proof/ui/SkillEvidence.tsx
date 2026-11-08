@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import { InlineText } from "@/shared/ui";
 import type { ProofSkill } from "../types";
+import { catchCounts } from "../redact";
 import { followUpMethodLine, formatDateTime, highlightSegments, integrityLines, plural, provedByLine, scoreLine, sourceName } from "./format";
 
 /** One proven skill: what they wrote, what was found in it, and how it was tested. */
@@ -36,7 +37,7 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
 
       <div className="flex flex-col gap-7 p-5 sm:p-6">
         {skill.catch ? (
-          <Section title="The AI's explanation, with its planted mistakes">
+          <Section title="The round">
             <CatchEvidence record={skill.catch} />
           </Section>
         ) : (
@@ -45,32 +46,30 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
           </Section>
         )}
 
-        <Section title={skill.catch ? "Planted mistakes" : "Checkpoints"}>
-          <p className="mb-3 text-sm text-ink-soft">
-            {skill.catch
-              ? `${scoreLine(skill).replace("checkpoint", "planted mistake")} Each correct sentence they marked as wrong cost 20. A pass needs ${PASS_SCORE}.`
-              : `${scoreLine(skill)} A pass needs ${PASS_SCORE}, plus the follow-up.`}
-          </p>
-          <Checkpoints skill={skill} />
-          {skill.factualErrors.length > 0 && (
-            <div className="mt-4">
-              <p className="font-semibold">{skill.factualErrors.length === 1 ? "Factual error found" : "Factual errors found"}</p>
-              <ul className="mt-1 list-disc pl-5 text-ink-soft">
-                {skill.factualErrors.map((error, index) => (
-                  <li key={index}>
-                    <InlineText text={error} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {skill.rejectedQuotes > 0 && (
-            <p className="mt-3 text-sm text-ink-soft">
-              The AI offered {plural(skill.rejectedQuotes, "quote")} that did not appear in this text, so code rejected{" "}
-              {skill.rejectedQuotes === 1 ? "it" : "them"}.
-            </p>
-          )}
-        </Section>
+        {!skill.catch && (
+          <Section title="Checkpoints">
+            <p className="mb-3 text-sm text-ink-soft">{`${scoreLine(skill)} A pass needs ${PASS_SCORE}, plus the follow-up.`}</p>
+            <Checkpoints skill={skill} />
+            {skill.factualErrors.length > 0 && (
+              <div className="mt-4">
+                <p className="font-semibold">{skill.factualErrors.length === 1 ? "Factual error found" : "Factual errors found"}</p>
+                <ul className="mt-1 list-disc pl-5 text-ink-soft">
+                  {skill.factualErrors.map((error, index) => (
+                    <li key={index}>
+                      <InlineText text={error} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {skill.rejectedQuotes > 0 && (
+              <p className="mt-3 text-sm text-ink-soft">
+                The AI offered {plural(skill.rejectedQuotes, "quote")} that did not appear in this text, so code rejected{" "}
+                {skill.rejectedQuotes === 1 ? "it" : "them"}.
+              </p>
+            )}
+          </Section>
+        )}
 
         {!skill.catch && (
           <Section title="Live follow-up question">
@@ -225,29 +224,24 @@ function SourceNote({ skill }: { skill: ProofSkill }) {
   );
 }
 
-/** Each sentence of the AI's explanation: where its mistakes were, and what this person marked and said. */
+/**
+ * Counts only. The round is shared by every copy of a course, so the sentences, the planted
+ * mistakes and the corrections stay off this public page: anyone could read them as answers.
+ */
 function CatchEvidence({ record }: { record: NonNullable<ProofSkill["catch"]> }) {
-  const planted = new Map(record.planted.map((item) => [item.sentence, item.why]));
-  const picks = new Map(record.picks.map((pick) => [pick.sentence, pick]));
+  const { plantedCount, caughtCount, wrongTaps } = catchCounts(record);
   return (
-    <ol className="flex flex-col gap-2.5">
-      {record.sentences.map((sentence, index) => {
-        const why = planted.get(index + 1);
-        const pick = picks.get(index + 1);
-        return (
-          <li key={index} className={why ? "border-l-2 border-amber pl-3" : "pl-3.5 text-ink-soft"}>
-            <p>
-              <span className="font-semibold">{index + 1}.</span> {sentence}
-            </p>
-            {why && <p className="mt-1 text-sm">Planted mistake: {why}</p>}
-            {pick && (
-              <p className="mt-1 text-sm">
-                {pick.fixed ? "Caught it" : why ? "Marked it, but the fix missed" : "Marked it, but it was correct"}: “{pick.correction}”
-              </p>
-            )}
-          </li>
-        );
-      })}
-    </ol>
+    <div>
+      <p className="font-semibold">
+        Caught {caughtCount} of {plural(plantedCount, "planted mistake")}.
+      </p>
+      <p className="mt-1 text-sm text-ink-soft">
+        {wrongTaps === 0
+          ? "No correct sentence was marked as wrong."
+          : `${plural(wrongTaps, "correct sentence")} marked as wrong, which cost 20 each.`}{" "}
+        A pass needs {PASS_SCORE}. The mistakes and the corrections are not shown here, because the same round is given to everyone who takes
+        this course.
+      </p>
+    </div>
   );
 }

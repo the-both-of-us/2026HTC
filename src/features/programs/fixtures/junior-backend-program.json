@@ -70,7 +70,7 @@
           "checkpoints": [
             "A variable declaration creates a named memory location that can hold a value.",
             "JavaScript primitive types include number, string, boolean, null, undefined, and symbol.",
-            "Assigning a value of a different type to a variable does not change its type because JavaScript variables are dynamically typed.",
+            "JavaScript variables are dynamically typed, so a variable can later hold a value of a different type; TypeScript instead rejects that assignment at compile time when the declared type differs.",
             "Using const creates a read‑only binding, so the variable cannot be reassigned."
           ]
         },

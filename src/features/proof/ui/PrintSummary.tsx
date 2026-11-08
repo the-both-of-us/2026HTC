@@ -43,7 +43,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
         </thead>
         <tbody>
           {snapshot.skills.map((skill) => {
-            const quote = skill.checkpoints.find((result) => result.quote)?.quote;
+            const quote = skill.catch ? undefined : skill.checkpoints.find((result) => result.quote)?.quote;
             return (
               <tr key={skill.nodeId} className="break-inside-avoid border-b border-rule align-top">
                 <td className="py-1 pr-3">
@@ -51,7 +51,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
                   {quote && <span className="line-clamp-1 text-[9pt] text-ink-soft">“{quote}”</span>}
                 </td>
                 <td className="py-1 pr-3 whitespace-nowrap">
-                  {metCount(skill)} of {skill.checkpoints.length}, follow-up passed
+                  {metCount(skill)} of {skill.checkpoints.length}{skill.catch ? ", mistakes caught" : ", follow-up passed"}
                 </td>
                 <td className="py-1 text-right font-medium tabular-nums">{skill.score}</td>
               </tr>

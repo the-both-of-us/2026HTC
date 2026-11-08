@@ -1,6 +1,7 @@
 import type { GridSolve } from "@/features/grid";
 import { isUsableQuote } from "@/features/teachback";
 import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode, type SourceKind } from "@/shared/types";
+import { redactSkill } from "./redact";
 import type { ProofFinalInterview, ProofGridSolve, ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
 type SnapshotInput = {
@@ -91,7 +92,7 @@ export function attemptProvesNode(attempt: Attempt, map: SkillMap, node: SkillNo
 }
 
 function toProofSkill(node: SkillNode, attempt: Attempt, sourceKind: SourceKind): ProofSkill {
-  return {
+  return redactSkill({
     nodeId: node.id,
     title: node.title,
     why: node.why,
@@ -111,7 +112,7 @@ function toProofSkill(node: SkillNode, attempt: Attempt, sourceKind: SourceKind)
     ...(attempt.format && attempt.format !== "explain" && attempt.format !== "final" && { format: attempt.format }),
     ...(attempt.format === "catch" && attempt.catch && { catch: attempt.catch }),
     ...(attempt.format === "kid" && attempt.plainLanguage && { readingGrade: attempt.plainLanguage.readingGrade }),
-  };
+  });
 }
 
 /** Keys for unknown values are left out, not set to null, so older records hash as before. */

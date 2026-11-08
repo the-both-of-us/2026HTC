@@ -1,5 +1,6 @@
 /** Plain functions that turn evidence into the words and pieces the page shows. No React here. */
 import type { IntegritySignals, SourceKind } from "@/shared/types";
+import { catchCounts } from "../redact";
 import type { ProofSkill, ProofSource } from "../types";
 
 export function plural(count: number, word: string): string {
@@ -129,7 +130,7 @@ function escapeForRegExp(word: string): string {
 export function provedByLine(skill: ProofSkill): string {
   const aloud = skill.integrity.inputMethod === "voice";
   if (skill.format === "catch" && skill.catch) {
-    const caught = skill.catch.picks.filter((pick) => pick.fixed).length;
+    const caught = catchCounts(skill.catch).caughtCount;
     return `Caught ${plural(caught, "planted mistake")} in an AI explanation and corrected ${caught === 1 ? "it" : "them"}`;
   }
   if (skill.format === "kid") {

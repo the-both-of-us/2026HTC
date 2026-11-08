@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { readUserId } from "@/shared/identity";
 import { getProof } from "../publish";
+import { toPublicSnapshot } from "../redact";
 import type { ProofRecord } from "../types";
 import { formatDateTime } from "./format";
 import { ProofDocument } from "./ProofDocument";
@@ -52,7 +53,7 @@ export async function ProofScreen({ id }: { id: string }) {
   return (
     <ProofFrame>
       {backLink}
-      <ProofDocument snapshot={record.snapshot} hash={record.hash} url={await pageUrl(id)} />
+      <ProofDocument snapshot={toPublicSnapshot(record.snapshot)} hash={record.hash} url={await pageUrl(id)} />
     </ProofFrame>
   );
 }
