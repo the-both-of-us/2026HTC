@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { copySkillMap, deriveNodeStates, deleteSkillMap, getSkillMap, toPublicMap, type PublicSkillMap } from "@/features/skill-map";
 import { listProvedNodes } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
@@ -9,7 +9,8 @@ import { claimDoc, deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
  * Study circles: a group learns the same map together. Each member proves skills on their
  * own copy, and the circle page shows who proved what. Explanations are never shared.
  *
- * Keys: circles/<code> holds the circle, circles/<code>/members/<userId> one member.
+ * Keys: circles/<code> holds the circle, circles/<code>/members/<userId> one member, and
+ * circles/<code>/cheers/<itemId>/<userId> one cheer on one proof.
  * The user id only ever appears in a key, never in what the API returns.
  */
 
@@ -19,9 +20,25 @@ export class CircleError extends HttpError {
 
 type Circle = { code: string; title: string; sourceMapId: string; createdBy: string; createdAt: string };
 type Member = { name: string; mapId: string; joinedAt: string };
+type Cheer = { name: string; at: string };
 
 export type CircleMember = { name: string; proved: number; isYou: boolean };
-export type CircleActivity = { name: string; nodeId: string; nodeTitle: string; at: string };
+/** One proof in the feed. `id` is a hash, so it names the proof without naming its user. */
+export type CircleActivity = {
+  id: string;
+  name: string;
+  nodeId: string;
+  nodeTitle: string;
+  at: string;
+  /** The viewer proved this one, so it can't be cheered by them. */
+  isYou: boolean;
+  cheers: number;
+  youCheered: boolean;
+};
+/** Who proved a skill on the shared map: initials on the card, names in its tooltip. */
+export type CircleAvatar = { initials: string; name: string };
+/** A cheer on one of the viewer's own proofs. */
+export type CircleCheer = { id: string; name: string; nodeTitle: string; at: string };
 
 /** What GET /api/circles/<code> returns: names, skills and times only. */
 export type CircleView = {
@@ -31,8 +48,8 @@ export type CircleView = {
   map: Pick<PublicSkillMap, "nodes" | "sourceKind">;
   members: CircleMember[];
   feed: CircleActivity[];
-  /** Initials of the members who proved each skill, for the map. */
-  provedBy: Record<string, string[]>;
+  /** The members who proved each skill, in the order they joined, for the map. */
+  provedBy: Record<string, CircleAvatar[]>;
   /**
    * What each skill looks like on the shared map: proven once anyone proved it, otherwise open
    * or locked by the viewer's own progress (a visitor who has not joined has proved nothing).
@@ -40,6 +57,8 @@ export type CircleView = {
   states: Record<string, NodeState>;
   /** The viewer's own copy, only when they are a member. */
   yourMapId: string | null;
+  /** Cheers on the viewer's own proofs, newest first. Empty for a visitor. */
+  cheersForYou: CircleCheer[];
 };
 
 /** 10 base32 characters is 50 random bits: short enough to type, far too many to guess. */
@@ -53,6 +72,14 @@ function newCode(): string {
 
 const circleKey = (code: string) => `circles/${code}`;
 const memberKey = (code: string, userId: string) => `circles/${code}/members/${userId}`;
+const cheersPrefix = (code: string) => `circles/${code}/cheers/`;
+const cheerKey = (code: string, itemId: string, userId: string) => `${cheersPrefix(code)}${itemId}/${userId}`;
+
+/** 16 base64url characters of a hash: names one proof in one circle without its user id. */
+const ITEM_ID_PATTERN = /^[A-Za-z0-9_-]{16}$/;
+function proofItemId(code: string, userId: string, nodeId: string): string {
+  return createHash("sha256").update(`circle-proof:${code}:${userId}:${nodeId}`).digest("base64url").slice(0, 16);
+}
 
 function checkName(name: string): string {
   // Control and invisible characters go, so nobody can join as a blank name.
@@ -166,8 +193,26 @@ async function readCircle(code: string) {
 
   const rows = await listMembers(circle.code);
   rows.sort((a, b) => a.member.joinedAt.localeCompare(b.member.joinedAt));
-  const proved = await Promise.all(rows.map((row) => listProvedNodes(row.member.mapId, row.userId)));
-  return { circle, source, rows, proved };
+  const [proved, cheerKeys] = await Promise.all([
+    Promise.all(rows.map((row) => listProvedNodes(row.member.mapId, row.userId))),
+    listKeys(cheersPrefix(circle.code)),
+  ]);
+  // circles/<code>/cheers/<itemId>/<userId>
+  const cheers = cheerKeys
+    .map((key) => key.split("/"))
+    .filter((parts) => parts.length === 5)
+    .map((parts) => ({ key: parts.join("/"), itemId: parts[3], userId: parts[4] }));
+  return { circle, source, rows, proved, cheers };
+}
+
+/** A cheer never changes once made, so each server reads each one once. */
+const cheerDocs = new Map<string, Cheer>();
+async function readCheer(key: string): Promise<Cheer | null> {
+  const known = cheerDocs.get(key);
+  if (known) return known;
+  const cheer = await getDoc<Cheer>(key);
+  if (cheer) cheerDocs.set(key, cheer);
+  return cheer;
 }
 
 /**
@@ -195,20 +240,53 @@ function forget(code: string): void {
 
 /** The circle as anyone with its link sees it. `viewerId` only decides isYou and yourMapId. */
 export async function getCircleView(code: string, viewerId: string | null): Promise<CircleView> {
-  const { circle, source, rows, proved } = await readCircleCached(code.toLowerCase());
+  const { circle, source, rows, proved, cheers } = await readCircleCached(code.toLowerCase());
+
+  const cheerCount = new Map<string, number>();
+  for (const cheer of cheers) cheerCount.set(cheer.itemId, (cheerCount.get(cheer.itemId) ?? 0) + 1);
+  const cheeredByYou = new Set(cheers.filter((cheer) => cheer.userId === viewerId).map((cheer) => cheer.itemId));
 
   const titles = new Map(source.nodes.map((node) => [node.id, node.title]));
-  const provedBy: Record<string, string[]> = {};
+  const provedBy: Record<string, CircleAvatar[]> = {};
   const feed: CircleActivity[] = [];
+  const yourItems = new Map<string, string>();
   rows.forEach((row, index) => {
+    const isYou = row.userId === viewerId;
     for (const { nodeId, provenAt } of proved[index]) {
       const nodeTitle = titles.get(nodeId);
       if (!nodeTitle) continue;
-      (provedBy[nodeId] ??= []).push(initials(row.member.name));
-      feed.push({ name: row.member.name, nodeId, nodeTitle, at: provenAt });
+      const id = proofItemId(circle.code, row.userId, nodeId);
+      if (isYou) yourItems.set(id, nodeTitle);
+      (provedBy[nodeId] ??= []).push({ initials: initials(row.member.name), name: row.member.name });
+      feed.push({
+        id,
+        name: row.member.name,
+        nodeId,
+        nodeTitle,
+        at: provenAt,
+        isYou,
+        cheers: cheerCount.get(id) ?? 0,
+        youCheered: cheeredByYou.has(id),
+      });
     }
   });
   feed.sort((a, b) => b.at.localeCompare(a.at));
+
+  // Cheers on the viewer's own proofs, for "Lee cheered your proof".
+  const forYou = cheers.filter((cheer) => yourItems.has(cheer.itemId));
+  const cheersForYou = (
+    await Promise.all(
+      forYou.map(async (cheer) => {
+        const doc = await readCheer(cheer.key);
+        if (!doc) return null;
+        const id = createHash("sha256").update(cheer.key).digest("base64url").slice(0, 12);
+        return { id, name: doc.name, nodeTitle: yourItems.get(cheer.itemId) ?? "", at: doc.at };
+      }),
+    )
+  )
+    .filter((cheer): cheer is CircleCheer => cheer !== null)
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, 10);
 
   const you = rows.find((row) => row.userId === viewerId);
   const yourProven = Object.fromEntries(
@@ -229,7 +307,33 @@ export async function getCircleView(code: string, viewerId: string | null): Prom
     provedBy,
     states,
     yourMapId: you?.member.mapId ?? null,
+    cheersForYou,
   };
+}
+
+/**
+ * One cheer from a member on someone else's proof. Cheering twice counts once, because the
+ * key holds the cheerer. Returns the proof's new count.
+ */
+export async function cheerProof(userId: string, code: string, itemId: string): Promise<{ cheers: number }> {
+  const circle = await loadCircle(code);
+  const notFound = new CircleError("That proof is not in this circle any more. Refresh the page.", 404);
+  if (!ITEM_ID_PATTERN.test(itemId)) throw notFound;
+
+  const member = await getDoc<Member>(memberKey(circle.code, userId));
+  if (!member) throw new CircleError("Join the circle to cheer its proofs.", 403);
+
+  const { rows, proved } = await readCircleCached(circle.code);
+  const owner = rows.find((row, index) =>
+    proved[index].some(({ nodeId }) => proofItemId(circle.code, row.userId, nodeId) === itemId),
+  );
+  if (!owner) throw notFound;
+  if (owner.userId === userId) throw new CircleError("That one is yours. Cheer someone else's proof.", 400);
+
+  const cheer: Cheer = { name: member.name, at: new Date().toISOString() };
+  await claimDoc(cheerKey(circle.code, itemId, userId), cheer);
+  forget(circle.code);
+  return { cheers: (await listKeys(`${cheersPrefix(circle.code)}${itemId}/`)).length };
 }
 
 /** For the map page's banner: the circle this map belongs to, if its owner is a member. */
@@ -248,21 +352,27 @@ export async function findCircleForMap(mapId: string, userId: string): Promise<{
  * For "Delete my data": leaves every circle this user joined, and closes the circles they started.
  * Members' own map copies are theirs and stay. Safe to run twice.
  */
-export async function deleteCircleData(userId: string): Promise<{ circles: number; memberships: number }> {
+export async function deleteCircleData(userId: string): Promise<{ circles: number; memberships: number; cheers: number }> {
   const keys = await listKeys("circles/");
-  const memberships = keys.filter((key) => key.split("/")[3] === userId);
+  const parts = (key: string) => key.split("/");
+  const memberships = keys.filter((key) => parts(key)[2] === "members" && parts(key)[3] === userId);
+  const cheersGiven = keys.filter((key) => parts(key)[2] === "cheers" && parts(key)[4] === userId);
 
   let circles = 0;
   for (const code of await listCircleCodes()) {
     const circle = await getDoc<Circle>(circleKey(code));
     if (circle?.createdBy !== userId) continue;
-    const memberKeys = keys.filter((key) => key.startsWith(`circles/${code}/members/`));
-    await Promise.all(memberKeys.map((key) => deleteDoc(key)));
+    // Closing a circle takes its members and cheers with it.
+    const inside = keys.filter((key) => key.startsWith(`circles/${code}/`));
+    await Promise.all(inside.map((key) => deleteDoc(key)));
     await deleteDoc(circleKey(code));
     forget(code);
     circles += 1;
   }
-  await Promise.all(memberships.map((key) => deleteDoc(key)));
-  memberships.forEach((key) => forget(key.split("/")[1]));
-  return { circles, memberships: memberships.length };
+  await Promise.all([...memberships, ...cheersGiven].map((key) => deleteDoc(key)));
+  [...memberships, ...cheersGiven].forEach((key) => {
+    cheerDocs.delete(key);
+    forget(parts(key)[1]);
+  });
+  return { circles, memberships: memberships.length, cheers: cheersGiven.length };
 }

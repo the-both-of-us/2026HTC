@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getSkillMap } from "@/features/skill-map";
 import { listKeys, putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
-import { deleteCircleData, findCircleForMap, getCircleView, joinCircle, startCircle } from "./circles";
+import { cheerProof, deleteCircleData, findCircleForMap, getCircleView, joinCircle, startCircle } from "./circles";
 
 async function seedMap(ownerId: string): Promise<SkillMap> {
   const node = (id: string, title: string, prerequisites: string[] = []) => ({
@@ -65,7 +65,7 @@ describe("study circles", () => {
     const view = await getCircleView(code.toUpperCase(), null);
     expect(view.code).toBe(code);
     expect(view.members).toHaveLength(2);
-    expect(view.provedBy.gravity).toEqual(["🦊F"]);
+    expect(view.provedBy.gravity).toEqual([{ initials: "🦊F", name: "🦊 Fox" }]);
   });
 
   it("gives a joiner their own copy, and the same copy when they join again", async () => {
@@ -104,7 +104,7 @@ describe("study circles", () => {
       "Sam: Gravity",
       "Abdu Mohamed: Gravity",
     ]);
-    expect(view.provedBy.gravity.sort()).toEqual(["AM", "S"]);
+    expect(view.provedBy.gravity.map((avatar) => avatar.initials)).toEqual(["AM", "S"]);
     expect(view.members).toEqual([
       { name: "Abdu Mohamed", proved: 1, isYou: false },
       { name: "Sam", proved: 2, isYou: true },
@@ -158,10 +158,50 @@ describe("study circles", () => {
     const other = await startCircle(otherOwner, (await seedMap(otherOwner)).id, "Lee");
     await joinCircle(owner, other.code, "Abdu");
 
-    expect(await deleteCircleData(owner)).toEqual({ circles: 1, memberships: 2 });
+    expect(await deleteCircleData(owner)).toEqual({ circles: 1, memberships: 2, cheers: 0 });
     expect(await listKeys(`circles/${code}`)).toEqual([]);
     expect((await getCircleView(other.code, null)).members.map((member) => member.name)).toEqual(["Lee"]);
     expect(await getSkillMap(mapId)).not.toBeNull();
-    expect(await deleteCircleData(owner)).toEqual({ circles: 0, memberships: 0 });
+    expect(await deleteCircleData(owner)).toEqual({ circles: 0, memberships: 0, cheers: 0 });
+  });
+
+  it("counts one cheer per member, tells the prover, and refuses non-members and your own proof", async () => {
+    const owner = randomUUID();
+    const map = await seedMap(owner);
+    const { code } = await startCircle(owner, map.id, "Abdu");
+    const sam = randomUUID();
+    const lee = randomUUID();
+    const { mapId } = await joinCircle(sam, code, "Sam");
+    await joinCircle(lee, code, "Lee");
+    await prove(mapId, sam, "gravity", "2026-11-07T12:00:00.000Z");
+
+    const item = (await getCircleView(code, lee)).feed[0];
+    expect(item).toMatchObject({ name: "Sam", nodeTitle: "Gravity", isYou: false, cheers: 0, youCheered: false });
+    expect(item.id).toMatch(/^[A-Za-z0-9_-]{16}$/);
+
+    expect(await cheerProof(lee, code, item.id)).toEqual({ cheers: 1 });
+    expect(await cheerProof(lee, code, item.id)).toEqual({ cheers: 1 });
+    expect(await cheerProof(owner, code, item.id)).toEqual({ cheers: 2 });
+    await expect(cheerProof(sam, code, item.id)).rejects.toThrow("That one is yours");
+    await expect(cheerProof(randomUUID(), code, item.id)).rejects.toThrow("Join the circle");
+    await expect(cheerProof(lee, code, "x".repeat(16))).rejects.toThrow("not in this circle");
+    await expect(cheerProof(lee, code, "../../maps/abcd")).rejects.toThrow("not in this circle");
+
+    const forLee = (await getCircleView(code, lee)).feed[0];
+    expect(forLee).toMatchObject({ cheers: 2, youCheered: true });
+    const forSam = await getCircleView(code, sam);
+    expect(forSam.feed[0]).toMatchObject({ isYou: true, cheers: 2, youCheered: false });
+    expect(forSam.cheersForYou.map((cheer) => `${cheer.name}: ${cheer.nodeTitle}`).sort()).toEqual([
+      "Abdu: Gravity",
+      "Lee: Gravity",
+    ]);
+    expect((await getCircleView(code, lee)).cheersForYou).toEqual([]);
+
+    const json = JSON.stringify(forSam);
+    // Sam sees his own map id (yourMapId), and no one's user id.
+    for (const id of [owner, sam, lee, map.id]) expect(json).not.toContain(id);
+
+    expect(await deleteCircleData(lee)).toEqual({ circles: 0, memberships: 1, cheers: 1 });
+    expect((await getCircleView(code, sam)).feed[0].cheers).toBe(1);
   });
 });

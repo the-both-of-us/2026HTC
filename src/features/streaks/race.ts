@@ -20,7 +20,10 @@ export type Race = {
 /** How many proofs the circle's feed holds at most. */
 export const FEED_LIMIT = 30;
 
-export function circleRace(view: Pick<CircleView, "members" | "feed" | "map">, now: Date): Race {
+/** Only what the race reads from a circle's view. */
+export type RaceInput = Pick<CircleView, "members" | "map"> & { feed: Pick<CircleView["feed"][number], "name" | "at">[] };
+
+export function circleRace(view: RaceInput, now: Date): Race {
   const week = weekOf(edmontonDay(now));
   const thisWeek = view.feed.filter((item) => weekOf(edmontonDay(new Date(item.at))) === week);
   const counts = new Map<string, number>();

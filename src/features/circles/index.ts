@@ -3,6 +3,7 @@ import "server-only";
 /** Server code for study circles. Client components are exported from client.ts. */
 export {
   CircleError,
+  cheerProof,
   deleteCircleData,
   findCircleForMap,
   getCircleView,
@@ -10,4 +11,4 @@ export {
   MAX_NAME_LENGTH,
   startCircle,
 } from "./circles";
-export type { CircleActivity, CircleMember, CircleView } from "./circles";
+export type { CircleActivity, CircleAvatar, CircleCheer, CircleMember, CircleView } from "./circles";
