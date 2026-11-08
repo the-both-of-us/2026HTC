@@ -273,7 +273,19 @@ describe("handleSttToken", () => {
       ...open,
       loadMap: async () => mapOf("Load balancing"),
     });
-    expect(new URL((await response.json()).wsUrl).searchParams.getAll("keyterm")).toEqual(["Load balancing"]);
+    const terms = new URL((await response.json()).wsUrl).searchParams.getAll("keyterm");
+    expect(terms.slice(0, 2)).toEqual(["Load balancing", "Map"]);
+    expect(terms).toContain("JavaScript");
+    expect(terms).not.toContain("Kirchhoff"); // a checkpoint: it would hand them the answer
+  });
+
+  it("listens for every topic title on the map, and never a checkpoint", async () => {
+    const map = mapOf("Load balancing");
+    map.nodes.push({ ...map.nodes[0], id: "n2", title: "Round-robin scheduling", checkpoints: ["Each server in turn"] });
+    const response = await handleSttToken(tokenRequest({ mapId: "m", nodeId: "n" }), "u", { ...open, loadMap: async () => map });
+    const terms = new URL((await response.json()).wsUrl).searchParams.getAll("keyterm");
+    expect(terms).toContain("Round-robin scheduling");
+    expect(terms.join(" ")).not.toMatch(/Kirchhoff|Each server in turn/);
   });
 
   it("gives a plain 503 when Deepgram refuses, without its message", async () => {

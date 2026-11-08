@@ -63,7 +63,7 @@ We send audio as binary frames, plus two control messages:
 
 - **The server decides every word.** `/speak` takes an attempt id, not text, and only speaks the stored question or feedback of an attempt the user owns. It won't read feedback while a follow-up is open.
 - **The text shown is the text sent.** The grader checks exact quotes, so `fullText` in `transcript.ts` is the one source for both. Editing it marks the answer as `typed`.
-- **Keyterms are safe to expose.** The socket URL is visible in the browser, so terms come only from the skill title and the learner's own explanation, never from checkpoints.
+- **Keyterms are safe to expose.** The socket URL is visible in the browser, so terms come only from what the learner can already see: the skill title, their own explanation, the map's title and topic titles, then a short public list of common tech and science terms (`buildKeyterms` in `flux.ts`). Never checkpoints. The list is deduplicated and kept under Deepgram's 500-token keyterm limit.
 - **The mic is on from the tap until the answer is heard.** It opens at Answer aloud, but sends silence while the question plays and for 150 ms after. Then it listens until Flux ends the turn and 2.5 s pass without more words. After that it closes. With no words for 20 s, it closes and asks them to try again. It never opens before the tap.
 - **A double-click is one tap.** A second tap on the main button within 350 ms is ignored, so it can't skip the question or end a turn that has just started.
 - **One take at a time.** A tap can stop a take while another step is still waiting, like a permission prompt or the end of a turn. Each take has a number in `listener.ts`, so when that wait ends, the old take cleans up its own mic and leaves the new one alone.

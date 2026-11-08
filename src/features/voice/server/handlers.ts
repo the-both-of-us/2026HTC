@@ -5,7 +5,7 @@
 import { getSkillMap } from "@/features/skill-map";
 import { AttemptError, getOwnAttempt } from "@/features/teachback";
 import type { Attempt, SkillMap } from "@/shared/types";
-import { buildFluxUrl, extractKeyterms } from "../flux";
+import { buildFluxUrl, buildKeyterms } from "../flux";
 import { allowRate } from "./rateLimit";
 import { sharedProviders, speakWithFailover, type FetchLike, type TtsProvider } from "./tts";
 
@@ -156,17 +156,22 @@ async function keytermsFor(userId: string, body: GrantBody | null, deps: GrantDe
     if (attempt.status !== "needs-followup") throw new AttemptError(NOT_WAITING, 409);
     const map = await loadMap(attempt.mapId);
     const title = map?.nodes.find((node) => node.id === attempt.nodeId)?.title ?? "";
-    return extractKeyterms(title, attempt.explanation);
+    return buildKeyterms(title, attempt.explanation, topicTitles(map));
   }
 
   if (typeof body?.mapId === "string" && typeof body.nodeId === "string") {
     const map = await loadMap(body.mapId);
     const node = map?.ownerId === userId ? map.nodes.find((candidate) => candidate.id === body.nodeId) : undefined;
     if (!node) throw new AttemptError(NO_SKILL, 404);
-    return extractKeyterms(node.title, "");
+    return buildKeyterms(node.title, "", topicTitles(map));
   }
 
   throw new AttemptError(NO_SKILL, 400);
+}
+
+/** The map's title and its topic titles: the learner can already see these. Never checkpoints. */
+function topicTitles(map: SkillMap | null): string[] {
+  return map ? [map.title, ...map.nodes.map((node) => node.title)] : [];
 }
 
 /**

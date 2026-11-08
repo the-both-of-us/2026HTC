@@ -79,8 +79,30 @@ export function buildFluxUrl(base: string, keyterms: readonly string[]): string 
   return url.toString();
 }
 
-const MAX_KEYTERMS = 12;
+/** Terms taken from the title and the learner's explanation. */
+const MAX_EXPLANATION_TERMS = 12;
 const MAX_TERM_LENGTH = 40;
+
+/**
+ * Deepgram's keyterm limit, which applies to Flux too: 500 tokens per request
+ * (developers.deepgram.com/docs/keyterm). We count a token per 3 characters, which
+ * overestimates, and stop at 450 so a long topic list can't make the socket refuse.
+ */
+const KEYTERM_TOKEN_BUDGET = 450;
+const MAX_KEYTERMS = 100;
+const estimateTokens = (term: string) => Math.ceil(term.length / 3) + 1;
+
+/**
+ * Words speech models often get wrong in a study explanation. They're public, so they
+ * are safe in the URL, and they go last: the learner's own map comes first.
+ */
+export const COMMON_TERMS: readonly string[] = [
+  "API", "SQL", "JSON", "HTTP", "HTML", "CSS", "JavaScript", "TypeScript", "Python", "React", "Next.js",
+  "Node.js", "PostgreSQL", "GraphQL", "Docker", "Kubernetes", "AWS", "Git", "GitHub", "Linux",
+  "algorithm", "recursion", "asynchronous", "latency", "cache", "regression", "variance", "derivative",
+  "integral", "eigenvalue", "neural network", "gradient descent", "DNA", "RNA", "enzyme", "mitochondria",
+  "photosynthesis", "molecule", "voltage", "kilowatt", "megawatt", "AESO",
+];
 
 const COMMON_WORDS = new Set(
   `and the for are but not its was has had his her our out how why who all any can too off per via yes than then
@@ -129,7 +151,29 @@ export function extractKeyterms(title: string, explanation: string): string[] {
     .sort((a, b) => b.score - a.score)
     .forEach((entry) => add(entry.word));
 
-  return terms.slice(0, MAX_KEYTERMS);
+  return terms.slice(0, MAX_EXPLANATION_TERMS);
+}
+
+/**
+ * Every keyterm for one socket: the skill's title and the learner's explanation first, then
+ * the other topic titles on the map, then COMMON_TERMS. Deduplicated and kept inside
+ * Deepgram's limit. Topic titles are fine to send; checkpoints never are.
+ */
+export function buildKeyterms(title: string, explanation: string, topics: readonly string[] = []): string[] {
+  const terms: string[] = [];
+  const seen = new Set<string>();
+  let tokens = 0;
+  for (const raw of [...extractKeyterms(title, explanation), ...topics, ...COMMON_TERMS]) {
+    const term = clean(raw);
+    const key = term.toLowerCase();
+    if (term.length < 2 || term.length > MAX_TERM_LENGTH || seen.has(key)) continue;
+    const cost = estimateTokens(term);
+    if (terms.length >= MAX_KEYTERMS || tokens + cost > KEYTERM_TOKEN_BUDGET) break;
+    seen.add(key);
+    terms.push(term);
+    tokens += cost;
+  }
+  return terms;
 }
 
 function clean(text: string): string {

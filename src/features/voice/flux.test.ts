@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFluxUrl, extractKeyterms, FLUX_MODEL, parseFluxMessage } from "./flux";
+import { buildFluxUrl, buildKeyterms, COMMON_TERMS, extractKeyterms, FLUX_MODEL, parseFluxMessage } from "./flux";
 
 describe("parseFluxMessage", () => {
   it("reads a TurnInfo", () => {
@@ -67,5 +67,29 @@ describe("extractKeyterms", () => {
     expect(terms.every((term) => term.length <= 40)).toBe(true);
     expect(terms.filter((term) => term.toLowerCase() === "title")).toHaveLength(1);
     expect(extractKeyterms("a\u0000 b\nc", "")).toEqual(["a b c"]);
+  });
+});
+
+describe("buildKeyterms", () => {
+  it("puts the skill and explanation first, then every topic on the map, then common terms, once each", () => {
+    const terms = buildKeyterms("Power flow", "Newton-Raphson is fast.", ["Map title", "Power flow", "Load shedding", "SQL"]);
+    expect(terms.slice(0, 2)).toEqual(["Power flow", "Newton-Raphson"]);
+    expect(terms.slice(2, 5)).toEqual(["Map title", "Load shedding", "SQL"]);
+    expect(terms).toContain("JavaScript");
+    expect(terms.filter((term) => term.toLowerCase() === "sql")).toHaveLength(1);
+    expect(terms.filter((term) => term.toLowerCase() === "power flow")).toHaveLength(1);
+  });
+
+  it("stays inside Deepgram's 500-token keyterm limit however big the map is", () => {
+    const topics = Array.from({ length: 300 }, (_, i) => `Topic number ${i} with a long title`);
+    const terms = buildKeyterms("Skill", "", topics);
+    expect(terms.length).toBeLessThanOrEqual(100);
+    const estimate = terms.reduce((sum, term) => sum + Math.ceil(term.length / 3) + 1, 0);
+    expect(estimate).toBeLessThanOrEqual(450);
+    expect(terms[0]).toBe("Skill");
+  });
+
+  it("keeps the common list short enough to leave room for the map", () => {
+    expect(COMMON_TERMS.length).toBeLessThanOrEqual(50);
   });
 });
