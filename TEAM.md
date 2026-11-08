@@ -19,6 +19,11 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
+**From Mirza to Abdu (Sat late night): please deploy `be23fb1` (like and dislike on a skill's videos).**
+- [ ] New `POST /api/reels/vote`. Votes are one key each at `skill-reel-votes/<topicKey>/<videoId>/<up|down>/<userId>`.
+- [ ] I added one line to your `trust/deleteData.ts`: `await deleteReelVotes(userId)` after `deleteFeedData`, so "Delete my data" removes votes.
+- [ ] FYI: your `MapScreen` closes the panel on any Escape that reaches `window`, even one meant for a `<dialog>` on the panel. My video viewer now stops its own Escape; `MapActions` already checks for `dialog[open]`, and the same check in `MapScreen` would protect any future dialog.
+
 **From Mirza to Abdu (Sat late night): please deploy `3e29d2e` (reels relevance fix).**
 - [ ] On production, "Programming basics" in the Junior Backend Developer course got "Junior vs Senior developer" clips. The search now leaves out a job posting's role title, and a video must mention the skill itself (hashtags don't count).
 - [ ] Lists saved by the old search carry no version, so they're looked up again on their next open. No data cleanup is needed.

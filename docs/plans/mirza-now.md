@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- **Like and dislike on a skill's Quick videos** (owner's request): thumbs up and down in the video viewer. Disliking hides it for you; a video with 2+ dislikes and more dislikes than likes is removed from the course for everyone, and the next saved video takes its place (lists keep 8, show 4), with no new search. Votes are one key each at `skill-reel-votes/<topicKey>/<videoId>/<up|down>/<user>`. Touches my `features/reels`, new `api/reels/vote`, and one line in Abdu's `trust/deleteData.ts` so "Delete my data" removes votes.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Done today (latest first)
 
+- Like and dislike on a skill's Quick videos (`be23fb1`): your dislike hides a video for you; 2+ dislikes outnumbering likes removes it for everyone and the next saved one fills in (lists keep 8, show 4). One key per vote at `skill-reel-votes/...`; Delete my data removes them (one line in Abdu's `trust/deleteData.ts`). Escape in the viewer no longer closes the skill. Needs a deploy (TEAM.md).
 - Reels relevance fix (`3e29d2e`): job-posting maps search the skill alone (a role title found career clips), a video must mention the skill itself (hashtags don't count), and saved lists carry a search version so the weak ones already in production are looked up again. Needs a deploy (TEAM.md).
 - Shorts inside each skill (`fd323a5`): "Quick videos" at the end of the Read tab, up to 4 portrait Shorts of 90 s or less, opening over the page in the feed's player (now `shared/ui/ShortPlayer`). One list per skill at `skill-reels/<topicKey>` (hash of map title, skill id, skill title, audience), shared by a course and every learner's copy; searched on first open only, at most once an hour. New `features/reels`, `api/reels`; small touches in Abdu's `FeedScreen.tsx`, `LessonTab.tsx`, `SkillPanel.tsx`, `feed/index.ts` (see TEAM.md).
 - Feed Shorts redesign (`c6a19c4`): no frame, header or badge; the video edge to edge at 9:16 with the rail beside it and one caption row (title, interest, channel link, Go deeper). YouTube's controls are off: tap to pause or play, and a sound button that stays on for later Shorts; the card loops each Short itself. Touched Abdu's `features/feed/ui/FeedScreen.tsx` and the feed README (see TEAM.md).
