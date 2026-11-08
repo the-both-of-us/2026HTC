@@ -68,4 +68,4 @@ Alberta's unemployment rate is 7.3%, against 6.7% for Canada (Statistics Canada,
 
 ## Built with
 
-`nextjs` `react` `typescript` `tailwindcss` `auth0` `gemini` `cerebras` `groq` `aws` `amazon-s3` `aws-bedrock` `vercel` `deepgram` `zod` `vitest` `playwright` `aeso` `statistics-canada`
+`nextjs` `react` `typescript` `tailwindcss` `auth0` `gemini` `cerebras` `groq` `aws` `amazon-s3` `aws-bedrock` `vercel` `deepgram` `zod` `vitest` `playwright` `statistics-canada`
