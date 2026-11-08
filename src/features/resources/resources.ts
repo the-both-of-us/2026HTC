@@ -33,8 +33,8 @@ export async function gatherResources(
 
   const [watch, wiki, books, podcasts, news] = await Promise.all([
     run(env.YOUTUBE_API_KEY ? () => searchYouTube(plan.query, env.YOUTUBE_API_KEY!) : null),
-    run(() => lookupWikipedia(title)),
-    run(() => searchBooks(plan.query)),
+    run(plan.young ? null : () => lookupWikipedia(title)),
+    run(() => searchBooks(plan.query, env.GOOGLE_BOOKS_API_KEY ?? env.YOUTUBE_API_KEY)),
     run(plan.adultSources && env.TADDY_API_KEY && env.TADDY_USER_ID ? () => searchPodcasts(plan.query, env.TADDY_API_KEY!, env.TADDY_USER_ID!) : null),
     run(plan.adultSources && env.GNEWS_API_KEY ? () => searchNews(plan.query, env.GNEWS_API_KEY!) : null),
   ]);

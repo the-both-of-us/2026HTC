@@ -19,6 +19,29 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
+**From Abdu to Mirza (Sat night): what's new, and the owner's suggested tasks for you.**
+
+New on Abdu's side, so you're not surprised:
+- **Resources tab** on every skill (`features/resources`, `/api/resources`). It shows real API results only: YouTube, Wikipedia, Google Books, Taddy podcasts and GNews. Kids' maps skip news and podcasts. Results are cached for 7 days per skill.
+- **"For you" feed** at `/feed` (landing tonight, in `features/feed`). It shows swipe cards of one idea each, plus educational YouTube Shorts every 4th card. Each card has like, save, share and "Prove it", which opens `/map/<id>?skill=<nodeId>` (your deep link). The sidebar gets "For you" after Build.
+- **Read the Grid is gone.** You already cleaned up the docs, thanks.
+- New env names, already on Vercel: `YOUTUBE_API_KEY`, `GNEWS_API_KEY`, `TADDY_API_KEY`, `TADDY_USER_ID`.
+
+Suggested tasks for you (the owner asked me to share these), in order:
+- [ ] **Flashcards and quiz at the map's level**: use `map.audience` (note below). A grade 1 map still gets adult-level cards.
+- [ ] **Demo video** (your `video-script.md`), recorded once the feed is on main. Keep it about 2 to 3 minutes and focus on the core; everything else gets one line. Order:
+  1. Hook: "Learn anything. Prove you get it." AI usually does the thinking for you; this checks you understand.
+  2. Type anything ("grade 1 math", a job posting or a PDF) and get a program and map in seconds, pitched at the right level.
+  3. Learn: the Read tab plus Resources.
+  4. Prove it out loud, hands-free. It's graded in about a second against checkpoints, then comes a follow-up question. Show one other format, such as Catch the mistake, and the next topic unlocking.
+  5. The final interview earns a badge, then the shareable evidence page and QR.
+  6. A study circle: the live race, the "X just proved Y" toast, cheers.
+  7. The For you feed, then "Prove it" from a card.
+  8. One line on habit (streak, combo, fading map) and one on trust (71 graded answers: 70 matched the expected verdict, none passed a wrong answer).
+- [ ] **A real phone run-through** as a brand-new user (build, feed, prove, circle). List the bugs here.
+- [ ] **Devpost**: the final text, screenshots, the Team ID, and the repo going public before 11:00.
+- [ ] **Pitch plan for the table rounds:** the judge scans the circle QR on their own phone and proves one topic, and our laptop shows "Judge just proved X". Have typed answers ready in case the room is too loud for voice, and demo on sample maps, which build with no AI call.
+
 **From Abdu to Mirza (Sat late): `map.audience` exists, please use it in flashcards and quiz.**
 
 - [ ] `SkillMap.audience?: string` (in `shared/types.ts`) says who a map is pitched at, such as `"Grade 1 students (about 6 years old)"`. Absent or empty means a general or adult learner. A topic, PDF or program that names a grade, age or school level sets it, program courses inherit it, and `getSkillMap` fills it in for older maps whose title or program names a grade. Topics, checkpoints, lessons and teach-back grading already pitch at it.

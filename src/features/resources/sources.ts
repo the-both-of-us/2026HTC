@@ -1,6 +1,8 @@
 import type { ResourceItem } from "./types";
 
 const TIMEOUT_MS = 5000;
+/** Wikimedia rate-limits requests that do not name the app. */
+const WIKI_AGENT = "OryxLearn/1.0 (https://oryxlearn.vercel.app)";
 
 /** Only real web addresses are ever shown as links. */
 function httpsUrl(value: unknown): string | null {
@@ -54,12 +56,23 @@ export async function searchYouTube(query: string, key: string): Promise<Resourc
   return items;
 }
 
-/** The Wikipedia summary for the skill, only when the page exists and is not a disambiguation page. */
-export async function lookupWikipedia(title: string): Promise<ResourceItem[]> {
-  const response = await fetch(
-    `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, "_"))}`,
-    { signal: AbortSignal.timeout(TIMEOUT_MS), headers: { "Api-User-Agent": "OryxLearn/1.0" } },
-  );
+/**
+ * The Wikipedia article that best matches the skill. Skill titles such as "Counting forward to 20"
+ * are rarely article names, so search first, then read that page's summary. Only a standard page
+ * (not a disambiguation page) with a summary is shown.
+ */
+export async function lookupWikipedia(query: string): Promise<ResourceItem[]> {
+  const headers = { "Api-User-Agent": WIKI_AGENT, "User-Agent": WIKI_AGENT };
+  const found = (await getJSON(
+    `https://en.wikipedia.org/w/rest.php/v1/search/page?${new URLSearchParams({ q: query, limit: "1" })}`,
+    { headers },
+  )) as Json;
+  const key = found?.pages?.[0]?.key;
+  if (typeof key !== "string" || !key) return [];
+  const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(key)}`, {
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+    headers,
+  });
   if (response.status === 404) return [];
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const page = (await response.json()) as Json;
@@ -79,8 +92,10 @@ export async function lookupWikipedia(title: string): Promise<ResourceItem[]> {
   ];
 }
 
-export async function searchBooks(query: string): Promise<ResourceItem[]> {
+/** Keyless Books calls share a global daily quota that is often used up, so send our Google key when there is one. */
+export async function searchBooks(query: string, key?: string): Promise<ResourceItem[]> {
   const params = new URLSearchParams({ q: query, maxResults: "2", printType: "books", langRestrict: "en" });
+  if (key) params.set("key", key);
   const body = (await getJSON(`https://www.googleapis.com/books/v1/volumes?${params}`)) as Json;
   const items: ResourceItem[] = [];
   for (const entry of body.items ?? []) {
