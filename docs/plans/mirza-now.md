@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Done today (latest first)
 
+- Reels relevance fix (`3e29d2e`): job-posting maps search the skill alone (a role title found career clips), a video must mention the skill itself (hashtags don't count), and saved lists carry a search version so the weak ones already in production are looked up again. Needs a deploy (TEAM.md).
 - Shorts inside each skill (`fd323a5`): "Quick videos" at the end of the Read tab, up to 4 portrait Shorts of 90 s or less, opening over the page in the feed's player (now `shared/ui/ShortPlayer`). One list per skill at `skill-reels/<topicKey>` (hash of map title, skill id, skill title, audience), shared by a course and every learner's copy; searched on first open only, at most once an hour. New `features/reels`, `api/reels`; small touches in Abdu's `FeedScreen.tsx`, `LessonTab.tsx`, `SkillPanel.tsx`, `feed/index.ts` (see TEAM.md).
 - Feed Shorts redesign (`c6a19c4`): no frame, header or badge; the video edge to edge at 9:16 with the rail beside it and one caption row (title, interest, channel link, Go deeper). YouTube's controls are off: tap to pause or play, and a sound button that stays on for later Shorts; the card loops each Short itself. Touched Abdu's `features/feed/ui/FeedScreen.tsx` and the feed README (see TEAM.md).
 - Submission docs: removed "Read the Grid" and AESO from the Devpost text, video script and AI disclosure, after `d62c14e`. StatCan numbers stay (still on the landing page).
