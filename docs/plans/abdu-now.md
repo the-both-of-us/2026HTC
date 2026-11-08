@@ -21,6 +21,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again (friends wo
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Put Mirza's d759362 9878ef5 live (auto-check: typecheck and tests pass).
 - Put Mirza's 475d388 9b7a078 84781b3 live (auto-check: typecheck and tests pass).
 - Friends: Add friend on network cards (request, accept or decline), Ping a friend (once an hour, shown on Network), friends' courses with progress bars, and a Friends and privacy section in Settings to turn off sharing progress, requests and pings.
 - Delete a course: the owner gets "Delete course" on the course page (two-step, no browser dialog). `DELETE /api/maps/[id]` removes the map and its Courses listing; others' copies stay; program courses are kept (409).
