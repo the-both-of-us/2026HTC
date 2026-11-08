@@ -156,7 +156,7 @@ function LoadedCourse({
       <CourseCover
         fingerprint={mapId}
         className="mt-4 flex flex-col gap-3 rounded-2xl px-6 py-8 sm:px-10 sm:py-12"
-        sealClassName="-right-24 size-[28rem] max-sm:-right-40 max-sm:opacity-60"
+        sealClassName="-right-24 size-[28rem] max-sm:-right-40 max-sm:opacity-25"
       >
         {!published && (
           <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-on-ink/15 px-3 py-1 text-sm font-semibold">

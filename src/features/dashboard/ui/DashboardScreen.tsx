@@ -154,7 +154,7 @@ async function DashboardContent() {
 }
 
 /** The hero is a soft tint with ink text, so the usual buttons read on it. */
-const onInkPrimary = buttonClasses("primary");
+const onInkPrimary = clsx(buttonClasses("primary"), "max-w-full");
 const onInkSecondary = clsx(buttonClasses("secondary"), "bg-sheet/70");
 
 /** A greeting, one line on where things stand, and the one thing to do next. */
@@ -175,14 +175,14 @@ function Hero({ name, data, latest }: { name: string | null; data: DashboardData
     <CourseCover
       fingerprint={latest?.startedFrom ?? latest?.mapId ?? "oryxlearn-dashboard"}
       className="flex flex-col gap-3 rounded-2xl px-6 py-8 sm:px-10 sm:py-10"
-      sealClassName="-right-20 size-[24rem] max-sm:-right-40 max-sm:opacity-60"
+      sealClassName="-right-20 size-[24rem] max-sm:-right-40 max-sm:opacity-25"
     >
       <h1 className="max-w-2xl text-3xl leading-tight font-medium tracking-tight break-words sm:text-[2.5rem]">{title}</h1>
       <p className="max-w-xl text-lg text-on-ink-soft">{line}</p>
       <div className="mt-3 flex flex-wrap gap-3">
         {latest ? (
           <Link href={`/map/${latest.mapId}`} className={onInkPrimary}>
-            <span className="max-w-[18rem] truncate">Continue {latest.title}</span>
+            <span className="min-w-0 truncate sm:max-w-[18rem]">Continue {latest.title}</span>
             <ArrowRight aria-hidden="true" size={18} className="shrink-0" />
           </Link>
         ) : (

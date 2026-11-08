@@ -279,7 +279,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
                     setTopic(event.target.value);
                     setFieldError(null);
                   }}
-                  className="block h-28 w-full bg-transparent px-4 text-[1.375rem] font-medium font-stretch-[110%] focus-visible:-outline-offset-3"
+                  className="block h-28 w-full bg-transparent px-4 text-lg font-medium font-stretch-[110%] focus-visible:-outline-offset-3 sm:text-[1.375rem]"
                 />
               </>
             )}
