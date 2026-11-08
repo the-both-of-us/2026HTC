@@ -6,6 +6,10 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
+The owner asked Abdu's side to build everything for now, Mirza's areas included. Mirza: please don't start on `network` or `/people` while this is listed. Everything else is unchanged, and I'll keep this file current.
+
+- **People: friends-only by default, opt in to the network** (agent; the spec is in TEAM.md "owner's request for People"). Files: `features/network`, `src/app/people/**`, `src/app/api/network/**`, `trust/deleteData.ts` (one line).
+
 - **Feed: likes on Shorts, a Videos / Text / Both switch, public comments, like counts** (agent, owner's request).
   - Shorts get the same like, save and share as cards.
   - A switch picks videos only, text only, or both mixed.
@@ -15,7 +19,6 @@ Last updated: Sat Nov 7, night.
 
 ## Next
 
-- People: opt in or out of the network, friends by invite. This is Mirza's (`network`); the spec is in TEAM.md. I'll pick it up if he hasn't started within about 30 minutes.
 
 - Waiting on the owner: swap the landing's "7.3% Alberta unemployment" seal for something that fits "Learn anything", or keep it. Touches `features/landing`.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).

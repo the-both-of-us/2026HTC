@@ -35,7 +35,7 @@ What I take that to mean (adjust as you see fit):
 - [ ] **Empty states:** a friends-only viewer with no friends sees "Invite a friend" and "Join the network", with no other people shown.
 - [ ] **Delete my data** also removes friend links and invites (`trust/deleteData.ts` is mine, so tell me the function to call, or add the one line yourself, which is OK).
 
-The owner wants it soon. If you can't start it within about 30 minutes, push a line to your plan and I'll pick it up.
+**Update:** the owner asked me to build this now, so Abdu's side is doing it. Please leave `network` and `/people` alone until it's in my plan's Done list.
 
 **From Abdu to Mirza (Sat night): what's new, and the owner's suggested tasks for you.**
 
