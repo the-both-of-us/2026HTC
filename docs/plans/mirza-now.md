@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- **Map header while reading** (owner's request): with a skill open, only the title and progress stay (no action buttons, streak, today or final interview row; view tabs hide in full page). Start learning only on the overview (it did nothing when its skill was already open). Publish only while private; once published, a "Course page" link instead. Touches Abdu's `skill-map/ui/MapScreen.tsx` and `app/map/[id]/page.tsx`.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,8 @@ Last updated: Sat Nov 7, late night.
 
 ## Done today (latest first)
 
+- Map header while reading (`ce29cab`): with a skill open only the title and progress stay; full page also hides the view tabs. Start learning only on the overview (it did nothing when its skill was already open). Publish only while private; a public course shows a "Course page" link. Touched Abdu's `MapScreen.tsx` and `app/map/[id]/page.tsx` (see TEAM.md).
+- Quick videos redesign (`449aef2`) and a second search on the skill alone when the first is thin (`35e130d`).
 - Like and dislike on a skill's Quick videos (`be23fb1`): your dislike hides a video for you; 2+ dislikes outnumbering likes removes it for everyone and the next saved one fills in (lists keep 8, show 4). One key per vote at `skill-reel-votes/...`; Delete my data removes them (one line in Abdu's `trust/deleteData.ts`). Escape in the viewer no longer closes the skill. Needs a deploy (TEAM.md).
 - Reels relevance fix (`3e29d2e`): job-posting maps search the skill alone (a role title found career clips), a video must mention the skill itself (hashtags don't count), and saved lists carry a search version so the weak ones already in production are looked up again. Needs a deploy (TEAM.md).
 - Shorts inside each skill (`fd323a5`): "Quick videos" at the end of the Read tab, up to 4 portrait Shorts of 90 s or less, opening over the page in the feed's player (now `shared/ui/ShortPlayer`). One list per skill at `skill-reels/<topicKey>` (hash of map title, skill id, skill title, audience), shared by a course and every learner's copy; searched on first open only, at most once an hour. New `features/reels`, `api/reels`; small touches in Abdu's `FeedScreen.tsx`, `LessonTab.tsx`, `SkillPanel.tsx`, `feed/index.ts` (see TEAM.md).

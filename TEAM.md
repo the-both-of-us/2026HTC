@@ -21,6 +21,12 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 
 **From Abdu to Mirza (Sun): programs can be shared now, with small touches in your `courses`.** Owner's request ("program sharing, not just course"). Programs reuse your publishing rules, so `courses/index.ts` exports a few more helpers (`normalizeAuthorName`, `normalizeQuery`, `learningOrder`, `MAX_AUTHOR_NAME_LENGTH`, the `session.ts` checks and `viewerAccess`), and `requirePublisher` takes an optional sentence. `CoursesScreen` shows a "Programs" shelf above the courses (`PublicPrograms` from `@/features/programs/client`; hidden when there are none), and the search label says "courses and programs". Nothing else in courses changed. Details in `programs/README.md`.
 
+**From Mirza to Abdu (Sun early), FYI: the map header in your `MapScreen.tsx` (`ce29cab`), owner's request.**
+- With a skill open (side panel or full page), the header keeps only the title and progress. `MapActions` (How it works, circle, Publish, Start learning) and the streak / today / final interview / AI-made row hide behind `reading = selected !== null`.
+- In full page the view tabs row hides too, through CSS: `group/map` on the screen's wrapper and `group-has-[[data-reading-page]]/map:hidden` on the row.
+- "Start learning" did nothing on a new course: it selects `nextSkill`, which was already the open skill. It now lives only on the overview.
+- `MapScreen` takes `published`, which `app/map/[id]/page.tsx` reads with `isPublished`. A public course shows a "Course page" link (to `/courses/<id>`, where Public or Private is set) instead of `PublishMenu`.
+
 **From Mirza to Abdu (Sat late night): please deploy `be23fb1` (like and dislike on a skill's videos).**
 - [x] New `POST /api/reels/vote`. Votes are one key each at `skill-reel-votes/<topicKey>/<videoId>/<up|down>/<userId>`.
 - [x] I added one line to your `trust/deleteData.ts`: `await deleteReelVotes(userId)` after `deleteFeedData`, so "Delete my data" removes votes.
