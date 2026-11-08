@@ -25,6 +25,8 @@ export function BenchmarksScreen({ results }: { results: BenchResults }) {
   const stepUp = routing.filter((r) => r.pick && r.pick.model !== "gpt-oss-120b");
   const oss = overall.get("gpt-oss-120b");
   const opus = overall.get("claude-opus-5-5");
+  const sonnet = overall.get("claude-sonnet-5-5");
+  const haiku = overall.get("claude-haiku-5-5");
 
   return (
     <PageShell width="wide">
@@ -36,7 +38,7 @@ export function BenchmarksScreen({ results }: { results: BenchResults }) {
           <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">Model comparisons</h1>
           <p className="max-w-3xl text-lg text-ink-soft">
             How the four models we can call did on public exam questions, subject by subject, and how fast
-            each writes a lesson. It is what the router leans on when it picks a model.
+            each writes a lesson. These results decided which models OryxLearn uses.
           </p>
           <p className="text-sm text-ink-soft">
             {results.questionsPerSubject} questions per subject, {results.totalQuestions} in all, run on{" "}
@@ -44,35 +46,43 @@ export function BenchmarksScreen({ results }: { results: BenchResults }) {
           </p>
         </header>
 
-        <Section title="What we use each model for">
-          <ul className="flex max-w-3xl list-disc flex-col gap-2 pl-5">
-            {oss && opus && (
-              <li>
-                <strong className="font-medium">Overall:</strong> gpt-oss-120b got {oss.overall.accuracy}% and Opus{" "}
-                {opus.overall.accuracy}%, but gpt-oss-120b answered in a median {oss.overall.medianSeconds} s against{" "}
-                {opus.overall.medianSeconds} s, at about {money(oss.overall.costPer100)} per 100 questions against{" "}
-                {money(opus.overall.costPer100)}.
-              </li>
-            )}
-            {ossHolds.length > 0 && (
-              <li>
-                <strong className="font-medium">gpt-oss-120b stays the default</strong> where it is within{" "}
-                {CLOSE_ENOUGH_POINTS} points of the best: {ossHolds.map((r) => r.subject.label.toLowerCase()).join(", ")}.
-              </li>
-            )}
-            {stepUp.length > 0 && (
-              <li>
-                <strong className="font-medium">The router steps up</strong> where it falls behind:{" "}
-                {stepUp
-                  .map((r) => `${r.subject.label.toLowerCase()} (${r.gap} points behind; ${shortName(r.pick!.model)} is close enough)`)
-                  .join(", ")}
-                .
-              </li>
-            )}
-            <li>
-              Answer checks and grading stay on gpt-oss-120b, since a learner waits on them and speed matters most there.
-            </li>
-          </ul>
+        <Section title="The verdict: two models">
+          <div className="flex max-w-3xl flex-col gap-4 rounded-md border border-rule-strong bg-sheet p-5">
+            <p className="text-lg">
+              OryxLearn uses <strong className="font-semibold">gpt-oss-120b</strong> by default and{" "}
+              <strong className="font-semibold">Claude Sonnet</strong> where accuracy is worth the wait. Haiku and Opus
+              are not used.
+            </p>
+            <ul className="flex list-disc flex-col gap-2 pl-5">
+              {oss && sonnet && (
+                <li>
+                  <strong className="font-medium">gpt-oss-120b</strong> scored {oss.overall.accuracy}% and answers in a
+                  median {oss.overall.medianSeconds} s. It ties Claude on {ossHolds.map((r) => r.subject.label.toLowerCase()).join(", ")}, so it
+                  writes everyday courses, flashcards and quizzes, and checks every answer.
+                </li>
+              )}
+              {sonnet && (
+                <li>
+                  <strong className="font-medium">Claude Sonnet</strong> scored {sonnet.overall.accuracy}% and was clearly
+                  better on {stepUp.map((r) => `${r.subject.label.toLowerCase()} (${r.gap} points)`).join(", ")}. It writes the map and
+                  lessons for hard courses, high-stakes courses, and those subjects.
+                </li>
+              )}
+              {haiku && oss && (
+                <li>
+                  <strong className="font-medium">Haiku</strong> ({haiku.overall.accuracy}%) was barely ahead of gpt-oss-120b
+                  and about {Math.round(haiku.overall.medianSeconds / oss.overall.medianSeconds)} times slower, so it adds nothing.
+                </li>
+              )}
+              {opus && sonnet && (
+                <li>
+                  <strong className="font-medium">Opus</strong> ({opus.overall.accuracy}%) beat Sonnet by about one question in
+                  64, at {(opus.overall.medianSeconds / sonnet.overall.medianSeconds).toFixed(1)} times the wait and about{" "}
+                  {Math.round(opus.overall.costPer100 / sonnet.overall.costPer100)} times the price, so it isn&apos;t worth it.
+                </li>
+              )}
+            </ul>
+          </div>
         </Section>
 
         <Section title="Accuracy by subject">

@@ -10,56 +10,41 @@ import { AI_TASKS, CHOICE_TIERS, type AiSettings, type AiTask, type Tier } from 
 export const DEFAULT_RATING: CourseRating = { difficulty: 2, stakes: 2 };
 
 /**
- * The lesson tier for a rating, which the other tasks build on. Everyday courses (nothing at 3)
- * stay on gpt-oss-120b. A 3 on one axis steps up: Haiku when the other axis is 1, Sonnet when it
- * is 2. Opus only for the hardest courses where accuracy matters most.
- *
- *              stakes 1   stakes 2   stakes 3
- *   diff 1        1          1          2
- *   diff 2        1          1          3
- *   diff 3        2          3          4
+ * Two models only, from the benchmark at /settings/models: gpt-oss-120b (tier 1) is fast and as
+ * accurate as Claude on math, algebra and computer science; Claude Sonnet (tier 3) is clearly
+ * better on psychology, health and law. Haiku scored about the same as gpt-oss-120b at five
+ * times the wait, and Opus barely beat Sonnet at 1.6 times the wait, so neither is routed to.
+ */
+export const OSS: Tier = 1;
+export const SONNET: Tier = 3;
+
+/**
+ * The lesson tier for a rating: Sonnet when the course is hard (difficulty 3) or accuracy
+ * matters (stakes 3, which also covers the subjects where gpt-oss-120b fell behind; see
+ * `withSubjectFloor`). Everything else stays on gpt-oss-120b.
  */
 export function baseTier({ difficulty, stakes }: CourseRating): Tier {
-  if (difficulty === 3 && stakes === 3) return 4;
-  if (difficulty < 3 && stakes < 3) return 1;
-  return Math.min(difficulty, stakes) === 1 ? 2 : 3;
+  return difficulty === 3 || stakes === 3 ? SONNET : OSS;
 }
 
 /**
  * Auto, per task:
- * - lesson: the base tier.
- * - map: one step above lessons for a hard course, but at most Sonnet, since the learner waits
- *   on the whole map at once (Opus there only with Thorough or an override).
- * - flashcards, quiz: at most Haiku. Short items, and they are saved.
- * - checks (grading, follow-ups): gpt-oss-120b, which is under a second and graded strictly in our
- *   eval. Haiku only when stakes are 3.
- * - other (feed, program plans): always gpt-oss-120b.
+ * - map outline and lesson: the base tier.
+ * - flashcards, quiz, checks (grading, follow-ups) and other (feed, program plans): gpt-oss-120b.
+ *   Short items, or a learner waiting on the answer, where speed matters most.
  */
 export function autoTier(task: AiTask, rating: CourseRating = DEFAULT_RATING): Tier {
-  const base = baseTier(rating);
-  switch (task) {
-    case "lesson":
-      return base;
-    case "map":
-      return base === 1 ? 1 : (Math.min(base + 1, 3) as Tier);
-    case "flashcards":
-    case "quiz":
-      return base >= 3 ? 2 : 1;
-    case "checks":
-      return rating.stakes === 3 ? 2 : 1;
-    case "other":
-      return 1;
-  }
+  return task === "lesson" || task === "map" ? baseTier(rating) : OSS;
 }
 
-/** The tier for one call: an override wins, then Fast (tier 1) or Thorough (one step up, at most Opus), then Auto. */
+/** The tier for one call: an override wins, then Fast (gpt-oss-120b) or Thorough (Sonnet), then Auto. */
 export function chooseTier(task: AiTask, rating: CourseRating | undefined, settings: AiSettings): Tier {
-  if (task === "other") return 1;
+  if (task === "other") return OSS;
   const override = settings.overrides[task];
   if (override && override !== "auto") return CHOICE_TIERS[override];
-  if (settings.speed === "fast") return 1;
-  const auto = autoTier(task, rating ?? DEFAULT_RATING);
-  return settings.speed === "thorough" ? (Math.min(auto + 1, 4) as Tier) : auto;
+  if (settings.speed === "fast") return OSS;
+  if (settings.speed === "thorough") return SONNET;
+  return autoTier(task, rating ?? DEFAULT_RATING);
 }
 
 /** True if this task can be overridden on the settings page. */
@@ -80,6 +65,16 @@ export function toRating(raw: { difficulty?: unknown; stakes?: unknown }, fallba
 // Words that make accuracy matter: health, electrical and other safety work, law, money, flying.
 const HIGH_STAKES =
   /\b(medic\w*|medication|dosage|drugs?|pharmac\w*|nurs\w*|clinical|patients?|surgery|surgical|first aid|cpr|anatomy|electrical|electrician|wiring|high voltage|arc flash|lockout|gas fitt\w*|hazmat|occupational (health|safety)|(workplace|fire|food|patient|process) safety|safety[- ]critical|law|laws|legal|paralegal|lawyer|tax|taxes|accounting|accountant|audit\w*|financ\w*|invest\w*|mortgage|securities|aviation|pilot|structural)\b/i;
+// Subjects where gpt-oss-120b fell behind Claude Sonnet in the benchmark: psychology (5 of 8 against
+// 8), health and medicine (5 against 6, Opus 7), law (7 against 8) and quantum physics (7 against 8).
+const SONNET_SUBJECTS =
+  /\b(psycholog\w*|psychiatr\w*|psychotherap\w*|mental health|neuroscien\w*|health\w*|medic\w*|nurs\w*|clinical|anatomy|physiolog\w*|pharmac\w*|law|laws|legal|paralegal|lawyer|quantum)\b/i;
+
+/** A course in one of those subjects counts as stakes 3, so its map and lessons go to Sonnet. */
+export function withSubjectFloor(rating: CourseRating, text: string): CourseRating {
+  return SONNET_SUBJECTS.test(text.slice(0, GUESS_CHARS)) ? { ...rating, stakes: 3 } : rating;
+}
+
 // Hobbies and play: getting a detail wrong costs little.
 const LOW_STAKES = /\b(hobby|games?|trivia|fun facts?|knitting|drawing|doodl\w*|guitar|ukulele|gardening|chess|origami|video games?)\b/i;
 const HARD =
@@ -99,5 +94,5 @@ export function guessRating(text: string, audience = ""): CourseRating {
   const head = text.slice(0, GUESS_CHARS);
   const difficulty = HARD.test(head) ? 3 : EASY.test(head) ? 1 : 2;
   const stakes = HIGH_STAKES.test(head) ? 3 : LOW_STAKES.test(head) ? 1 : 2;
-  return { difficulty, stakes };
+  return withSubjectFloor({ difficulty, stakes }, head);
 }

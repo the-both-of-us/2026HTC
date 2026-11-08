@@ -128,13 +128,13 @@ describe("the model router on lessons", () => {
     const map = await getDoc<SkillMap>(`maps/${mapId}`);
     await putDoc(`maps/${mapId}`, { ...map, rating: { difficulty: 3, stakes: 3 } });
     mockChatJSON.mockImplementation(async (options) => {
-      options.onServed?.({ route: "anthropic", model: "claude-opus-5-5", ms: 12_400 });
+      options.onServed?.({ route: "anthropic", model: "claude-sonnet-5-5", ms: 12_400 });
       return LESSON;
     });
 
     const lesson = await getOrCreateLesson(mapId, "basics", OWNER);
-    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 4 });
-    expect(lesson.writtenBy).toEqual({ model: "Claude Opus", ms: 12_400 });
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 3 });
+    expect(lesson.writtenBy).toEqual({ model: "Claude Sonnet", ms: 12_400 });
   });
 
   it("keeps an everyday course on tier 1, and an old lesson without writtenBy still loads", async () => {

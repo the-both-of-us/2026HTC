@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 
-/** 1 is gpt-oss-120b (fast, the default for general material), then Claude Haiku, Sonnet and Opus. */
+/** 1 is gpt-oss-120b (fast, the default), 3 is Claude Sonnet. 2 (Haiku) and 4 (Opus) still work in `features/ai` but the router never picks them. */
 export type Tier = 1 | 2 | 3 | 4;
 
 /** The jobs the router picks a model for. "other" (feed, program plans) always stays on tier 1. */
@@ -23,24 +23,25 @@ export const SPEEDS = ["auto", "fast", "thorough"] as const;
 export type Speed = (typeof SPEEDS)[number];
 
 export const SPEED_LABELS: Record<Speed, { label: string; hint: string }> = {
-  auto: { label: "Auto (recommended)", hint: "Fast for everyday topics. Stronger models for hard or high-stakes courses." },
-  fast: { label: "Fast", hint: "The quickest model everywhere. Nothing waits more than a few seconds." },
-  thorough: { label: "Thorough", hint: "One step stronger than Auto. Slower, for when you'd rather wait." },
+  auto: {
+    label: "Auto (recommended)",
+    hint: "gpt-oss-120b for everyday topics. Claude Sonnet writes maps and lessons for hard courses, high-stakes ones, and psychology, health and law.",
+  },
+  fast: { label: "Fast", hint: "gpt-oss-120b everywhere. Nothing waits more than a few seconds." },
+  thorough: { label: "Thorough", hint: "Claude Sonnet for everything it writes and checks. Slower, for when you'd rather wait." },
 };
 
-export const MODEL_CHOICES = ["auto", "oss", "haiku", "sonnet", "opus"] as const;
+export const MODEL_CHOICES = ["auto", "oss", "sonnet"] as const;
 export type ModelChoice = (typeof MODEL_CHOICES)[number];
 
 export const MODEL_LABELS: Record<ModelChoice, string> = {
   auto: "Auto",
   oss: "gpt-oss-120b (fastest)",
-  haiku: "Claude Haiku",
-  sonnet: "Claude Sonnet",
-  opus: "Claude Opus (slowest)",
+  sonnet: "Claude Sonnet (slower, more accurate)",
 };
 
 /** The tier each fixed choice means. */
-export const CHOICE_TIERS: Record<Exclude<ModelChoice, "auto">, Tier> = { oss: 1, haiku: 2, sonnet: 3, opus: 4 };
+export const CHOICE_TIERS: Record<Exclude<ModelChoice, "auto">, Tier> = { oss: 1, sonnet: 3 };
 
 /** What is stored at settings/<userId>. Unknown or bad values fall back to Auto, so an old document still loads. */
 const choice = z.enum(MODEL_CHOICES).optional().catch(undefined);

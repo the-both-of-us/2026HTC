@@ -80,8 +80,9 @@ export function TrustScreen() {
           <p>
             It is kept in the app&apos;s cloud storage. Postings, explanations and answers are sent
             to an AI model (gpt-oss-120b, on Cerebras first, with other providers as backups) to
-            build maps and grade. Hard or high-stakes courses, or the choices on /settings, can use
-            Claude models from Anthropic instead, with gpt-oss-120b as the backup. When you speak instead of typing, the audio goes to a speech-to-text
+            build maps and grade. Hard or high-stakes courses, and psychology, health and law, have
+            their maps and lessons written by Claude Sonnet from Anthropic instead, with gpt-oss-120b
+            as the backup. Why these two models is on the model comparison page in Settings. When you speak instead of typing, the audio goes to a speech-to-text
             service and we keep only the words.
           </p>
         </Section>

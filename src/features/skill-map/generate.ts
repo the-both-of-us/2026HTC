@@ -1,4 +1,4 @@
-import { guessRating, tierFor, toRating } from "@/features/settings";
+import { guessRating, tierFor, toRating, withSubjectFloor } from "@/features/settings";
 import type { CourseRating, ProgramLink, SkillMap } from "@/shared/types";
 import {
   askModelForCourseMap,
@@ -25,9 +25,10 @@ function withAudience(map: SkillMap, audience: string): SkillMap {
 /**
  * The model's own rating of the course, or the guess made before the call for whatever it left
  * out. Sample maps (saved output with no rating) get the guess, so they need no model call.
+ * Psychology, health, law and quantum courses count as stakes 3 (see `withSubjectFloor`).
  */
 function withRating(map: SkillMap, raw: RawSkillMap, guess: CourseRating): SkillMap {
-  return { ...map, rating: toRating(raw, guess) };
+  return { ...map, rating: withSubjectFloor(toRating(raw, guess), map.title) };
 }
 
 /**

@@ -20,8 +20,8 @@ describe("stored settings", () => {
   });
 
   it("save under settings/<userId>, leaving out Auto overrides", async () => {
-    const saved = await saveAiSettings(userId, { speed: "thorough", overrides: { lesson: "opus", quiz: "auto" } });
-    expect(saved).toEqual({ speed: "thorough", overrides: { lesson: "opus" } });
+    const saved = await saveAiSettings(userId, { speed: "thorough", overrides: { lesson: "sonnet", quiz: "auto" } });
+    expect(saved).toEqual({ speed: "thorough", overrides: { lesson: "sonnet" } });
     expect(await getDoc(`settings/${userId}`)).toEqual(saved);
     expect(await getAiSettings(userId)).toEqual(saved);
   });
@@ -40,7 +40,7 @@ describe("stored settings", () => {
   });
 
   it("decide the tier together with the course rating", async () => {
-    expect(await tierFor("lesson", userId, { difficulty: 3, stakes: 3 })).toBe(4);
+    expect(await tierFor("lesson", userId, { difficulty: 3, stakes: 3 })).toBe(3);
     await saveAiSettings(userId, { speed: "fast", overrides: {} });
     expect(await tierFor("lesson", userId, { difficulty: 3, stakes: 3 })).toBe(1);
   });
@@ -48,7 +48,8 @@ describe("stored settings", () => {
 
 describe("the settings a browser may send", () => {
   it("must be known values, with no extra tasks", () => {
-    expect(aiSettingsInputSchema.safeParse({ speed: "fast", overrides: { lesson: "haiku" } }).success).toBe(true);
+    expect(aiSettingsInputSchema.safeParse({ speed: "fast", overrides: { lesson: "sonnet" } }).success).toBe(true);
+    expect(aiSettingsInputSchema.safeParse({ speed: "fast", overrides: { lesson: "opus" } }).success).toBe(false);
     expect(aiSettingsInputSchema.safeParse({ speed: "warp", overrides: {} }).success).toBe(false);
     expect(aiSettingsInputSchema.safeParse({ speed: "auto", overrides: { lesson: "gpt-9" } }).success).toBe(false);
     expect(aiSettingsInputSchema.safeParse({ speed: "auto", overrides: { feed: "opus" } }).success).toBe(false);
