@@ -14,7 +14,7 @@ Last updated: Sat Nov 7, evening.
   - `features/voice`: dictation keyterms from every topic title on the map, plus common tech terms.
   - `features/teachback`: a full final-interview run, all 3 questions through to the badge.
 - **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
-- **Cleanup**: removing finished git worktrees on Abdu's machine. No repo files.
+- **UI audit fixes, part 1** (me): readable labels on the /grid mix bar (`features/grid/ui/MixBar.tsx`), and in Dark the landing's sample band becomes a dark raised band instead of a pale slab (`src/app/globals.css`). The audit's map-card items wait for the polish agent.
 
 ## Next
 
