@@ -8,7 +8,9 @@ Last updated: Sun Nov 8, just after midnight.
 
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
-Nothing on Mirza's paths now: `network` and `/people` are free again.
+Working in Mirza's `network` and `/people` now (owner's request), plus a section on `/settings`.
+
+- **Friends** (owner's request): an Add friend button on people in the network (a request the other person accepts), pinging a friend (a nudge they see on Network), and seeing friends' courses and progress. Settings gets a Friends and privacy section to turn each of those off.
 
 
 
