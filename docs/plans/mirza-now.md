@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Nothing new yet: waiting on the owner. Next candidates: "Ask for help" requests on People, and an anonymous-profile option (undecided).
+- **People page visual cleanup**: calmer, easier-to-scan layout for `/people` (cards, sections, join panel, filter bar), in all three themes and on phones. Touches: `src/features/network/ui/**` only.
 
 ## Next
 
