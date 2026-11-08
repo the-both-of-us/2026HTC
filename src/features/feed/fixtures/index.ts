@@ -1,25 +1,12 @@
-import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
-import type { SkillMap } from "@/shared/types";
-import { rawCardsSchema, type RawCards } from "../prompt";
-import dataAnalystGrid from "./data-analyst-grid.json";
-import instrumentationRenewables from "./instrumentation-renewables.json";
-import juniorBackend from "./junior-backend.json";
+import type { PoolCard, PoolShort } from "../types";
+import pools from "./pools.json";
 
-/** What scripts/cache-feed.ts writes: real model output for each sample map. */
-export type SampleCards = { sampleId: string; generatedAt: string; output: unknown };
+/** What scripts/cache-feed.ts writes: the starting cards and Shorts for each suggested interest. */
+export type SeedPool = { name: string; cards: PoolCard[]; shorts: PoolShort[]; shortsSearchedAt?: string };
 
-const CARDS_BY_SAMPLE_ID: Record<string, SampleCards> = {
-  "data-analyst-grid": dataAnalystGrid,
-  "instrumentation-renewables": instrumentationRenewables,
-  "junior-backend": juniorBackend,
-};
+const SEEDS = (pools as { pools: Record<string, SeedPool> }).pools;
 
-/** The saved cards if this map was built from a sample posting, so the demo feed needs no model call. */
-export function findSampleCards(map: Pick<SkillMap, "sourceKind" | "sourceText">): RawCards | null {
-  if (map.sourceKind !== "posting") return null;
-  const sample = SAMPLE_POSTINGS.find((candidate) => candidate.text.trim() === map.sourceText.trim());
-  const saved = sample && CARDS_BY_SAMPLE_ID[sample.id];
-  if (!saved?.output) return null;
-  const parsed = rawCardsSchema.safeParse(saved.output);
-  return parsed.success ? parsed.data : null;
+/** The saved starting pool for a suggested interest, so the demo feed needs no model call. */
+export function findSeedPool(slug: string): SeedPool | null {
+  return Object.hasOwn(SEEDS, slug) ? SEEDS[slug] : null;
 }

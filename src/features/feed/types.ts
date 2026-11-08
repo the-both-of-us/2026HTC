@@ -1,28 +1,38 @@
-/** One idea from one topic of a map, as stored at feed-cards/<mapId>. */
-export type Topiclet = {
-  /** `<mapId>.<n>`, stable for a map's saved cards. */
+import type { Interest } from "./suggestions";
+
+export type { Interest } from "./suggestions";
+
+/** One idea in an interest's shared pool, stored at feed-pool/<slug>. */
+export type PoolCard = {
+  /** `<slug>.c<n>`, stable for as long as the card is in the pool. */
   id: string;
-  mapId: string;
-  nodeId: string;
   title: string;
   body: string;
+  /** A short phrase you could build a course on, for "Go deeper". */
+  subtopic: string;
+  createdAt: string;
 };
 
-/** An educational YouTube Short found for a topic. Only ids and names that YouTube returned. */
-export type Short = { videoId: string; title: string; channel: string };
+/** An educational YouTube Short in an interest's pool, stored at feed-shorts/<slug>. Only what YouTube returned. */
+export type PoolShort = {
+  /** `<slug>.v<videoId>`. */
+  id: string;
+  videoId: string;
+  title: string;
+  channel: string;
+  /** What it was searched for, used by "Go deeper". */
+  subtopic: string;
+  addedAt: string;
+};
 
-/** What a browser gets for a text card. No owner ids, no checkpoints. */
+/** What a browser gets for a text card. */
 export type FeedCard = {
   kind: "card";
   id: string;
-  mapId: string;
-  nodeId: string;
-  mapTitle: string;
-  topicTitle: string;
+  interest: Interest;
   title: string;
   body: string;
-  /** The viewer already proved this topic. */
-  proven: boolean;
+  subtopic: string;
   liked: boolean;
   saved: boolean;
 };
@@ -30,21 +40,20 @@ export type FeedCard = {
 export type FeedShort = {
   kind: "short";
   id: string;
-  mapId: string;
-  nodeId: string;
-  mapTitle: string;
-  topicTitle: string;
-  short: Short;
+  interest: Interest;
+  subtopic: string;
+  short: { videoId: string; title: string; channel: string };
 };
 
 export type FeedItem = FeedCard | FeedShort;
 
 export type FeedPage = {
+  /** True when the viewer has picked no interests yet, so the picker shows. */
+  needsInterests: boolean;
+  interests: Interest[];
   items: FeedItem[];
-  /** Pass back as ?cursor= for the next page. Null once the viewer has seen every card. */
-  nextCursor: string | null;
-  /** Text cards in the whole feed, for "3 of 40". */
+  /** False once every card in the viewer's interests is on screen. */
+  more: boolean;
+  /** Text cards across the viewer's interests. */
   total: number;
-  /** True when the viewer has no maps yet, so the feed shows the sample courses. */
-  fromSamples: boolean;
 };

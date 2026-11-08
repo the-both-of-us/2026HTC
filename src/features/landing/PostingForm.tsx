@@ -57,6 +57,17 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
   const [pending, setPending] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
+  const topicInput = useRef<HTMLInputElement>(null);
+
+  // "Go deeper" from the feed links here with ?topic=<subtopic>: fill it in once and focus it.
+  useEffect(() => {
+    const prefill = new URLSearchParams(window.location.search).get("topic")?.trim().slice(0, MAX_TOPIC_LENGTH);
+    if (!prefill) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMode("topic");
+    setTopic(prefill);
+    requestAnimationFrame(() => topicInput.current?.focus());
+  }, []);
 
   // The seal is drawn from what you have typed, so every posting gets its own. Deferred, so
   // typing stays quick while the big seal redraws.
@@ -256,6 +267,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
                   Topic
                 </label>
                 <input
+                  ref={topicInput}
                   id="topic"
                   type="text"
                   value={topic}

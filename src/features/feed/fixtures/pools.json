@@ -1,0 +1,2493 @@
+{
+ "pools": {
+  "game-theory": {
+   "name": "Game theory",
+   "cards": [
+    {
+     "id": "game-theory.c0",
+     "title": "Nash Equilibrium Explained",
+     "body": "A Nash equilibrium is a set of choices where no player can do better by changing only their own move. It means everyone’s strategy fits together like a stable puzzle. Even if the outcome isn’t the best for anyone, nobody can improve alone.",
+     "subtopic": "Nash equilibrium",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    },
+    {
+     "id": "game-theory.c1",
+     "title": "Prisoners Dilemma Shows Trust",
+     "body": "In the Prisoners Dilemma two people must decide to cooperate or betray without knowing the other’s choice. If both cooperate they get a small reward, but betrayal gives a bigger gain if the partner cooperates. The puzzle shows why fear of being cheated can stop cooperation.",
+     "subtopic": "Prisoner's dilemma",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    },
+    {
+     "id": "game-theory.c2",
+     "title": "Mixed Strategies Use Randomness",
+     "body": "A mixed strategy means a player randomizes their moves instead of picking one fixed option. By assigning probabilities, they can keep opponents guessing and avoid being predictable. This is useful in games like rock‑paper‑scissors where no single move always wins.",
+     "subtopic": "Mixed strategies",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    },
+    {
+     "id": "game-theory.c3",
+     "title": "Zero Sum Games Balance Wins",
+     "body": "In a zero‑sum game one player’s gain is exactly the other player’s loss, so the total score always adds up to zero. Chess and poker are examples where one side’s win means the other side loses the same amount. Understanding this helps players focus on maximizing their own payoff.",
+     "subtopic": "Zero-sum games",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    },
+    {
+     "id": "game-theory.c4",
+     "title": "Backward Induction Solves Games",
+     "body": "Backward induction works by looking at the last move of a game first and then reasoning backward to the start. By knowing the final outcome, players can choose earlier moves that lead to the best result. It’s often used in games that end after a fixed number of turns.",
+     "subtopic": "Backward induction",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    },
+    {
+     "id": "game-theory.c5",
+     "title": "Evolutionary Stable Strategy Basics",
+     "body": "An evolutionary stable strategy (ESS) is a behavior that, if adopted by most of a population, can’t be invaded by a different one. It comes from biology, where successful traits persist over generations. In game terms, an ESS is a strategy that resists being outperformed.",
+     "subtopic": "Evolutionary game theory",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    },
+    {
+     "id": "game-theory.c6",
+     "title": "Public Goods Need Cooperation",
+     "body": "A public goods game asks players to contribute to a common pool that benefits everyone, even non‑contributors. If most people give, the group gains a lot, but if many free‑ride, the total reward drops. The scenario shows why voluntary cooperation is hard but valuable.",
+     "subtopic": "Public goods games",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    },
+    {
+     "id": "game-theory.c7",
+     "title": "Battle of the Sexes Compromise",
+     "body": "The Battle of the Sexes is a coordination game where two players want to meet but have different preferred locations. The best outcome is when they both choose the same place, even if it’s not each person’s favorite. It illustrates how communication can create mutually acceptable solutions.",
+     "subtopic": "Coordination games",
+     "createdAt": "2026-11-08T03:56:44.651Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "game-theory.vYueJukoFBMU",
+     "videoId": "YueJukoFBMU",
+     "title": "Game Theory Explained in One Minute",
+     "channel": "One Minute Economics",
+     "subtopic": "Game theory",
+     "addedAt": "2026-11-08T03:56:44.654Z"
+    },
+    {
+     "id": "game-theory.v2ecJ_fDpWTg",
+     "videoId": "2ecJ_fDpWTg",
+     "title": "What is Game Theory (Explained in 3 Minutes)",
+     "channel": "theblurb",
+     "subtopic": "Game theory",
+     "addedAt": "2026-11-08T03:56:44.654Z"
+    },
+    {
+     "id": "game-theory.vvcN2gAvRdgg",
+     "videoId": "vcN2gAvRdgg",
+     "title": "Game Theory Explained: Why Cheating and Secret Alliances Win Every Time #gametheory #prof jiang",
+     "channel": "Prof Jiang - Lecture clips",
+     "subtopic": "Game theory",
+     "addedAt": "2026-11-08T03:56:44.654Z"
+    },
+    {
+     "id": "game-theory.vTI9TSNxuU3c",
+     "videoId": "TI9TSNxuU3c",
+     "title": "What is game theory? #shorts",
+     "channel": "Big Think",
+     "subtopic": "Game theory",
+     "addedAt": "2026-11-08T03:56:44.654Z"
+    },
+    {
+     "id": "game-theory.vQa82gNYYkdc",
+     "videoId": "Qa82gNYYkdc",
+     "title": "What is Game Theory? (Explained in 3 Minute)",
+     "channel": "Helpful Professor Explains!",
+     "subtopic": "Game theory",
+     "addedAt": "2026-11-08T03:56:44.654Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:56:45.286Z"
+  },
+  "stoicism": {
+   "name": "Stoicism",
+   "cards": [
+    {
+     "id": "stoicism.c0",
+     "title": "Control What You Can Control",
+     "body": "Stoics split life into things we can control and things we cannot. By focusing effort on the controllable, we reduce frustration. This simple habit helps us stay calm even when external events surge.",
+     "subtopic": "Dichotomy of Control",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    },
+    {
+     "id": "stoicism.c1",
+     "title": "Imagine Loss to Appreciate",
+     "body": "Before enjoying something, Stoics picture losing it. This mental rehearsal makes us value what we have and prepares us for change. It's a gentle reminder that nothing lasts forever.",
+     "subtopic": "Negative Visualization",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    },
+    {
+     "id": "stoicism.c2",
+     "title": "Love Your Destiny Daily",
+     "body": "Amor fati means \"love of fate.\" Rather than resisting what happens, we accept it as part of life’s flow. Seeing every event as a chance to grow makes hardships feel meaningful.",
+     "subtopic": "Amor Fati Practice",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    },
+    {
+     "id": "stoicism.c3",
+     "title": "Morning Pages for Calm Mind",
+     "body": "Stoics often write short reflections each morning and evening. The practice clears the mind, sets daily intentions, and reviews actions. Over time it builds self‑awareness and steadier reactions.",
+     "subtopic": "Stoic Journaling",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    },
+    {
+     "id": "stoicism.c4",
+     "title": "Virtue Is the Only Good",
+     "body": "In Stoic teaching, virtue—like honesty and courage—is the only true good. External wealth or reputation are indifferent; they can be used well or poorly. Living virtuously leads to inner peace regardless of circumstance.",
+     "subtopic": "Stoic Ethics",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    },
+    {
+     "id": "stoicism.c5",
+     "title": "Marcus Aurelius Emperor Philosopher",
+     "body": "Marcus Aurelius ruled an empire while keeping a notebook of thoughts. His writings show how a ruler can stay humble and thoughtful. He proved philosophy works in busy, real‑world life.",
+     "subtopic": "Historical Stoics",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    },
+    {
+     "id": "stoicism.c6",
+     "title": "Turn Obstacles Into Opportunities",
+     "body": "When an obstacle appears, Stoics treat it as training. The difficulty forces us to practice patience, creativity, and resilience. Turning problems into practice builds strength for future challenges.",
+     "subtopic": "Obstacle Theory",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    },
+    {
+     "id": "stoicism.c7",
+     "title": "Pause Before Reacting",
+     "body": "The pause technique asks us to stop before reacting to a trigger. A brief breath gives the mind space to choose a rational response. This habit prevents angry outbursts and supports calmer choices.",
+     "subtopic": "Emotional Regulation",
+     "createdAt": "2026-11-08T03:56:57.079Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "stoicism.vRxzx5x7TY5M",
+     "videoId": "Rxzx5x7TY5M",
+     "title": "Stoicism Explained In 3 Minutes",
+     "channel": "Daily Stoic",
+     "subtopic": "Stoicism",
+     "addedAt": "2026-11-08T03:56:57.080Z"
+    },
+    {
+     "id": "stoicism.vhfePd0-8KCM",
+     "videoId": "hfePd0-8KCM",
+     "title": "The Stoic Mindset- Jordan Peterson #jordanpeterson #canadianpsychologist",
+     "channel": "Jordan Peterson Rules for Life",
+     "subtopic": "Stoicism",
+     "addedAt": "2026-11-08T03:56:57.080Z"
+    },
+    {
+     "id": "stoicism.vEEwnQfftg00",
+     "videoId": "EEwnQfftg00",
+     "title": "5 Stoic Phrases That Instantly Stop Manipulators (Stoic Wisdom You NEED)#shorts#stoicism#innerpeace",
+     "channel": "Stoic Sage Academy",
+     "subtopic": "Stoicism",
+     "addedAt": "2026-11-08T03:56:57.080Z"
+    },
+    {
+     "id": "stoicism.v6QAkP-Vm6-E",
+     "videoId": "6QAkP-Vm6-E",
+     "title": "What is Stoicism?",
+     "channel": "The Daily Stoic",
+     "subtopic": "Stoicism",
+     "addedAt": "2026-11-08T03:56:57.080Z"
+    },
+    {
+     "id": "stoicism.vKKgCUchNVSc",
+     "videoId": "KKgCUchNVSc",
+     "title": "Jerry Seinfeld: Marcus Aurelius and Stoicism #stoicism",
+     "channel": "Graham Bensinger",
+     "subtopic": "Stoicism",
+     "addedAt": "2026-11-08T03:56:57.080Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:56:57.947Z"
+  },
+  "behavioural-economics": {
+   "name": "Behavioural economics",
+   "cards": [
+    {
+     "id": "behavioural-economics.c0",
+     "title": "Why Free Feels Priceless",
+     "body": "When something is listed as free, people think it is more valuable than it really is. The brain treats a zero price as a special signal, not just another low price. This can make us grab freebies we don’t need.",
+     "subtopic": "Zero price effect",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    },
+    {
+     "id": "behavioural-economics.c1",
+     "title": "The Power of Tiny Costs",
+     "body": "Even a tiny fee can make a product seem higher quality. Our minds link price with value, so a small charge can persuade us to buy. This is called the small cost bias.",
+     "subtopic": "Small cost bias",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    },
+    {
+     "id": "behavioural-economics.c2",
+     "title": "Decisions Swayed by First Numbers",
+     "body": "The first number we see can shape later judgments. If a shirt is first shown at $100, $80 looks cheap even if it’s still pricey. This is the anchoring effect.",
+     "subtopic": "Anchoring bias",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    },
+    {
+     "id": "behavioural-economics.c3",
+     "title": "Losses Hurt More Than Gains",
+     "body": "Losing something feels worse than gaining the same thing feels good. Our brain reacts more strongly to pain than pleasure. This tendency is called loss aversion.",
+     "subtopic": "Loss aversion",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    },
+    {
+     "id": "behavioural-economics.c4",
+     "title": "How Social Proof Shapes Choices",
+     "body": "People often look at what others are doing before they decide. Seeing many friends using a game can make us want to try it too. This influence is social proof.",
+     "subtopic": "Social proof",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    },
+    {
+     "id": "behavioural-economics.c5",
+     "title": "Choosing the Easy Option",
+     "body": "When choices are preset, we usually stick with them. A default option, like an automatic enrollment, gets chosen more often because it’s easier. This is the default bias.",
+     "subtopic": "Default bias",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    },
+    {
+     "id": "behavioural-economics.c6",
+     "title": "When Time Tricks Our Minds",
+     "body": "We prefer rewards now over larger rewards later. The farther a reward is in the future, the less we value it. This short‑term focus is called present bias.",
+     "subtopic": "Present bias",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    },
+    {
+     "id": "behavioural-economics.c7",
+     "title": "Why We Overvalue What We Own",
+     "body": "Owning an object makes us value it higher than before we owned it. This happens even if the item’s real usefulness hasn’t changed. Psychologists call it the endowment effect.",
+     "subtopic": "Endowment effect",
+     "createdAt": "2026-11-08T03:57:09.927Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "behavioural-economics.vo1aRJeDe8j8",
+     "videoId": "o1aRJeDe8j8",
+     "title": "What is Behavioral Economics? - Psychology Explained",
+     "channel": "Simplified In Short ",
+     "subtopic": "Behavioural economics",
+     "addedAt": "2026-11-08T03:57:09.928Z"
+    },
+    {
+     "id": "behavioural-economics.v8TmABFbePRE",
+     "videoId": "8TmABFbePRE",
+     "title": "Economist defines Behavioral Economics",
+     "channel": "Pop Culture Economics",
+     "subtopic": "Behavioural economics",
+     "addedAt": "2026-11-08T03:57:09.928Z"
+    },
+    {
+     "id": "behavioural-economics.vFHAhaUMmNlU",
+     "videoId": "FHAhaUMmNlU",
+     "title": "What is Behavioural Economics?",
+     "channel": "Frankfurt School of Finance & Management",
+     "subtopic": "Behavioural economics",
+     "addedAt": "2026-11-08T03:57:09.928Z"
+    },
+    {
+     "id": "behavioural-economics.v-H63rQ7tJRY",
+     "videoId": "-H63rQ7tJRY",
+     "title": "What is Behavioural Economics? I 60 Second Economics",
+     "channel": "tutor2u",
+     "subtopic": "Behavioural economics",
+     "addedAt": "2026-11-08T03:57:09.928Z"
+    },
+    {
+     "id": "behavioural-economics.vsM91d5I36Po",
+     "videoId": "sM91d5I36Po",
+     "title": "Prospect Theory (explained in a minute) - Behavioural Finance",
+     "channel": "Sanlam Investments",
+     "subtopic": "Behavioural economics",
+     "addedAt": "2026-11-08T03:57:09.928Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:57:10.599Z"
+  },
+  "black-holes": {
+   "name": "Black holes",
+   "cards": [
+    {
+     "id": "black-holes.c0",
+     "title": "Event Horizon Point of No Return",
+     "body": "The event horizon is the edge of a black hole. Anything that crosses it cannot escape, because the escape speed exceeds the speed of light. It marks the point of no return.",
+     "subtopic": "Event Horizon Basics",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    },
+    {
+     "id": "black-holes.c1",
+     "title": "Spaghettification Tidal Stretching Explained",
+     "body": "Spaghettification is what happens to objects that get too close to a black hole. The black hole’s gravity pulls harder on the side nearest it, stretching the object into a thin line. This is a tidal force, like the Moon’s pull on Earth’s oceans.",
+     "subtopic": "Tidal Forces",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    },
+    {
+     "id": "black-holes.c2",
+     "title": "How Massive Stars Form Black Holes",
+     "body": "When a very massive star runs out of fuel, its core collapses under gravity. The collapse can become so extreme that it forms a black hole. The outer layers explode as a supernova, leaving the black hole behind.",
+     "subtopic": "Stellar Collapse",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    },
+    {
+     "id": "black-holes.c3",
+     "title": "Hawking Radiation Black Hole Leak",
+     "body": "Stephen Hawking predicted that black holes emit a faint glow called Hawking radiation. This radiation comes from tiny particles that appear near the event horizon. Over huge timescales, it causes the black hole to lose mass and shrink.",
+     "subtopic": "Quantum Radiation",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    },
+    {
+     "id": "black-holes.c4",
+     "title": "Mass Determines Black Hole Size",
+     "body": "A black hole’s size, called its Schwarzschild radius, grows larger as its mass grows. Roughly, a black hole one time the Sun’s mass has a radius of three kilometers. So more mass means a bigger invisible sphere.",
+     "subtopic": "Mass‑Size Relationship",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    },
+    {
+     "id": "black-holes.c5",
+     "title": "Gravitational Waves Reveal Collisions",
+     "body": "When two black holes orbit each other and merge, they shake space itself, creating gravitational waves. Detectors on Earth have measured these ripples, confirming Einstein’s predictions. The waves tell scientists the masses and spins of the merging black holes.",
+     "subtopic": "Gravitational Wave Astronomy",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    },
+    {
+     "id": "black-holes.c6",
+     "title": "Accretion Disk Lights Up Black Hole",
+     "body": "Black holes often have a bright disk of hot gas called an accretion disk. As gas spirals inward, friction heats it to millions of degrees, producing X‑rays. The light lets astronomers see where a black hole is, even though the hole itself is dark.",
+     "subtopic": "Accretion Disk Physics",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    },
+    {
+     "id": "black-holes.c7",
+     "title": "Time Dilation Near Black Holes",
+     "body": "Time runs slower near a strong gravity source like a black hole, a effect called time dilation. An astronaut close to a black hole would age more slowly than someone far away. This is a consequence of Einstein’s theory of relativity.",
+     "subtopic": "Relativistic Time Effects",
+     "createdAt": "2026-11-08T03:57:23.059Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "black-holes.vQcMbm95x29M",
+     "videoId": "QcMbm95x29M",
+     "title": "The Mystery of Black Holes 🌌 | Secrets of the Universe #shorts",
+     "channel": "Wonder Wonders",
+     "subtopic": "Black holes",
+     "addedAt": "2026-11-08T03:57:23.061Z"
+    },
+    {
+     "id": "black-holes.v64_J02ACvaw",
+     "videoId": "64_J02ACvaw",
+     "title": "Black Holes Explained With A Bucket And Ball 🌟",
+     "channel": "Space Rewind",
+     "subtopic": "Black holes",
+     "addedAt": "2026-11-08T03:57:23.061Z"
+    },
+    {
+     "id": "black-holes.voL4B3CdSaIw",
+     "videoId": "oL4B3CdSaIw",
+     "title": "How Black Holes Are Formed w/ Neil DeGrasse Tyson",
+     "channel": "Universe University",
+     "subtopic": "Black holes",
+     "addedAt": "2026-11-08T03:57:23.061Z"
+    },
+    {
+     "id": "black-holes.v7LrNkeiseJU",
+     "videoId": "7LrNkeiseJU",
+     "title": "Black holes twist spacetime #shorts",
+     "channel": "Dr. Becky",
+     "subtopic": "Black holes",
+     "addedAt": "2026-11-08T03:57:23.061Z"
+    },
+    {
+     "id": "black-holes.vhBjcvvIOR5w",
+     "videoId": "hBjcvvIOR5w",
+     "title": "Black Holes are PORTALS to OTHER DIMENSIONS ?! 🤯 w/ Neil deGrasse Tyson",
+     "channel": "Universal Knowledge ",
+     "subtopic": "Black holes",
+     "addedAt": "2026-11-08T03:57:23.061Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:57:23.582Z"
+  },
+  "how-memory-works": {
+   "name": "How memory works",
+   "cards": [
+    {
+     "id": "how-memory-works.c0",
+     "title": "Brain Stores Information in Patterns",
+     "body": "The brain doesn't keep exact copies of experiences; it stores patterns of activity that represent what we learned. When you recall something, those patterns are re‑created.",
+     "subtopic": "Encoding and Representation",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    },
+    {
+     "id": "how-memory-works.c1",
+     "title": "Short‑Term Memory Holds a Few Items",
+     "body": "Short‑term memory can keep about seven items for a few seconds without rehearsal. It's like a mental notepad that quickly fades if not practiced.",
+     "subtopic": "Working Memory Limits",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    },
+    {
+     "id": "how-memory-works.c2",
+     "title": "Sleep Helps Combine Memories",
+     "body": "During deep sleep the brain replays recent experiences, linking them with older knowledge. This process makes memories stronger and easier to retrieve later.",
+     "subtopic": "Memory Consolidation",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    },
+    {
+     "id": "how-memory-works.c3",
+     "title": "Hippocampus Routes New Memories",
+     "body": "The hippocampus is a small brain region that tags fresh experiences and sends them to the cortex for long‑term storage. Damage to it makes forming new memories hard.",
+     "subtopic": "Hippocampal Function",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    },
+    {
+     "id": "how-memory-works.c4",
+     "title": "Recall Can Change What We Remember",
+     "body": "Each time we remember something, the brain can adjust the details, mixing in later information or emotions. This is why eyewitness accounts often differ.",
+     "subtopic": "Memory Distortion",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    },
+    {
+     "id": "how-memory-works.c5",
+     "title": "Procedural Memory Stores Skills",
+     "body": "Skills like riding a bike are stored as procedural memory, which works without conscious thought. Once learned, you can perform them even if you can't explain the steps.",
+     "subtopic": "Implicit Learning",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    },
+    {
+     "id": "how-memory-works.c6",
+     "title": "Emotion Boosts Memory Strength",
+     "body": "Strong emotions trigger chemicals that flag an experience as important, making the memory more vivid and durable. That's why scary or happy moments stick out.",
+     "subtopic": "Emotional Tagging",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    },
+    {
+     "id": "how-memory-works.c7",
+     "title": "Chunking Expands Memory Capacity",
+     "body": "Grouping separate items into meaningful blocks, like remembering a phone number as three parts, lets us hold more information in short‑term memory. This strategy is called chunking.",
+     "subtopic": "Memory Strategies",
+     "createdAt": "2026-11-08T03:57:35.843Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "how-memory-works.vfXpTLFTfN_w",
+     "videoId": "fXpTLFTfN_w",
+     "title": "How RAM Works 🤔",
+     "channel": "Zack D. Films",
+     "subtopic": "How memory works",
+     "addedAt": "2026-11-08T03:57:35.844Z"
+    },
+    {
+     "id": "how-memory-works.v_nWMP68DqHE",
+     "videoId": "_nWMP68DqHE",
+     "title": "The Neuroscience of Learning",
+     "channel": "Halo Neuroscience",
+     "subtopic": "How memory works",
+     "addedAt": "2026-11-08T03:57:35.844Z"
+    },
+    {
+     "id": "how-memory-works.vUMz7BkgINbQ",
+     "videoId": "UMz7BkgINbQ",
+     "title": "How is the data stored in digital memory ? 🧐🤔 📲 #shorts #smartphone #science #animation #memory",
+     "channel": "DG EYE science",
+     "subtopic": "How memory works",
+     "addedAt": "2026-11-08T03:57:35.844Z"
+    },
+    {
+     "id": "how-memory-works.v4tfh7vs0MIc",
+     "videoId": "4tfh7vs0MIc",
+     "title": "How Does Human Memory Work?",
+     "channel": "Academy of Learning Career College",
+     "subtopic": "How memory works",
+     "addedAt": "2026-11-08T03:57:35.844Z"
+    },
+    {
+     "id": "how-memory-works.vbSl7REbB26o",
+     "videoId": "bSl7REbB26o",
+     "title": "How Short term Memory works #andrewhuberman #neuroscience",
+     "channel": "Neuro Diaries",
+     "subtopic": "How memory works",
+     "addedAt": "2026-11-08T03:57:35.844Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:57:37.056Z"
+  },
+  "ancient-rome": {
+   "name": "Ancient Rome",
+   "cards": [
+    {
+     "id": "ancient-rome.c0",
+     "title": "Roads Built for Speed",
+     "body": "Romans built roads of stone that were very straight. They layered sand, gravel, and flat stones to make a smooth surface that lasted for centuries. The roads let armies and traders move quickly across the empire.",
+     "subtopic": "Roman infrastructure",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    },
+    {
+     "id": "ancient-rome.c1",
+     "title": "Aqueducts Transport Fresh Water",
+     "body": "Aqueducts are bridge-like channels that carried fresh water from mountains to cities. They used a slight downhill slope so water flowed by gravity alone. Roman towns got clean water for fountains, baths, and homes.",
+     "subtopic": "Water engineering",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    },
+    {
+     "id": "ancient-rome.c2",
+     "title": "Concrete That Grows Stronger",
+     "body": "Roman concrete mixed lime with volcanic ash and water. When it touched seawater, a chemical reaction made the material grow harder over time. Modern concrete often cracks, but many Roman ports are still intact.",
+     "subtopic": "Building materials",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    },
+    {
+     "id": "ancient-rome.c3",
+     "title": "Julian Calendar Fixed the Year",
+     "body": "Julius Caesar created a calendar with 365 days and added a leap day every four years. The extra day kept the calendar aligned with the changing seasons. This system is the basis of the calendar we use today.",
+     "subtopic": "Timekeeping",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    },
+    {
+     "id": "ancient-rome.c4",
+     "title": "Legionnaires Trained as a Unit",
+     "body": "A Roman legion contained about five thousand soldiers split into smaller units called centuries. Each century had about eighty men who trained together in marching, building camps, and fighting. The tight organization helped the army stay disciplined on battlefields.",
+     "subtopic": "Military organization",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    },
+    {
+     "id": "ancient-rome.c5",
+     "title": "Gladiators Were Skilled Athletes",
+     "body": "Gladiators trained in special schools to learn how to fight with different weapons. Some became popular stars, and not every match ended in death. The games were a major public entertainment in Rome.",
+     "subtopic": "Entertainment in Rome",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    },
+    {
+     "id": "ancient-rome.c6",
+     "title": "Latin Words Live On",
+     "body": "Latin was the language spoken in ancient Rome. Many English words, like \"video\" meaning \"I see\" and \"audience\" meaning \"to hear,\" come from Latin roots. Learning a few Latin words can help understand many modern terms.",
+     "subtopic": "Language legacy",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    },
+    {
+     "id": "ancient-rome.c7",
+     "title": "Apartment Buildings Called Insulae",
+     "body": "Most Romans lived in tall apartment blocks called insulae. The ground floor often held shops, while families lived on the upper floors. These buildings were similar to the apartment complexes we see today.",
+     "subtopic": "Urban housing",
+     "createdAt": "2026-11-08T03:57:49.095Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "ancient-rome.vYn7xqTYKXmc",
+     "videoId": "Yn7xqTYKXmc",
+     "title": "Weirdest Laws in the Roman Empire...",
+     "channel": "Hoodie Guy",
+     "subtopic": "Ancient Rome",
+     "addedAt": "2026-11-08T03:57:49.097Z"
+    },
+    {
+     "id": "ancient-rome.vTUQ7L3JMHio",
+     "videoId": "TUQ7L3JMHio",
+     "title": "Roman Shaving was Brutal! - Extra History #shorts",
+     "channel": "Extra History",
+     "subtopic": "Ancient Rome",
+     "addedAt": "2026-11-08T03:57:49.097Z"
+    },
+    {
+     "id": "ancient-rome.v0bj8_uCR-Q4",
+     "videoId": "0bj8_uCR-Q4",
+     "title": "The Life of Poor Ancient Roman #shorts",
+     "channel": "History Unfolded",
+     "subtopic": "Ancient Rome",
+     "addedAt": "2026-11-08T03:57:49.097Z"
+    },
+    {
+     "id": "ancient-rome.v04NVT1KGbYA",
+     "videoId": "04NVT1KGbYA",
+     "title": "I Tried Ancient Rome’s Most Popular Food.. 🐟 #shorts",
+     "channel": "Sean Andrew",
+     "subtopic": "Ancient Rome",
+     "addedAt": "2026-11-08T03:57:49.097Z"
+    },
+    {
+     "id": "ancient-rome.v-7KI5KgudbE",
+     "videoId": "-7KI5KgudbE",
+     "title": "Rome’s Fall Explained | Class 11th History 🔥🔥 #shorts #nexttoppershumanities #class11history",
+     "channel": "Next Toppers - 11th Humanities",
+     "subtopic": "Ancient Rome",
+     "addedAt": "2026-11-08T03:57:49.097Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:57:49.750Z"
+  },
+  "negotiation": {
+   "name": "Negotiation",
+   "cards": [
+    {
+     "id": "negotiation.c0",
+     "title": "Know Your Best Alternative",
+     "body": "Your BATNA is the best outcome you can achieve without a deal. Knowing it gives you confidence and a fallback. It helps you set realistic goals.",
+     "subtopic": "Best Alternative concept",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    },
+    {
+     "id": "negotiation.c1",
+     "title": "Start With an Anchor",
+     "body": "An anchor is an opening offer that sets the negotiation range. People tend to adjust from that number, even if it’s high. Starting with a clear anchor can steer the final agreement.",
+     "subtopic": "Anchoring bias",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    },
+    {
+     "id": "negotiation.c2",
+     "title": "Listen More Than You Speak",
+     "body": "Listening lets you understand the other side’s needs and priorities. Summarizing what they said shows you value their view. This often leads to faster, smoother agreements.",
+     "subtopic": "Active listening",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    },
+    {
+     "id": "negotiation.c3",
+     "title": "Create Win Win Solutions",
+     "body": "A win‑win solution meets the most important interests of both parties. Instead of splitting the difference, look for creative options that satisfy each side. Such deals build trust for future interactions.",
+     "subtopic": "Integrative bargaining",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    },
+    {
+     "id": "negotiation.c4",
+     "title": "Read Body Language",
+     "body": "Body language reveals confidence, openness, or tension. Maintaining eye contact and uncrossed arms signals that you are engaged. Watching these cues can tell you when the other party is comfortable or hesitant.",
+     "subtopic": "Nonverbal cues",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    },
+    {
+     "id": "negotiation.c5",
+     "title": "Find the Zone of Agreement",
+     "body": "The Zone of Possible Agreement is where both sides’ interests overlap. It exists between each party’s minimum acceptable outcome. Finding this zone lets you focus on realistic solutions.",
+     "subtopic": "ZOPA definition",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    },
+    {
+     "id": "negotiation.c6",
+     "title": "Use Framing to Shape Deals",
+     "body": "Framing presents an offer in a way that highlights benefits. Describing a proposal as a gain rather than a loss can change perception. Effective framing often encourages agreement.",
+     "subtopic": "Framing effect",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    },
+    {
+     "id": "negotiation.c7",
+     "title": "Make Strategic Concessions",
+     "body": "A concession is a small give‑away that moves the deal forward. Plan what you’re willing to sacrifice before you negotiate. Timing a concession can prompt the other side to reciprocate.",
+     "subtopic": "Concession strategy",
+     "createdAt": "2026-11-08T03:58:01.733Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "negotiation.vSoErQfLkqjY",
+     "videoId": "SoErQfLkqjY",
+     "title": "The SECRET To Winning Any Negotiation",
+     "channel": "Chris Voss & The Black Swan Group",
+     "subtopic": "Negotiation",
+     "addedAt": "2026-11-08T03:58:01.734Z"
+    },
+    {
+     "id": "negotiation.vBegeGTBWMgE",
+     "videoId": "BegeGTBWMgE",
+     "title": "3 Negotiation Skills All Professionals Can Benefit From | Business: Explained",
+     "channel": "HBS Online",
+     "subtopic": "Negotiation",
+     "addedAt": "2026-11-08T03:58:01.734Z"
+    },
+    {
+     "id": "negotiation.vxbZ6pcTqu1g",
+     "videoId": "xbZ6pcTqu1g",
+     "title": "How to Negotiate Like a Pro 💼 #shorts #career  #skills  #trendingshorts",
+     "channel": "Mindception - Empowering Your Mind",
+     "subtopic": "Negotiation",
+     "addedAt": "2026-11-08T03:58:01.734Z"
+    },
+    {
+     "id": "negotiation.v2Pd8Oz_Ocic",
+     "videoId": "2Pd8Oz_Ocic",
+     "title": "What is Negotiation | Explained in 2 min",
+     "channel": "Productivity Guy",
+     "subtopic": "Negotiation",
+     "addedAt": "2026-11-08T03:58:01.734Z"
+    },
+    {
+     "id": "negotiation.vwokK-oA_2Ys",
+     "videoId": "wokK-oA_2Ys",
+     "title": "How Billionaires negotiate a Deal 🗿💵 | Kuldeep Singhaniaa #shorts",
+     "channel": "Kuldeep Singhania Shorts",
+     "subtopic": "Negotiation",
+     "addedAt": "2026-11-08T03:58:01.734Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:58:02.263Z"
+  },
+  "personal-finance": {
+   "name": "Personal finance",
+   "cards": [
+    {
+     "id": "personal-finance.c0",
+     "title": "How Compound Interest Multiplies Your Savings",
+     "body": "When you save money in an account that pays interest, your interest starts earning interest of its own. Over many years, this snowball effect can make your balance grow much faster than just adding your own cash. Starting even a few years earlier makes a massive difference in the final amount.",
+     "subtopic": "Compound interest",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    },
+    {
+     "id": "personal-finance.c1",
+     "title": "Why Cash Loses Value Over Time",
+     "body": "Inflation means prices for everyday items gradually go up over time. If you keep money in a piggy bank, it stays the same numerical amount but buys fewer goods in ten years. Investing helps your money grow fast enough to keep up with rising prices.",
+     "subtopic": "Inflation and purchasing power",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    },
+    {
+     "id": "personal-finance.c2",
+     "title": "Emergency Funds Prevent Costly Debt Spikes",
+     "body": "An emergency fund is money saved purely for unexpected trouble, like a sudden car repair or medical bill. Having three to six months of living costs put aside keeps you from borrowing money when bad luck strikes. It turns a potential financial disaster into a manageable setback.",
+     "subtopic": "Financial safety nets",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    },
+    {
+     "id": "personal-finance.c3",
+     "title": "Index Funds Spread Out Your Risk",
+     "body": "Buying stock in just one company is risky because that single business could fail. An index fund lets you buy tiny pieces of hundreds of companies all at once. If a few companies struggle, the growing ones help balance out your overall investment.",
+     "subtopic": "Diversified investing",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    },
+    {
+     "id": "personal-finance.c4",
+     "title": "High Interest Debt Eats Your Wealth",
+     "body": "Credit cards often charge high interest rates, meaning you pay steep extra fees on money you borrow. Paying off a card charging twenty percent interest saves you more money than most investments will ever earn. Clearing high-cost debt should almost always happen before you start investing.",
+     "subtopic": "Debt management",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    },
+    {
+     "id": "personal-finance.c5",
+     "title": "Credit Scores Track Your Borrowing Reliability",
+     "body": "A credit score is a number that shows banks how reliably you pay back borrowed money. Paying bills on time builds a high score, which lets you borrow money at lower interest rates later. A low score makes big steps, like buying a house, much more expensive.",
+     "subtopic": "Credit history",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    },
+    {
+     "id": "personal-finance.c6",
+     "title": "Every Purchase Has an Invisible Opportunity Cost",
+     "body": "When you spend fifty dollars on shoes, you also give up what that money could have earned if invested. This lost potential is called opportunity cost. Thinking about what your money could grow into helps you decide if a purchase is truly worth it.",
+     "subtopic": "Opportunity cost in spending",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    },
+    {
+     "id": "personal-finance.c7",
+     "title": "Simple Budget Rules Keep Spending on Track",
+     "body": "The 50/30/20 rule divides your income after taxes into three basic buckets. Half goes to needs like rent and food, thirty percent to wants like hobbies, and twenty percent to savings. This setup allows you to enjoy your money today while protecting your future.",
+     "subtopic": "Budgeting frameworks",
+     "createdAt": "2026-11-08T03:58:25.386Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "personal-finance.v37F9l3Q1HzE",
+     "videoId": "37F9l3Q1HzE",
+     "title": "Do These 5 Things To Win With Money",
+     "channel": "Mark Tilbury",
+     "subtopic": "Personal finance",
+     "addedAt": "2026-11-08T03:58:25.387Z"
+    },
+    {
+     "id": "personal-finance.vDYCroCvPvJU",
+     "videoId": "DYCroCvPvJU",
+     "title": "HERE IS HOW TO MAKE SAVING 10K SIMPLE #SHORTS",
+     "channel": "Smart Women Society",
+     "subtopic": "Personal finance",
+     "addedAt": "2026-11-08T03:58:25.387Z"
+    },
+    {
+     "id": "personal-finance.vRIOcs8stB6w",
+     "videoId": "RIOcs8stB6w",
+     "title": "My 6-step Payday Routine. Full guide 👆 #shorts #payday #personalfinance",
+     "channel": "Nischa",
+     "subtopic": "Personal finance",
+     "addedAt": "2026-11-08T03:58:25.387Z"
+    },
+    {
+     "id": "personal-finance.vda5pfEezDjg",
+     "videoId": "da5pfEezDjg",
+     "title": "QUIT SPENDING MONEY ON THESE 3 THINGS",
+     "channel": "Mark Tilbury",
+     "subtopic": "Personal finance",
+     "addedAt": "2026-11-08T03:58:25.387Z"
+    },
+    {
+     "id": "personal-finance.vIKXiyApvKjI",
+     "videoId": "IKXiyApvKjI",
+     "title": "How much money is in your bank account?  🤔💰  #shorts #finance #interview",
+     "channel": "Chris Stocks",
+     "subtopic": "Personal finance",
+     "addedAt": "2026-11-08T03:58:25.387Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:58:25.941Z"
+  },
+  "evolution": {
+   "name": "Evolution",
+   "cards": [
+    {
+     "id": "evolution.c0",
+     "title": "Natural Selection Shapes Traits",
+     "body": "Individuals with advantageous traits survive longer and leave more offspring. Over many generations these traits become common in the population. This process is the engine of evolution.",
+     "subtopic": "Natural selection",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.c1",
+     "title": "Genetic Drift Changes Populations",
+     "body": "When a small group separates, random chance can shift gene frequencies regardless of usefulness. This can cause rare traits to become common or disappear. Drift is strongest in small populations.",
+     "subtopic": "Genetic drift",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.c2",
+     "title": "Speciation Happens When Groups Split",
+     "body": "If two groups of the same species stop interbreeding, their genes diverge over time. Eventually they become distinct species that can no longer produce fertile offspring. Geographic barriers often start this process.",
+     "subtopic": "Speciation mechanisms",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.c3",
+     "title": "Fossils Record Life's History",
+     "body": "Fossils are preserved remains that show how organisms looked in the past. Layers of rock act like pages in a history book, with older layers deeper down. Comparing fossils reveals how groups changed.",
+     "subtopic": "Fossil record",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.c4",
+     "title": "Common Ancestors Link All Species",
+     "body": "All living things trace back to shared ancestors, like branches of a huge family tree. Similar DNA patterns among distant animals signal this shared origin. The farther back, the more differences accumulate.",
+     "subtopic": "Common ancestry",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.c5",
+     "title": "Vestigial Organs Reveal Past",
+     "body": "Some structures, like human appendix or whale pelvic bones, no longer serve their original purpose. They persist because evolution modifies, not erases, existing parts. These remnants hint at former lifestyles.",
+     "subtopic": "Vestigial structures",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.c6",
+     "title": "Convergent Evolution Creates Similarities",
+     "body": "Unrelated species can evolve alike features when they face similar environments. For example, dolphins and sharks both have streamlined bodies for fast swimming. The similarity is functional, not due to close kinship.",
+     "subtopic": "Convergent evolution",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.c7",
+     "title": "DNA Shows Evolutionary Paths",
+     "body": "DNA sequences act like a code that mutates over time. By comparing genes of different organisms, scientists can map how species diverged. Shared mutations mark common branches on the tree of life.",
+     "subtopic": "Molecular evidence",
+     "createdAt": "2026-11-08T03:58:28.063Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "evolution.vm2FcWmo0sC0",
+     "videoId": "m2FcWmo0sC0",
+     "title": "Casually Explained: Evolution",
+     "channel": "Casually Explained",
+     "subtopic": "Evolution",
+     "addedAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.vYx11aZx0zWU",
+     "videoId": "Yx11aZx0zWU",
+     "title": "Human Evolution in Under 60 Seconds",
+     "channel": "Evolude",
+     "subtopic": "Evolution",
+     "addedAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.v2W5hOJaFjxU",
+     "videoId": "2W5hOJaFjxU",
+     "title": "Incredible Animation Shows How Humans Evolved From Early Life",
+     "channel": "Insider Tech",
+     "subtopic": "Evolution",
+     "addedAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.vt5ChC9zzoXg",
+     "videoId": "t5ChC9zzoXg",
+     "title": "How Evolution Works! 🤔🤔",
+     "channel": "BlobbyClips",
+     "subtopic": "Evolution",
+     "addedAt": "2026-11-08T03:58:28.063Z"
+    },
+    {
+     "id": "evolution.vqcCWjXLSyLo",
+     "videoId": "qcCWjXLSyLo",
+     "title": "Evolution Explained in Under 60 Seconds",
+     "channel": "Tyrecordslol",
+     "subtopic": "Evolution",
+     "addedAt": "2026-11-08T03:58:28.063Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:58:28.571Z"
+  },
+  "cryptography": {
+   "name": "Cryptography",
+   "cards": [
+    {
+     "id": "cryptography.c0",
+     "title": "Secret Keys Keep Data Safe",
+     "body": "Symmetric encryption uses the same secret key to scramble and unscramble information. Anyone who knows the key can read the message, so the key must be kept hidden. This is like using a password to lock and unlock a file.",
+     "subtopic": "Symmetric encryption",
+     "createdAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.c1",
+     "title": "Public Keys Unlock Open Sharing",
+     "body": "Asymmetric encryption uses a pair of keys: a public key that anyone can use to encrypt a message, and a private key that only the owner can use to decrypt it. The public key can be shared openly, while the private key stays secret. This lets you send confidential data without first sharing a secret.",
+     "subtopic": "Asymmetric encryption",
+     "createdAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.c2",
+     "title": "Hashes Make Quick Checks",
+     "body": "A cryptographic hash turns any piece of data into a short, fixed-size string called a digest. Changing even one letter of the original data produces a completely different digest. People use hashes to quickly check that files have not been altered.",
+     "subtopic": "Cryptographic hash functions",
+     "createdAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.c3",
+     "title": "Digital Signatures Prove Authenticity",
+     "body": "A digital signature is created by encrypting a hash of a message with the sender’s private key. Others can verify the signature with the sender’s public key, confirming both integrity and origin. This proves the message really came from the claimed sender.",
+     "subtopic": "Digital signatures",
+     "createdAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.c4",
+     "title": "One-Time Pad Gives Perfect Secrecy",
+     "body": "The one-time pad uses a random key that is as long as the message itself and is used only once. Because the key is random and never reused, the encrypted text reveals no information about the original message. This method provides perfect secrecy, but the key distribution is hard.",
+     "subtopic": "One-time pad",
+     "createdAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.c5",
+     "title": "Block Cipher Modes Add Randomness",
+     "body": "Block ciphers encrypt data in fixed-size chunks, but patterns can still appear. Modes like CBC chain each block with the previous one and add an initialization vector, a random start value. This hides patterns and makes the ciphertext harder to analyze.",
+     "subtopic": "Block cipher modes",
+     "createdAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.c6",
+     "title": "Collision Attacks Break Hashes",
+     "body": "A collision occurs when two different inputs produce the same hash value. Attackers can exploit collisions to forge documents or certificates that appear legitimate. Modern hash designs are chosen to make finding collisions extremely difficult.",
+     "subtopic": "Hash collisions",
+     "createdAt": "2026-11-08T03:58:41.022Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "cryptography.vGQvu49c0ZZc",
+     "videoId": "GQvu49c0ZZc",
+     "title": "What is Cryptography | Cryptography Explained | Cryptography Basics | Intellipaat",
+     "channel": "Intellipaat",
+     "subtopic": "Cryptography",
+     "addedAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.vSNmYrzdZxaM",
+     "videoId": "SNmYrzdZxaM",
+     "title": "Encryption EXPLAINED in 30 seconds👩‍💻 #technology #programming #software #tech #computerscience",
+     "channel": "Coding with Lewis",
+     "subtopic": "Cryptography",
+     "addedAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.v5H4Cd3AqT6Y",
+     "videoId": "5H4Cd3AqT6Y",
+     "title": "Cryptography in simple words | Basics of cryptocurrency | Neha Nagar #shorts",
+     "channel": "Finshow by Neha Nagar",
+     "subtopic": "Cryptography",
+     "addedAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.v50PrveNht7g",
+     "videoId": "50PrveNht7g",
+     "title": "What is Cryptography and Why is it Important?",
+     "channel": "Eye on Tech",
+     "subtopic": "Cryptography",
+     "addedAt": "2026-11-08T03:58:41.022Z"
+    },
+    {
+     "id": "cryptography.vVQj_nIvGzME",
+     "videoId": "VQj_nIvGzME",
+     "title": "How Spartan Encryption Scytales Worked 😮",
+     "channel": "Zack D. Films",
+     "subtopic": "Cryptography",
+     "addedAt": "2026-11-08T03:58:41.022Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:58:41.604Z"
+  },
+  "music-theory": {
+   "name": "Music theory",
+   "cards": [
+    {
+     "id": "music-theory.c0",
+     "title": "Circle of Fifths Explained",
+     "body": "The circle of fifths arranges the twelve keys around a clock. Moving clockwise adds a sharp each step; moving counter‑clockwise adds a flat. Musicians use it to find related keys quickly.",
+     "subtopic": "Key relationships",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    },
+    {
+     "id": "music-theory.c1",
+     "title": "How Major Scales Feel Happy",
+     "body": "A major scale follows a pattern of whole and half steps that sounds bright. The pattern is whole‑whole‑half‑whole‑whole‑whole‑half. This ordering creates the happy feeling we hear in many songs.",
+     "subtopic": "Scale construction",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    },
+    {
+     "id": "music-theory.c2",
+     "title": "Understanding Minor Scale Mood",
+     "body": "A natural minor scale changes the third, sixth and seventh notes of a major scale down a half step. This lower third gives a sad or mysterious sound. Many pop songs switch between major and minor for contrast.",
+     "subtopic": "Minor scale",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    },
+    {
+     "id": "music-theory.c3",
+     "title": "Why 4/4 Is Common",
+     "body": "The time signature 4/4 means four beats per measure and the quarter note gets one beat. It matches the natural rhythm of walking and speech. That's why most pop and rock songs use it.",
+     "subtopic": "Rhythm basics",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    },
+    {
+     "id": "music-theory.c4",
+     "title": "The Secret of Chord Progressions",
+     "body": "A chord progression is a sequence of chords that creates movement. The I‑V‑vi‑IV progression appears in countless hits because it feels resolved yet varied. Musicians memorize common progressions to write songs faster.",
+     "subtopic": "Harmony patterns",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    },
+    {
+     "id": "music-theory.c5",
+     "title": "Relative Major and Minor Keys",
+     "body": "Every major key has a relative minor that shares the same notes but starts on the sixth degree. For example, C major and A minor use the same white keys. This relationship lets composers shift mood without changing notes.",
+     "subtopic": "Key pairing",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    },
+    {
+     "id": "music-theory.c6",
+     "title": "Syncopation Gives Groove",
+     "body": "Syncopation places emphasis on normally weak beats or off‑beats. This surprise makes music feel more lively and danceable. Jazz and funk often use syncopation to create a groove.",
+     "subtopic": "Rhythmic syncopation",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    },
+    {
+     "id": "music-theory.c7",
+     "title": "Modes Show Different Colors",
+     "body": "Modes are scales built from the same notes but starting on different steps. The Dorian mode sounds a bit jazzy, while Phrygian sounds exotic. Musicians choose modes to give a song a distinct color.",
+     "subtopic": "Scale modes",
+     "createdAt": "2026-11-08T03:58:54.063Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "music-theory.vJfhrLak5KFo",
+     "videoId": "JfhrLak5KFo",
+     "title": "Music Theory EXPLAINED in 60 Seconds",
+     "channel": "Mike George",
+     "subtopic": "Music theory",
+     "addedAt": "2026-11-08T03:58:54.064Z"
+    },
+    {
+     "id": "music-theory.vGP3uNf3xeGc",
+     "videoId": "GP3uNf3xeGc",
+     "title": "Basic Music Theory 💯🎼🎹 #musictheory #musiclessons #shorts #ytshorts #sheetmusic #pianomusic #guitar",
+     "channel": "Sandeep Kumar Music Classes ",
+     "subtopic": "Music theory",
+     "addedAt": "2026-11-08T03:58:54.064Z"
+    },
+    {
+     "id": "music-theory.vJSHzRUzCMIQ",
+     "videoId": "JSHzRUzCMIQ",
+     "title": "Music Theory Explained in 2 MINUTES",
+     "channel": "Mike George",
+     "subtopic": "Music theory",
+     "addedAt": "2026-11-08T03:58:54.064Z"
+    },
+    {
+     "id": "music-theory.vuSkqSEnGALw",
+     "videoId": "uSkqSEnGALw",
+     "title": "ESSENTIAL GUITAR THEORY",
+     "channel": "Redlight Blue",
+     "subtopic": "Music theory",
+     "addedAt": "2026-11-08T03:58:54.064Z"
+    },
+    {
+     "id": "music-theory.vh64STITg0m8",
+     "videoId": "h64STITg0m8",
+     "title": "20 Years Of Music Theory in 2 Minutes",
+     "channel": "Amosdoll Music",
+     "subtopic": "Music theory",
+     "addedAt": "2026-11-08T03:58:54.064Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:58:54.906Z"
+  },
+  "sleep-science": {
+   "name": "Sleep science",
+   "cards": [
+    {
+     "id": "sleep-science.c0",
+     "title": "The Body’s Internal Clock",
+     "body": "The body runs a 24‑hour rhythm called the circadian clock that tells us when to wake and when to sleep. Light from sunrise resets this clock each day, keeping our sleep times stable.",
+     "subtopic": "Circadian rhythm",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    },
+    {
+     "id": "sleep-science.c1",
+     "title": "Why REM Sleep Feels Vivid",
+     "body": "REM (Rapid Eye Movement) sleep is when most dreaming happens, and the brain is as active as when we are awake. This high activity makes dreams feel vivid and sometimes emotional.",
+     "subtopic": "REM sleep",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    },
+    {
+     "id": "sleep-science.c2",
+     "title": "Sleep Cures Memory Gaps",
+     "body": "While we sleep, the brain replays the day’s events and moves important details to long‑term storage. This process helps us remember what we learned and forget useless bits.",
+     "subtopic": "Memory consolidation",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    },
+    {
+     "id": "sleep-science.c3",
+     "title": "The Truth About Sleep Debt",
+     "body": "Missing a few hours of sleep creates a sleep debt that your body tries to repay later. One long nap or extra night of rest can reduce the debt, but repeated loss harms health.",
+     "subtopic": "Sleep debt",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    },
+    {
+     "id": "sleep-science.c4",
+     "title": "Napping Boosts Learning",
+     "body": "A short 20‑minute nap can refresh the brain and improve alertness, while a 60‑minute nap helps move information into memory. Naps are most effective when taken early afternoon.",
+     "subtopic": "Power nap",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    },
+    {
+     "id": "sleep-science.c5",
+     "title": "How Sleep Grows Kids",
+     "body": "Growth hormone spikes during deep sleep, especially in the first part of the night. This hormone helps bones and muscles develop, making regular sleep essential for growing children.",
+     "subtopic": "Growth hormone",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    },
+    {
+     "id": "sleep-science.c6",
+     "title": "Dreams May Sort Emotions",
+     "body": "Researchers think that dreaming helps the brain process feelings from the day, turning strong emotions into neutral memories. This may explain why nightmares often involve fear or stress.",
+     "subtopic": "Dream function",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    },
+    {
+     "id": "sleep-science.c7",
+     "title": "Sleep Shields Your Immune System",
+     "body": "During sleep, the body makes more cytokines, proteins that fight infection and inflammation. Getting enough rest therefore helps you stay healthier and recover faster from illnesses.",
+     "subtopic": "Immune support",
+     "createdAt": "2026-11-08T03:59:06.903Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "sleep-science.vLlujAABku9M",
+     "videoId": "LlujAABku9M",
+     "title": "Unlocking the Secrets of Our Unique Sleep Patterns #shorts",
+     "channel": "Rena Malik, M.D.",
+     "subtopic": "Sleep science",
+     "addedAt": "2026-11-08T03:59:06.906Z"
+    },
+    {
+     "id": "sleep-science.vuEHu8LIZUKI",
+     "videoId": "uEHu8LIZUKI",
+     "title": "Are naps actually good for us? | Sleeping with Science",
+     "channel": "TED",
+     "subtopic": "Sleep science",
+     "addedAt": "2026-11-08T03:59:06.906Z"
+    },
+    {
+     "id": "sleep-science.veTgNgGO_bLs",
+     "videoId": "eTgNgGO_bLs",
+     "title": "What happens when we sleep?",
+     "channel": "The Economist",
+     "subtopic": "Sleep science",
+     "addedAt": "2026-11-08T03:59:06.906Z"
+    },
+    {
+     "id": "sleep-science.vVHJJBgR84w8",
+     "videoId": "VHJJBgR84w8",
+     "title": "Why Sleep Cycles Matter More Than Sleep Time",
+     "channel": "Dr James Gill",
+     "subtopic": "Sleep science",
+     "addedAt": "2026-11-08T03:59:06.906Z"
+    },
+    {
+     "id": "sleep-science.vknJWF4km3y0",
+     "videoId": "knJWF4km3y0",
+     "title": "How much sleep do you really need? | Sleeping with Science, a TED series",
+     "channel": "TED",
+     "subtopic": "Sleep science",
+     "addedAt": "2026-11-08T03:59:06.906Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:59:07.466Z"
+  },
+  "philosophy-of-mind": {
+   "name": "Philosophy of mind",
+   "cards": [
+    {
+     "id": "philosophy-of-mind.c0",
+     "title": "Mind and Body Separate",
+     "body": "Dualism says the mind and body are different kinds of stuff. Physicalism says everything, including thoughts, is just physical matter. Most scientists favor physicalism, but the debate is still alive.",
+     "subtopic": "Dualism vs Physicalism",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    },
+    {
+     "id": "philosophy-of-mind.c1",
+     "title": "The Hard Problem Explained",
+     "body": "The Hard Problem asks why a brain's activity feels like something from the inside. It shows the gap between describing neurons and explaining experience. Philosophers still look for an answer.",
+     "subtopic": "Hard Problem of Consciousness",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    },
+    {
+     "id": "philosophy-of-mind.c2",
+     "title": "Why the Chinese Room Matters",
+     "body": "The Chinese Room thought experiment imagines a person following rules to answer Chinese without understanding it. It shows that following a program may not give real understanding. The experiment challenges the idea that computers can truly think.",
+     "subtopic": "Chinese Room Thought Experiment",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    },
+    {
+     "id": "philosophy-of-mind.c3",
+     "title": "What Qualia Really Mean",
+     "body": "Qualia are the personal, private feelings like the redness of a rose. They are hard to measure because only the experiencer knows them. This idea shows why describing inner experience is tricky.",
+     "subtopic": "Qualia and Experience",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    },
+    {
+     "id": "philosophy-of-mind.c4",
+     "title": "How Intentionality Works",
+     "body": "Intentionality means a mental state is about something, like wanting ice cream. It lets our thoughts point to objects, events, or ideas. Understanding intentionality helps explain how we talk about the world.",
+     "subtopic": "Intentionality Explained",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    },
+    {
+     "id": "philosophy-of-mind.c5",
+     "title": "Brain as a Computer",
+     "body": "The brain as a computer view says neurons work like bits and logic gates. It suggests mental processes can be described by information processing. Critics note that brains are more messy than silicon chips.",
+     "subtopic": "Computational Theory of Mind",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    },
+    {
+     "id": "philosophy-of-mind.c6",
+     "title": "Thoughts Trigger Real Actions",
+     "body": "Mental causation asks how thoughts can cause physical actions, like deciding to pick up a cup. If everything is just particles, it's unclear how a feeling moves a hand. Philosophers try to link mental events with physical events.",
+     "subtopic": "Mental Causation Debate",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    },
+    {
+     "id": "philosophy-of-mind.c7",
+     "title": "Mind Extends Beyond Skin",
+     "body": "The extended mind thesis claims tools like notebooks become parts of our mind. When we rely on a phone to remember numbers, the phone acts as a memory store. This view blurs the line between brain and environment.",
+     "subtopic": "Extended Mind Theory",
+     "createdAt": "2026-11-08T03:59:20.056Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "philosophy-of-mind.vKYgzceVZA9E",
+     "videoId": "KYgzceVZA9E",
+     "title": "Carl Jung on God #shorts",
+     "channel": "DustyArchiver",
+     "subtopic": "Philosophy of mind",
+     "addedAt": "2026-11-08T03:59:20.057Z"
+    },
+    {
+     "id": "philosophy-of-mind.vtnViLTafKdU",
+     "videoId": "tnViLTafKdU",
+     "title": "Philosophy Of Mind (Pansychism)",
+     "channel": "The New World",
+     "subtopic": "Philosophy of mind",
+     "addedAt": "2026-11-08T03:59:20.057Z"
+    },
+    {
+     "id": "philosophy-of-mind.voqzAkbIB4B8",
+     "videoId": "oqzAkbIB4B8",
+     "title": "Stop Explaining Yourself to Small Minds💭 #shortsfeed #shorts #philosophy",
+     "channel": "Still Mind Society ",
+     "subtopic": "Philosophy of mind",
+     "addedAt": "2026-11-08T03:59:20.057Z"
+    },
+    {
+     "id": "philosophy-of-mind.voRHjKv3f0Y8",
+     "videoId": "oRHjKv3f0Y8",
+     "title": "Philosophy Of Mind (Monistic Idealism)",
+     "channel": "The New World",
+     "subtopic": "Philosophy of mind",
+     "addedAt": "2026-11-08T03:59:20.057Z"
+    },
+    {
+     "id": "philosophy-of-mind.vlgJ8nUGwAQ0",
+     "videoId": "lgJ8nUGwAQ0",
+     "title": "Functionalism - Philosophy of Mind",
+     "channel": "Philosophy Vibe",
+     "subtopic": "Philosophy of mind",
+     "addedAt": "2026-11-08T03:59:20.057Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:59:20.790Z"
+  },
+  "probability": {
+   "name": "Probability",
+   "cards": [
+    {
+     "id": "probability.c0",
+     "title": "Two Coins One Surprise",
+     "body": "When you flip two fair coins, there are four equally likely outcomes: HH, HT, TH, TT. The chance of getting exactly one head is 2 out of 4, so 50%. This shows how adding possibilities changes probabilities.",
+     "subtopic": "Simple coin experiments",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    },
+    {
+     "id": "probability.c1",
+     "title": "Birthday Paradox Made Simple",
+     "body": "In a group of just 23 people, the chance that two share the same birthday is higher than 50%. This seems low because many pairs are compared, not just one pair. It illustrates how probability grows quickly with more participants.",
+     "subtopic": "Surprising probabilities",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    },
+    {
+     "id": "probability.c2",
+     "title": "Independent Events Explained",
+     "body": "Two events are independent when the outcome of one does not affect the likelihood of the other. For example, rolling a die and flipping a coin are independent; each keeps its original chance. Multiplying their individual probabilities gives the joint chance.",
+     "subtopic": "Event independence",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    },
+    {
+     "id": "probability.c3",
+     "title": "Monty Hall Switching Wins",
+     "body": "In the game show puzzle, you pick one of three doors, then the host opens another door that hides a goat. If you switch your choice, you win the car two-thirds of the time. Switching improves odds because the host’s action gives extra information.",
+     "subtopic": "Conditional probability",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    },
+    {
+     "id": "probability.c4",
+     "title": "Law of Large Numbers",
+     "body": "If you toss a fair coin many thousands of times, the proportion of heads approaches 50%. The more trials you run, the closer the observed frequency gets to the theoretical probability. This principle underlies why statistics become reliable with large data sets.",
+     "subtopic": "Long‑run frequencies",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    },
+    {
+     "id": "probability.c5",
+     "title": "Odds versus Probability Clarified",
+     "body": "Odds compare the number of ways an event can happen to the ways it cannot. For a fair dice roll, the odds of rolling a six are 1 to 5, while the probability is 1 divided by 6, about 16.7%. Converting between them helps in betting and games.",
+     "subtopic": "Odds and probability",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    },
+    {
+     "id": "probability.c6",
+     "title": "Gambler Fallacy Unmasked",
+     "body": "The gambler's fallacy is the belief that past random events change future chances, like thinking a coin will land heads after many tails. Each flip remains independent, so the chance stays 50% regardless of previous outcomes. Recognizing this prevents faulty betting strategies.",
+     "subtopic": "Misconceptions in randomness",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    },
+    {
+     "id": "probability.c7",
+     "title": "Expected Value Guides Decisions",
+     "body": "Expected value adds up each possible outcome multiplied by its chance, giving a single number to compare options. A game that pays $10 half the time and $0 the other half has an expected value of $5. Choosing actions with higher expected value tends to be advantageous over many trials.",
+     "subtopic": "Decision theory basics",
+     "createdAt": "2026-11-08T03:59:33.560Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "probability.vOJjn7WLQeBo",
+     "videoId": "OJjn7WLQeBo",
+     "title": "Conditional probability in one minute",
+     "channel": "Onlock",
+     "subtopic": "Probability",
+     "addedAt": "2026-11-08T03:59:33.561Z"
+    },
+    {
+     "id": "probability.vrcYM6XjRW-Q",
+     "videoId": "rcYM6XjRW-Q",
+     "title": "Probability? It’s all made up",
+     "channel": "Oxford Mathematics",
+     "subtopic": "Probability",
+     "addedAt": "2026-11-08T03:59:33.561Z"
+    },
+    {
+     "id": "probability.vYu6OdQ7dMow",
+     "videoId": "Yu6OdQ7dMow",
+     "title": "Probability Formulas -1",
+     "channel": "Bright Maths",
+     "subtopic": "Probability",
+     "addedAt": "2026-11-08T03:59:33.561Z"
+    },
+    {
+     "id": "probability.vTwctT3Ncm1w",
+     "videoId": "TwctT3Ncm1w",
+     "title": "Probability Demonstration: the Galton Board",
+     "channel": "Shaosong Ou",
+     "subtopic": "Probability",
+     "addedAt": "2026-11-08T03:59:33.561Z"
+    },
+    {
+     "id": "probability.vbjFbDbvMEcc",
+     "videoId": "bjFbDbvMEcc",
+     "title": "Probability of Consecutive Coin Flips",
+     "channel": "Justice Shepard",
+     "subtopic": "Probability",
+     "addedAt": "2026-11-08T03:59:33.561Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:59:34.329Z"
+  },
+  "ocean-life": {
+   "name": "Ocean life",
+   "cards": [
+    {
+     "id": "ocean-life.c0",
+     "title": "Deep Sea Creatures Make Their Own Light",
+     "body": "Most animals living in the pitch-black ocean depths can produce their own light, a trait called bioluminescence. They use glowing chemical reactions to lure prey, confuse predators, or communicate in total darkness.",
+     "subtopic": "Deep sea bioluminescence",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    },
+    {
+     "id": "ocean-life.c1",
+     "title": "Corals Are Animals Powered By Algae",
+     "body": "Coral reefs look like underwater rocks, but they are built by colonies of tiny soft-bodied animals. Microscopic algae live inside the coral cells and provide most of their food through photosynthesis.",
+     "subtopic": "Coral reef symbiosis",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    },
+    {
+     "id": "ocean-life.c2",
+     "title": "Life Thrives Around Sunless Ocean Vents",
+     "body": "Deep sea hydrothermal vents spew scalding water packed with minerals. Special bacteria convert these chemicals into food without any sunlight, supporting whole ecosystems of giant tubeworms and crabs.",
+     "subtopic": "Hydrothermal vent chemosynthesis",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    },
+    {
+     "id": "ocean-life.c3",
+     "title": "Dead Whales Feed Deep Sea Communities",
+     "body": "When a whale dies and sinks to the seafloor, it creates a rich ecosystem called a whale fall. A single carcass provides food and shelter for scavengers, specialized worms, and bacteria for several decades.",
+     "subtopic": "Whale fall ecosystems",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    },
+    {
+     "id": "ocean-life.c4",
+     "title": "Countershading Helps Fish Hide In Open Water",
+     "body": "Many ocean fish like sharks and tuna have dark backs and light bellies. Viewed from above, their dark tops blend into the deep water, while their pale undersides blend into bright sunlight from below.",
+     "subtopic": "Marine animal camouflage",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    },
+    {
+     "id": "ocean-life.c5",
+     "title": "Millions Of Sea Creatures Migrate Every Night",
+     "body": "Every evening, billions of small sea creatures swim hundreds of meters from the deep ocean up to the surface to feed. Before sunrise, they swim back down into the dark to hide from daytime predators.",
+     "subtopic": "Diel vertical migration",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    },
+    {
+     "id": "ocean-life.c6",
+     "title": "Parrotfish Create Huge Amounts Of White Sand",
+     "body": "Parrotfish use strong, beak-like teeth to scrape algae off tropical reefs, crunching up the hard coral skeleton in the process. They digest the algae and poop out finely ground coral that forms tropical white sand beaches.",
+     "subtopic": "Coral reef bioerosion",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    },
+    {
+     "id": "ocean-life.c7",
+     "title": "Acidic Oceans Make Shells Hard To Build",
+     "body": "As the ocean absorbs excess carbon dioxide from the air, the water becomes more acidic. This change strips away the chemical building blocks that crabs, clams, and tiny plankton need to form their hard shells.",
+     "subtopic": "Ocean acidification effects",
+     "createdAt": "2026-11-08T03:59:56.499Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "ocean-life.v3iS8FRUYDCU",
+     "videoId": "3iS8FRUYDCU",
+     "title": "Ocean Floor: Earth's Recycling System & Deep-Sea Life Explained #shorts",
+     "channel": "For Facts Sake",
+     "subtopic": "Ocean life",
+     "addedAt": "2026-11-08T03:59:56.501Z"
+    },
+    {
+     "id": "ocean-life.vDZ9v54D4mZ8",
+     "videoId": "DZ9v54D4mZ8",
+     "title": "How Deep The Ocean REALLY Is",
+     "channel": "Cleo Abram",
+     "subtopic": "Ocean life",
+     "addedAt": "2026-11-08T03:59:56.501Z"
+    },
+    {
+     "id": "ocean-life.vLLXu3xWR6WM",
+     "videoId": "LLXu3xWR6WM",
+     "title": "Top 5 Unexplained Deep Sea Creatures That Science Can’t Explain",
+     "channel": "Woofy D. Luffy",
+     "subtopic": "Ocean life",
+     "addedAt": "2026-11-08T03:59:56.501Z"
+    },
+    {
+     "id": "ocean-life.v1xWzJmtC7og",
+     "videoId": "1xWzJmtC7og",
+     "title": "Deep Sea Creature Seen For First Time",
+     "channel": "Cleo Abram",
+     "subtopic": "Ocean life",
+     "addedAt": "2026-11-08T03:59:56.501Z"
+    },
+    {
+     "id": "ocean-life.vfzU4elK95vA",
+     "videoId": "fzU4elK95vA",
+     "title": "Ocean Life Explained in 30 Seconds! 🌊",
+     "channel": "comraaz",
+     "subtopic": "Ocean life",
+     "addedAt": "2026-11-08T03:59:56.501Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:59:57.056Z"
+  },
+  "architecture": {
+   "name": "Architecture",
+   "cards": [
+    {
+     "id": "architecture.c0",
+     "title": "Flying Buttresses Support Cathedrals",
+     "body": "Flying buttresses are external supports that transfer roof weight outward to the walls. This lets the walls be tall and thin, creating large stained‑glass windows. Gothic cathedrals used many of them for both strength and style.",
+     "subtopic": "Gothic structural engineering",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    },
+    {
+     "id": "architecture.c1",
+     "title": "Greek Temples Hide Optical Illusions",
+     "body": "Greek temples were built slightly curved upward, a technique called entasis, which hides the illusion of sagging. Their columns also tilt inward a tiny amount to appear straight to the eye. These subtle tricks made the buildings look perfect from far away.",
+     "subtopic": "Classical architectural optics",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    },
+    {
+     "id": "architecture.c2",
+     "title": "Glass Facades Boost Energy Use",
+     "body": "Modern glass facades let a lot of sunlight in, which can make indoor spaces bright. However, without shading, the extra heat raises cooling costs. Designers add low‑emissivity coatings and blinds to balance light and energy.",
+     "subtopic": "Modernist building envelope",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    },
+    {
+     "id": "architecture.c3",
+     "title": "Passive Solar Design Catches Sunlight",
+     "body": "Passive solar design places windows on the south side to catch winter sun. Thick walls or floors store that heat and release it slowly. By shaping the building, it stays comfortable without mechanical heating.",
+     "subtopic": "Sustainable building design",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    },
+    {
+     "id": "architecture.c4",
+     "title": "Base Isolation Buffers Earthquakes",
+     "body": "Base isolation uses rubber or slider pads between a building and its foundation. When the ground shakes, the isolation layer absorbs most of the motion. This keeps the structure above more stable during earthquakes.",
+     "subtopic": "Seismic engineering",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    },
+    {
+     "id": "architecture.c5",
+     "title": "Domes Spread Load Evenly",
+     "body": "A dome is like a three‑dimensional arch that pushes forces outward and down. This even distribution lets a dome cover large spaces without internal supports. Many famous domes, like the Pantheon, use this principle.",
+     "subtopic": "Vault and dome construction",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    },
+    {
+     "id": "architecture.c6",
+     "title": "Modular Units Speed Construction",
+     "body": "Modular construction builds room‑sized sections in factories. These sections are then shipped to the site and connected like giant building blocks. The method reduces waste and speeds up the construction schedule.",
+     "subtopic": "Prefabricated building methods",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    },
+    {
+     "id": "architecture.c7",
+     "title": "Brutalist Buildings Use Raw Concrete",
+     "body": "Brutalist architecture showcases raw concrete surfaces with few decorations. The massive, blocky shapes often hide functional elements like ventilation. Though controversial, the style emphasizes honesty of material.",
+     "subtopic": "20th century architectural style",
+     "createdAt": "2026-11-08T03:59:59.106Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "architecture.vyLZPIrEusR8",
+     "videoId": "yLZPIrEusR8",
+     "title": "Discover the Unique Miller Curve: Newfoundland Architecture Explained #shorts",
+     "channel": "Deep Dive Survivor",
+     "subtopic": "Architecture",
+     "addedAt": "2026-11-08T03:59:59.110Z"
+    },
+    {
+     "id": "architecture.v_doTyirVc1M",
+     "videoId": "_doTyirVc1M",
+     "title": "POV: You Make Architectural Scale Models✨ #architecture",
+     "channel": "NEEZO Studios",
+     "subtopic": "Architecture",
+     "addedAt": "2026-11-08T03:59:59.110Z"
+    },
+    {
+     "id": "architecture.vFkV9KTrMoPw",
+     "videoId": "FkV9KTrMoPw",
+     "title": "Spaghetti bridge contest 🍝🫡 #shorts #architecture #architect",
+     "channel": "Art by Joudy",
+     "subtopic": "Architecture",
+     "addedAt": "2026-11-08T03:59:59.110Z"
+    },
+    {
+     "id": "architecture.vfdvZ0SdTl7U",
+     "videoId": "fdvZ0SdTl7U",
+     "title": "A Day in the Life of an Architecture Major",
+     "channel": "Gohar Khan",
+     "subtopic": "Architecture",
+     "addedAt": "2026-11-08T03:59:59.110Z"
+    },
+    {
+     "id": "architecture.vd8ZY7diYxyY",
+     "videoId": "d8ZY7diYxyY",
+     "title": "Architect vs Engineer 💀",
+     "channel": "Memesso",
+     "subtopic": "Architecture",
+     "addedAt": "2026-11-08T03:59:59.110Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T03:59:59.446Z"
+  },
+  "habits-and-motivation": {
+   "name": "Habits and motivation",
+   "cards": [
+    {
+     "id": "habits-and-motivation.c0",
+     "title": "The Habit Loop Explained",
+     "body": "Every habit follows three steps: a cue that triggers it, a routine that is the action, and a reward that tells your brain it was worth it. Recognizing the loop lets you change unwanted habits by tweaking one part.",
+     "subtopic": "Habit loop basics",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    },
+    {
+     "id": "habits-and-motivation.c1",
+     "title": "Stack New Habits With Old",
+     "body": "Link a habit you already do to a new small action, like doing push‑ups right after brushing teeth. The old habit acts as a cue, making the new one easier to start.",
+     "subtopic": "Habit stacking technique",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    },
+    {
+     "id": "habits-and-motivation.c2",
+     "title": "Identity Shapes Your Routines",
+     "body": "When you see yourself as a runner, you’re more likely to lace up daily. Changing self‑talk from ‘I want to run’ to ‘I am a runner’ strengthens habits.",
+     "subtopic": "Identity based habits",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    },
+    {
+     "id": "habits-and-motivation.c3",
+     "title": "Willpower Is a Limited Resource",
+     "body": "Your brain’s self‑control gets tired after use, so making decisions early in the day is easier. Put important habits in the morning before willpower wanes.",
+     "subtopic": "Willpower depletion",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    },
+    {
+     "id": "habits-and-motivation.c4",
+     "title": "Environment Designs Automatic Behaviors",
+     "body": "Keeping a water bottle on your desk makes you sip more, while hiding snacks reduces temptation. Small changes in surroundings cue desired habits without thinking.",
+     "subtopic": "Environmental cues",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    },
+    {
+     "id": "habits-and-motivation.c5",
+     "title": "Track Progress To Stay Motivated",
+     "body": "Marking each day you succeed creates a visual chain that your brain wants to keep growing. Missing a day feels like breaking the streak, which pushes you to continue.",
+     "subtopic": "Habit tracking benefits",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    },
+    {
+     "id": "habits-and-motivation.c6",
+     "title": "Start With Tiny Steps",
+     "body": "Instead of aiming for a 30‑minute run, begin with two minutes. Small successes build confidence and make the habit feel doable, leading to gradual growth.",
+     "subtopic": "Mini habit start",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    },
+    {
+     "id": "habits-and-motivation.c7",
+     "title": "Reward Your Brain, Not Just Your Goals",
+     "body": "Celebrate finishing a study session with a short break, not just the grade you hope to earn. Immediate rewards reinforce the habit loop more than distant outcomes.",
+     "subtopic": "Immediate rewards",
+     "createdAt": "2026-11-08T04:00:12.029Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "habits-and-motivation.vkqQLQZ7vTcI",
+     "videoId": "kqQLQZ7vTcI",
+     "title": "Try the 2-Minute Rule for building new habits 🤯 #jamesclear #habits",
+     "channel": "MasterClass",
+     "subtopic": "Habits and motivation",
+     "addedAt": "2026-11-08T04:00:12.032Z"
+    },
+    {
+     "id": "habits-and-motivation.vDyliijbw_aQ",
+     "videoId": "Dyliijbw_aQ",
+     "title": "5 Lessons from Atomic Habits in Under 60 Seconds #SHORTS",
+     "channel": "Ali Abdaal",
+     "subtopic": "Habits and motivation",
+     "addedAt": "2026-11-08T04:00:12.032Z"
+    },
+    {
+     "id": "habits-and-motivation.vNuBhME3Elf0",
+     "videoId": "NuBhME3Elf0",
+     "title": "6 Habits Of Billionaires",
+     "channel": "Motivadership",
+     "subtopic": "Habits and motivation",
+     "addedAt": "2026-11-08T04:00:12.032Z"
+    },
+    {
+     "id": "habits-and-motivation.vRZj-gkGGRh8",
+     "videoId": "RZj-gkGGRh8",
+     "title": "Healthy Habits to Transform Your Life | Simple Routine #healthyeating #healthylifestyle #shorts",
+     "channel": "Fit Food Doctor ",
+     "subtopic": "Habits and motivation",
+     "addedAt": "2026-11-08T04:00:12.032Z"
+    },
+    {
+     "id": "habits-and-motivation.vfLeJJPxua3E",
+     "videoId": "fLeJJPxua3E",
+     "title": "Best Short Motivational Speech Video - 24 HOURS - 1-Minute Motivation #2",
+     "channel": "Motiversity",
+     "subtopic": "Habits and motivation",
+     "addedAt": "2026-11-08T04:00:12.032Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:00:12.765Z"
+  },
+  "linguistics": {
+   "name": "Linguistics",
+   "cards": [
+    {
+     "id": "linguistics.c0",
+     "title": "Sounds Shape Meaning",
+     "body": "Changing a single sound can change a word’s meaning. For example, “bat” and “pat” sound similar but mean different things.",
+     "subtopic": "Phonetics",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    },
+    {
+     "id": "linguistics.c1",
+     "title": "Word Building Blocks",
+     "body": "A morpheme is the smallest part of a word that has meaning. The prefix “un‑” means “not”, so “un‑happy” means not happy.",
+     "subtopic": "Morphology",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    },
+    {
+     "id": "linguistics.c2",
+     "title": "Sentence Order Matters",
+     "body": "The order of words tells who does what. “Dog bites man” is different from “Man bites dog.”",
+     "subtopic": "Syntax",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    },
+    {
+     "id": "linguistics.c3",
+     "title": "Hidden Meaning Layers",
+     "body": "Semantics studies what words literally mean and what they imply. Saying “It’s cold in here” can be a polite way of asking someone to close a window.",
+     "subtopic": "Semantics",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    },
+    {
+     "id": "linguistics.c4",
+     "title": "Dialects Show Identity",
+     "body": "Sociolinguistics looks at how speech varies with community. In the American South many people use the word “y’all” to address a group.",
+     "subtopic": "Sociolinguistics",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    },
+    {
+     "id": "linguistics.c5",
+     "title": "Kids Learn Language Fast",
+     "body": "Children pick up grammar rules just by listening, not by formal lessons. They start using past‑tense verbs like “walked” before they can read.",
+     "subtopic": "Language Acquisition",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    },
+    {
+     "id": "linguistics.c6",
+     "title": "Languages Evolve Over Time",
+     "body": "Historical linguistics traces how languages change over centuries. Old English “niht” became the modern word “night.”",
+     "subtopic": "Historical Linguistics",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    },
+    {
+     "id": "linguistics.c7",
+     "title": "Writing Systems Are Pictures",
+     "body": "Writing systems can show sounds or whole ideas. Alphabet letters spell sounds, while Chinese characters mostly represent ideas.",
+     "subtopic": "Writing Systems",
+     "createdAt": "2026-11-08T04:02:48.468Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "linguistics.vpJls5A7lZYg",
+     "videoId": "pJls5A7lZYg",
+     "title": "Do you know these “obvious” etymologies? #linguistics #language #words #etymology #english",
+     "channel": "human1011",
+     "subtopic": "Linguistics",
+     "addedAt": "2026-11-08T04:02:48.471Z"
+    },
+    {
+     "id": "linguistics.vCibp-AsPxqU",
+     "videoId": "Cibp-AsPxqU",
+     "title": "Branches of Linguistics #linguistics #branchesoflinguistics #learnenglish #learning #shorts",
+     "channel": "Let's Talk Literature",
+     "subtopic": "Linguistics",
+     "addedAt": "2026-11-08T04:02:48.471Z"
+    },
+    {
+     "id": "linguistics.vw98JneRYE8w",
+     "videoId": "w98JneRYE8w",
+     "title": "𝐋𝐢𝐧𝐠𝐮𝐢𝐬𝐭𝐢𝐜𝐬 क्या होता है? || 𝐋𝐢𝐧𝐠𝐮𝐢𝐬𝐭𝐢𝐜𝐬 𝐢𝐧 𝐄𝐧𝐠𝐥𝐢𝐬𝐡 || 𝐄𝐱𝐩𝐥𝐚𝐧𝐚𝐭𝐢𝐨𝐧 𝐨𝐟 𝐋𝐢𝐧𝐠𝐮𝐢𝐬𝐭𝐢𝐜𝐬 |𝐁𝐲 𝐃𝐢𝐩𝐢𝐤𝐚 𝐊𝐮𝐦𝐚𝐯𝐚𝐭",
+     "channel": "English with Dipika Kumavat",
+     "subtopic": "Linguistics",
+     "addedAt": "2026-11-08T04:02:48.471Z"
+    },
+    {
+     "id": "linguistics.vQHUg_HCcKmY",
+     "videoId": "QHUg_HCcKmY",
+     "title": "Why they forget \"the\" a lot #linguistics #language",
+     "channel": "Nardi",
+     "subtopic": "Linguistics",
+     "addedAt": "2026-11-08T04:02:48.471Z"
+    },
+    {
+     "id": "linguistics.vfBGx4WbBGJI",
+     "videoId": "fBGx4WbBGJI",
+     "title": "Linguistics & Its Branches Explained in 15 Seconds! 🧠📚 | Easy Linguistics",
+     "channel": "LitScope",
+     "subtopic": "Linguistics",
+     "addedAt": "2026-11-08T04:02:48.471Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:02:49.075Z"
+  },
+  "space-exploration": {
+   "name": "Space exploration",
+   "cards": [
+    {
+     "id": "space-exploration.c0",
+     "title": "How Rockets Defy Gravity",
+     "body": "Rockets carry fuel that burns and shoots hot gas out the back. By Newton's third law, the push of the gas makes the rocket move forward. This works even in the vacuum of space because the reaction only needs something to push.",
+     "subtopic": "Rocket propulsion",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    },
+    {
+     "id": "space-exploration.c1",
+     "title": "Living in Microgravity",
+     "body": "In microgravity, astronauts float because they are falling toward Earth together with the station. Their muscles and bones get weaker without the pull of gravity, so they exercise several hours a day. Simple resistance machines help keep them strong.",
+     "subtopic": "Human health in space",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    },
+    {
+     "id": "space-exploration.c2",
+     "title": "Why Space Telescopes See Better",
+     "body": "Space telescopes sit above Earth's atmosphere, so they avoid blurry air. Without atmospheric distortion they can see faint galaxies clearly. This lets them discover new planets and study distant stars.",
+     "subtopic": "Space telescopes",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    },
+    {
+     "id": "space-exploration.c3",
+     "title": "The International Space Station Life",
+     "body": "Astronauts on the ISS follow a strict schedule of work, meals, and sleep. They float while they eat, using food packets that stick to trays. Every few months they receive fresh supplies from cargo rockets.",
+     "subtopic": "ISS daily routine",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    },
+    {
+     "id": "space-exploration.c4",
+     "title": "Protecting Other Planets",
+     "body": "Planetary protection means cleaning spacecraft so they don't carry Earth germs to other worlds. Scientists also avoid contaminating places we might study for life. This helps keep future discoveries reliable.",
+     "subtopic": "Planetary protection",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    },
+    {
+     "id": "space-exploration.c5",
+     "title": "Water Discovered on the Moon",
+     "body": "Scientists found frozen water in permanently shadowed craters near the Moon's poles. They detected the ice using a special radar that senses water signatures. The water could be turned into drinking supply for future moon bases.",
+     "subtopic": "Lunar water",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    },
+    {
+     "id": "space-exploration.c6",
+     "title": "Mars Rovers Explore Red Soil",
+     "body": "Mars rovers move across the Red Planet using wheels that can climb over rocks. They carry cameras and drills to analyze soil and look for signs of past life. They send pictures back to Earth over a radio link.",
+     "subtopic": "Mars rover technology",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    },
+    {
+     "id": "space-exploration.c7",
+     "title": "Space Junk Threatens Satellites",
+     "body": "Old satellites and spent rocket stages orbit Earth as space junk. If they collide, they create fast fragments that can damage active satellites. Tracking networks watch the debris to warn spacecraft of possible hits.",
+     "subtopic": "Space debris management",
+     "createdAt": "2026-11-08T04:03:01.149Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "space-exploration.veMSJI8MHV1w",
+     "videoId": "eMSJI8MHV1w",
+     "title": "How Does a Rocket Land Backward? 🚀 Explained in 30 Seconds! #shortsfeed  #nexorascience #space",
+     "channel": "Nexora Science",
+     "subtopic": "Space exploration",
+     "addedAt": "2026-11-08T04:03:01.151Z"
+    },
+    {
+     "id": "space-exploration.vmtS7ykaOInQ",
+     "videoId": "mtS7ykaOInQ",
+     "title": "How Fast Can We Reach Titania? 🪐🚀 | Light, Space Shuttle, UFO & More!",
+     "channel": "Let's Learn Universe",
+     "subtopic": "Space exploration",
+     "addedAt": "2026-11-08T04:03:01.151Z"
+    },
+    {
+     "id": "space-exploration.v30oheh48f20",
+     "videoId": "30oheh48f20",
+     "title": "Project Orion: Nuclear Space Propulsion Dream Explained 🚀 | Space Exploration & Beyond #shorts",
+     "channel": "ASKING AI",
+     "subtopic": "Space exploration",
+     "addedAt": "2026-11-08T04:03:01.151Z"
+    },
+    {
+     "id": "space-exploration.viJIb4qxWPpk",
+     "videoId": "iJIb4qxWPpk",
+     "title": "Ever Wondered How Astronauts Get Back to Their Spacecraft?",
+     "channel": "Chronovex",
+     "subtopic": "Space exploration",
+     "addedAt": "2026-11-08T04:03:01.151Z"
+    },
+    {
+     "id": "space-exploration.vHc5Afrk7yCs",
+     "videoId": "Hc5Afrk7yCs",
+     "title": "Solar System Explained  | Amazing Planetary Orbits Simulation! #solarsystem #space #nasa #usa",
+     "channel": "Galaxy Sabid",
+     "subtopic": "Space exploration",
+     "addedAt": "2026-11-08T04:03:01.151Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:03:01.732Z"
+  },
+  "how-ai-works": {
+   "name": "How AI works",
+   "cards": [
+    {
+     "id": "how-ai-works.c0",
+     "title": "Neural Networks Mimic Brain Connections",
+     "body": "Artificial neural networks are built from many tiny units called neurons. Each neuron does a little calculation and sends its result to the next layer, similar to how brain cells work together.",
+     "subtopic": "Artificial neural networks",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    },
+    {
+     "id": "how-ai-works.c1",
+     "title": "Training Data Shapes AI Knowledge",
+     "body": "AI learns by looking at lots of examples, called training data. The patterns it discovers depend on what it has seen, so diverse data leads to broader knowledge.",
+     "subtopic": "Supervised learning data",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    },
+    {
+     "id": "how-ai-works.c2",
+     "title": "Backpropagation Adjusts Weights",
+     "body": "After the AI makes a guess, it checks how wrong it was. The error is sent backward through the network to change each connection’s weight, a number that scales inputs, improving future guesses.",
+     "subtopic": "Learning algorithm",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    },
+    {
+     "id": "how-ai-works.c3",
+     "title": "Loss Function Measures Mistakes",
+     "body": "A loss function is a formula that tells how far the prediction is from the correct answer. Lower loss means the AI is performing better.",
+     "subtopic": "Error measurement",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    },
+    {
+     "id": "how-ai-works.c4",
+     "title": "Overfitting Makes AI Forget New",
+     "body": "Overfitting happens when a model memorizes training examples too closely. It then struggles to apply what it learned to new situations because it cannot generalize, or use rules on unseen data.",
+     "subtopic": "Model generalization",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    },
+    {
+     "id": "how-ai-works.c5",
+     "title": "Regularization Keeps Models Simple",
+     "body": "Regularization techniques like dropout randomly turn off some neurons while training. This forces the AI to rely on many paths and reduces overfitting.",
+     "subtopic": "Preventing overfit",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    },
+    {
+     "id": "how-ai-works.c6",
+     "title": "Inference Runs AI Quickly",
+     "body": "Once training ends, the AI uses the learned weights to make predictions in a fast step called inference. Inference can run on phones, computers, or cloud servers.",
+     "subtopic": "Model deployment",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    },
+    {
+     "id": "how-ai-works.c7",
+     "title": "Bias Can Slip Into AI",
+     "body": "If the training data contains unfair patterns, the AI can repeat those biases, which are systematic errors favoring some groups. Developers must check data and adjust the model to keep it fair.",
+     "subtopic": "Ethical AI",
+     "createdAt": "2026-11-08T04:01:23.965Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "how-ai-works.vnFRYgfitomc",
+     "videoId": "nFRYgfitomc",
+     "title": "How Does An AI Like ChatGPT Learn 😮",
+     "channel": "Zack D. Films",
+     "subtopic": "How AI works",
+     "addedAt": "2026-11-08T04:03:01.734Z"
+    },
+    {
+     "id": "how-ai-works.vzu4r3YElEz0",
+     "videoId": "zu4r3YElEz0",
+     "title": "What is AI? Simple Explanation for Beginners! (Must Watch!) #shorts #ai",
+     "channel": "CTRL+ALT+DEFEND ",
+     "subtopic": "How AI works",
+     "addedAt": "2026-11-08T04:03:01.734Z"
+    },
+    {
+     "id": "how-ai-works.vFCvK8Bbc0HU",
+     "videoId": "FCvK8Bbc0HU",
+     "title": "Artificial Intelligence for Dummies | Understanding AI 🤯",
+     "channel": "Shawn Ryan Clips",
+     "subtopic": "How AI works",
+     "addedAt": "2026-11-08T04:03:01.734Z"
+    },
+    {
+     "id": "how-ai-works.vUdE-W30oOXo",
+     "videoId": "UdE-W30oOXo",
+     "title": "Artificial intelligence explained in 2 minutes: What exactly is AI?",
+     "channel": "KI-Campus",
+     "subtopic": "How AI works",
+     "addedAt": "2026-11-08T04:03:01.734Z"
+    },
+    {
+     "id": "how-ai-works.v3Yh9OddmgS0",
+     "videoId": "3Yh9OddmgS0",
+     "title": "How data centers work and why AI is driving their growth",
+     "channel": "Associated Press",
+     "subtopic": "How AI works",
+     "addedAt": "2026-11-08T04:03:01.734Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:03:02.097Z"
+  },
+  "startups": {
+   "name": "Startups",
+   "cards": [
+    {
+     "id": "startups.c0",
+     "title": "Build a Minimum Viable Product",
+     "body": "A Minimum Viable Product (MVP) is the simplest version of a product that still solves a real problem for users. It lets founders test ideas quickly with real customers. Feedback from an MVP guides later features and reduces wasted effort.",
+     "subtopic": "MVP development",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    },
+    {
+     "id": "startups.c1",
+     "title": "Understanding Seed Funding",
+     "body": "Seed funding is the first round of money that investors give to turn an idea into a working business. It usually comes from angel investors, friends, or small venture funds. The money is used for building a prototype and early hiring.",
+     "subtopic": "Early financing",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    },
+    {
+     "id": "startups.c2",
+     "title": "Equity Dilution Explained",
+     "body": "Equity dilution happens when a startup issues new shares to raise money, reducing each existing owner's percentage of ownership. Founders often accept dilution to get capital that grows the company. Keeping track of dilution helps founders protect enough control.",
+     "subtopic": "Ownership math",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    },
+    {
+     "id": "startups.c3",
+     "title": "Finding Product Market Fit",
+     "body": "Product‑market fit means the product satisfies a strong market demand and customers keep buying it. Signs include rapid user growth and low churn. Achieving fit often follows many trial versions and listening to users.",
+     "subtopic": "Market validation",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    },
+    {
+     "id": "startups.c4",
+     "title": "When to Pivot a Startup",
+     "body": "A pivot is a strategic change in a startup’s product or business model based on learning that the original plan isn’t working. It differs from minor tweaks because it redirects core direction. Successful pivots keep the same team and core strengths.",
+     "subtopic": "Strategic change",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    },
+    {
+     "id": "startups.c5",
+     "title": "Managing the Burn Rate",
+     "body": "Burn rate is the speed at which a startup spends its cash reserves. Knowing the burn rate helps founders forecast how long money will last, called the runway. Reducing unnecessary expenses can extend the runway for growth.",
+     "subtopic": "Cash management",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    },
+    {
+     "id": "startups.c6",
+     "title": "The Power of Network Effects",
+     "body": "Network effects occur when a product becomes more valuable as more people use it, like a phone network. Early users attract more users, creating a self‑reinforcing growth loop. Companies that capture strong network effects can dominate a market.",
+     "subtopic": "Growth dynamics",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    },
+    {
+     "id": "startups.c7",
+     "title": "Co‑founder Roles and Conflict",
+     "body": "Co‑founders often split responsibilities like product, technology, and business to cover all needs. Clear roles reduce conflict, but differences in vision can still cause tension. Open communication and agreed‑upon decision rules help teams stay aligned.",
+     "subtopic": "Team dynamics",
+     "createdAt": "2026-11-08T04:01:36.547Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "startups.vVnZli0bOyxc",
+     "videoId": "VnZli0bOyxc",
+     "title": "How Did This Indian Startup Turn Plastic Bags Into Sneakers? #shorts",
+     "channel": "Behind The Startup",
+     "subtopic": "Startups",
+     "addedAt": "2026-11-08T04:03:02.100Z"
+    },
+    {
+     "id": "startups.vhwKwbhQ0ZRE",
+     "videoId": "hwKwbhQ0ZRE",
+     "title": "Sam Altman on Which AI Startups Will Win",
+     "channel": "Greylock",
+     "subtopic": "Startups",
+     "addedAt": "2026-11-08T04:03:02.100Z"
+    },
+    {
+     "id": "startups.v1zgOgoMfRBo",
+     "videoId": "1zgOgoMfRBo",
+     "title": "Bachi hui bread se bana diya business #shorts #business #startup",
+     "channel": "Rohit Singh Vlog",
+     "subtopic": "Startups",
+     "addedAt": "2026-11-08T04:03:02.100Z"
+    },
+    {
+     "id": "startups.v9WI6KQTLcGs",
+     "videoId": "9WI6KQTLcGs",
+     "title": "Helicopter Turbine Startup in Action",
+     "channel": "Daily Curiously",
+     "subtopic": "Startups",
+     "addedAt": "2026-11-08T04:03:02.100Z"
+    },
+    {
+     "id": "startups.vmBxhMrllUkE",
+     "videoId": "mBxhMrllUkE",
+     "title": "Startup क्या होता है 🤔 #shorts #ytshorts #drishtiias #ias #upsc #iasinterview",
+     "channel": "Motivation Express",
+     "subtopic": "Startups",
+     "addedAt": "2026-11-08T04:03:02.100Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:03:02.592Z"
+  },
+  "chess-strategy": {
+   "name": "Chess strategy",
+   "cards": [
+    {
+     "id": "chess-strategy.c0",
+     "title": "Control the Center Early",
+     "body": "Occupying the central squares with pawns and pieces gives you greater mobility and influence. A pawn on e4 lets both the queen and bishop see far across the board. Controlling the center limits the opponent’s options and often decides the flow of the game.",
+     "subtopic": "Central dominance",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    },
+    {
+     "id": "chess-strategy.c1",
+     "title": "Develop Knights Before Bishops",
+     "body": "Knights can jump over other pieces and immediately attack central squares, making them useful early in the game. Bishops need open lines, which may not exist yet, so they often wait. Developing knights first speeds up piece activity and coordination.",
+     "subtopic": "Piece development order",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    },
+    {
+     "id": "chess-strategy.c2",
+     "title": "Castle to Protect Your King",
+     "body": "Castling moves the king to a safer corner and connects the rooks, allowing them to work together. A king left in the center is vulnerable to attacks from many directions. Early castling usually prevents quick checkmates and improves overall safety.",
+     "subtopic": "King safety",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    },
+    {
+     "id": "chess-strategy.c3",
+     "title": "Use Open Files for Rooks",
+     "body": "Rooks are most powerful on open files—columns without any pawns blocking them. Placing a rook on an open file lets it pressure the opponent’s pieces or king from a distance. Doubling rooks on the same open file can create a strong attacking force.",
+     "subtopic": "Rook activation",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    },
+    {
+     "id": "chess-strategy.c4",
+     "title": "Create Pawn Chains Wisely",
+     "body": "A pawn chain is a diagonal line of pawns protecting each other. The base of the chain is a potential weakness and should be defended carefully. Advancing the pawn at the tip of the chain can open lines for your bishops and rooks.",
+     "subtopic": "Pawn structure",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    },
+    {
+     "id": "chess-strategy.c5",
+     "title": "Establish Outposts for Knights",
+     "body": "An outpost is a strong square on the opponent’s side where a knight cannot be easily chased away. Place a knight on a protected square without enemy pawns to dominate nearby squares. A well‑placed outpost knight can disrupt the opponent’s plans.",
+     "subtopic": "Knight outposts",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    },
+    {
+     "id": "chess-strategy.c6",
+     "title": "Watch for Pins and Skewers",
+     "body": "A pin traps a piece because moving it would expose a more valuable piece behind it. A skewer is the reverse—attacking a valuable piece forces it to move and reveals a lesser piece behind it. Spotting these tactics helps you avoid losing material.",
+     "subtopic": "Tactical motifs",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    },
+    {
+     "id": "chess-strategy.c7",
+     "title": "Plan Around Weak Squares",
+     "body": "A weak square is one that cannot be defended by a pawn. Opponents often try to occupy such squares with their pieces to gain a foothold. Identifying and controlling weak squares restricts the opponent’s activity and improves your position.",
+     "subtopic": "Positional weaknesses",
+     "createdAt": "2026-11-08T04:01:49.874Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "chess-strategy.vKor7ai1q6Vk",
+     "videoId": "Kor7ai1q6Vk",
+     "title": "4 MOVE CHECKMATE: Best Chess Trap for Beginners (Wayward Queen)",
+     "channel": "Bobby BoJanglles",
+     "subtopic": "Chess strategy",
+     "addedAt": "2026-11-08T04:03:02.594Z"
+    },
+    {
+     "id": "chess-strategy.vxtV_qZ0kDXY",
+     "videoId": "xtV_qZ0kDXY",
+     "title": "How to Win Chess in 3 Moves!! #shorts",
+     "channel": "Triple S Games",
+     "subtopic": "Chess strategy",
+     "addedAt": "2026-11-08T04:03:02.594Z"
+    },
+    {
+     "id": "chess-strategy.vKCTR1DhmNAs",
+     "videoId": "KCTR1DhmNAs",
+     "title": "This 4-Move Checkmate is INSANE #chess #queensacrifice #shorts",
+     "channel": "Strategy Chess",
+     "subtopic": "Chess strategy",
+     "addedAt": "2026-11-08T04:03:02.594Z"
+    },
+    {
+     "id": "chess-strategy.vPaZVLsojjG0",
+     "videoId": "PaZVLsojjG0",
+     "title": "How To Win Chess In 2 Moves 😨",
+     "channel": "Troni",
+     "subtopic": "Chess strategy",
+     "addedAt": "2026-11-08T04:03:02.594Z"
+    },
+    {
+     "id": "chess-strategy.vDqN3HeQ1ydQ",
+     "videoId": "DqN3HeQ1ydQ",
+     "title": "How to Win Chess in 2 Moves!! #shorts",
+     "channel": "Triple S Games",
+     "subtopic": "Chess strategy",
+     "addedAt": "2026-11-08T04:03:02.594Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:03:02.947Z"
+  },
+  "art-history": {
+   "name": "Art history",
+   "cards": [
+    {
+     "id": "art-history.c0",
+     "title": "Cave Paintings Tell Stories",
+     "body": "Early humans painted animals and symbols on cave walls over 30,000 years ago. The red ochre pigments came from iron oxide ground into powder. These images helped share hunting knowledge and spiritual beliefs.",
+     "subtopic": "Prehistoric cave art",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    },
+    {
+     "id": "art-history.c1",
+     "title": "Egyptian Wall Reliefs",
+     "body": "Egyptian artists carved shallow scenes into stone walls, leaving raised images. They followed strict rules for body proportions to keep figures the same size. This style showed the power of pharaohs and gods.",
+     "subtopic": "Ancient Egyptian art",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    },
+    {
+     "id": "art-history.c2",
+     "title": "Greek Red Figure Pottery",
+     "body": "Greek potters began drawing figures with red paint while the background stayed black. This let them show movement and details more clearly. The technique replaced the older black‑figure style around 530 BCE.",
+     "subtopic": "Classical Greek ceramics",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    },
+    {
+     "id": "art-history.c3",
+     "title": "Roman Concrete Lasted Centuries",
+     "body": "Romans mixed volcanic ash with lime and seawater to create a concrete that hardens underwater. The ash reacts chemically to form minerals that grow stronger over time. That is why structures like the Pantheon still stand.",
+     "subtopic": "Roman building materials",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    },
+    {
+     "id": "art-history.c4",
+     "title": "Renaissance Linear Perspective",
+     "body": "Artists like Brunelleschi drew scenes using a vanishing point where parallel lines appear to meet. This trick makes a flat painting look three‑dimensional. Viewers feel they are looking into a realistic space.",
+     "subtopic": "Renaissance drawing techniques",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    },
+    {
+     "id": "art-history.c5",
+     "title": "Baroque Light and Drama",
+     "body": "Baroque painters used strong contrasts of light and dark, called chiaroscuro, to create drama. The bright spot often focuses attention on a key figure. This technique made scenes feel alive and emotional.",
+     "subtopic": "Baroque painting style",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    },
+    {
+     "id": "art-history.c6",
+     "title": "Impressionism Captured Light",
+     "body": "Impressionists painted quickly outdoors to catch changing sunlight. They used small brushstrokes and bright colors instead of detailed lines. The result looks like a snapshot of a moment.",
+     "subtopic": "Impressionist painting movement",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    },
+    {
+     "id": "art-history.c7",
+     "title": "Women Artists Break Barriers",
+     "body": "In the 19th century, artists like Rosa Bonheur sold paintings under their own name, defying gender norms. Later, female painters formed support groups to exhibit their work. Their successes opened doors for future generations.",
+     "subtopic": "Women in art history",
+     "createdAt": "2026-11-08T04:02:03.075Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "art-history.v8BwUYBOt-zw",
+     "videoId": "8BwUYBOt-zw",
+     "title": "The Dance of Salomé by Leopold Schmutzler #history #art",
+     "channel": "History by Mae",
+     "subtopic": "Art history",
+     "addedAt": "2026-11-08T04:03:02.949Z"
+    },
+    {
+     "id": "art-history.vnSB3OgUlDIo",
+     "videoId": "nSB3OgUlDIo",
+     "title": "Impressionists in 60-seconds #shorts",
+     "channel": "Great Art Explained",
+     "subtopic": "Art history",
+     "addedAt": "2026-11-08T04:03:02.949Z"
+    },
+    {
+     "id": "art-history.vQZQyV9BB50E",
+     "videoId": "QZQyV9BB50E",
+     "title": "What is Art?",
+     "channel": "LearnFree",
+     "subtopic": "Art history",
+     "addedAt": "2026-11-08T04:03:02.949Z"
+    },
+    {
+     "id": "art-history.vrcPVDigl1_c",
+     "videoId": "rcPVDigl1_c",
+     "title": "In awe of Vittorio Reggianini's work!! #history #art",
+     "channel": "History by Mae",
+     "subtopic": "Art history",
+     "addedAt": "2026-11-08T04:03:02.949Z"
+    },
+    {
+     "id": "art-history.vUg1lGuxrwck",
+     "videoId": "Ug1lGuxrwck",
+     "title": "The history behind the trifacial trinity paintings #history #art",
+     "channel": "History by Mae",
+     "subtopic": "Art history",
+     "addedAt": "2026-11-08T04:03:02.949Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:03:03.438Z"
+  },
+  "climate-science": {
+   "name": "Climate science",
+   "cards": [
+    {
+     "id": "climate-science.c0",
+     "title": "How Greenhouse Gases Warm Earth",
+     "body": "Greenhouse gases trap infrared radiation that the Earth emits as heat. Water vapor, carbon dioxide, and methane are the main gases that do this. Without them, the planet would be much colder.",
+     "subtopic": "Greenhouse effect",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    },
+    {
+     "id": "climate-science.c1",
+     "title": "Why Oceans Store Most Heat",
+     "body": "Oceans absorb over ninety percent of excess heat from the atmosphere. Warm water moves slowly, so the surface temperature rises gradually. This storage delays some climate effects but also stores a huge amount of energy.",
+     "subtopic": "Ocean heat uptake",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    },
+    {
+     "id": "climate-science.c2",
+     "title": "Ice Melt Accelerates Warming",
+     "body": "Ice reflects sunlight back into space; when it melts, darker water or land absorbs more heat. This creates a feedback loop that speeds up warming. The process is called the ice‑albedo feedback.",
+     "subtopic": "Ice‑albedo feedback",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    },
+    {
+     "id": "climate-science.c3",
+     "title": "Climate Models Predict Future Trends",
+     "body": "Climate models use equations to describe the atmosphere, oceans, and land. They are checked against past climate data to ensure they work. Then they can show how temperature might change under different emission scenarios.",
+     "subtopic": "Climate modeling",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    },
+    {
+     "id": "climate-science.c4",
+     "title": "Carbon Cycle Links Plants and Air",
+     "body": "Plants take in carbon dioxide during photosynthesis and release oxygen. When plants die or are burned, the carbon returns to the atmosphere as CO2. This cycle keeps the amount of carbon in the air and on land balanced over long periods.",
+     "subtopic": "Carbon cycle basics",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    },
+    {
+     "id": "climate-science.c5",
+     "title": "Extreme Weather Grows With Heat",
+     "body": "Warmer air can hold more moisture, making storms drop more rain. Higher temperatures also intensify droughts and wildfires. Scientists have observed these changes becoming more common in recent decades.",
+     "subtopic": "Climate impacts on weather",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    },
+    {
+     "id": "climate-science.c6",
+     "title": "Renewable Energy Cuts Emissions",
+     "body": "Solar panels and wind turbines produce electricity without burning fossil fuels, so they emit little carbon dioxide. Deploying more renewable sources reduces the amount of greenhouse gases released into the atmosphere.",
+     "subtopic": "Mitigation technologies",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    },
+    {
+     "id": "climate-science.c7",
+     "title": "Climate Sensitivity Measures Warming Response",
+     "body": "Climate sensitivity describes how much the global average temperature rises if carbon dioxide levels double. Scientists estimate a range for this value using past climate changes and model simulations.",
+     "subtopic": "Climate sensitivity",
+     "createdAt": "2026-11-08T04:02:15.442Z"
+    }
+   ],
+   "shorts": [
+    {
+     "id": "climate-science.vSN5-DnOHQmE",
+     "videoId": "SN5-DnOHQmE",
+     "title": "What Is the Greenhouse Effect?",
+     "channel": "NASA Space Place",
+     "subtopic": "Climate science",
+     "addedAt": "2026-11-08T04:03:03.441Z"
+    },
+    {
+     "id": "climate-science.vQUCT90DyBh0",
+     "videoId": "QUCT90DyBh0",
+     "title": "Climate Change explained in less than 1 minute!",
+     "channel": "Be Smart",
+     "subtopic": "Climate science",
+     "addedAt": "2026-11-08T04:03:03.441Z"
+    },
+    {
+     "id": "climate-science.vNKpsEbf4GRg",
+     "videoId": "NKpsEbf4GRg",
+     "title": "This famous climate graph is hiding a secret 🤔",
+     "channel": "Be Smart",
+     "subtopic": "Climate science",
+     "addedAt": "2026-11-08T04:03:03.441Z"
+    },
+    {
+     "id": "climate-science.vnEvWK3-UOis",
+     "videoId": "nEvWK3-UOis",
+     "title": "How is CO2 warming up the planet? #shorts",
+     "channel": "DW Planet A",
+     "subtopic": "Climate science",
+     "addedAt": "2026-11-08T04:03:03.441Z"
+    },
+    {
+     "id": "climate-science.vG4H1N_yXBiA",
+     "videoId": "G4H1N_yXBiA",
+     "title": "Causes and Effects of Climate Change | National Geographic",
+     "channel": "National Geographic",
+     "subtopic": "Climate science",
+     "addedAt": "2026-11-08T04:03:03.441Z"
+    }
+   ],
+   "shortsSearchedAt": "2026-11-08T04:03:03.860Z"
+  }
+ }
+}
