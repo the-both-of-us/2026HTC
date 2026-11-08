@@ -7,12 +7,6 @@ Last updated: Sat Nov 7, evening.
 ## Working on now
 
 - **AWS redeploy of `1d3694c`** (running; no repo files).
-- **Polish pass** (agent). Touches:
-  - `features/skill-map/ui` and `features/streaks/ui`: a shorter map header on phones.
-  - `features/proof`: a deleted evidence page answers a real 404.
-  - `features/lessons`: write the first open topic's lesson right after a map is built, so the Read tab is instant.
-  - `features/voice`: dictation keyterms from every topic title on the map, plus common tech terms.
-  - `features/teachback`: a full final-interview run, all 3 questions through to the badge.
 - **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
 - **Study circle polish** (agent). Touches `features/circles` (all of it), `src/app/circle/**` and `src/app/api/circles/**`. It may add small exports to `features/skill-map` and `features/teachback`.
   - The whole map fits, with bigger labels and visible member initials.
@@ -27,11 +21,16 @@ Last updated: Sat Nov 7, evening.
 ## Next
 
 - Waiting on the owner: swap the landing's "7.3% Alberta unemployment" seal for something that fits "Learn anything", or keep it. Touches `features/landing`.
-- Phone map header wraps tall. Touches `features/skill-map/ui`, `features/streaks/ui`.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
 
+- Polish pass, checked on a production build with real keys:
+  - Phone map header: the map starts at 218 px on a 390x844 phone (was 385; 243 with a circle banner, was 410). The next skill plus a "More" menu with the labelled actions, the streak and today's topic on one line (`950c11b`).
+  - A missing or withdrawn evidence page answers a real 404 (was 200). `src/proxy.ts` checks first, because the page streams; the owner still sees "withdrawn" (`b4c8f78`).
+  - The Read tab is instant on a new map: the first open topic's lesson is written with `after()` once the map is sent. 32 ms when opened 25 s later (writing it took 14.7 s on Gemini); the map response is not slowed (`9f033bf`).
+  - Dictation keyterms: the skill, the learner's words, every topic title and a short list of common tech terms, under Deepgram's 500-token limit, never checkpoints (`b260eb5`).
+  - Final interview run end to end with real grading: 3 questions written in 0.9 s, 3 of 3 passed (0.4 s each), the badge shows on the map and the evidence page. Nothing needed fixing.
 - Put Mirza's course page redesign (`cf57083`) live on Vercel, since his commits are blocked there. Typecheck and the courses and skill-map tests pass on main.
 - UI audit fixes, part 1: /grid mix bar labels readable (5 to 6.8:1), and the Dark sample band is dark, not a pale slab.
 - Final live check with real AI on production: Explain it, Catch, Age 10, 30 seconds (typed fallback) all pass in 1 to 2 s, and the final interview's first question passes. Fixes in `d1de1c9`. Judge README (`19bc763`).
