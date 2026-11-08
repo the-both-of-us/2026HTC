@@ -6,6 +6,8 @@ import {
   hasSample,
   likesLabel,
   mapHref,
+  provenCount,
+  skillHref,
   optimisticLike,
   resultsSummary,
   skillsLabel,
@@ -69,5 +71,19 @@ describe("links", () => {
   it("encodes the id", () => {
     expect(courseHref("a b")).toBe("/courses/a%20b");
     expect(mapHref("m1")).toBe("/map/m1");
+  });
+});
+
+describe("skillHref", () => {
+  it("opens one skill in a map, encoding both ids", () => {
+    expect(skillHref("m1", "n1")).toBe("/map/m1?skill=n1");
+    expect(skillHref("a/b", "x y&z")).toBe("/map/a%2Fb?skill=x+y%26z");
+  });
+});
+
+describe("provenCount", () => {
+  it("counts only proven skills from the course, ignoring unknown ids", () => {
+    expect(provenCount({ a: "proven", b: "available", c: "proven", z: "proven" }, ["a", "b", "c", "d"])).toBe(2);
+    expect(provenCount({}, ["a"])).toBe(0);
   });
 });

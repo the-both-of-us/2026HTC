@@ -1,7 +1,8 @@
-import { getSkillMap } from "@/features/skill-map";
+import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
+import { getProgress } from "@/features/teachback";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { deleteDoc, getDoc, listDocs } from "@/shared/store";
-import type { SkillMap } from "@/shared/types";
+import type { NodeState, SkillMap } from "@/shared/types";
 import { COURSE_NOT_FOUND, CoursesError } from "./errors";
 import { getListing, likeKey, listingKey, saveListing, withLikeCount } from "./listing";
 import {
@@ -85,6 +86,7 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
     isOwner ? null : findMyCopy(map.id, viewerId),
     viewerAccess(),
   ]);
+  const skillStates = await viewerSkillStates(map, isOwner ? map.id : myCopyId, viewerId);
 
   return {
     course: listing ? toPublicCourse(listing) : null,
@@ -104,7 +106,27 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
       why: node.why,
       fromSource: node.fromSource,
     })),
+    skillStates,
   };
+}
+
+/**
+ * The viewer's state on each skill, from their own map of this course. A copy keeps the
+ * course's skill ids and prerequisites, so the course's nodes describe it. Progress is a
+ * nicety on this page, so a failure shows the course without it.
+ */
+async function viewerSkillStates(
+  map: SkillMap,
+  viewerMapId: string | null,
+  viewerId: string,
+): Promise<Record<string, NodeState> | null> {
+  if (!viewerMapId) return null;
+  try {
+    return deriveNodeStates(map, await getProgress(viewerMapId, viewerId));
+  } catch (error) {
+    console.error("[courses] could not read progress for the course page", error);
+    return null;
+  }
 }
 
 /**

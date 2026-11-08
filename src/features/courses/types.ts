@@ -1,4 +1,5 @@
 /** Types only this feature uses. The old PublicCourse in shared/types.ts is not used. */
+import type { NodeState } from "@/shared/types";
 
 /** What `courses/<mapId>` holds. Present means the course is public. */
 export type CourseListing = {
@@ -63,6 +64,11 @@ export type CourseDetail = {
   displayName: string | null;
   /** In learning order: every skill comes after the skills it needs. */
   skills: CourseSkill[];
+  /**
+   * Where the viewer stands on each skill, read from their own map: the course itself for the
+   * owner, or their copy. Null when they have no map of this course yet, or progress failed to load.
+   */
+  skillStates: Record<string, NodeState> | null;
 };
 
 export type LikeResult = { liked: boolean; likeCount: number };

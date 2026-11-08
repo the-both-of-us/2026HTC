@@ -1,4 +1,5 @@
 /** Small, plain helpers for the courses screens, kept out of the components so they can be tested. */
+import type { NodeState } from "@/shared/types";
 import type { LikeResult, PublicCourse } from "../types";
 
 /** "1 skill", "3 skills". */
@@ -35,6 +36,23 @@ export function courseHref(mapId: string): string {
 export function mapHref(mapId: string): string {
   return `/map/${encodeURIComponent(mapId)}`;
 }
+
+/** One skill in a map, which the map opens as a full page: /map/<id>?skill=<nodeId>. */
+export function skillHref(mapId: string, skillId: string): string {
+  return `${mapHref(mapId)}?${new URLSearchParams({ skill: skillId })}`;
+}
+
+/** How many of the course's skills the viewer has proved. Ids missing from the states count as not proved. */
+export function provenCount(states: Record<string, NodeState>, skillIds: string[]): number {
+  return skillIds.filter((id) => states[id] === "proven").length;
+}
+
+/** The status label a skill row shows. Locked and Proven speak for themselves; available means you can start it. */
+export const SKILL_STATE_LABELS: Record<NodeState, string> = {
+  locked: "Locked",
+  available: "Ready",
+  proven: "Proven",
+};
 
 /** How long to wait after the last keystroke before searching. */
 export const SEARCH_DEBOUNCE_MS = 250;

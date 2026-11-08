@@ -45,6 +45,8 @@ type SkillPanelProps = {
   reward?: ReactNode;
   /** The quick check that relights a proved skill that has started to fade. */
   relight?: ReactNode;
+  /** Start in full-page reading, as when a course page links straight to this skill. */
+  initialFullPage?: boolean;
 };
 
 const SOURCE_NAME: Record<SourceKind, string> = { posting: "posting", pdf: "PDF", topic: "topic" };
@@ -66,6 +68,7 @@ export function SkillPanel({
   onClose,
   reward,
   relight,
+  initialFullPage = false,
 }: SkillPanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -73,7 +76,7 @@ export function SkillPanel({
   const teachRef = useRef<HTMLElement>(null);
   // Full page covers the map so a lesson reads like a page, not a sidebar. It stays on
   // while you move between skills, until you go back to the map.
-  const [fullPage, setFullPage] = useState(false);
+  const [fullPage, setFullPage] = useState(initialFullPage);
   const state = states[skill.id] ?? "locked";
   // A proof can land while another skill is open. The notice then belongs to that other skill.
   const ownNotice = notice?.nodeId === skill.id ? notice : null;

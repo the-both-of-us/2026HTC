@@ -63,6 +63,8 @@ type PublishControlsProps = {
   signInRequired?: boolean;
   /** The signed-in viewer's name, to pre-fill "Name to show". */
   displayName?: string | null;
+  /** The course page says Public or Private itself, so it hides the badge here. */
+  showStatus?: boolean;
 };
 
 type FocusTarget = "field" | "publish" | "makePrivate" | null;
@@ -78,6 +80,7 @@ export function PublishControls({
   showViewLink = true,
   signInRequired = false,
   displayName = null,
+  showStatus = true,
 }: PublishControlsProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState(() => (displayName ?? "").slice(0, MAX_AUTHOR_NAME_LENGTH));
@@ -144,10 +147,12 @@ export function PublishControls({
     <div ref={area} className="flex max-w-full flex-col gap-2">
       {published ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Badge>
-            <Globe aria-hidden="true" size={14} />
-            Public
-          </Badge>
+          {showStatus && (
+            <Badge>
+              <Globe aria-hidden="true" size={14} />
+              Public
+            </Badge>
+          )}
           <Button
             variant="subtle"
             size="sm"

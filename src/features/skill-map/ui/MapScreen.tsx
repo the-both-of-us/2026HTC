@@ -21,6 +21,12 @@ import { SkillList } from "./SkillList";
 import { SkillPanel, type ProvenNotice } from "./SkillPanel";
 
 const PHONE_SCREEN = "(max-width: 640px)";
+
+/** The skill named by ?skill= in the address, if it is on this map. Only call in the browser. */
+function linkedSkillId(map: PublicSkillMap): string | null {
+  const id = new URLSearchParams(window.location.search).get("skill");
+  return id && map.nodes.some((node) => node.id === id) ? id : null;
+}
 /** Long enough for the entrance to finish on a map of about eight rows. */
 const REVEAL_MS = 1800;
 
@@ -197,7 +203,9 @@ function LoadedMap({
 }) {
   const [proven, setProven] = useState(initialProven);
   const [unlocked, setUnlocked] = useState(initialUnlocked);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // A link like /map/<id>?skill=<nodeId> (from a course page) opens that skill as a full page.
+  const [selectedId, setSelectedId] = useState<string | null>(() => linkedSkillId(map));
+  const [openFullPage, setOpenFullPage] = useState(() => linkedSkillId(map) !== null);
   // This component only mounts in the browser, after the fetch, so matchMedia is safe.
   const [view, setView] = useState<View>(() =>
     window.matchMedia(PHONE_SCREEN).matches ? "list" : "map",
@@ -233,6 +241,7 @@ function LoadedMap({
   const closePanel = useCallback(() => {
     const closedId = selectedId;
     setSelectedId(null);
+    setOpenFullPage(false);
     setNotice(null);
     // Put focus back on the skill that was open, in whichever view is showing.
     if (closedId) {
@@ -407,6 +416,7 @@ function LoadedMap({
 
           {selected && (
             <SkillPanel
+              initialFullPage={openFullPage}
               mapId={map.id}
               skills={map.nodes}
               skill={selected}

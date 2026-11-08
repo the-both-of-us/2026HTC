@@ -27,6 +27,7 @@ const DETAIL: CourseDetail = {
   signInRequired: false,
   displayName: null,
   skills: [],
+  skillStates: null,
 };
 
 const fetchMock = vi.fn<typeof fetch>();

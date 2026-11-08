@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { chatJSON } from "@/features/ai";
 import { copySkillMap, deleteSkillMap, getSkillMap } from "@/features/skill-map";
+import { getProgress } from "@/features/teachback";
 import { getDoc } from "@/shared/store";
 import { getCourse, publishCourse, unpublishCourse } from "./courses";
 import { COURSE_NOT_FOUND, CoursesError } from "./errors";
@@ -18,6 +19,12 @@ vi.mock("@/features/ai", async (importOriginal) => ({
 vi.mock("@/features/skill-map", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/features/skill-map")>();
   return { ...actual, copySkillMap: vi.fn(actual.copySkillMap) };
+});
+
+// The real getProgress, wrapped so tests can see which map's progress the course page reads.
+vi.mock("@/features/teachback", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/teachback")>();
+  return { ...actual, getProgress: vi.fn(actual.getProgress) };
 });
 
 const OWNER = randomUUID();
@@ -46,6 +53,7 @@ beforeEach(() => {
   resetStore();
   vi.mocked(chatJSON).mockReset();
   mockCopy.mockClear();
+  vi.mocked(getProgress).mockClear();
 });
 
 describe("startCourse", () => {
@@ -182,5 +190,42 @@ describe("a copy of a sample course", () => {
     const course = await publishCourse(mapId, LEARNER, "Lee");
     expect(course).toMatchObject({ mapId, isSample: true, authorName: "Lee" });
     expect(chatJSON).not.toHaveBeenCalled();
+  });
+});
+
+describe("getCourse skill states", () => {
+  it("are null for a viewer who has not started the course", async () => {
+    const map = await publishedCourse();
+    expect((await getCourse(map.id, LEARNER)).skillStates).toBeNull();
+    expect(getProgress).not.toHaveBeenCalled();
+  });
+
+  it("come from the owner's own map for the owner", async () => {
+    const map = await publishedCourse();
+    const detail = await getCourse(map.id, OWNER);
+    expect(getProgress).toHaveBeenCalledWith(map.id, OWNER);
+    expect(Object.keys(detail.skillStates ?? {}).sort()).toEqual(map.nodes.map((node) => node.id).sort());
+    // Nothing is proved yet, so a skill with no prerequisites is ready and none is proven.
+    expect(Object.values(detail.skillStates ?? {})).not.toContain("proven");
+    expect(Object.values(detail.skillStates ?? {})).toContain("available");
+  });
+
+  it("come from the learner's copy once they started, keyed by the course's skill ids", async () => {
+    const map = await publishedCourse();
+    const { mapId: copyId } = await startCourse(map.id, LEARNER);
+    const detail = await getCourse(map.id, LEARNER);
+    expect(detail.myCopyId).toBe(copyId);
+    expect(getProgress).toHaveBeenCalledWith(copyId, LEARNER);
+    expect(Object.keys(detail.skillStates ?? {}).sort()).toEqual(map.nodes.map((node) => node.id).sort());
+  });
+
+  it("are null, and the page still loads, when progress can't be read", async () => {
+    const map = await publishedCourse();
+    vi.mocked(getProgress).mockRejectedValueOnce(new Error("store down"));
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    const detail = await getCourse(map.id, OWNER);
+    quiet.mockRestore();
+    expect(detail.skillStates).toBeNull();
+    expect(detail.title).toBe(map.title);
   });
 });

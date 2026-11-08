@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Course page redesign (`/courses/[id]`): a cleaner header with one action row, a compact owner bar, and skills as clickable cards that open the skill in your map, in full-page reading view (a guest who hasn't started yet starts the course first). Per-skill progress (proven, ready, locked) for the owner or someone who started it. Files: `src/features/courses/**` (mine), plus a small deep link in Abdu's `skill-map/ui/MapScreen.tsx` (read `?skill=<nodeId>` once on load) and `skill-map/ui/SkillPanel.tsx` (an `initialFullPage` prop).
+- Nothing new yet: waiting on the owner for the next task.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Course page redesign: a progress card ("3 of 14 skills proven" plus your main action), a compact Public/Private bar for owners, and skills as clickable cards with Ready/Locked/Proven. A skill opens in your map as a full page via `/map/<id>?skill=<nodeId>`; for a learner who hasn't started, it starts the course first. Small additions in Abdu's `MapScreen.tsx` and `SkillPanel.tsx` (see TEAM.md).
 - Sidebar "Sign out" now lines up with "Signed in as" (`-ml-3` became `-ml-0.5` in `src/shared/ui/Account.tsx`, Abdu's file, at the owner's request).
 - Locked skills: no lesson, flashcards or quiz is generated for a locked skill (UI hides them; lessons, flashcards and quiz return 403 before any model call). The owner can press "Unlock anyway": saved at `unlocks/<mapId>/<ownerId>/<nodeId>`, the skill becomes available everywhere including proving, and shows "Unlocked early". New `POST /api/maps/[id]/unlock`, `unlockNode` and `isNodeLockedFor` in teachback, `unlockedEarlyIds` in skill-map; `MapProgress.unlocked` in shared types. The sample script passes `ignoreLock`.
 - Full-page reading for a skill: a "Full page" button beside the ✕ in the skill panel. On large screens it covers the map area with a centred reading column; on phones it's a full-screen sheet above the top bar. "Back to map" returns. Touched `skill-map/ui/SkillPanel.tsx` only, with Abdu's OK.
