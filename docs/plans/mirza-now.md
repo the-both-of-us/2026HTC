@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- **UI refresh of Dashboard, Courses and the course page** (owner's request): a more modern dashboard (greeting, stat tiles, courses to start, also for new users), course cards with a seal cover and no "Sample" tag, and a two-column course page with a sticky start card. Touches my `features/dashboard/ui/**` and `features/courses/ui/**` only.
 
 ## Next
 
