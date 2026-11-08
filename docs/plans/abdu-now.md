@@ -6,9 +6,7 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
-The owner asked for all three on Abdu's side.
-
-- New keys: `YOUTUBE_API_KEY`, `GNEWS_API_KEY`, `TADDY_API_KEY`, `TADDY_USER_ID` (in .env.local, Vercel and AWS).
+- **Feed ranking by engagement** (agent, owner's request: "store generated topiclets and pulled youtube links, based on an algorithm like more likes get more action"). Every card and Short is stored for good. Each item also stores counts, built from per-viewer keys: views, time on card, quick skips, likes, saves, shares and "Prove it" taps. The feed ranks items by an engagement score with a fairness boost for new items. It still favours your unproved and fading topics, and drops what you've already seen. One YouTube search now keeps up to 5 Shorts per topic, and the best-performing one plays. Topics people love get a fresh batch of cards. Files: `features/feed`, `src/app/api/feed/**`, and `trust/deleteData.ts` (one line).
 
 ## Next
 
