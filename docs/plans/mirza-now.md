@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Resources tab: long titles stop squeezing into a narrow column (two-line limit, Play here moves under the text). Abdu's `src/features/resources/ui/ResourcesTab.tsx` only, at the owner's request.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sun Nov 8.
 
 ## Done today (latest first)
 
+- Resources tab long titles (`9878ef5`): two-line limit, Play here under the text. Abdu's `ResourcesTab.tsx`, see TEAM.md. Needs a deploy.
 - Voiceover script rebuilt (`1924d55`) around boring, lonely learning: topic courses, Network, FYP, per-topic resources. FYP like counts include the demo seed, so keep them out of the video or set `DEMO_LIKE_SEED` to null. Docs only.
 - Voiceover script for the Devpost video (`a36f059`): `docs/submission/voiceover-script.md`, narration with a shot for each beat. Docs only.
 - Dashboard shows one card per course (`84781b3`): if you hold a course and a copy of it, only your copy shows (matched on title and skills). Proofs on both still count. `features/dashboard` only. Needs a deploy.
