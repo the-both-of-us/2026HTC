@@ -10,6 +10,9 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
+- **Softer colours on the new UI and the feed** (owner's request: "clean up" the Dashboard/Courses refresh): course-card banners in palette tints instead of solid violet/lavender, a lighter top band on Dashboard and the course page, a softer feed card frame and crisper dark-mode text. Touches Mirza's `features/courses/ui/**`, `features/dashboard/ui/**` (noted in TEAM.md), my `features/feed/ui/FeedScreen.tsx`, `globals.css`.
+- **Model router and a Settings page** (owner's request): each map is rated for difficulty and stakes when it's built; gpt-oss-120b stays the fast default, harder or higher-stakes courses step up to Claude Haiku, Sonnet, then Opus per task; answer checks stay fast. New `/settings` (appearance, accessibility, AI speed and per-task overrides); the theme and learning-mode controls move there from the sidebar. Touches `features/ai`, `skill-map` (rating), `lessons`, `shared/ui/PageShell.tsx` + sidebar, new `features/settings`, `app/settings`.
+
 
 
 ## Next
