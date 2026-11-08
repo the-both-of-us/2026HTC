@@ -1,5 +1,13 @@
 import { getUserId } from "@/shared/identity";
-import { getNetwork, joinNetwork, leaveNetwork, networkErrorResponse, parseProfileBody } from "@/features/network";
+import {
+  getNetwork,
+  joinNetwork,
+  leaveNetwork,
+  networkErrorResponse,
+  parseProfileBody,
+  parseVisibilityBody,
+  setInNetwork,
+} from "@/features/network";
 
 /** The network as this viewer sees it: their profile, who could mentor them, and everyone else. */
 export async function GET() {
@@ -22,7 +30,18 @@ export async function PUT(request: Request) {
   }
 }
 
-/** Leaves the network, which deletes your profile. */
+/** Opts in to the network (`{inNetwork: true}`) or out of it, keeping your friends. */
+export async function PATCH(request: Request) {
+  try {
+    const { inNetwork } = await parseVisibilityBody(request);
+    const userId = await getUserId();
+    return Response.json({ me: await setInNetwork(userId, inNetwork) });
+  } catch (error) {
+    return networkErrorResponse(error);
+  }
+}
+
+/** Deletes your profile, your friend links and your invite link. */
 export async function DELETE() {
   try {
     const userId = await getUserId();

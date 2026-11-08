@@ -1,6 +1,19 @@
 "use client";
 
-import { Dumbbell, ExternalLink, FileCheck, Filter, GraduationCap, MapPin, Search, Users, X } from "lucide-react";
+import {
+  Dumbbell,
+  ExternalLink,
+  FileCheck,
+  Filter,
+  Globe,
+  GraduationCap,
+  Heart,
+  MapPin,
+  Search,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 import { Badge, Button, buttonClasses, Card, ErrorNotice, Field, PageShell, Spinner, TextInput } from "@/shared/ui";
@@ -14,7 +27,8 @@ import {
 } from "../rules";
 import { skillsMatch } from "../matching";
 import type { Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "../types";
-import { fetchNetwork, leaveNetwork, saveProfile, type Result } from "./api";
+import { deleteProfile, fetchNetwork, removeFriend, saveProfile, setInNetwork, type Result } from "./api";
+import { FriendInviteDialog, type FriendInviteHandle } from "./FriendInvite";
 import {
   canMatch,
   contactHost,
@@ -25,14 +39,18 @@ import {
   hasAnyMatch,
   hasDemo,
   LOGIN_HREF,
+  NETWORK_OFF_NOTE,
+  NETWORK_ON_NOTE,
   peopleCount,
   SIGN_IN_LEAD,
   SKILLS_SHOWN,
 } from "./view";
 
 type Loaded = { attempt: number; result: Result<{ view: NetworkView }> };
+/** What a viewer with no profile asked for, so making the profile finishes it. */
+type Intent = "network" | "invite" | null;
 
-/** /people: join the network, and find people who proved what you're learning. */
+/** /people: your friends, and, once you join the network, people who proved what you're learning. */
 export function NetworkScreen() {
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -89,7 +107,7 @@ export function NetworkScreen() {
     <PageShell width="wide">
       <h1 className="text-3xl font-medium">People</h1>
       <p className="mt-2 max-w-2xl text-lg text-ink-soft">
-        Find people who have proved the skills you&apos;re learning, or who are learning the same ones.
+        See what your friends have proved. Join the network to find people who proved the skills you&apos;re learning.
       </p>
 
       <div className="mt-6">
@@ -108,6 +126,7 @@ export function NetworkScreen() {
             onRetry={() => reload("status")}
             onSaved={onSaved}
             onLeft={onLeft}
+            onChanged={() => reload()}
             profileHeading={profileHeading}
             joinHeading={joinHeading}
             statusLine={statusLine}
@@ -125,6 +144,7 @@ function LoadedNetwork({
   onRetry,
   onSaved,
   onLeft,
+  onChanged,
   profileHeading,
   joinHeading,
   statusLine,
@@ -135,12 +155,52 @@ function LoadedNetwork({
   onRetry: () => void;
   onSaved: (me: MyProfileView) => void;
   onLeft: () => void;
+  /** Reloads the view after a change elsewhere on the page, such as the network setting. */
+  onChanged: () => void;
   profileHeading: RefObject<HTMLHeadingElement | null>;
   joinHeading: RefObject<HTMLHeadingElement | null>;
   statusLine: RefObject<HTMLParagraphElement | null>;
 }) {
   const matching = canMatch(view);
   const total = peopleCount(view);
+  const inviteDialog = useRef<FriendInviteHandle>(null);
+  const [intent, setIntent] = useState<Intent>(null);
+  const [toggling, setToggling] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
+  /** Joining the network or inviting needs a profile first: without one, the form finishes the job. */
+  function ask(next: "network" | "invite") {
+    if (!view.me) {
+      setIntent(next);
+      requestAnimationFrame(() => joinHeading.current?.focus());
+      return;
+    }
+    if (next === "invite") inviteDialog.current?.open();
+    else void toggleNetwork(true);
+  }
+
+  async function toggleNetwork(on: boolean) {
+    setToggling(true);
+    setToggleError(null);
+    const result = await setInNetwork(on);
+    setToggling(false);
+    if (result.ok) onChanged();
+    else setToggleError(result.message);
+  }
+
+  function onProfileMade(me: MyProfileView) {
+    const opened = intent;
+    setIntent(null);
+    onSaved(me);
+    if (opened === "invite") inviteDialog.current?.open();
+  }
+
+  async function unfriend(publicId: string): Promise<string | null> {
+    const result = await removeFriend(publicId);
+    if (!result.ok) return result.message;
+    onChanged();
+    return null;
+  }
   // Clicking a skill on any card shows only the people who proved it.
   const [skillFilter, setSkillFilter] = useState<string | null>(null);
   // Typing narrows by name, city, what they're looking for, or a skill.
@@ -154,10 +214,11 @@ function LoadedNetwork({
         (!skillFilter || profile.provenSkills.some((skill) => skillsMatch(skill.title, skillFilter))) &&
         (!needle || searchText(profile).includes(needle)),
     );
+  const friends = keep(view.friends);
   const mentors = keep(view.mentors);
   const peers = keep(view.peers);
   const everyone = keep(view.everyone);
-  const shownCount = mentors.length + peers.length + everyone.length;
+  const shownCount = friends.length + mentors.length + peers.length + everyone.length;
   const narrowed = skillFilter !== null || needle !== "";
 
   function pickSkill(title: string) {
@@ -168,147 +229,273 @@ function LoadedNetwork({
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:items-start">
-      <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-6">
+      <aside className="order-2 flex min-w-0 flex-col gap-4 lg:sticky lg:top-6 lg:order-1">
         {view.me ? (
           <MyProfileCard me={view.me} headingRef={profileHeading} onSaved={onSaved} onLeft={onLeft} />
         ) : (
-          <JoinCard view={view} headingRef={joinHeading} onSaved={onSaved} />
+          <JoinCard view={view} intent={intent} headingRef={joinHeading} onSaved={onProfileMade} />
         )}
         {!view.viewerHasMaps && <NoMapsCard />}
       </aside>
 
-      <div className="flex min-w-0 flex-col gap-6">
-        <div className="flex flex-col gap-3 border-b border-rule pb-5">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <p
-              ref={statusLine}
-              tabIndex={-1}
-              role="status"
-              className="flex flex-wrap items-center gap-2.5 text-base outline-none"
-            >
-              <span className="font-medium">
-                {total === 0
-                  ? "Nobody else has joined yet."
-                  : narrowed
-                    ? `Showing ${shownCount} of ${countLabel(total, "person", "people")}`
-                    : countLabel(total, "person", "people")}
-              </span>
-              {stale && (
-                <span className="inline-flex items-center gap-2 text-ink-soft">
-                  <Spinner size={16} />
-                  Updating.
-                </span>
+      {/* First on a phone, so the network setting and your friends come before the profile form. */}
+      <div className="order-1 flex min-w-0 flex-col gap-6 lg:order-2">
+        <FriendInviteDialog ref={inviteDialog} />
+        <NetworkControl
+          inNetwork={view.inNetwork}
+          // The empty state below carries the same two buttons, so they show once.
+          showActions={view.inNetwork || view.friends.length > 0}
+          pending={toggling}
+          error={toggleError}
+          onJoin={() => ask("network")}
+          onLeave={() => toggleNetwork(false)}
+          onInvite={() => ask("invite")}
+        />
+
+        {!view.inNetwork && view.friends.length === 0 ? (
+          <FriendsOnlyEmpty onInvite={() => ask("invite")} onJoin={() => ask("network")} pending={toggling} />
+        ) : (
+          <>
+            <div className="flex flex-col gap-3 border-b border-rule pb-5">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <p
+                  ref={statusLine}
+                  tabIndex={-1}
+                  role="status"
+                  className="flex flex-wrap items-center gap-2.5 text-base outline-none"
+                >
+                  <span className="font-medium">
+                    {total === 0
+                      ? "Nobody else is in the network yet."
+                      : narrowed
+                        ? `Showing ${shownCount} of ${countLabel(total, "person", "people")}`
+                        : countLabel(total, "person", "people")}
+                  </span>
+                  {stale && (
+                    <span className="inline-flex items-center gap-2 text-ink-soft">
+                      <Spinner size={16} />
+                      Updating.
+                    </span>
+                  )}
+                </p>
+                {total > 0 && (
+                  <div className="relative w-full sm:w-72">
+                    <label htmlFor={searchId} className="sr-only">
+                      Search people by name, skill or city
+                    </label>
+                    <Search
+                      aria-hidden="true"
+                      size={17}
+                      className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-soft"
+                    />
+                    <TextInput
+                      id={searchId}
+                      type="search"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="Search name, skill or city"
+                      className="py-2! pl-9 text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+              {(hasDemo(view) || total > 0) && (
+                <p className="text-sm text-ink-soft">
+                  {hasDemo(view) && <>{DEMO_NOTE} </>}
+                  {total > 0 && "Click any skill to see everyone who proved it."}
+                </p>
               )}
-            </p>
-            {total > 0 && (
-              <div className="relative w-full sm:w-72">
-                <label htmlFor={searchId} className="sr-only">
-                  Search people by name, skill or city
-                </label>
-                <Search
-                  aria-hidden="true"
-                  size={17}
-                  className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-soft"
-                />
-                <TextInput
-                  id={searchId}
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search name, skill or city"
-                  className="py-2! pl-9 text-sm"
-                />
+            </div>
+
+            {failedMessage && <ErrorNotice message={failedMessage} onRetry={onRetry} />}
+
+            {view.inNetwork && matching && !hasAnyMatch(view) && total > 0 && !narrowed && (
+              <p className="text-base text-ink-soft">
+                Nobody matches your skills yet. As you and others prove more skills, matches show up here.
+              </p>
+            )}
+
+            {skillFilter && (
+              <div
+                ref={filterBar}
+                tabIndex={-1}
+                role="status"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 border-l-4 border-proven bg-proven/10 px-4 py-3 outline-none"
+              >
+                <p className="flex min-w-0 flex-1 basis-56 items-start gap-2 text-base">
+                  <Filter aria-hidden="true" size={17} className="mt-1 shrink-0 text-proven" />
+                  <span className="min-w-0 break-words">
+                    {shownCount === 0 ? (
+                      <>
+                        Nobody here has proved <strong className="font-medium">{skillFilter}</strong> yet.
+                      </>
+                    ) : (
+                      <>
+                        {countLabel(shownCount, "person", "people")} proved{" "}
+                        <strong className="font-medium">{skillFilter}</strong>.
+                      </>
+                    )}
+                  </span>
+                </p>
+                <a href={practiseHref(skillFilter)} className={buttonClasses("secondary", "sm")}>
+                  <Dumbbell aria-hidden="true" size={16} />
+                  Practise it
+                </a>
+                <Button variant="quiet" size="sm" onClick={() => setSkillFilter(null)}>
+                  <X aria-hidden="true" size={16} />
+                  Show everyone
+                </Button>
               </div>
             )}
-          </div>
-          {(hasDemo(view) || total > 0) && (
-            <p className="text-sm text-ink-soft">
-              {hasDemo(view) && <>{DEMO_NOTE} </>}
-              {total > 0 && "Click any skill to see everyone who proved it."}
-            </p>
-          )}
-        </div>
 
-        {failedMessage && <ErrorNotice message={failedMessage} onRetry={onRetry} />}
+            {narrowed && shownCount === 0 && !skillFilter && (
+              <p className="text-base text-ink-soft">Nobody matches “{search.trim()}”.</p>
+            )}
 
-        {matching && !hasAnyMatch(view) && total > 0 && !narrowed && (
-          <p className="text-base text-ink-soft">
-            Nobody matches your skills yet. As you and others prove more skills, matches show up here.
-          </p>
-        )}
-
-        {skillFilter && (
-          <div
-            ref={filterBar}
-            tabIndex={-1}
-            role="status"
-            className="flex flex-wrap items-center gap-x-3 gap-y-2 border-l-4 border-proven bg-proven/10 px-4 py-3 outline-none"
-          >
-            <p className="flex min-w-0 flex-1 basis-56 items-start gap-2 text-base">
-              <Filter aria-hidden="true" size={17} className="mt-1 shrink-0 text-proven" />
-              <span className="min-w-0 break-words">
-                {shownCount === 0 ? (
-                  <>
-                    Nobody here has proved <strong className="font-medium">{skillFilter}</strong> yet.
-                  </>
-                ) : (
-                  <>
-                    {countLabel(shownCount, "person", "people")} proved{" "}
-                    <strong className="font-medium">{skillFilter}</strong>.
-                  </>
-                )}
-              </span>
-            </p>
-            <a href={practiseHref(skillFilter)} className={buttonClasses("secondary", "sm")}>
-              <Dumbbell aria-hidden="true" size={16} />
-              Practise it
-            </a>
-            <Button variant="quiet" size="sm" onClick={() => setSkillFilter(null)}>
-              <X aria-hidden="true" size={16} />
-              Show everyone
-            </Button>
-          </div>
-        )}
-
-        {narrowed && shownCount === 0 && !skillFilter && (
-          <p className="text-base text-ink-soft">Nobody matches “{search.trim()}”.</p>
-        )}
-
-        {mentors.length > 0 && (
-          <PeopleSection
-            id="mentors"
-            icon={<GraduationCap aria-hidden="true" size={20} className="text-proven" />}
-            title="Could mentor you"
-            description="They proved skills that you're still learning."
-            entries={mentors}
-            activeSkill={skillFilter}
-            onPickSkill={pickSkill}
-          />
-        )}
-        {peers.length > 0 && (
-          <PeopleSection
-            id="peers"
-            icon={<Users aria-hidden="true" size={20} className="text-accent-bright" />}
-            title="Learning what you're learning"
-            description="Study together: they're working on the same skills as you."
-            entries={peers}
-            activeSkill={skillFilter}
-            onPickSkill={pickSkill}
-          />
-        )}
-        {everyone.length > 0 && (
-          <PeopleSection
-            id="everyone"
-            icon={<Users aria-hidden="true" size={20} className="text-ink-soft" />}
-            title={everyoneHeading(view)}
-            description={everyoneDescription(view)}
-            entries={everyone}
-            activeSkill={skillFilter}
-            onPickSkill={pickSkill}
-          />
+            {(friends.length > 0 || (!narrowed && view.inNetwork)) && (
+              <PeopleSection
+                id="friends"
+                icon={<Heart aria-hidden="true" size={20} className="text-proven" />}
+                title="Friends"
+                description={
+                  view.friends.length === 0
+                    ? "No friends yet. Invite one with a link or QR code, and you'll always see each other here."
+                    : "You always see each other, whatever your network setting."
+                }
+                entries={friends}
+                activeSkill={skillFilter}
+                onPickSkill={pickSkill}
+                onRemove={unfriend}
+              />
+            )}
+            {mentors.length > 0 && (
+              <PeopleSection
+                id="mentors"
+                icon={<GraduationCap aria-hidden="true" size={20} className="text-proven" />}
+                title="Could mentor you"
+                description="They proved skills that you're still learning."
+                entries={mentors}
+                activeSkill={skillFilter}
+                onPickSkill={pickSkill}
+              />
+            )}
+            {peers.length > 0 && (
+              <PeopleSection
+                id="peers"
+                icon={<Users aria-hidden="true" size={20} className="text-accent-bright" />}
+                title="Learning what you're learning"
+                description="Study together: they're working on the same skills as you."
+                entries={peers}
+                activeSkill={skillFilter}
+                onPickSkill={pickSkill}
+              />
+            )}
+            {everyone.length > 0 && (
+              <PeopleSection
+                id="everyone"
+                icon={<Users aria-hidden="true" size={20} className="text-ink-soft" />}
+                title={everyoneHeading(view)}
+                description={everyoneDescription(view)}
+                entries={everyone}
+                activeSkill={skillFilter}
+                onPickSkill={pickSkill}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
+  );
+}
+
+/** "Network: on/off", with what each means, and "Invite a friend". */
+function NetworkControl({
+  inNetwork,
+  showActions,
+  pending,
+  error,
+  onJoin,
+  onLeave,
+  onInvite,
+}: {
+  inNetwork: boolean;
+  showActions: boolean;
+  pending: boolean;
+  error: string | null;
+  onJoin: () => void;
+  onLeave: () => void;
+  onInvite: () => void;
+}) {
+  return (
+    <Card className="border-rule sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0 flex-1 basis-64">
+          <h2 className="flex items-center gap-2 text-lg font-medium">
+            <Globe aria-hidden="true" size={19} className={inNetwork ? "text-proven" : "text-ink-soft"} />
+            Network: {inNetwork ? "on" : "off"}
+          </h2>
+          <p className="mt-1 text-sm text-ink-soft">{inNetwork ? NETWORK_ON_NOTE : NETWORK_OFF_NOTE}</p>
+        </div>
+        {showActions && (
+          <div className="flex flex-wrap gap-2">
+            {inNetwork ? (
+              <Button variant="secondary" size="sm" pending={pending} onClick={onLeave}>
+                Leave the network
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" pending={pending} onClick={onJoin}>
+                Join the network
+              </Button>
+            )}
+            <Button variant="primary" size="sm" onClick={onInvite}>
+              <UserPlus aria-hidden="true" size={16} />
+              Invite a friend
+            </Button>
+          </div>
+        )}
+      </div>
+      {error && (
+        <div className="mt-3">
+          <ErrorNotice message={error} />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** Friends only, and no friends yet: nobody else is shown, so say what to do. */
+function FriendsOnlyEmpty({
+  onInvite,
+  onJoin,
+  pending,
+}: {
+  onInvite: () => void;
+  onJoin: () => void;
+  pending: boolean;
+}) {
+  return (
+    <section
+      aria-labelledby="friends-empty"
+      className="flex flex-col gap-3 rounded-sheet border border-rule p-5 sm:p-6"
+    >
+      <h2 id="friends-empty" className="flex items-center gap-2 text-xl font-medium">
+        <Heart aria-hidden="true" size={20} className="text-proven" />
+        No friends here yet
+      </h2>
+      <p className="text-base text-ink-soft">
+        With the network off, you only see friends. Invite a friend with a link or QR code, or join the network to see
+        everyone in it.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={onInvite}>
+          <UserPlus aria-hidden="true" size={16} />
+          Invite a friend
+        </Button>
+        <Button variant="secondary" size="sm" pending={pending} onClick={onJoin}>
+          Join the network
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -320,6 +507,7 @@ function PeopleSection({
   entries,
   activeSkill,
   onPickSkill,
+  onRemove,
 }: {
   id: string;
   icon: ReactNode;
@@ -328,6 +516,8 @@ function PeopleSection({
   entries: Match[];
   activeSkill: string | null;
   onPickSkill: (title: string) => void;
+  /** On friends' cards: removes the friend, or returns a sentence saying why it failed. */
+  onRemove?: (publicId: string) => Promise<string | null>;
 }) {
   const headingId = `${id}-heading`;
   return (
@@ -351,6 +541,7 @@ function PeopleSection({
               mentorFor={mentorFor}
               activeSkill={activeSkill}
               onPickSkill={onPickSkill}
+              onRemove={onRemove}
             />
           </li>
         ))}
@@ -365,6 +556,7 @@ function PersonCard({
   mentorFor,
   activeSkill,
   onPickSkill,
+  onRemove,
 }: {
   profile: PublicProfile;
   reasons: string[];
@@ -372,6 +564,7 @@ function PersonCard({
   mentorFor: string[];
   activeSkill: string | null;
   onPickSkill: (title: string) => void;
+  onRemove?: (publicId: string) => Promise<string | null>;
 }) {
   const host = contactHost(profile.contactUrl);
   return (
@@ -443,7 +636,45 @@ function PersonCard({
           <span className="sr-only">(opens in a new tab)</span>
         </a>
       )}
+
+      {onRemove && <RemoveFriend name={profile.displayName} onRemove={() => onRemove(profile.publicId)} />}
     </article>
+  );
+}
+
+/** "Remove friend", with a second click to confirm, so a slip doesn't cost a friendship. */
+function RemoveFriend({ name, onRemove }: { name: string; onRemove: () => Promise<string | null> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function remove() {
+    setPending(true);
+    setError(null);
+    const failure = await onRemove();
+    setPending(false);
+    if (failure) setError(failure);
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-rule pt-3">
+      {confirming ? (
+        <div role="group" aria-label={`Remove ${name}?`} className="flex flex-wrap items-center gap-2">
+          <p className="text-sm">Remove {name}? You stop seeing each other.</p>
+          <Button variant="secondary" size="sm" pending={pending} onClick={remove}>
+            Remove
+          </Button>
+          <Button variant="quiet" size="sm" onClick={() => setConfirming(false)}>
+            Keep
+          </Button>
+        </div>
+      ) : (
+        <Button variant="quiet" size="sm" className="self-start" onClick={() => setConfirming(true)}>
+          Remove friend
+        </Button>
+      )}
+      {error && <ErrorNotice message={error} />}
+    </div>
   );
 }
 
@@ -485,9 +716,7 @@ function SkillChips({
   const shown = showAll ? skills : skills.slice(0, SKILLS_SHOWN);
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-        Proved {countLabel(skills.length, "skill", "skills")}
-      </p>
+      <p className="text-sm text-ink-soft">Proved {countLabel(skills.length, "skill", "skills")}</p>
       <ul id={listId} className="flex flex-wrap gap-1.5">
         {shown.map((skill) => {
           const active = activeSkill !== null && skillsMatch(skill.title, activeSkill);
@@ -546,34 +775,47 @@ function SkillChips({
 
 function JoinCard({
   view,
+  intent,
   headingRef,
   onSaved,
 }: {
   view: NetworkView;
+  intent: Intent;
   headingRef: RefObject<HTMLHeadingElement | null>;
   onSaved: (me: MyProfileView) => void;
 }) {
+  const note =
+    intent === "network"
+      ? "Make your profile to join the network. Everyone in it can then see you and your proven skills."
+      : intent === "invite"
+        ? "Make your profile first, so your friends know who invited them."
+        : "Your friends see this, and the network does too once you join it. Delete it any time.";
   return (
-    <Card className="border-rule sm:p-5">
+    <Card className={intent ? "border-proven sm:p-5" : "border-rule sm:p-5"}>
       <h2 ref={headingRef} tabIndex={-1} className="text-lg font-medium outline-none">
-        Join the network
+        Make your profile
       </h2>
-      <p className="mt-1.5 text-sm text-ink-soft">
-        Show the skills you&apos;ve proved, so people learning them can find you. Leave any time, which deletes your
-        profile.
-      </p>
+      <p className="mt-1.5 text-sm text-ink-soft">{note}</p>
       <div className="mt-3">
         {view.signInRequired ? (
           <div className="flex flex-col gap-2">
             <a href={LOGIN_HREF} className={`${buttonClasses("primary", "sm")} self-start`}>
-              {SIGN_IN_LEAD} to join
+              {SIGN_IN_LEAD} to make a profile
             </a>
             <p className="text-xs text-ink-soft">Signing in shows people it&apos;s really you.</p>
           </div>
         ) : (
           <ProfileForm
-            initial={{ displayName: view.displayName ?? "", city: "", lookingFor: "", contactUrl: "" }}
-            submitLabel="Join the network"
+            initial={{
+              displayName: view.displayName ?? "",
+              city: "",
+              lookingFor: "",
+              contactUrl: "",
+            }}
+            submitLabel={
+              intent === "network" ? "Join the network" : intent === "invite" ? "Save and invite" : "Save profile"
+            }
+            inNetwork={intent === "network" ? true : undefined}
             onSaved={onSaved}
           />
         )}
@@ -612,7 +854,7 @@ function MyProfileCard({
   async function leave() {
     setLeaving(true);
     setLeaveError(null);
-    const result = await leaveNetwork();
+    const result = await deleteProfile();
     setLeaving(false);
     if (result.ok) onLeft();
     else setLeaveError(result.message);
@@ -687,8 +929,7 @@ function MyProfileCard({
               <SkillChips skills={me.provenSkills} owner="you" />
             ) : (
               <p className="text-base text-ink-soft">
-                No proven skills yet. Explain a skill in a teach-back to prove it, and it shows here for others to
-                see.
+                No proven skills yet. Explain a skill in a teach-back to prove it, and it shows here for others to see.
               </p>
             )}
             {me.learning.length > 0 && (
@@ -704,7 +945,7 @@ function MyProfileCard({
             </Button>
             {!confirmLeave && (
               <Button id={leaveButtonId} variant="quiet" size="sm" onClick={() => setConfirmLeave(true)}>
-                Leave the network
+                Delete profile
               </Button>
             )}
           </div>
@@ -716,12 +957,11 @@ function MyProfileCard({
               className="mt-4 flex flex-col gap-3 rounded-control border border-danger/70 bg-danger-surface p-4"
             >
               <p id="leave-question" className="text-base">
-                Leave the network? Your profile is deleted and nobody can find you here. Your maps and proven skills
-                stay.
+                Delete your profile? You leave the network and lose your friends here. Your maps and proven skills stay.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button id={confirmButtonId} variant="primary" size="sm" pending={leaving} onClick={leave}>
-                  Leave and delete my profile
+                  Delete my profile
                 </Button>
                 <Button
                   variant="secondary"
@@ -744,7 +984,12 @@ function MyProfileCard({
   );
 }
 
-type FormValues = { displayName: string; city: string; lookingFor: string; contactUrl: string };
+type FormValues = {
+  displayName: string;
+  city: string;
+  lookingFor: string;
+  contactUrl: string;
+};
 
 function ProfileForm({
   initial,
@@ -752,9 +997,12 @@ function ProfileForm({
   onSaved,
   onCancel,
   focusOnOpen = false,
+  inNetwork,
 }: {
   initial: FormValues;
   submitLabel: string;
+  /** Sent with the profile: true joins the network as the profile is made. Left out, the setting stays. */
+  inNetwork?: boolean;
   onSaved: (me: MyProfileView) => void;
   onCancel?: () => void;
   /** Moves focus to the first field, for a form that replaced the button that opened it. */
@@ -790,13 +1038,15 @@ function ProfileForm({
     const checked = checkProfileInput(values);
     if (!checked.ok) {
       setErrors(checked.errors);
-      const first = (["displayName", "city", "lookingFor", "contactUrl"] as const).find((field) => checked.errors[field]);
+      const first = (["displayName", "city", "lookingFor", "contactUrl"] as const).find(
+        (field) => checked.errors[field],
+      );
       if (first) document.getElementById(ids[first])?.focus();
       return;
     }
     setErrors({});
     setSaving(true);
-    const result = await saveProfile(checked.value);
+    const result = await saveProfile(checked.value, inNetwork);
     setSaving(false);
     if (result.ok) onSaved(result.me);
     else setFailure(result.message);
@@ -845,7 +1095,7 @@ function ProfileForm({
       <Field
         id={ids.contactUrl}
         label="Contact link (optional)"
-        hint="A link that starts with https://, such as your LinkedIn page. Everyone can see it."
+        hint="A link that starts with https://, such as your LinkedIn page. Everyone who can see your profile sees it."
         error={errors.contactUrl}
       >
         {(control) => (

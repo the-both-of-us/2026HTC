@@ -1,5 +1,5 @@
 /** Calls to the network API. Every failure becomes a sentence a person can act on. */
-import type { CleanProfile, MyProfileView, NetworkView } from "../types";
+import type { CleanProfile, InviteView, MyProfileView, NetworkView } from "../types";
 
 export type Failure = { ok: false; message: string; status: number | null };
 export type Result<T> = ({ ok: true } & T) | Failure;
@@ -9,6 +9,8 @@ const TIMEOUT_MS = 20_000;
 const COULD_NOT_CONNECT = "OryxLearn could not be reached. Check your connection, then try again.";
 
 type Messages = { failed: string; timedOut: string };
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
 
 const LOAD_MESSAGES: Messages = {
   failed: "The network could not be loaded this time. Please try again.",
@@ -20,7 +22,7 @@ const SAVE_MESSAGES: Messages = {
 };
 const LEAVE_MESSAGES: Messages = {
   failed: "Your profile could not be deleted this time. Please try again.",
-  timedOut: "Leaving the network took too long. Please try again.",
+  timedOut: "Deleting your profile took too long. Please try again.",
 };
 
 /**
@@ -39,14 +41,26 @@ async function request<T>(
   read: (body: unknown) => T | null,
 ): Promise<Result<T>> {
   try {
-    const response = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    const response = await fetch(url, {
+      ...init,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     const body: unknown = await response.json().catch(() => null);
-    if (!response.ok) return { ok: false, message: failureMessage(body, messages.failed), status: response.status };
+    if (!response.ok)
+      return {
+        ok: false,
+        message: failureMessage(body, messages.failed),
+        status: response.status,
+      };
     const value = read(body);
     return value ? { ok: true, ...value } : { ok: false, message: messages.failed, status: response.status };
   } catch (error) {
     const timedOut = error instanceof DOMException && error.name === "TimeoutError";
-    return { ok: false, message: timedOut ? messages.timedOut : COULD_NOT_CONNECT, status: null };
+    return {
+      ok: false,
+      message: timedOut ? messages.timedOut : COULD_NOT_CONNECT,
+      status: null,
+    };
   }
 }
 
@@ -66,6 +80,8 @@ function isView(value: unknown): value is NetworkView {
   const me = field(value, "me");
   return (
     (me === null || isMyProfile(me)) &&
+    typeof field(value, "inNetwork") === "boolean" &&
+    Array.isArray(field(value, "friends")) &&
     Array.isArray(field(value, "mentors")) &&
     Array.isArray(field(value, "peers")) &&
     Array.isArray(field(value, "everyone")) &&
@@ -82,10 +98,14 @@ export function fetchNetwork(): Promise<Result<{ view: NetworkView }>> {
 }
 
 /** Joins the network, or saves changes to your profile. */
-export function saveProfile(profile: CleanProfile): Promise<Result<{ me: MyProfileView }>> {
+export function saveProfile(profile: CleanProfile, inNetwork?: boolean): Promise<Result<{ me: MyProfileView }>> {
   return request(
     "/api/network",
-    { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(profile) },
+    {
+      method: "PUT",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ ...profile, inNetwork }),
+    },
     SAVE_MESSAGES,
     (body) => {
       const me = field(body, "me");
@@ -94,9 +114,89 @@ export function saveProfile(profile: CleanProfile): Promise<Result<{ me: MyProfi
   );
 }
 
-/** Leaves the network, which deletes your profile. */
-export function leaveNetwork(): Promise<Result<object>> {
+/** Deletes your profile, your friend links and your invite link. */
+export function deleteProfile(): Promise<Result<object>> {
   return request("/api/network", { method: "DELETE" }, LEAVE_MESSAGES, (body) =>
     field(body, "ok") === true ? {} : null,
+  );
+}
+
+/** Opts in to the network, or out of it. */
+export function setInNetwork(inNetwork: boolean): Promise<Result<object>> {
+  return request(
+    "/api/network",
+    {
+      method: "PATCH",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ inNetwork }),
+    },
+    {
+      failed: "Your network setting could not be saved this time. Please try again.",
+      timedOut: "Saving your network setting took too long. Please try again.",
+    },
+    (body) => (field(body, "me") !== undefined ? {} : null),
+  );
+}
+
+/** Your invite code: the same each time, or a new one with `fresh`, which retires the old link. */
+export function createInvite(fresh = false): Promise<Result<{ code: string }>> {
+  return request(
+    "/api/network/invite",
+    { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ fresh }) },
+    {
+      failed: "The invite link could not be made this time. Please try again.",
+      timedOut: "Making the invite link took too long. Please try again.",
+    },
+    (body) => {
+      const code = field(body, "code");
+      return typeof code === "string" ? { code } : null;
+    },
+  );
+}
+
+/** Who sent an invite. */
+export function fetchInvite(code: string): Promise<Result<{ invite: InviteView }>> {
+  return request(
+    `/api/network/invite/${encodeURIComponent(code)}`,
+    { method: "GET", cache: "no-store" },
+    {
+      failed: "This invite could not be loaded. Please try again.",
+      timedOut: "Loading the invite took too long. Please try again.",
+    },
+    (body) =>
+      field(body, "inviter") && typeof field(body, "isYou") === "boolean" ? { invite: body as InviteView } : null,
+  );
+}
+
+/** Accepts an invite, with a name for a viewer who has no profile yet. */
+export function acceptInvite(code: string, displayName: string | null): Promise<Result<{ friend: string }>> {
+  return request(
+    `/api/network/invite/${encodeURIComponent(code)}`,
+    {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ displayName }),
+    },
+    {
+      failed: "You could not be added as friends this time. Please try again.",
+      timedOut: "Adding your friend took too long. Please try again.",
+    },
+    (body) => {
+      const friend = field(body, "friend");
+      return typeof friend === "string" ? { friend } : null;
+    },
+  );
+}
+
+/** Removes a friend, both ways. */
+export function removeFriend(publicId: string): Promise<Result<object>> {
+  return request(
+    `/api/network/friends/${encodeURIComponent(publicId)}`,
+    { method: "DELETE" },
+    {
+      failed: "Your friend could not be removed this time. Please try again.",
+      timedOut: "Removing your friend took too long. Please try again.",
+    },
+    (body) => (field(body, "ok") === true ? {} : null),
   );
 }

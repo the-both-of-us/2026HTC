@@ -8,7 +8,18 @@ export const SIGN_IN_REST = " to join the network, so people know it's really yo
 export const SKILLS_SHOWN = 6;
 
 /** The sign-in link that comes back to /people. A plain URL, so it works without JavaScript. */
-export const LOGIN_HREF = `/api/auth/login?${new URLSearchParams({ returnTo: "/people" })}`;
+export const LOGIN_HREF = loginHref("/people");
+
+/** A sign-in link that comes back to `returnTo`. */
+export function loginHref(returnTo: string): string {
+  return `/api/auth/login?${new URLSearchParams({ returnTo })}`;
+}
+
+/** What each network setting means, in one plain sentence. */
+export const NETWORK_ON_NOTE =
+  "You see everyone else in the network, and they see you and your proven skills. Your friends always see you.";
+export const NETWORK_OFF_NOTE =
+  "Friends only. You see only your friends, and only they see you. Join the network to see everyone in it.";
 
 /** "1 skill", "3 skills". */
 export function countLabel(count: number, one: string, many: string): string {
@@ -29,7 +40,7 @@ export function contactHost(url: string | null): string | null {
 
 /** True when any profile on the page is a demo, so the page must say they are made up. */
 export function hasDemo(view: NetworkView): boolean {
-  return [...view.mentors, ...view.peers, ...view.everyone].some((match) => match.profile.isDemo);
+  return [...view.friends, ...view.mentors, ...view.peers, ...view.everyone].some((match) => match.profile.isDemo);
 }
 
 /** True when the viewer can be matched: they joined, or they have a map. */
@@ -54,10 +65,10 @@ export function everyoneDescription(view: NetworkView): string {
 
 /** The last section's heading: "else" once people were already shown above it. */
 export function everyoneHeading(view: NetworkView): string {
-  return view.mentors.length + view.peers.length > 0 ? "Everyone else in the network" : "Everyone in the network";
+  return view.mentors.length + view.peers.length > 0 ? "Everyone else in the network" : "People in the network";
 }
 
-/** Total people in the network, other than the viewer. */
+/** Total people the viewer can see: friends, plus the network when opted in. */
 export function peopleCount(view: NetworkView): number {
-  return view.mentors.length + view.peers.length + view.everyone.length;
+  return view.friends.length + view.mentors.length + view.peers.length + view.everyone.length;
 }

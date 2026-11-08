@@ -24,6 +24,8 @@ const plain = (profile: PublicProfile): Match => ({
 
 const view = (overrides: Partial<NetworkView>): NetworkView => ({
   me: null,
+  inNetwork: true,
+  friends: [],
   mentors: [],
   peers: [],
   everyone: [],
@@ -50,7 +52,7 @@ describe("network view helpers", () => {
   });
 
   it("says 'else' only when people were shown above", () => {
-    expect(everyoneHeading(view({}))).toBe("Everyone in the network");
+    expect(everyoneHeading(view({}))).toBe("People in the network");
     const match = { profile: person(false), score: 2, mentorFor: [], sharedLearning: ["x"], sharedProven: [], reasons: [] };
     expect(everyoneHeading(view({ peers: [match] }))).toBe("Everyone else in the network");
   });

@@ -2,11 +2,21 @@
 import { ensureDemoProfiles } from "./demo";
 import { NetworkError } from "./errors";
 import { groupMatches, matchProfile } from "./matching";
-import { deleteProfile, getProfile, listProfiles, saveProfile } from "./profiles";
+import {
+  addFriendship,
+  areFriends,
+  deleteFriendData,
+  getInvite as getInviteRecord,
+  listFriendIds,
+  ownInviteCode,
+  removeFriendship,
+} from "./friends";
+import { deleteProfile, getProfile, isInNetwork, listProfiles, saveProfile, setProfileInNetwork } from "./profiles";
 import { checkProfileInput, firstError } from "./rules";
 import { assertUserId, requireJoiner, viewerAccess } from "./session";
 import { computeSkills, demoSkillSet, NO_SKILLS } from "./skills";
 import type {
+  InviteView,
   Match,
   MyProfileView,
   NetworkView,
@@ -53,6 +63,7 @@ function toMyProfile(record: ProfileRecord, skills: SkillSet): MyProfileView {
     contactUrl: record.contactUrl,
     joinedAt: record.joinedAt,
     updatedAt: record.updatedAt,
+    inNetwork: isInNetwork(record),
     provenSkills: skills.proven.map((skill) => ({ ...skill })),
     learning: [...skills.learning],
   };
@@ -74,33 +85,58 @@ function directoryOrder(left: Match, right: Match): number {
 }
 
 /**
- * Everything /people shows to this viewer. Matching needs the viewer to have a profile or
- * at least one map; without either, everyone is listed with no match sections.
+ * Everything /people shows to this viewer.
+ *
+ * - Friends always show, whatever either side's network setting.
+ * - Opted out (the default): nobody else at all.
+ * - Opted in: everyone else who opted in (and the demo profiles), matched by skills.
+ *
+ * Matching needs the viewer to have a profile or at least one map.
  */
 export async function getNetwork(userId: string): Promise<NetworkView> {
   assertUserId(userId);
-  try {
-    await ensureDemoProfiles();
-  } catch (error) {
-    // The demo profiles are a nicety. Real profiles still list without them.
-    console.error("[network] could not seed the demo profiles", error);
+  const [profiles, viewer, access, friendIds] = await Promise.all([
+    listProfiles(),
+    computeSkills(userId),
+    viewerAccess(),
+    listFriendIds(userId),
+  ]);
+  const mine = profiles.find((profile) => profile.userId === userId && !profile.isDemo) ?? null;
+  const viewerIn = mine !== null && isInNetwork(mine);
+  const friendSet = new Set(friendIds);
+  const isFriend = (record: ProfileRecord) =>
+    !record.isDemo && record.userId !== userId && friendSet.has(record.userId);
+
+  const inView = (record: ProfileRecord) => record.userId !== userId && !isFriend(record) && isInNetwork(record);
+  // Friends only: nobody outside your friends is read, let alone listed.
+  let others: ProfileRecord[] = [];
+  if (viewerIn) {
+    let listed = profiles;
+    try {
+      // The demo profiles are a nicety, only seen in the network. Real profiles still list without them.
+      await ensureDemoProfiles();
+      if (!profiles.some((record) => record.isDemo)) listed = await listProfiles();
+    } catch (error) {
+      console.error("[network] could not seed the demo profiles", error);
+    }
+    others = listed.filter(inView);
   }
 
-  const [profiles, viewer, access] = await Promise.all([listProfiles(), computeSkills(userId), viewerAccess()]);
-  const mine = profiles.find((profile) => profile.userId === userId && !profile.isDemo) ?? null;
-  const others = profiles.filter((profile) => profile.userId !== userId);
-  const othersWithSkills = await Promise.all(
-    others.map(async (record) => ({ record, skills: await skillsOf(record) })),
-  );
-
   const canMatch = mine !== null || viewer.hasMaps;
-  const matches = othersWithSkills.map(({ record, skills }) =>
-    matchProfile(canMatch ? viewer : NO_SKILLS, skills, toPublicProfile(record, skills)),
-  );
+  const matchAll = (records: ProfileRecord[]) =>
+    Promise.all(
+      records.map(async (record) => {
+        const skills = await skillsOf(record);
+        return matchProfile(canMatch ? viewer : NO_SKILLS, skills, toPublicProfile(record, skills));
+      }),
+    );
+  const [friends, matches] = await Promise.all([matchAll(profiles.filter(isFriend)), matchAll(others)]);
   const { mentors, peers, rest } = canMatch ? groupMatches(matches) : { mentors: [], peers: [], rest: matches };
 
   return {
     me: mine ? toMyProfile(mine, viewer) : null,
+    inNetwork: viewerIn,
+    friends: friends.sort(directoryOrder),
     mentors,
     peers,
     everyone: [...rest].sort(directoryOrder),
@@ -111,19 +147,109 @@ export async function getNetwork(userId: string): Promise<NetworkView> {
   };
 }
 
-/** Creates or updates the viewer's profile. Signed in, once Auth0 is set up. */
+/**
+ * Creates or updates the viewer's profile. Signed in, once Auth0 is set up. `inNetwork`
+ * opts in or out at the same time; left out, the profile keeps its setting.
+ */
 export async function joinNetwork(userId: string, input: ProfileInput): Promise<MyProfileView> {
   await requireJoiner(userId);
   const checked = checkProfileInput(input);
   if (!checked.ok) throw new NetworkError(firstError(checked.errors), 400);
-  const record = await saveProfile(userId, checked.value);
+  const record = await saveProfile(userId, checked.value, input.inNetwork ?? undefined);
   return toMyProfile(record, await computeSkills(userId));
 }
 
-/** Deletes the viewer's profile. Never needs a sign-in, and leaving twice is fine. */
+const MAKE_PROFILE_FIRST = "Make your profile first, so people know who you are.";
+
+/**
+ * Opts in to the network, or out of it. Opting in needs a profile (and a sign-in, once Auth0
+ * is set up). Opting out never needs a sign-in, hides you from the network at once, and
+ * keeps your friends.
+ */
+export async function setInNetwork(userId: string, inNetwork: boolean): Promise<MyProfileView | null> {
+  if (inNetwork) await requireJoiner(userId);
+  else assertUserId(userId);
+  const record = await setProfileInNetwork(userId, inNetwork);
+  if (!record && inNetwork) throw new NetworkError(MAKE_PROFILE_FIRST, 400);
+  return record ? toMyProfile(record, await computeSkills(userId)) : null;
+}
+
+/**
+ * Deletes the viewer's profile, their friend links (both ways) and their invite link.
+ * Never needs a sign-in, and deleting twice is fine.
+ */
 export async function leaveNetwork(userId: string): Promise<void> {
   assertUserId(userId);
+  await deleteFriendData(userId);
   await deleteProfile(userId);
+}
+
+/** The viewer's invite code: the same each time, or a new one with `fresh`, which retires the old link. */
+export async function createInvite(userId: string, fresh: boolean): Promise<{ code: string }> {
+  await requireJoiner(userId);
+  const profile = await getProfile(userId);
+  if (!profile || profile.isDemo) throw new NetworkError(MAKE_PROFILE_FIRST, 400);
+  return { code: await ownInviteCode(userId, fresh) };
+}
+
+const INVITE_GONE = "This invite link doesn't work any more. Ask your friend for a new one.";
+
+/** The invite and its sender's profile, or a 404 that says what to do. */
+async function loadInvite(code: string): Promise<{ inviterId: string; inviter: ProfileRecord }> {
+  const invite = await getInviteRecord(code);
+  const inviter = invite ? await getProfile(invite.userId) : null;
+  if (!invite || !inviter || inviter.isDemo) throw new NetworkError(INVITE_GONE, 404);
+  return { inviterId: invite.userId, inviter };
+}
+
+/** What the invite page shows: who invited you, and whether you can accept. */
+export async function getInvite(viewerId: string, code: string): Promise<InviteView> {
+  assertUserId(viewerId);
+  const { inviterId, inviter } = await loadInvite(code);
+  const [access, mine, alreadyFriends] = await Promise.all([
+    viewerAccess(),
+    getProfile(viewerId),
+    areFriends(viewerId, inviterId),
+  ]);
+  return {
+    inviter: { displayName: inviter.displayName, city: inviter.city },
+    isYou: inviterId === viewerId,
+    alreadyFriends,
+    hasProfile: mine !== null && !mine.isDemo,
+    signInRequired: access.signInRequired,
+    displayName: access.displayName,
+  };
+}
+
+/**
+ * Accepts an invite: both people become friends. A viewer with no profile gets one, friends
+ * only, under `displayName`. Signed in, once Auth0 is set up, like joining.
+ */
+export async function acceptInvite(
+  viewerId: string,
+  code: string,
+  displayName: string | null,
+): Promise<{ friend: string }> {
+  await requireJoiner(viewerId);
+  const { inviterId, inviter } = await loadInvite(code);
+  if (inviterId === viewerId) throw new NetworkError("This is your own invite link. Send it to a friend.", 400);
+  const mine = await getProfile(viewerId);
+  if (!mine || mine.isDemo) {
+    const checked = checkProfileInput({ displayName: displayName ?? "" });
+    if (!checked.ok) throw new NetworkError(firstError(checked.errors), 400);
+    await saveProfile(viewerId, checked.value, false);
+  }
+  await addFriendship(viewerId, inviterId);
+  return { friend: inviter.displayName };
+}
+
+/** Removes a friend, both ways, by their public id. Never needs a sign-in, and removing twice is fine. */
+export async function removeFriend(userId: string, publicId: string): Promise<void> {
+  assertUserId(userId);
+  const friendIds = await listFriendIds(userId);
+  const profiles = await Promise.all(friendIds.map((id) => getProfile(id)));
+  const index = profiles.findIndex((profile) => profile?.publicId === publicId);
+  if (index >= 0) await removeFriendship(userId, friendIds[index]);
 }
 
 /** The viewer's own profile, or null. */

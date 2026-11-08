@@ -8,7 +8,10 @@ import { getUserId } from "@/shared/identity";
 import { saveSkillMap } from "@/features/skill-map";
 import { putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
-import { DELETE, GET, PUT } from "./route";
+import { DELETE as removeFriendRoute } from "./friends/[publicId]/route";
+import { GET as inviteGET, POST as invitePOST } from "./invite/[code]/route";
+import { POST as createInviteRoute } from "./invite/route";
+import { DELETE, GET, PATCH, PUT } from "./route";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
@@ -44,9 +47,9 @@ async function body(response: Response): Promise<Record<string, unknown>> {
   return JSON.parse(text);
 }
 
-function put(payload: unknown): Request {
-  return new Request("http://localhost/api/network", {
-    method: "PUT",
+function put(payload: unknown, method = "PUT", url = "http://localhost/api/network"): Request {
+  return new Request(url, {
+    method,
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
@@ -67,21 +70,26 @@ beforeEach(async () => {
 describe("network route", () => {
   it("join, view, edit and leave, with no ids in any response", async () => {
     asUser(BO);
-    const joined = await PUT(put({ displayName: "Bo", city: "Calgary", contactUrl: "https://example.com/bo" }));
+    const joined = await PUT(
+      put({ displayName: "Bo", city: "Calgary", contactUrl: "https://example.com/bo", inNetwork: true }),
+    );
     expect(joined.status).toBe(200);
     expect(await body(joined)).toMatchObject({
       me: { displayName: "Bo", provenSkills: [{ title: "SQL joins", mapTitle: "Data analyst", evidenceUrl: null }] },
     });
 
     asUser(ANA);
+    // Friends only until Ana joins: nobody is listed.
+    expect(await body(await GET())).toMatchObject({ me: null, inNetwork: false, friends: [], mentors: [], everyone: [] });
+    await body(await PUT(put({ displayName: "Ana", inNetwork: true })));
     const view = await body(await GET());
-    expect(view).toMatchObject({ me: null, viewerHasMaps: true, signedIn: false, signInRequired: false });
+    expect(view).toMatchObject({ inNetwork: true, viewerHasMaps: true, signedIn: false, signInRequired: false });
     const mentors = view.mentors as { profile: { displayName: string }; reasons: string[] }[];
     expect(mentors.find((match) => match.profile.displayName === "Bo")?.reasons).toEqual([
       "Proved SQL joins, which you're learning.",
     ]);
 
-    expect((await body(await PUT(put({ displayName: "Ana" })))).me).toMatchObject({ displayName: "Ana" });
+    expect((await body(await PUT(put({ displayName: "Ana" })))).me).toMatchObject({ displayName: "Ana", inNetwork: true });
     expect((await body(await PUT(put({ displayName: "Ana L." })))).me).toMatchObject({ displayName: "Ana L." });
     expect(await body(await DELETE())).toEqual({ ok: true });
     expect((await body(await GET())).me).toBeNull();
@@ -113,5 +121,41 @@ describe("network route", () => {
     expect(await body(await GET())).toMatchObject({ signInRequired: true });
     // Leaving never needs a sign-in.
     expect((await DELETE()).status).toBe(200);
+  });
+
+  it("invite, accept, see each other, toggle the network and remove, with no ids in any response", async () => {
+    const params = <T>(value: T) => ({ params: Promise.resolve(value) });
+    asUser(BO);
+    expect((await createInviteRoute(put({}, "POST"))).status).toBe(400);
+    await body(await PUT(put({ displayName: "Bo" })));
+    const { code } = (await body(await createInviteRoute(put({}, "POST")))) as { code: string };
+    expect(code).toMatch(/^[a-z2-7]{12}$/);
+
+    asUser(ANA);
+    const inviteUrl = `http://localhost/api/network/invite/${code}`;
+    expect(await body(await inviteGET(new Request(inviteUrl), params({ code })))).toMatchObject({
+      inviter: { displayName: "Bo" },
+      hasProfile: false,
+    });
+    expect(await body(await invitePOST(put({ displayName: "Ana" }, "POST", inviteUrl), params({ code })))).toEqual({
+      friend: "Bo",
+    });
+    const anas = await body(await GET());
+    expect(anas).toMatchObject({ inNetwork: false, everyone: [], friends: [{ profile: { displayName: "Bo" } }] });
+
+    asUser(BO);
+    const bos = await body(await GET());
+    const ana = (bos.friends as { profile: { displayName: string; publicId: string } }[])[0].profile;
+    expect(ana.displayName).toBe("Ana");
+    expect((await body(await PATCH(put({ inNetwork: true }, "PATCH")))).me).toMatchObject({ inNetwork: true });
+    expect(await body(await GET())).toMatchObject({ inNetwork: true, friends: [{ profile: { displayName: "Ana" } }] });
+    expect((await PATCH(put({ inNetwork: "yes" }, "PATCH"))).status).toBe(400);
+
+    const removed = await removeFriendRoute(new Request("http://localhost"), params({ publicId: ana.publicId }));
+    expect(await body(removed)).toEqual({ ok: true });
+    expect((await body(await GET())).friends).toEqual([]);
+    asUser(ANA);
+    expect((await body(await GET())).friends).toEqual([]);
+    expect((await inviteGET(new Request(inviteUrl), params({ code: "zzzzzzzzzzzz" }))).status).toBe(404);
   });
 });

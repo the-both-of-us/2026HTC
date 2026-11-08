@@ -24,6 +24,12 @@ export type ProfileRecord = {
   updatedAt: string;
   isDemo: boolean;
   /**
+   * True when this person opted in to the network, so everyone else in it can see them.
+   * Absent on profiles made before the setting existed, which counts as opted out (friends
+   * only). Demo profiles are always in the network, whatever this says.
+   */
+  inNetwork?: boolean;
+  /**
    * Demo profiles only: their made-up skills, written by the seed (never by a person).
    * Real profiles never have this; their skills are worked out from their progress.
    */
@@ -80,6 +86,8 @@ export type MyProfileView = {
   contactUrl: string | null;
   joinedAt: string;
   updatedAt: string;
+  /** True when the viewer opted in to the network. False means friends only. */
+  inNetwork: boolean;
   provenSkills: ProvenSkill[];
   learning: string[];
 };
@@ -87,6 +95,10 @@ export type MyProfileView = {
 /** What GET /api/network returns. */
 export type NetworkView = {
   me: MyProfileView | null;
+  /** The viewer's setting. False (the default) is friends only: mentors, peers and everyone are empty. */
+  inNetwork: boolean;
+  /** The viewer's friends, whatever their network setting. Never repeated in the sections below. */
+  friends: Match[];
   /** People who proved what the viewer is learning, best match first. */
   mentors: Match[];
   /** People learning the same skills, who are not already in mentors. */
@@ -110,6 +122,21 @@ export type ProfileInput = {
   city?: string | null;
   lookingFor?: string | null;
   contactUrl?: string | null;
+  /** Opt in or out of the network. Left out, an existing profile keeps its setting and a new one is opted out. */
+  inNetwork?: boolean | null;
+};
+
+/** What GET /api/network/invite/<code> returns: who sent the invite, and what the viewer can do. */
+export type InviteView = {
+  inviter: { displayName: string; city: string };
+  /** The viewer opened their own invite link. */
+  isYou: boolean;
+  alreadyFriends: boolean;
+  /** False when accepting also makes the viewer's profile, so the page asks for a name. */
+  hasProfile: boolean;
+  signInRequired: boolean;
+  /** The viewer's own name from sign-in, to pre-fill the form. */
+  displayName: string | null;
 };
 
 /** The same fields after cleaning. */

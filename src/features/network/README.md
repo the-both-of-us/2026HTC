@@ -2,9 +2,13 @@
 
 **Owner:** Mirza. See `TEAM.md`.
 
-Match people by proven skills: "Priya proved what you're learning, ask her." Joining is opt-in: a person makes a profile at `/people`, and it shows everyone the skills they have proved. Leaving deletes it.
+Friends by invite, and an opt-in network that matches people by proven skills: "Priya proved what you're learning, ask her."
 
-The UI is exported from `@/features/network/client`: `NetworkScreen` (`/people`). Everything else is server code from `@/features/network`.
+- **Network off (the default): friends only.** You see your friends and nobody else, and only your friends see you.
+- **Network on:** you also see everyone else who opted in (and the demo profiles), matched by skills, and they see you.
+- Opting out hides you from the network at once and keeps your friends. Friends always see each other's proven skills and evidence links, whatever either side's setting.
+
+The UI is exported from `@/features/network/client`: `NetworkScreen` (`/people`) and `InviteScreen` (`/people/invite/<code>`). Everything else is server code from `@/features/network`.
 
 **Status:** built.
 
@@ -12,7 +16,10 @@ The UI is exported from `@/features/network/client`: `NetworkScreen` (`/people`)
 
 | Key | Holds |
 |---|---|
-| `network/profiles/<userId>` | `ProfileRecord`: `userId` (server only), `publicId` (random, the only id a browser sees), `displayName`, `city`, `lookingFor`, `contactUrl`, `joinedAt`, `updatedAt`, `isDemo`, and for demo profiles only `demo` (their made-up skills). |
+| `network/profiles/<userId>` | `ProfileRecord`: `userId` (server only), `publicId` (random, the only id a browser sees), `displayName`, `city`, `lookingFor`, `contactUrl`, `joinedAt`, `updatedAt`, `isDemo`, `inNetwork`, and for demo profiles only `demo` (their made-up skills). `inNetwork` missing (profiles from before the setting) means opted out; demo profiles are always in. |
+| `network/friends/<userId>/<friendUserId>` | `{since}`. Always written, and removed, for both people. |
+| `network/invites/<code>` | `{code, userId, createdAt}`, claimed with `claimDoc`. 12 random base32 characters (60 bits). Works for any number of friends until its owner makes a new one, which deletes it. |
+| `network/my-invite/<userId>` | `{code}`: the owner's current invite, so they get the same link back. |
 
 Skills are **never stored or typed**. They are worked out on each request from the person's own maps (`listMapsByOwner`) and progress (`getProgress`, then `deriveNodeStates`):
 
@@ -26,9 +33,14 @@ Everyone's skills are worked out afresh on every listing, so a skill proved a mo
 
 | Route | Does | Who |
 |---|---|---|
-| `GET /api/network` | `NetworkView`: `{me, mentors, peers, everyone, viewerHasMaps, signedIn, signInRequired, displayName}` | Anyone |
-| `PUT /api/network` `{displayName, city?, lookingFor?, contactUrl?}` | `{me}`: join, or update your profile | Signed in, once Auth0 is set up |
-| `DELETE /api/network` | `{ok: true}`: leave, which deletes your profile | Anyone. Leaving twice is fine. |
+| `GET /api/network` | `NetworkView`: `{me, inNetwork, friends, mentors, peers, everyone, viewerHasMaps, signedIn, signInRequired, displayName}`. Opted out: `mentors`, `peers` and `everyone` are empty and nobody else is read. | Anyone |
+| `PUT /api/network` `{displayName, city?, lookingFor?, contactUrl?, inNetwork?}` | `{me}`: make or update your profile. `inNetwork` left out keeps the setting; a new profile starts opted out. | Signed in, once Auth0 is set up |
+| `PATCH /api/network` `{inNetwork}` | `{me}` (null with no profile): opt in or out | Opting in: a profile, and signed in once Auth0 is set up. Opting out: anyone. |
+| `DELETE /api/network` | `{ok: true}`: deletes your profile, your friend links (both ways) and your invite | Anyone. Twice is fine. |
+| `POST /api/network/invite` `{fresh?}` | `{code}`: your invite for `/people/invite/<code>`, the same each time; `fresh` retires the old link | A profile, and signed in once Auth0 is set up |
+| `GET /api/network/invite/<code>` | `InviteView`: `{inviter: {displayName, city}, isYou, alreadyFriends, hasProfile, signInRequired, displayName}`, or 404 | Anyone |
+| `POST /api/network/invite/<code>` `{displayName?}` | `{friend}`: you and the sender become friends. With no profile, one is made (friends only) under `displayName`. | Signed in, once Auth0 is set up. Not your own link. |
+| `DELETE /api/network/friends/<publicId>` | `{ok: true}`: removes that friend both ways | Anyone. Twice is fine. |
 | `GET /api/network/practise?skill=<title>` | 303 to that skill on the viewer's own map (`/map/<id>?skill=<nodeId>`), or to `/courses?q=<title>` if none of their maps has it | Anyone. Only the viewer's own maps are read, so a map id only reaches its owner, in a redirect. |
 
 Errors are `{error: "a sentence for people"}` with a 400, 401 or 500. Raw errors only go to the server log, prefixed `[network]`.
@@ -42,11 +54,12 @@ Every profile leaves the server through `toPublicProfile` (field by field) or `t
 - **City:** optional, up to 40. **Looking for:** optional, one line, up to 120.
 - **Contact link:** optional, up to 200, and only a whole `https:` URL with no name or password in it. `javascript:`, `data:` and `http:` are refused. It shows as "Contact on linkedin.com" with `target="_blank" rel="noopener noreferrer nofollow"`.
 - `rules.ts` holds these checks as plain functions, so the form checks the same rules before sending.
-- **Sign-in:** with Auth0 set up, joining or editing needs a signed-in session for that same user id (401: "Sign in to join the network, so people know it's really you."). Without Auth0 (tests, offline development), guests may join. Leaving never needs a sign-in.
+- **Sign-in:** with Auth0 set up, making or editing a profile, opting in, making an invite and accepting one all need a signed-in session for that same user id (401: "Sign in to join the network, so people know it's really you."). Without Auth0 (tests, offline development), guests may do all of it. Opting out, removing a friend and deleting your profile never need a sign-in.
+- **Friends** need a profile on both sides (the invite page makes one from a name). Friends are never repeated in the network sections.
 
 ## Matching
 
-Only when the viewer has a profile or at least one map. Titles are normalised (lower case, punctuation to spaces, spaces collapsed; `+` and `#` become words so C++ and C# differ). Two titles match when equal, or when their word sets overlap by a Jaccard similarity of 0.6 or more, after dropping filler words ("and", "the", "of"...) and plural endings. So "SQL joins" matches "SQL joins and unions", and "SQL queries" matches "SQL query writing".
+Only over the people the viewer can see (friends, plus the network when opted in), and only when the viewer has a profile or at least one map. Titles are normalised (lower case, punctuation to spaces, spaces collapsed; `+` and `#` become words so C++ and C# differ). Two titles match when equal, or when their word sets overlap by a Jaccard similarity of 0.6 or more, after dropping filler words ("and", "the", "of"...) and plural endings. So "SQL joins" matches "SQL joins and unions", and "SQL queries" matches "SQL query writing".
 
 For every other profile:
 
@@ -66,13 +79,13 @@ Six made-up people (`demo.ts`) whose skills are titles from the three sample map
 
 ## Delete my data
 
-`deleteUserData(userId): Promise<{ profiles: number }>` removes the person's profile. Only UUID ids are accepted, only that one key changes, and it can run twice. There is nothing else to remove: skills are never stored here.
+`deleteUserData(userId): Promise<{ profiles: number; friends: number }>` removes the person's profile (and with it the network setting), every friend link both ways, and their invite. Only UUID ids are accepted and it can run twice. Skills are never stored here, so there is nothing else to remove.
 
 ## Files
 
 - `network.ts`: the view, join and leave. `matching.ts`: title matching and scoring, as plain functions. `skills.ts`: skills from maps and progress. `demo.ts`: the demo profiles.
-- `profiles.ts`: store reads and writes. `rules.ts`: field checks. `session.ts`: the sign-in seam. `http.ts`: request parsing and error responses. `deleteData.ts`: "Delete my data".
-- `ui/api.ts`: fetch helpers that turn every failure into a sentence. `ui/view.ts`: labels, as plain functions. `ui/NetworkScreen.tsx`: the page.
+- `profiles.ts`: profile store reads and writes. `friends.ts`: friend links and invite codes. `rules.ts`: field checks. `session.ts`: the sign-in seam. `http.ts`: request parsing and error responses. `deleteData.ts`: "Delete my data".
+- `ui/api.ts`: fetch helpers that turn every failure into a sentence. `ui/view.ts`: labels, as plain functions. `ui/NetworkScreen.tsx`: the page. `ui/FriendInvite.tsx`: the invite link and QR dialog. `ui/InviteScreen.tsx`: the invite page.
 
 ## Tests
 

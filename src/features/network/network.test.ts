@@ -10,7 +10,7 @@ import { getDoc, listKeys, putDoc } from "@/shared/store";
 import { DEMO_PROFILES, DEMO_VERSION, ensureDemoProfiles, resetDemoStateForTests } from "./demo";
 import { deleteUserData } from "./deleteData";
 import { NetworkError, SIGN_IN_TO_JOIN } from "./errors";
-import { getNetwork, joinNetwork, leaveNetwork } from "./network";
+import { acceptInvite, createInvite, getInvite, getNetwork, joinNetwork, leaveNetwork, removeFriend, setInNetwork } from "./network";
 import { listProfiles, profileKey } from "./profiles";
 import { computeSkills } from "./skills";
 import { node, prove, publishEvidence, resetNetwork, saveMap } from "./testing";
@@ -34,6 +34,19 @@ vi.mock("next/headers", () => ({
 
 const ANA = randomUUID();
 const BO = randomUUID();
+const CY = randomUUID();
+
+/** Makes a profile that is in the network. */
+const joinIn = (userId: string, displayName: string, extra: { contactUrl?: string } = {}) =>
+  joinNetwork(userId, { displayName, inNetwork: true, ...extra });
+
+/** Makes `a` and `b` friends through an invite, the way the invite page does. */
+async function befriend(a: string, b: string, bName = "Friend") {
+  const { code } = await createInvite(a, false);
+  await acceptInvite(b, code, bName);
+}
+
+const names = (matches: { profile: { displayName: string } }[]) => matches.map((match) => match.profile.displayName);
 
 function stubAuth(on: boolean) {
   const values = on
@@ -186,7 +199,8 @@ describe("the network view", () => {
     const anasMap = await saveMap(ANA, [node("sql", "SQL queries"), node("joins", "SQL joins", ["sql"])]);
     const bosMap = await saveMap(BO, [node("j", "SQL joins and unions"), node("p", "Python")], "Backend");
     await prove(bosMap.id, BO, "j");
-    await joinNetwork(BO, { displayName: "Bo", contactUrl: "https://example.com/bo" });
+    await joinIn(BO, "Bo", { contactUrl: "https://example.com/bo" });
+    await joinIn(ANA, "Ana");
 
     const view = await getNetwork(ANA);
     const bo = view.mentors.find((match) => match.profile.displayName === "Bo");
@@ -202,17 +216,16 @@ describe("the network view", () => {
     }
   });
 
-  it("lists everyone without match sections when the viewer has no profile and no maps", async () => {
+  it("lists everyone once the viewer joins, demo profiles included", async () => {
+    await joinIn(ANA, "Ana");
     const view = await getNetwork(ANA);
-    expect(view.me).toBeNull();
     expect(view.viewerHasMaps).toBe(false);
-    expect(view.mentors).toEqual([]);
-    expect(view.peers).toEqual([]);
-    expect(view.everyone).toHaveLength(DEMO_PROFILES.length);
+    expect([...view.mentors, ...view.peers, ...view.everyone]).toHaveLength(DEMO_PROFILES.length);
   });
 
   it("matches the viewer with demo profiles from the sample maps' skills", async () => {
     await saveMap(ANA, [node("sql", "SQL queries"), node("joins", "SQL joins", ["sql"])]);
+    await joinIn(ANA, "Ana");
     const view = await getNetwork(ANA);
     const mentors = view.mentors.map((match) => match.profile.displayName);
     // Priya proved SQL queries and SQL joins; Marcus proved "SQL query writing".
@@ -227,7 +240,8 @@ describe("the network view", () => {
   });
 
   it("lists real people before demo profiles", async () => {
-    await joinNetwork(BO, { displayName: "Bo" });
+    await joinIn(BO, "Bo");
+    await joinIn(ANA, "Ana");
     const view = await getNetwork(ANA);
     expect(view.everyone[0].profile).toMatchObject({ displayName: "Bo", isDemo: false });
   });
@@ -237,7 +251,8 @@ describe("the network view", () => {
     const bosMap = await saveMap(BO, [node("q", "Quantum origami")], "Folding");
     await prove(anasMap.id, ANA, "q");
     await prove(bosMap.id, BO, "q");
-    await joinNetwork(BO, { displayName: "Bo" });
+    await joinIn(BO, "Bo");
+    await joinIn(ANA, "Ana");
 
     const view = await getNetwork(ANA);
     expect(view.mentors.map((match) => match.profile.displayName)).not.toContain("Bo");
@@ -251,7 +266,8 @@ describe("the network view", () => {
     const bosMap = await saveMap(BO, [node("a", "SQL queries"), node("b", "Python")], "Backend");
     await prove(bosMap.id, BO, "a");
     const proofId = await publishEvidence(bosMap, BO, ["a"]);
-    await joinNetwork(BO, { displayName: "Bo" });
+    await joinIn(BO, "Bo");
+    await joinIn(ANA, "Ana");
     const bo = (view: Awaited<ReturnType<typeof getNetwork>>) =>
       view.everyone.find((match) => match.profile.displayName === "Bo")!.profile;
 
@@ -282,6 +298,7 @@ describe("demo profiles", () => {
       expect(demo.userId).not.toMatch(/^[0-9a-f-]{36}$/);
       expect(demo.demo?.version).toBe(DEMO_VERSION);
     }
+    await joinIn(ANA, "Ana");
     const view = await getNetwork(ANA);
     expect(view.everyone.every(({ profile }) => profile.isDemo && profile.contactUrl === null)).toBe(true);
   });
@@ -305,8 +322,8 @@ describe("deleteUserData", () => {
   it("removes only this person's profile, and can run twice", async () => {
     await joinNetwork(ANA, { displayName: "Ana" });
     await joinNetwork(BO, { displayName: "Bo" });
-    expect(await deleteUserData(ANA)).toEqual({ profiles: 1 });
-    expect(await deleteUserData(ANA)).toEqual({ profiles: 0 });
+    expect(await deleteUserData(ANA)).toEqual({ profiles: 1, friends: 0 });
+    expect(await deleteUserData(ANA)).toEqual({ profiles: 0, friends: 0 });
     expect(await getDoc(profileKey(ANA))).toBeNull();
     expect(await getDoc(profileKey(BO))).not.toBeNull();
   });
@@ -314,9 +331,167 @@ describe("deleteUserData", () => {
   it("refuses ids that are not UUIDs, so demo profiles and other keys are safe", async () => {
     await ensureDemoProfiles();
     const before = await listKeys("network/");
-    expect(await deleteUserData("demo-network-priya")).toEqual({ profiles: 0 });
-    expect(await deleteUserData("../maps")).toEqual({ profiles: 0 });
-    expect(await deleteUserData("")).toEqual({ profiles: 0 });
+    expect(await deleteUserData("demo-network-priya")).toEqual({ profiles: 0, friends: 0 });
+    expect(await deleteUserData("../maps")).toEqual({ profiles: 0, friends: 0 });
+    expect(await deleteUserData("")).toEqual({ profiles: 0, friends: 0 });
     expect(await listKeys("network/")).toEqual(before);
+  });
+});
+
+describe("network visibility", () => {
+  it("shows an opted-out viewer their friends and nobody else", async () => {
+    await joinIn(BO, "Bo");
+    await joinNetwork(ANA, { displayName: "Ana" });
+    await befriend(ANA, CY, "Cy");
+
+    const view = await getNetwork(ANA);
+    expect(view.inNetwork).toBe(false);
+    expect(view.me?.inNetwork).toBe(false);
+    expect(names(view.friends)).toEqual(["Cy"]);
+    expect([...view.mentors, ...view.peers, ...view.everyone]).toEqual([]);
+    // A guest with no profile sees nobody at all.
+    expect(await getNetwork(randomUUID())).toMatchObject({ friends: [], mentors: [], peers: [], everyone: [] });
+  });
+
+  it("shows an opted-in viewer the network plus their friends, each once", async () => {
+    await joinIn(BO, "Bo");
+    await joinIn(ANA, "Ana");
+    await befriend(ANA, CY, "Cy");
+    await befriend(ANA, BO);
+
+    const view = await getNetwork(ANA);
+    expect(view.inNetwork).toBe(true);
+    expect(names(view.friends).sort()).toEqual(["Bo", "Cy"]);
+    const network = names([...view.mentors, ...view.peers, ...view.everyone]);
+    expect(network).not.toContain("Bo");
+    expect(network).not.toContain("Cy");
+    expect(network).toHaveLength(DEMO_PROFILES.length);
+  });
+
+  it("hides opted-out people, including old profiles, and opting out hides you at once but keeps friends", async () => {
+    await joinIn(ANA, "Ana");
+    await joinNetwork(BO, { displayName: "Bo" });
+    // A profile stored before the setting existed counts as opted out.
+    const legacy = randomUUID();
+    await putDoc(profileKey(legacy), {
+      userId: legacy,
+      publicId: randomUUID(),
+      displayName: "Old",
+      city: "",
+      lookingFor: "",
+      contactUrl: null,
+      joinedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isDemo: false,
+    });
+    const everyone = async () => names((await getNetwork(ANA)).everyone);
+    expect(await everyone()).not.toContain("Bo");
+    expect(await everyone()).not.toContain("Old");
+
+    await setInNetwork(BO, true);
+    expect(await everyone()).toContain("Bo");
+
+    await befriend(BO, CY, "Cy");
+    await setInNetwork(BO, false);
+    expect(await everyone()).not.toContain("Bo");
+    expect(names((await getNetwork(BO)).friends)).toEqual(["Cy"]);
+  });
+
+  it("needs a profile to opt in, and opting out never needs a sign-in", async () => {
+    expect(await statusOf(setInNetwork(ANA, true))).toMatchObject({ status: 400 });
+    expect(await setInNetwork(ANA, false)).toBeNull();
+    await joinIn(ANA, "Ana");
+    stubAuth(true);
+    expect(await statusOf(setInNetwork(ANA, true))).toMatchObject({ status: 401 });
+    expect((await setInNetwork(ANA, false))?.inNetwork).toBe(false);
+  });
+
+  it("lets friends see each other's proven skills and evidence whatever their setting", async () => {
+    const map = await saveMap(ANA, [node("a", "SQL queries")]);
+    await prove(map.id, ANA, "a");
+    const proofId = await publishEvidence(map, ANA, ["a"]);
+    await joinIn(ANA, "Ana");
+    await befriend(ANA, CY, "Cy");
+
+    const cy = await getNetwork(CY);
+    expect(cy.inNetwork).toBe(false);
+    expect(cy.friends[0].profile.provenSkills).toEqual([
+      { title: "SQL queries", mapTitle: "Data analyst", evidenceUrl: `/proof/${proofId}` },
+    ]);
+    expect(names((await getNetwork(ANA)).friends)).toEqual(["Cy"]);
+  });
+});
+
+describe("friend invites", () => {
+  it("need a profile, keep one code until a new one is made, and work for several friends", async () => {
+    expect(await statusOf(createInvite(ANA, false))).toMatchObject({ status: 400 });
+    await joinNetwork(ANA, { displayName: "Ana" });
+    const { code } = await createInvite(ANA, false);
+    expect(code).toMatch(/^[a-z2-7]{12}$/);
+    expect((await createInvite(ANA, false)).code).toBe(code);
+
+    await acceptInvite(BO, code, "Bo");
+    await acceptInvite(CY, code.toUpperCase(), "Cy");
+    expect(names((await getNetwork(ANA)).friends).sort()).toEqual(["Bo", "Cy"]);
+
+    const fresh = (await createInvite(ANA, true)).code;
+    expect(fresh).not.toBe(code);
+    expect(await statusOf(getInvite(BO, code))).toMatchObject({ status: 404 });
+    expect(await getInvite(BO, fresh)).toMatchObject({ inviter: { displayName: "Ana" }, alreadyFriends: true });
+  });
+
+  it("show who invited you, make a friends-only profile, and refuse your own link", async () => {
+    await joinNetwork(ANA, { displayName: "Ana", city: "Calgary" });
+    const { code } = await createInvite(ANA, false);
+    expect(await getInvite(BO, code)).toEqual({
+      inviter: { displayName: "Ana", city: "Calgary" },
+      isYou: false,
+      alreadyFriends: false,
+      hasProfile: false,
+      signInRequired: false,
+      displayName: null,
+    });
+    expect((await getInvite(ANA, code)).isYou).toBe(true);
+    expect(await statusOf(acceptInvite(ANA, code, null))).toMatchObject({ status: 400 });
+    expect(await statusOf(acceptInvite(BO, code, ""))).toMatchObject({ status: 400 });
+    expect(await statusOf(getInvite(BO, "nope"))).toMatchObject({ status: 404 });
+
+    expect(await acceptInvite(BO, code, "Bo")).toEqual({ friend: "Ana" });
+    const bo = await getNetwork(BO);
+    expect(bo.me).toMatchObject({ displayName: "Bo", inNetwork: false });
+    expect(names(bo.friends)).toEqual(["Ana"]);
+  });
+
+  it("need a sign-in to accept once Auth0 is set up", async () => {
+    await joinNetwork(ANA, { displayName: "Ana" });
+    const { code } = await createInvite(ANA, false);
+    stubAuth(true);
+    expect(await statusOf(acceptInvite(BO, code, "Bo"))).toEqual({ status: 401, message: SIGN_IN_TO_JOIN });
+  });
+
+  it("remove a friend both ways, and removing twice is fine", async () => {
+    await joinNetwork(ANA, { displayName: "Ana" });
+    await befriend(ANA, BO, "Bo");
+    const boPublicId = (await getNetwork(ANA)).friends[0].profile.publicId;
+    await removeFriend(ANA, boPublicId);
+    await removeFriend(ANA, boPublicId);
+    expect((await getNetwork(ANA)).friends).toEqual([]);
+    expect((await getNetwork(BO)).friends).toEqual([]);
+  });
+
+  it("are gone, with every friend link, after Delete my data or deleting the profile", async () => {
+    await joinNetwork(ANA, { displayName: "Ana" });
+    const { code } = await createInvite(ANA, false);
+    await acceptInvite(BO, code, "Bo");
+    await acceptInvite(CY, code, "Cy");
+
+    expect(await deleteUserData(ANA)).toEqual({ profiles: 1, friends: 2 });
+    expect((await getNetwork(BO)).friends).toEqual([]);
+    expect(await statusOf(getInvite(CY, code))).toMatchObject({ status: 404 });
+    expect((await listKeys("network/")).filter((key) => key.includes(ANA))).toEqual([]);
+
+    await befriend(BO, CY, "Cy");
+    await leaveNetwork(BO);
+    expect((await getNetwork(CY)).friends).toEqual([]);
   });
 });
