@@ -6,7 +6,8 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Nothing running. Waiting on the owner's next call.
+- **Redeploying.** Vercel BLOCKS deploys of commits authored by MirzaHB (not a member of the Vercel team), so production was stuck at `55a97f4` without your locked-skills and Sign out commits. This commit, by VVarrior1, deploys current main including yours. Until that's fixed, after you push, one of Abdu's commits (or `vercel redeploy`) is needed to put your work live.
+- **AWS redeploy from main**, adding `PROOF_SEAL_SECRET` to `scripts/deploy-aws.sh`'s secrets. Touches `scripts/deploy-aws.sh` only.
 
 ## Next
 
