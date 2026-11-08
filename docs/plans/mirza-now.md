@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- **UI refresh of Dashboard, Courses and the course page** (owner's request): a more modern dashboard (greeting, stat tiles, courses to start, also for new users), course cards with a seal cover and no "Sample" tag, and a two-column course page with a sticky start card. Touches my `features/dashboard/ui/**` and `features/courses/ui/**` only.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Done today (latest first)
 
+- UI refresh (`81f2769`): a seal per course (cover in ink, teal or violet from the map id); Courses cards with it and no Sample tag; the course page as a seal hero with skills beside a sticky start card; the dashboard as a hero with Continue, stat tiles (zeros on a first visit), your courses with progress, and courses to start. My `features/courses/ui` and `features/dashboard` only.
 - Map header while reading (`ce29cab`): with a skill open only the title and progress stay; full page also hides the view tabs. Start learning only on the overview (it did nothing when its skill was already open). Publish only while private; a public course shows a "Course page" link. Touched Abdu's `MapScreen.tsx` and `app/map/[id]/page.tsx` (see TEAM.md).
 - Quick videos redesign (`449aef2`) and a second search on the skill alone when the first is thin (`35e130d`).
 - Like and dislike on a skill's Quick videos (`be23fb1`): your dislike hides a video for you; 2+ dislikes outnumbering likes removes it for everyone and the next saved one fills in (lists keep 8, show 4). One key per vote at `skill-reel-votes/...`; Delete my data removes them (one line in Abdu's `trust/deleteData.ts`). Escape in the viewer no longer closes the skill. Needs a deploy (TEAM.md).
