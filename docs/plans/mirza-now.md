@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Nothing new yet: waiting on the owner for the next task. The skill-map, teachback, lessons, flashcards and quiz files above are free again.
+- Sidebar "Sign out" alignment: it hung 12px left of "Signed in as". One class in `src/shared/ui/Account.tsx` (Abdu's file; the owner asked for it). Nothing else touched.
 
 ## Next
 
