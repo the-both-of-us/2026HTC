@@ -10,7 +10,6 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
-- **Model benchmarks page** (owner's request): run gpt-oss-120b, Claude Haiku, Sonnet and Opus on public benchmark questions per subject (MMLU / MMLU-Pro: psychology, physics, algebra, law, health and more), graded by code against the answer key, plus speed; results saved in the repo and shown on a small page linked quietly from Settings, so the router's choices rest on data. Spends some Claude credits (owner OK'd). New `features/benchmarks`, `scripts/bench-models.ts`, `app/settings/models`.
 
 
 
@@ -21,6 +20,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Model benchmarks at `/settings/models` (small link in Settings): 64 public MMLU/MMLU-Pro questions per model. gpt-oss-120b 85.9%, Haiku 87.5%, Sonnet 95.3%, Opus 96.9%; gpt-oss ties Claude on math and CS, Claude is clearly better on psychology, health and law.
 - Model router and `/settings`: gpt-oss-120b by default; harder or higher-stakes courses use Claude Haiku, Sonnet or Opus per task (live-checked: all four tiers answer in 0.4–1.3 s). Theme, text size and learning mode moved into Settings.
 - Softer colours: course covers are soft sage, mist and sand tints with ink seal lines (no more solid violet/lavender), the Dashboard and course heroes are light tints with normal buttons, the feed card has a soft rounded edge instead of a hard ink frame (interest name in teal, body in offset ink), and dark mode text is a little crisper. Checked in Chrome, light and dark.
 - Put Mirza's UI refresh live (`81f2769`: Dashboard, Courses and the course page, a seal per course); the Programs section on /courses is kept; typecheck, lint and tests pass.

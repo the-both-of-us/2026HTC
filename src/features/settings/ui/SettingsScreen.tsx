@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Card, LearningModeToggle, PageShell, TextSizeSelect, ThemeSelect } from "@/shared/ui";
 import { AiSettingsForm } from "./AiSettingsForm";
@@ -34,6 +35,11 @@ export function SettingsScreen() {
 
         <Section title="AI models">
           <AiSettingsForm />
+          <p className="text-right text-xs text-ink-soft">
+            <Link href="/settings/models" className="underline underline-offset-4 hover:text-ink">
+              How the models compare
+            </Link>
+          </p>
         </Section>
       </div>
     </PageShell>
