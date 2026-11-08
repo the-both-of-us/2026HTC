@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { canReadMap } from "@/app/api/maps/[id]/access";
 import { findCircleForMap } from "@/features/circles";
+import { isPublished } from "@/features/courses";
 import { CircleLink, StartCircleButton } from "@/features/circles/client";
 import { getSkillMap } from "@/features/skill-map";
 import { MapScreen, MapScreenLoading } from "@/features/skill-map/client";
@@ -30,12 +31,14 @@ async function MapFromRoute({ params }: MapPageProps) {
   await connection();
   const { id } = await params;
   // Voice controls only appear once the server knows its voice key works.
-  const [isPrivate, voiceReady, circle] = await Promise.all([isPrivateToSomeoneElse(id), isVoiceReady(), circleOf(id)]);
+  const [isPrivate, voiceReady, circle, published] = await Promise.all([isPrivateToSomeoneElse(id), isVoiceReady(), circleOf(id), isPublic(id)]);
   if (isPrivate) return <PrivateMapNotice />;
   return (
     <MapScreen
       mapId={id}
       voiceReady={voiceReady}
+      // A public course's header links to its page instead of offering Publish.
+      published={published}
       // A map in a circle gets one "Your circle" button where "Start a study circle" would be:
       // starting another circle from a circle's map makes no sense, and it saves a header row.
       ownerActions={circle ? <CircleLink code={circle.code} title={circle.title} /> : <StartCircleButton mapId={id} />}
@@ -51,6 +54,16 @@ async function circleOf(id: string): Promise<{ code: string; title: string } | n
   } catch (error) {
     console.error("[map page] could not check for a study circle", error);
     return null;
+  }
+}
+
+/** Whether the map is a public course. A failure only means the header offers Publish. */
+async function isPublic(id: string): Promise<boolean> {
+  try {
+    return await isPublished(id);
+  } catch (error) {
+    console.error("[map page] could not check whether a map is published", error);
+    return false;
   }
 }
 

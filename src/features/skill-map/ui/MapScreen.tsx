@@ -8,7 +8,7 @@ import { ProofReward, RelightCheck, StreakNudge, useMapHabits, type ProofRewardD
 import { FinalInterview, YoungLearnerProvider } from "@/features/teachback/client";
 import { isYoungAudience } from "@/shared/audience";
 import clsx from "clsx";
-import { BookOpen, Compass, Lock, Network, Sparkles, Upload } from "lucide-react";
+import { BookOpen, Compass, Globe, Lock, Network, Sparkles, Upload } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
@@ -47,17 +47,20 @@ type LoadState =
 /**
  * voiceReady comes from the server, which checked that its voice key works.
  * banner shows above the header (the study circle line), ownerActions beside the owner's buttons.
+ * published says the map is a public course, so the header links to its page instead of offering Publish.
  */
 export function MapScreen({
   mapId,
   voiceReady = false,
   banner,
   ownerActions,
+  published = false,
 }: {
   mapId: string;
   voiceReady?: boolean;
   banner?: ReactNode;
   ownerActions?: ReactNode;
+  published?: boolean;
 }) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -124,6 +127,7 @@ export function MapScreen({
       voiceReady={voiceReady}
       banner={banner}
       ownerActions={ownerActions}
+      published={published}
     />
   );
 }
@@ -193,6 +197,7 @@ function LoadedMap({
   voiceReady,
   banner,
   ownerActions,
+  published,
 }: {
   map: PublicSkillMap;
   initialProven: Record<string, string>;
@@ -201,6 +206,7 @@ function LoadedMap({
   voiceReady: boolean;
   banner?: ReactNode;
   ownerActions?: ReactNode;
+  published: boolean;
 }) {
   const [proven, setProven] = useState(initialProven);
   const [unlocked, setUnlocked] = useState(initialUnlocked);
@@ -233,6 +239,9 @@ function LoadedMap({
   const nextSkill = map.nodes.find((node) => states[node.id] === "available") ?? null;
   const featured = map.nodes.find((node) => node.id === habits?.topicOfTheDay) ?? null;
   const selectedDim = selected ? (habits?.dim[selected.id] ?? 0) : 0;
+  // With a skill open, the header keeps only the title and progress: the actions and the habit row
+  // are for the overview. "Start learning" also lives there, where it always opens something.
+  const reading = selected !== null;
 
   const selectSkill = useCallback((nodeId: string) => {
     setSelectedId(nodeId);
@@ -296,7 +305,8 @@ function LoadedMap({
   // On a map for young children, "Explain it to a 10-year-old" reads "Explain it to a friend".
   const screen = (
     <PageShell width="full">
-      <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
+      {/* group/map: in full-page reading (data-reading-page on the panel), the view tabs row hides. */}
+      <div className="group/map flex flex-1 flex-col lg:h-dvh lg:flex-none">
         {/* The circle line stays one slim row, so the map keeps the height. */}
         {banner && <div className="[&>p]:py-1 max-sm:[&>p]:text-xs">{banner}</div>}
         {/*
@@ -324,14 +334,14 @@ function LoadedMap({
                 <Progress proven={provenCount} total={map.nodes.length} />
               </div>
             </div>
-            {/* Compact buttons with one primary: the next skill. */}
-            {isOwner ? (
+            {/* Compact buttons with one primary: the next skill. Only on the overview. */}
+            {reading ? null : isOwner ? (
               <MapActions
                 more={
                   <>
                     <HowItWorksButton />
                     {ownerActions}
-                    <PublishMenu mapId={map.id} />
+                    {published ? <CoursePageLink mapId={map.id} /> : <PublishMenu mapId={map.id} />}
                     {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
                   </>
                 }
@@ -349,9 +359,9 @@ function LoadedMap({
             )}
           </div>
 
-          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1.5 sm:gap-y-2">
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1.5 group-has-[[data-reading-page]]/map:hidden sm:gap-y-2">
             <div className="flex min-w-0 items-center gap-2 text-sm max-sm:w-full sm:flex-wrap sm:pb-2">
-              {isOwner && habits && (
+              {!reading && isOwner && habits && (
                 <StreakNudge
                   className="min-w-0"
                   streak={habits.streak}
@@ -363,7 +373,7 @@ function LoadedMap({
                 />
               )}
               {/* On a phone the progress count already says how many are left. */}
-              {isOwner && !allProven && (
+              {!reading && isOwner && !allProven && (
                 <p
                   className="inline-flex min-h-8 items-center gap-1.5 text-ink-soft max-sm:hidden"
                   title="The final interview unlocks when every topic is proven."
@@ -377,7 +387,7 @@ function LoadedMap({
                 </p>
               )}
               {/* A topic has no source, so say plainly where the map came from. */}
-              {map.sourceKind === "topic" && (
+              {!reading && map.sourceKind === "topic" && (
                 <span title="AI-generated from a topic, with no source to cite" className="shrink-0">
                   <Badge tone="sample" className="text-xs">
                     AI-made, no citations
@@ -478,6 +488,16 @@ function LoadedMap({
     </PageShell>
   );
   return <YoungLearnerProvider young={isYoungAudience(map.audience)}>{screen}</YoungLearnerProvider>;
+}
+
+/** Once a course is public, its page is where it is managed (Public or Private), so the header just links there. */
+function CoursePageLink({ mapId }: { mapId: string }) {
+  return (
+    <Link href={`/courses/${mapId}`} className={clsx(buttonClasses("subtle", "sm"), "min-h-9! px-3!")}>
+      <Globe aria-hidden="true" size={15} />
+      Course page
+    </Link>
+  );
 }
 
 /** Publishing is occasional, so it sits behind one small button instead of a sentence in the header. */
