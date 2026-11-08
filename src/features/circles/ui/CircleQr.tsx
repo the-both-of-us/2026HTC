@@ -19,7 +19,7 @@ export function CircleQr({ url, size = 240 }: { url: string; size?: number }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="rounded-control bg-sheet border border-rule-strong p-3">
+      <div className="rounded-control border border-rule-strong bg-qr-paper p-3">
         <QRCodeSVG
           value={url}
           size={size}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { prefersReducedMotion, resolvedTheme, subscribeTheme } from "@/shared/ui";
 import { METER_BANDS, type AudioMeter } from "../adapters/types";
 
 /**
@@ -47,12 +48,22 @@ const PALETTES: Record<OrbMood, Palette> = {
   "not-yet": { light: [200, 210, 205], body: [55, 86, 79], deep: [10, 58, 55], glow: [55, 86, 79], glowStrength: 0.1 },
 };
 
+/** Dark theme: the same inks lifted toward bone, so the sphere reads on viridian-black paper. */
+const BONE: Rgb = [214, 232, 224];
+const lift = (rgb: Rgb, t: number): Rgb => rgb.map((c, i) => c + (BONE[i] - c) * t) as Rgb;
+const DARK_PALETTES = Object.fromEntries(
+  Object.entries(PALETTES).map(([mood, p]) => [
+    mood,
+    { light: lift(p.light, 0.45), body: lift(p.body, 0.3), deep: lift(p.deep, 0.18), glow: lift(p.glow, 0.4), glowStrength: p.glowStrength * 1.4 },
+  ]),
+) as Record<OrbMood, Palette>;
+
 function rgba([r, g, b]: Rgb, alpha: number): string {
   return `rgba(${r | 0},${g | 0},${b | 0},${alpha})`;
 }
 
 function reducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return prefersReducedMotion();
 }
 
 export function Orb({ mood, getMeter, className }: OrbProps) {
@@ -94,6 +105,10 @@ export function Orb({ mood, getMeter, className }: OrbProps) {
     let raf = 0;
     let lastDraw = 0;
     const still = reducedMotion();
+    let dark = resolvedTheme() === "dark";
+    const unsubscribeTheme = subscribeTheme(() => {
+      dark = resolvedTheme() === "dark";
+    });
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
@@ -114,7 +129,7 @@ export function Orb({ mood, getMeter, className }: OrbProps) {
       }
 
       // Colours ease over about a third of a second, so a change of state never snaps.
-      const target = PALETTES[moodRef.current];
+      const target = (dark ? DARK_PALETTES : PALETTES)[moodRef.current];
       const ease = still ? 1 : 0.08;
       for (const key of ["light", "body", "deep", "glow"] as const) {
         for (let i = 0; i < 3; i++) colour[key][i] += (target[key][i] - colour[key][i]) * ease;
@@ -191,6 +206,7 @@ export function Orb({ mood, getMeter, className }: OrbProps) {
     return () => {
       cancelAnimationFrame(raf);
       observer.disconnect();
+      unsubscribeTheme();
     };
   }, []);
 

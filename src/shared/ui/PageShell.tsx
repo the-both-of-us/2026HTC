@@ -1,10 +1,12 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { AccountStatusLine } from "./Account";
 import { LearningModeToggle } from "./LearningModeToggle";
 import { LogoMark } from "./LogoMark";
 import { SideNav } from "./SideNav";
 import { SkipLink } from "./SkipLink";
+import { ThemeSelect } from "./ThemeSelect";
 
 type PageWidth = "reading" | "wide" | "full";
 
@@ -27,15 +29,11 @@ type PageShellProps = {
 
 /** Every page's frame: skip link, the sidebar (a top bar with a menu on phones), and <main>. */
 export function PageShell({ width = "wide", headerActions, footer, children }: PageShellProps) {
-  const guestNote = (
+  const footerControls = (
     <>
+      <ThemeSelect />
       <LearningModeToggle className="-mx-2" />
-      <p className="text-sm text-ink-soft">
-        Learning as a guest. Your progress stays in this browser.{" "}
-        <Link href="/trust" className="font-semibold text-ink underline underline-offset-4">
-          What we store
-        </Link>
-      </p>
+      <AccountStatusLine />
     </>
   );
 
@@ -56,7 +54,7 @@ export function PageShell({ width = "wide", headerActions, footer, children }: P
         </Link>
         {/* The current page depends on the URL, so the links stream in after prerendering. */}
         <Suspense fallback={<span className="ml-auto min-h-11 lg:hidden" />}>
-          <SideNav>{guestNote}</SideNav>
+          <SideNav>{footerControls}</SideNav>
         </Suspense>
       </aside>
 

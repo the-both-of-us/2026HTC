@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Flame } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { TopBarSignIn } from "./Account";
 
 // Plain words, no icons, as in Seal. Mirza adds his pages' links here when they are ready.
 const NAV_ITEMS = [
@@ -20,7 +21,7 @@ const NAV_ITEMS = [
 /**
  * The site's links. On large screens a column of words down the sidebar, the current page
  * marked with an ink rule. On phones a "Menu" button that opens the same list under the top bar.
- * `children` sits under the links: the learning-mode switch and the guest note.
+ * `children` sits under the links: appearance, the learning-mode switch and the account line.
  */
 export function SideNav({ children }: { children?: ReactNode }) {
   const pathname = usePathname();
@@ -29,16 +30,20 @@ export function SideNav({ children }: { children?: ReactNode }) {
 
   return (
     <>
-      <StreakFlame streak={streak} className="ml-auto flex lg:hidden" />
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="site-menu"
-        onClick={() => setOpen(!open)}
-        className={clsx("min-h-11 cursor-pointer px-1 font-semibold underline decoration-[1.5px] underline-offset-4 lg:hidden", streak && streak.count > 0 ? "ml-4" : "ml-auto")}
-      >
-        {open ? "Close menu" : "Menu"}
-      </button>
+      {/* Phones: the streak, "Sign in" for guests, and the menu button, at the right of the top bar. */}
+      <div className="ml-auto flex items-center gap-4 lg:hidden">
+        <StreakFlame streak={streak} className="flex" />
+        <TopBarSignIn />
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls="site-menu"
+          onClick={() => setOpen(!open)}
+          className="min-h-11 cursor-pointer px-1 font-semibold underline decoration-[1.5px] underline-offset-4"
+        >
+          {open ? "Close" : "Menu"}
+        </button>
+      </div>
       <div
         id="site-menu"
         className={clsx("w-full basis-full flex-col pb-3 lg:flex lg:flex-1 lg:pb-0", open ? "flex" : "hidden")}

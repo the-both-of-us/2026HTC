@@ -47,7 +47,11 @@ export function subscribeLearningMode(onChange: () => void): () => void {
   };
 }
 
-/** True when the system asks for less motion, or Learning Mode is on. */
+/** True when the system asks for less motion, Learning Mode is on, or the Eye comfort theme is on. */
 export function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches || isLearningModeOn();
+  return (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    isLearningModeOn() ||
+    document.documentElement.getAttribute("data-theme") === "eye"
+  );
 }

@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Lexend, Mona_Sans } from "next/font/google";
+import { Suspense } from "react";
+import { SignInNotice } from "@/features/auth/client";
 import { LEARNING_MODE_SCRIPT } from "@/shared/ui/learningMode";
+import { THEME_SCRIPT } from "@/shared/ui/theme";
 import "./globals.css";
 
 // No `weight` option: it loads as a variable font. Static weights of some Google
@@ -31,17 +34,27 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e8efea",
+  // The browser bar follows the system setting; a chosen theme is set by theme.ts.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#e8efea" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c1f1c" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // The script below may add data-learning-mode before React loads, hence suppressHydrationWarning.
+    // The scripts below may add data-learning-mode and data-theme before React loads, hence suppressHydrationWarning.
     <html lang="en-CA" className={`${mona.variable} ${lexend.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: LEARNING_MODE_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT + LEARNING_MODE_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* It reads the URL, which a dynamic route only knows at request time. */}
+        <Suspense fallback={null}>
+          <SignInNotice />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

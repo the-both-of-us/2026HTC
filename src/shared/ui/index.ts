@@ -17,3 +17,7 @@ export { Tabs, tabId } from "./Tabs";
 export type { TabItem } from "./Tabs";
 export { Seal, SealBlank, sha256Hex } from "./seal";
 export type { SealState } from "./seal";
+export { AccountStatusLine, signInHref, useAccount } from "./Account";
+export { ThemeSelect, useTheme } from "./ThemeSelect";
+export { resolvedTheme, setTheme, subscribeTheme, THEMES } from "./theme";
+export type { Theme } from "./theme";

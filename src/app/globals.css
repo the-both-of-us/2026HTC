@@ -23,6 +23,9 @@
   --color-on-ink: #e8efea; /* text on an ink band */
   --color-on-ink-soft: #b8cdc4;
   --color-ink-press: #042220; /* the shadow under a pressed die */
+  /* QR codes stay dark on light in every theme, with a light quiet zone, so they always scan. */
+  --color-qr-paper: #f7f9f5;
+  --color-qr-ink: #0a3a37;
 
   /* Surfaces */
   --color-paper: #e8efea; /* page background: security paper */
@@ -177,6 +180,169 @@
   ::-webkit-scrollbar-thumb {
     background: var(--color-rule-strong);
   }
+}
+
+/*
+ * Themes (src/shared/ui/theme.ts). No data-theme means System: Light, or Dark when the
+ * system prefers it. Each theme overrides the same tokens, so every screen follows.
+ *
+ * Dark: Seal's ink world inverted. Deep viridian-black paper, bone text, the green inks
+ * lifted, seals struck in a light ink. Contrast (WCAG AA, checked): ink on paper 14.1, on
+ * sheet 12.5, on raised 10.8, on tint 8.5, on highlight 7.7; ink-soft on paper 8.9, on sheet
+ * 7.9, on raised 6.8, on tint 5.4; proven on paper 9.0, on sheet 8.0, on proven-surface 6.7;
+ * danger on paper 8.7, on danger-surface 7.8; accent-bright on paper 11.2; on-dark on accent
+ * 13.0; control-edge on paper 7.5.
+ */
+html[data-theme="dark"] {
+  --color-paper-hi: #122a26;
+  --color-ink-2: #a9c0b6;
+  --color-tint: #244640;
+  --color-foil-a: #3fc4b1;
+  --color-foil-b: #a68cf2;
+  --color-foil-c: #f07fb1;
+  --color-alert: #f4a3ac;
+  --color-on-ink: #0c1f1c;
+  --color-on-ink-soft: #2f4c46;
+  --color-ink-press: #030a09;
+  --color-paper: #0c1f1c;
+  --color-sheet: #122a26;
+  --color-raised: #1a3530;
+  --color-rule: #244640;
+  --color-rule-strong: #55786f;
+  --color-control-edge: #93b3a8;
+  --color-ink: #e4ebe1;
+  --color-ink-soft: #a9c0b6;
+  --color-on-dark: #0c1f1c;
+  --color-accent: #cfe6da;
+  --color-accent-bright: #a6dccb;
+  --color-amber: #a9c0b6;
+  --color-violet: #cfe6da;
+  --color-violet-dim: #55786f;
+  --color-danger: #f4a3ac;
+  --color-danger-surface: #3b1c21;
+  --color-focus: #e4ebe1;
+  --color-locked: #a9c0b6;
+  --color-locked-surface: #162e2a;
+  --color-available: #e4ebe1;
+  --color-available-surface: #122a26;
+  --color-proven: #5ccfba;
+  --color-proven-surface: #14392f;
+  --color-on-proven: #0c1f1c;
+  --color-forest: #cfe6da;
+  --color-forest-deep: #a6dccb;
+  --color-contour: #a9c0b6;
+  --color-highlight: #2b4d46;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    --color-paper-hi: #122a26;
+    --color-ink-2: #a9c0b6;
+    --color-tint: #244640;
+    --color-foil-a: #3fc4b1;
+    --color-foil-b: #a68cf2;
+    --color-foil-c: #f07fb1;
+    --color-alert: #f4a3ac;
+    --color-on-ink: #0c1f1c;
+    --color-on-ink-soft: #2f4c46;
+    --color-ink-press: #030a09;
+    --color-paper: #0c1f1c;
+    --color-sheet: #122a26;
+    --color-raised: #1a3530;
+    --color-rule: #244640;
+    --color-rule-strong: #55786f;
+    --color-control-edge: #93b3a8;
+    --color-ink: #e4ebe1;
+    --color-ink-soft: #a9c0b6;
+    --color-on-dark: #0c1f1c;
+    --color-accent: #cfe6da;
+    --color-accent-bright: #a6dccb;
+    --color-amber: #a9c0b6;
+    --color-violet: #cfe6da;
+    --color-violet-dim: #55786f;
+    --color-danger: #f4a3ac;
+    --color-danger-surface: #3b1c21;
+    --color-focus: #e4ebe1;
+    --color-locked: #a9c0b6;
+    --color-locked-surface: #162e2a;
+    --color-available: #e4ebe1;
+    --color-available-surface: #122a26;
+    --color-proven: #5ccfba;
+    --color-proven-surface: #14392f;
+    --color-on-proven: #0c1f1c;
+    --color-forest: #cfe6da;
+    --color-forest-deep: #a6dccb;
+    --color-contour: #a9c0b6;
+    --color-highlight: #2b4d46;
+    color-scheme: dark;
+  }
+}
+
+/*
+ * Eye comfort: a warm, low-blue sepia paper (no pure white), slightly softer ink, roomier
+ * lines and letters, and no motion. Contrast (WCAG AA, checked): ink on paper 10.2, on sheet
+ * 11.0, on raised 9.1, on tint 7.7, on highlight 8.6; ink-soft on paper 6.1, on sheet 6.6, on
+ * raised 5.4, on tint 4.6; proven on paper 5.1, on sheet 5.5, on proven-surface 4.8; danger
+ * on paper 6.5, on danger-surface 6.2; accent-bright on paper 8.2; on-dark on accent 10.2;
+ * control-edge on paper 6.6.
+ */
+html[data-theme="eye"] {
+  --color-paper-hi: #f6eedb;
+  --color-ink-2: #5f523f;
+  --color-tint: #d8c8a8;
+  --color-foil-a: #5f7a2e;
+  --color-foil-b: #8a5a2b;
+  --color-foil-c: #a3452f;
+  --color-alert: #8f2d1f;
+  --color-on-ink: #efe5cf;
+  --color-on-ink-soft: #d8c8a8;
+  --color-ink-press: #241d14;
+  --color-paper: #efe5cf;
+  --color-sheet: #f6eedb;
+  --color-raised: #e5d9bf;
+  --color-rule: #d8c8a8;
+  --color-rule-strong: #a3906d;
+  --color-control-edge: #5c4c36;
+  --color-ink: #3a3125;
+  --color-ink-soft: #5f523f;
+  --color-on-dark: #efe5cf;
+  --color-accent: #3a3125;
+  --color-accent-bright: #4b3f2f;
+  --color-amber: #5f523f;
+  --color-violet: #3a3125;
+  --color-violet-dim: #a3906d;
+  --color-danger: #8f2d1f;
+  --color-danger-surface: #f3dccd;
+  --color-focus: #3a3125;
+  --color-locked: #5f523f;
+  --color-locked-surface: #e8dcc2;
+  --color-available: #3a3125;
+  --color-available-surface: #f6eedb;
+  --color-proven: #3f6a33;
+  --color-proven-surface: #dfe3c4;
+  --color-on-proven: #f6eedb;
+  --color-forest: #3a3125;
+  --color-forest-deep: #4b3f2f;
+  --color-contour: #5f523f;
+  --color-highlight: #e2d3b2;
+  --text-sm--line-height: 1.55;
+  --text-base--line-height: 1.65;
+  --text-lg--line-height: 1.6;
+}
+
+html[data-theme="eye"] body {
+  line-height: 1.65;
+  letter-spacing: 0.012em;
+  word-spacing: 0.03em;
+}
+
+html[data-theme="eye"] *,
+html[data-theme="eye"] ::before,
+html[data-theme="eye"] ::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }
 
 /*
