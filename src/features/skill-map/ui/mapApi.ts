@@ -42,13 +42,18 @@ async function fetchProgress(
   signal?: AbortSignal,
 ): Promise<{ proven: Record<string, string>; unlocked: Record<string, string>; isOwner: boolean }> {
   const response = await fetch(`${mapUrl(mapId)}/progress`, { signal });
-  // Only a map's owner can read its progress. Anyone else with the link sees a fresh map.
+  // Only a map's owner has progress. Anyone else with the link gets { isOwner: false } and sees
+  // a fresh map. (A server from before that change answered 403.)
   if (response.status === 403) return { proven: {}, unlocked: {}, isOwner: false };
   if (response.status === 404) return { proven: {}, unlocked: {}, isOwner: true };
   if (!response.ok) throw new Error(`Progress request failed: ${response.status}`);
 
-  const progress = (await response.json()) as { proven?: Record<string, string>; unlocked?: Record<string, string> };
-  return { proven: progress.proven ?? {}, unlocked: progress.unlocked ?? {}, isOwner: true };
+  const progress = (await response.json()) as {
+    isOwner?: boolean;
+    proven?: Record<string, string>;
+    unlocked?: Record<string, string>;
+  };
+  return { proven: progress.proven ?? {}, unlocked: progress.unlocked ?? {}, isOwner: progress.isOwner !== false };
 }
 
 /**

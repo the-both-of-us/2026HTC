@@ -49,7 +49,7 @@ Asking a model to "score this answer" gave fluent, empty text 55-85/100. So the 
 | `POST /api/attempts` `{mapId, nodeId, explanation, integrity}` | the attempt |
 | `POST /api/attempts/[id]/followup` `{answer}` | the attempt |
 | `GET /api/attempts/[id]` | the attempt, owner only |
-| `GET /api/maps/[id]/progress` | `{mapId, proven, states}`, owner only |
+| `GET /api/maps/[id]/progress` | `{isOwner: true, mapId, proven, unlocked, states}` for the owner; `{isOwner: false, proven: {}, unlocked: {}}` with a 200 for anyone else |
 | `GET /api/attempts/catch?mapId&nodeId` | `{sentences, mistakeCount, revealed}`, owner only |
 | `GET`, `POST /api/maps/[id]/final` | the final interview's state and questions, owner only |
 
