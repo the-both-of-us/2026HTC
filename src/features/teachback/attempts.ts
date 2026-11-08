@@ -356,17 +356,54 @@ export async function getOwnAttempt(userId: string, attemptId: string): Promise<
   return attempt;
 }
 
-/** Returns one user's progress on one map, or null if they have proven nothing yet. */
+/**
+ * Returns one user's progress on one map: what they proved, and what they unlocked anyway.
+ * Null if they have done neither yet.
+ */
 export async function getProgress(mapId: string, ownerId: string): Promise<MapProgress | null> {
-  const records = await listDocs<ProvenRecord>(`${progressKey(mapId, ownerId)}/`);
-  if (records.length === 0) return null;
+  const [records, unlocks] = await Promise.all([
+    listDocs<ProvenRecord>(`${progressKey(mapId, ownerId)}/`),
+    listDocs<UnlockRecord>(`${unlockPrefix(mapId, ownerId)}`),
+  ]);
+  if (records.length === 0 && unlocks.length === 0) return null;
 
   return {
     mapId,
     ownerId,
     proven: Object.fromEntries(records.map((record) => [record.nodeId, record.attemptId])),
-    updatedAt: records.map((record) => record.provenAt).sort().at(-1) as string,
+    ...(unlocks.length > 0 && {
+      unlocked: Object.fromEntries(unlocks.map((unlock) => [unlock.nodeId, unlock.unlockedAt])),
+    }),
+    updatedAt: [...records.map((record) => record.provenAt), ...unlocks.map((unlock) => unlock.unlockedAt)]
+      .sort()
+      .at(-1) as string,
   };
+}
+
+/**
+ * "Unlock anyway": opens a locked skill for its owner without proving its prerequisites.
+ * It then counts as available everywhere, so it can be studied and proven. Unlocking a
+ * skill that is already open changes nothing.
+ */
+export async function unlockNode(userId: string, mapId: string, nodeId: string): Promise<ProgressView> {
+  const map = await loadOwnMap(mapId, userId);
+  const node = findNode(map, nodeId);
+  const progress = await getProgress(map.id, userId);
+  if (deriveNodeStates(map, progress)[node.id] === "locked") {
+    const record: UnlockRecord = { nodeId: node.id, unlockedAt: new Date().toISOString() };
+    await putDoc(`${unlockPrefix(map.id, userId)}${node.id}`, record);
+  }
+  return getProgressView(userId, map.id);
+}
+
+/**
+ * Whether a skill is still locked for this viewer, so nothing is generated for it yet.
+ * The owner's own progress counts. Anyone else reading a published course has none, so
+ * only its first skills are open to them.
+ */
+export async function isNodeLockedFor(map: SkillMap, viewerId: string, nodeId: string): Promise<boolean> {
+  const progress = viewerId !== "" && map.ownerId === viewerId ? await getProgress(map.id, viewerId) : null;
+  return deriveNodeStates(map, progress)[nodeId] === "locked";
 }
 
 /** The skills one user has proven on one map, with when, for a study circle's feed. No explanation text. */
@@ -378,6 +415,8 @@ export async function listProvedNodes(mapId: string, ownerId: string): Promise<{
 export type ProgressView = {
   mapId: string;
   proven: Record<string, string>;
+  /** nodeId to when it was unlocked anyway. */
+  unlocked: Record<string, string>;
   states: Record<string, NodeState>;
 };
 
@@ -388,6 +427,7 @@ export async function getProgressView(userId: string, mapId: string): Promise<Pr
   return {
     mapId: map.id,
     proven: progress?.proven ?? {},
+    unlocked: progress?.unlocked ?? {},
     states: deriveNodeStates(map, progress),
   };
 }
@@ -403,12 +443,15 @@ export async function deleteLearnerData(userId: string): Promise<{ attempts: num
   const progressKeys = (await listKeys("progress/")).filter((key) => key.split("/")[2] === userId);
   const finals = (await listDocs<FinalRecord>("final/")).filter((record) => record.ownerId === userId);
   const revealedKeys = (await listKeys("catch-revealed/")).filter((key) => key.split("/")[2] === userId);
+  // Unlock keys are unlocks/<mapId>/<ownerId>/<nodeId>, like progress keys.
+  const unlockKeys = (await listKeys("unlocks/")).filter((key) => key.split("/")[2] === userId);
 
   await Promise.all([
     ...finals.map((record) => deleteDoc(`final/${record.mapId}`)),
     ...attempts.flatMap((attempt) => [deleteDoc(`attempts/${attempt.id}`), deleteDoc(answerClaimKey(attempt.id))]),
     ...progressKeys.map((key) => deleteDoc(key)),
     ...revealedKeys.map((key) => deleteDoc(key)),
+    ...unlockKeys.map((key) => deleteDoc(key)),
   ]);
   return { attempts: attempts.length, provenSkills: progressKeys.length };
 }
@@ -514,6 +557,13 @@ function answerClaimKey(attemptId: string): string {
 
 async function saveAttempt(attempt: Attempt): Promise<void> {
   await putDoc(`attempts/${attempt.id}`, attempt);
+}
+
+/** One "Unlock anyway", at unlocks/<mapId>/<ownerId>/<nodeId>. */
+type UnlockRecord = { nodeId: string; unlockedAt: string };
+
+function unlockPrefix(mapId: string, ownerId: string): string {
+  return `unlocks/${mapId}/${ownerId}/`;
 }
 
 function progressKey(mapId: string, ownerId: string): string {

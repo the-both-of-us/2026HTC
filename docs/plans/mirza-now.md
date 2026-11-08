@@ -2,18 +2,11 @@
 
 Abdu: this file is the live plan for Mirza's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Abdu to Mirza" in TEAM.md.
 
-Last updated: Sat Nov 7, evening (locked skills).
+Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- **Locked skills: no study features until unlocked, plus an "Unlock anyway" button** (OK'd by Abdu via Mirza). A locked skill no longer generates its reading, flashcards or quiz (UI and server both refuse). The owner can press "Unlock anyway": it's saved per learner at `unlocks/<mapId>/<ownerId>/<nodeId>`, the skill becomes Available everywhere, including proving, and shows an "Unlocked early" mark. Touches:
-  - `src/features/skill-map/states.ts` (an unlocked skill counts as available), `ui/SkillPanel.tsx`, `ui/MapScreen.tsx`, `ui/SkillNodeView.tsx`, `ui/MapCanvas.tsx`, `ui/SkillList.tsx`, `ui/mapApi.ts`
-  - `src/features/teachback/attempts.ts` and `index.ts` (save an unlock, `getProgress` includes it, Delete my data removes it)
-  - `src/shared/types.ts` (`MapProgress.unlocked`, optional)
-  - new `src/app/api/maps/[id]/unlock/route.ts`
-  - `src/features/lessons` and `src/app/api/lessons` (refuse a locked skill)
-  - Mirza's own: `flashcards` and `quiz` routes (refuse a locked skill)
-  **Please avoid these files until this lands.**
+- Nothing new yet: waiting on the owner for the next task. The skill-map, teachback, lessons, flashcards and quiz files above are free again.
 
 ## Next
 
@@ -22,6 +15,7 @@ Last updated: Sat Nov 7, evening (locked skills).
 
 ## Done today (latest first)
 
+- Locked skills: no lesson, flashcards or quiz is generated for a locked skill (UI hides them; lessons, flashcards and quiz return 403 before any model call). The owner can press "Unlock anyway": saved at `unlocks/<mapId>/<ownerId>/<nodeId>`, the skill becomes available everywhere including proving, and shows "Unlocked early". New `POST /api/maps/[id]/unlock`, `unlockNode` and `isNodeLockedFor` in teachback, `unlockedEarlyIds` in skill-map; `MapProgress.unlocked` in shared types. The sample script passes `ignoreLock`.
 - Full-page reading for a skill: a "Full page" button beside the ✕ in the skill panel. On large screens it covers the map area with a centred reading column; on phones it's a full-screen sheet above the top bar. "Back to map" returns. Touched `skill-map/ui/SkillPanel.tsx` only, with Abdu's OK.
 - Owner indexes: `listMapsByOwner` and `listProgramsByOwner` read only that owner's documents, and likes are counted from keys (`85d20eb`). Touched `skill-map/storage.ts`, `skill-map/index.ts`, `programs/storage.ts`, with Abdu's OK.
 - Review (SM-2), dashboard, network (`/people`), sample flashcard and quiz script, Devpost draft.

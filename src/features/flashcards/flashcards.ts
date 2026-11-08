@@ -1,5 +1,6 @@
 import { chatJSON, type RouteName } from "@/features/ai";
 import { isPublished } from "@/features/courses";
+import { isNodeLockedFor } from "@/features/teachback";
 import { getSkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -82,10 +83,19 @@ export async function getSavedFlashcards(mapId: string, nodeId: string, viewerId
  * The saved cards, or new ones from one model call, saved before they are returned.
  * Same 404s as getSavedFlashcards.
  */
-export async function getOrCreateFlashcards(mapId: string, nodeId: string, viewerId: string): Promise<Flashcard[]> {
+export async function getOrCreateFlashcards(
+  mapId: string,
+  nodeId: string,
+  viewerId: string,
+  options: { ignoreLock?: boolean } = {},
+): Promise<Flashcard[]> {
   // Every caller is checked here, before it can join a generation already in flight,
   // so nobody can wait on the owner's private generation and receive its cards.
   const { map, node, key } = await resolveNode(mapId, nodeId, viewerId);
+  // Nothing is made for a skill that is still locked. Only the sample script skips this.
+  if (!options.ignoreLock && (await isNodeLockedFor(map, viewerId, node.id))) {
+    throw new FlashcardsError("This skill is still locked. Prove the skills it depends on first, or unlock it on the map.", 403);
+  }
 
   // Checked and set with no await in between, so a second caller always finds the first.
   const pending = inFlight.get(key);

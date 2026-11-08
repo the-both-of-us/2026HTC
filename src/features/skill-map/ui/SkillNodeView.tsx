@@ -22,6 +22,8 @@ export type SkillNodeData = {
   dim: number;
   /** Today's topic of the day. */
   featured: boolean;
+  /** Opened with "Unlock anyway", before what it builds on was proven. */
+  unlockedEarly?: boolean;
   /** How this topic is proved: see assignFormats. */
   format?: TopicFormat;
 };
@@ -90,7 +92,13 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
           {state === "locked" && <Lock aria-hidden="true" size={14} className="mt-[3px] shrink-0" />}
         </div>
         <p className="flex items-center justify-between gap-2 text-[13px] leading-none">
-          <span>{fading ? "Fading, relight it" : NODE_STATE_LABELS[state]}</span>
+          <span>
+            {fading
+              ? "Fading, relight it"
+              : data.unlockedEarly && state === "available"
+                ? "Unlocked early"
+                : NODE_STATE_LABELS[state]}
+          </span>
           <span className="flex items-center gap-1">
             {featured && state === "available" && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber">

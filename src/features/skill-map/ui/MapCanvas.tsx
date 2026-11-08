@@ -69,6 +69,8 @@ type MapCanvasProps = {
   dim?: Record<string, number>;
   /** Today's topic, which is worth double. */
   featuredId?: string | null;
+  /** Skills opened with "Unlock anyway" before what they build on was proven. */
+  unlockedEarly?: Set<string>;
   onSelect: (nodeId: string) => void;
   /** A study circle's initials for each skill: who has proved it. */
   avatars?: Record<string, string[]>;
@@ -92,6 +94,7 @@ function Canvas({
   justUnlockedIds,
   dim,
   featuredId = null,
+  unlockedEarly,
   onSelect,
   avatars,
 }: MapCanvasProps) {
@@ -141,11 +144,12 @@ function Canvas({
           avatars: avatars?.[skill.id] ?? [],
           dim: dim?.[skill.id] ?? 0,
           featured: featuredId === skill.id,
+          unlockedEarly: unlockedEarly?.has(skill.id) ?? false,
           format: formats[skill.id],
         },
       };
     });
-  }, [layout, skills, states, selectedId, reveal, justProvenId, justUnlockedIds, dim, featuredId, onSelect, avatars]);
+  }, [layout, skills, states, selectedId, reveal, justProvenId, justUnlockedIds, dim, featuredId, unlockedEarly, onSelect, avatars]);
 
   const edges = useMemo<SkillFlowEdge[]>(() => {
     const layerById = new Map(layout.nodes.map((placed) => [placed.id, placed.layer]));

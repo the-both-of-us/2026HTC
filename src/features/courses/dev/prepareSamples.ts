@@ -65,7 +65,10 @@ export const realDeps: Deps = {
   getSaved: (kind, mapId, nodeId, viewerId) =>
     kind === "flashcards" ? getSavedFlashcards(mapId, nodeId, viewerId) : getSavedQuiz(mapId, nodeId, viewerId),
   create: (kind, mapId, nodeId, viewerId) =>
-    kind === "flashcards" ? getOrCreateFlashcards(mapId, nodeId, viewerId) : getOrCreateQuiz(mapId, nodeId, viewerId),
+    // Every skill gets its cards ahead of time, locked or not, so the demo never waits.
+    kind === "flashcards"
+      ? getOrCreateFlashcards(mapId, nodeId, viewerId, { ignoreLock: true })
+      : getOrCreateQuiz(mapId, nodeId, viewerId, { ignoreLock: true }),
   now: () => Date.now(),
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   log: (line) => console.log(line),

@@ -147,6 +147,8 @@ export type MapProgress = {
   ownerId: string;
   /** nodeId to the id of the attempt that proved it */
   proven: Record<string, string>;
+  /** nodeId to when the learner chose "Unlock anyway", skipping its prerequisites. */
+  unlocked?: Record<string, string>;
   updatedAt: string;
 };
 

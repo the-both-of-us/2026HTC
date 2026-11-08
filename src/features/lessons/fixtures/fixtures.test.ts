@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { chatJSON } from "@/features/ai";
 import { generateSkillMap } from "@/features/skill-map";
+import { unlockNode } from "@/features/teachback";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { getOrCreateLesson } from "../lessons";
 import { lessonProblem } from "../validate";
@@ -24,6 +25,8 @@ describe.each(SAMPLE_POSTINGS)("saved lessons for $id", (sample) => {
     const map = await generateSkillMap({ text: sample.text, kind: "posting", ownerId: owner });
 
     for (const node of map.nodes) {
+      // Lessons are only written for open skills, so open each one the learner's way.
+      await unlockNode(owner, map.id, node.id);
       const lesson = await getOrCreateLesson(map.id, node.id, owner);
       expect(lessonProblem(lesson, node.checkpoints), node.id).toBeNull();
       expect(lesson.readingMinutes, node.id).toBeGreaterThanOrEqual(3);

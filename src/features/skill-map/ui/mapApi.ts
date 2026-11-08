@@ -1,7 +1,14 @@
 import type { PublicSkillMap } from "../storage";
 
 export type MapLoadResult =
-  | { kind: "found"; map: PublicSkillMap; proven: Record<string, string>; isOwner: boolean }
+  | {
+      kind: "found";
+      map: PublicSkillMap;
+      proven: Record<string, string>;
+      /** Skills the learner unlocked anyway: node id to when. */
+      unlocked: Record<string, string>;
+      isOwner: boolean;
+    }
   | { kind: "missing" };
 
 function mapUrl(mapId: string): string {
@@ -33,13 +40,33 @@ export async function fetchProven(mapId: string): Promise<Record<string, string>
 async function fetchProgress(
   mapId: string,
   signal?: AbortSignal,
-): Promise<{ proven: Record<string, string>; isOwner: boolean }> {
+): Promise<{ proven: Record<string, string>; unlocked: Record<string, string>; isOwner: boolean }> {
   const response = await fetch(`${mapUrl(mapId)}/progress`, { signal });
   // Only a map's owner can read its progress. Anyone else with the link sees a fresh map.
-  if (response.status === 403) return { proven: {}, isOwner: false };
-  if (response.status === 404) return { proven: {}, isOwner: true };
+  if (response.status === 403) return { proven: {}, unlocked: {}, isOwner: false };
+  if (response.status === 404) return { proven: {}, unlocked: {}, isOwner: true };
   if (!response.ok) throw new Error(`Progress request failed: ${response.status}`);
 
-  const progress = (await response.json()) as { proven?: Record<string, string> };
-  return { proven: progress.proven ?? {}, isOwner: true };
+  const progress = (await response.json()) as { proven?: Record<string, string>; unlocked?: Record<string, string> };
+  return { proven: progress.proven ?? {}, unlocked: progress.unlocked ?? {}, isOwner: true };
+}
+
+/**
+ * "Unlock anyway": opens a locked skill without proving what it builds on. Returns the
+ * skills now unlocked anyway. Throws an Error whose message is a sentence for people.
+ */
+export async function unlockSkill(mapId: string, nodeId: string): Promise<Record<string, string>> {
+  let response: Response;
+  try {
+    response = await fetch(`${mapUrl(mapId)}/unlock`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nodeId }),
+    });
+  } catch {
+    throw new Error("We could not reach OryxLearn. Check your connection and try again.");
+  }
+  const body = (await response.json().catch(() => null)) as { unlocked?: Record<string, string>; error?: string } | null;
+  if (!response.ok) throw new Error(body?.error ?? "The skill could not be unlocked this time. Please try again.");
+  return body?.unlocked ?? {};
 }

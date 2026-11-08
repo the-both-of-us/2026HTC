@@ -26,10 +26,21 @@ type SkillListProps = {
   /** As on the map: how far each proved topic has faded, and today's topic. */
   dim?: Record<string, number>;
   featuredId?: string | null;
+  /** Skills opened with "Unlock anyway" before what they build on was proven. */
+  unlockedEarly?: Set<string>;
 };
 
 /** The same skills as the map, as plain lists. The default on phones, and for screen readers. */
-export function SkillList({ skills, states, selectedId, sourceKind, onSelect, dim, featuredId }: SkillListProps) {
+export function SkillList({
+  skills,
+  states,
+  selectedId,
+  sourceKind,
+  onSelect,
+  dim,
+  featuredId,
+  unlockedEarly,
+}: SkillListProps) {
   // In a topic map every skill is AI-generated, so calling each one a foundation would mislead.
   const fromTopic = sourceKind === "topic";
   const titleOf = (id: string) => skills.find((skill) => skill.id === id)?.title ?? id;
@@ -78,7 +89,9 @@ export function SkillList({ skills, states, selectedId, sourceKind, onSelect, di
                               ? `Needs ${waitingOn.map(titleOf).join(", ")}`
                               : fading
                                 ? "Fading, relight it"
-                                : skill.why}
+                                : state === "available" && unlockedEarly?.has(skill.id)
+                                  ? `Unlocked early. ${skill.why}`
+                                  : skill.why}
                           </span>
                           {(today || format) && (
                             <span className="mt-1.5 flex flex-wrap items-center gap-2">

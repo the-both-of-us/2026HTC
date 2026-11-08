@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AiUnavailableError, chatJSON } from "@/features/ai";
 import { publishCourse } from "@/features/courses";
+import { unlockNode } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import type { QuizQuestion } from "./types";
@@ -261,5 +262,32 @@ describe("who may read a map's quiz", () => {
     release(modelReply());
     await expect(owners).resolves.toHaveLength(5);
     expect(mockChatJSON).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a locked skill", () => {
+  it("gets nothing made until it is unlocked, and no model call is spent", async () => {
+    const lockedMapId = randomUUID();
+    await putDoc(`maps/${lockedMapId}`, {
+      id: lockedMapId,
+      ownerId: OWNER,
+      title: "Locked test",
+      subtitle: "",
+      sourceKind: "posting",
+      sourceText: "",
+      nodes: [
+        { id: "base", title: "Base", why: "", prerequisites: [], fromSource: false, citation: null, checkpoints: ["A"] },
+        { id: "later", title: "Later", why: "", prerequisites: ["base"], fromSource: false, citation: null, checkpoints: ["B"] },
+      ],
+      createdAt: new Date().toISOString(),
+    } satisfies SkillMap);
+    mockChatJSON.mockClear();
+
+    await expect(getOrCreateQuiz(lockedMapId, "later", OWNER)).rejects.toMatchObject({ status: 403, message: expect.stringContaining("locked") });
+    expect(mockChatJSON).not.toHaveBeenCalled();
+
+    await unlockNode(OWNER, lockedMapId, "later");
+    mockChatJSON.mockResolvedValueOnce(modelReply());
+    await expect(getOrCreateQuiz(lockedMapId, "later", OWNER)).resolves.toBeDefined();
   });
 });

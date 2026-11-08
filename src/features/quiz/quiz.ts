@@ -1,5 +1,6 @@
 import { chatJSON, type RouteName } from "@/features/ai";
 import { isPublished } from "@/features/courses";
+import { isNodeLockedFor } from "@/features/teachback";
 import { getSkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -67,6 +68,8 @@ export async function getSavedQuiz(mapId: string, nodeId: string, viewerId: stri
 export type CreateOptions = {
   /** Shuffles answer positions. Tests pass a seeded one. */
   random?: RandomSource;
+  /** Makes a quiz for a locked skill too. Only the sample script uses it. */
+  ignoreLock?: boolean;
 };
 
 /** The saved quiz, or a new one made with a single model call and then saved. Same 404s as getSavedQuiz. */
@@ -79,6 +82,10 @@ export async function getOrCreateQuiz(
   // Every caller is checked here, before it can join a generation already in flight,
   // so nobody can wait on the owner's private generation and receive its questions.
   const found = await findNode(mapId, nodeId, viewerId);
+  // Nothing is made for a skill that is still locked.
+  if (!options.ignoreLock && (await isNodeLockedFor(found.map, viewerId, found.node.id))) {
+    throw new QuizError("This skill is still locked. Prove the skills it depends on first, or unlock it on the map.", 403);
+  }
 
   // No await between this check and the set below, so concurrent callers share one promise.
   const pending = inFlight.get(found.key);

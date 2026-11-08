@@ -4,7 +4,7 @@ import { ShareProofButton } from "@/features/proof/client";
 import { QuizTab } from "@/features/quiz/client";
 import { assignFormats, FormatBadge, TeachBackPanel } from "@/features/teachback/client";
 import clsx from "clsx";
-import { BadgeCheck, ChevronRight, Maximize2, Minimize2, X } from "lucide-react";
+import { BadgeCheck, ChevronRight, LockOpen, Maximize2, Minimize2, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Citation, NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
@@ -36,6 +36,10 @@ type SkillPanelProps = {
   voiceReady: boolean;
   onSelect: (nodeId: string) => void;
   onProven: (nodeId: string) => void;
+  /** "Unlock anyway": saves the unlock on the server. Throws an Error with a sentence for people. */
+  onUnlock: (nodeId: string) => Promise<void>;
+  /** Open only because it was unlocked anyway, before what it builds on was proven. */
+  unlockedEarly: boolean;
   onClose: () => void;
   /** The streak and combo just earned, shown with what the proof opened. */
   reward?: ReactNode;
@@ -57,6 +61,8 @@ export function SkillPanel({
   voiceReady,
   onSelect,
   onProven,
+  onUnlock,
+  unlockedEarly,
   onClose,
   reward,
   relight,
@@ -183,6 +189,7 @@ export function SkillPanel({
               </h2>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={state} />
+                {unlockedEarly && state === "available" && <Badge>Unlocked early</Badge>}
                 <FormatBadge format={format} compact />
                 {skill.fromSource ? (
                   <JobAsksTag kind={skill.citation?.kind} />
@@ -262,7 +269,12 @@ export function SkillPanel({
                 </section>
               )}
 
-              {study}
+              {/* Nothing is written for a locked skill: no lesson, cards or quiz until it opens. */}
+              {state === "locked" ? (
+                <UnlockAnyway key={skill.id} isOwner={isOwner} onUnlock={() => onUnlock(skill.id)} />
+              ) : (
+                study
+              )}
             </>
           )}
 
@@ -298,6 +310,50 @@ export function SkillPanel({
         </div>
       </section>
     </>
+  );
+}
+
+/** What a locked skill shows instead of its lesson, flashcards and quiz. */
+function UnlockAnyway({ isOwner, onUnlock }: { isOwner: boolean; onUnlock: () => Promise<void> }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function unlock() {
+    setPending(true);
+    setError(null);
+    try {
+      await onUnlock();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The skill could not be unlocked this time. Please try again.");
+      setPending(false);
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-sheet border border-dashed border-control-edge bg-raised/50 p-4">
+      <h3 className="font-medium">The lesson, flashcards and quiz open with this skill</h3>
+      {isOwner ? (
+        <>
+          <p className="text-ink-soft">
+            Prove the skills above first, or unlock it now if you already know them. Unlocking opens
+            everything here, including proving it, and the map marks it as unlocked early.
+          </p>
+          <div>
+            <Button variant="subtle" onClick={unlock} disabled={pending}>
+              <LockOpen aria-hidden="true" size={16} />
+              {pending ? "Unlocking…" : "Unlock anyway"}
+            </Button>
+          </div>
+          {error && (
+            <p role="alert" className="text-sm text-danger">
+              {error}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-ink-soft">They open once the skills above are proven on your own copy of this map.</p>
+      )}
+    </section>
   );
 }
 

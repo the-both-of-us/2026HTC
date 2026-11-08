@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { chatJSON } from "@/features/ai";
 import { publishCourse } from "@/features/courses";
+import { unlockNode } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { deleteLessonsForMaps, getOrCreateLesson } from "./lessons";
@@ -147,5 +148,32 @@ describe("getOrCreateLesson", () => {
     expect(await deleteLessonsForMaps([mapId, "../maps"])).toBe(1);
     expect(await getDoc(`lessons/${mapId}/${NODE.id}`)).toBeNull();
     expect(await deleteLessonsForMaps([mapId])).toBe(0);
+  });
+});
+
+describe("a locked skill", () => {
+  it("gets no lesson written until it is unlocked, and no model call is spent", async () => {
+    const lockedMapId = randomUUID();
+    await putDoc(`maps/${lockedMapId}`, {
+      id: lockedMapId,
+      ownerId: OWNER,
+      title: "Locked test",
+      subtitle: "",
+      sourceKind: "posting",
+      sourceText: "",
+      nodes: [NODE, { ...NODE, id: "later", prerequisites: [NODE.id] }],
+      createdAt: new Date().toISOString(),
+    } satisfies SkillMap);
+    mockChatJSON.mockClear();
+
+    await expect(getOrCreateLesson(lockedMapId, "later", OWNER)).rejects.toMatchObject({
+      status: 403,
+      message: expect.stringContaining("locked"),
+    });
+    expect(mockChatJSON).not.toHaveBeenCalled();
+    expect(await getDoc(`lessons/${lockedMapId}/later`)).toBeNull();
+
+    await unlockNode(OWNER, lockedMapId, "later");
+    await expect(getOrCreateLesson(lockedMapId, "later", OWNER)).resolves.toBeDefined();
   });
 });

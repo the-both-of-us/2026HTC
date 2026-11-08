@@ -75,3 +75,9 @@ The server counts `wordCount` itself and caps `activeMs` at an hour. `pasted`, `
 ## Tests
 
 `npm test -- teachback` mocks the model. `realCheck.ts` runs the real model through about 7 calls, so run it by hand: `npx tsx --env-file=.env.local src/features/teachback/realCheck.ts`.
+
+## Unlock anyway
+
+A locked skill can be opened by its owner without proving what it builds on: `unlockNode(userId, mapId, nodeId)` (`POST /api/maps/[id]/unlock` `{nodeId}`) saves `unlocks/<mapId>/<ownerId>/<nodeId>` `{nodeId, unlockedAt}`. `getProgress` returns it as `unlocked`, and `deriveNodeStates` counts an unlocked skill as available, so every check that uses them (attempts, catch, the map) treats it as open, including proving it. The map marks it "Unlocked early" until its prerequisites are proven (`unlockedEarlyIds`). Delete my data removes the unlocks.
+
+`isNodeLockedFor(map, viewerId, nodeId)` is how other features decide whether to generate anything: lessons, flashcards and quiz refuse a locked skill with a 403 before any model call. The owner's progress counts; anyone else reading a published course has none, so only its first skills are open to them.

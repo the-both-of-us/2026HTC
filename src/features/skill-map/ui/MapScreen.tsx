@@ -13,10 +13,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
-import { deriveNodeStates } from "../states";
+import { deriveNodeStates, unlockedEarlyIds } from "../states";
 import type { PublicSkillMap } from "../storage";
 import { MapCanvas } from "./MapCanvas";
-import { fetchMapWithProgress, fetchProven } from "./mapApi";
+import { fetchMapWithProgress, fetchProven, unlockSkill } from "./mapApi";
 import { SkillList } from "./SkillList";
 import { SkillPanel, type ProvenNotice } from "./SkillPanel";
 
@@ -28,7 +28,13 @@ type LoadState =
   | { status: "loading" }
   | { status: "missing" }
   | { status: "failed" }
-  | { status: "ready"; map: PublicSkillMap; proven: Record<string, string>; isOwner: boolean };
+  | {
+      status: "ready";
+      map: PublicSkillMap;
+      proven: Record<string, string>;
+      unlocked: Record<string, string>;
+      isOwner: boolean;
+    };
 
 /** The whole map screen: loads the map, then shows it. */
 /**
@@ -56,7 +62,13 @@ export function MapScreen({
         setLoad(
           result.kind === "missing"
             ? { status: "missing" }
-            : { status: "ready", map: result.map, proven: result.proven, isOwner: result.isOwner },
+            : {
+                status: "ready",
+                map: result.map,
+                proven: result.proven,
+                unlocked: result.unlocked,
+                isOwner: result.isOwner,
+              },
         );
       })
       .catch(() => {
@@ -100,6 +112,7 @@ export function MapScreen({
     <LoadedMap
       map={load.map}
       initialProven={load.proven}
+      initialUnlocked={load.unlocked}
       isOwner={load.isOwner}
       voiceReady={voiceReady}
       banner={banner}
@@ -168,6 +181,7 @@ export function MapScreenLoading() {
 function LoadedMap({
   map,
   initialProven,
+  initialUnlocked,
   isOwner,
   voiceReady,
   banner,
@@ -175,12 +189,14 @@ function LoadedMap({
 }: {
   map: PublicSkillMap;
   initialProven: Record<string, string>;
+  initialUnlocked: Record<string, string>;
   isOwner: boolean;
   voiceReady: boolean;
   banner?: ReactNode;
   ownerActions?: ReactNode;
 }) {
   const [proven, setProven] = useState(initialProven);
+  const [unlocked, setUnlocked] = useState(initialUnlocked);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // This component only mounts in the browser, after the fetch, so matchMedia is safe.
   const [view, setView] = useState<View>(() =>
@@ -200,7 +216,8 @@ function LoadedMap({
     return () => clearTimeout(timer);
   }, [view]);
 
-  const states = useMemo(() => deriveNodeStates(map, { proven }), [map, proven]);
+  const states = useMemo(() => deriveNodeStates(map, { proven, unlocked }), [map, proven, unlocked]);
+  const unlockedEarly = useMemo(() => unlockedEarlyIds(map, { proven, unlocked }), [map, proven, unlocked]);
   const provenCount = map.nodes.filter((node) => states[node.id] === "proven").length;
   const allProven = map.nodes.length > 0 && provenCount === map.nodes.length;
   const selected = map.nodes.find((node) => node.id === selectedId) ?? null;
@@ -242,8 +259,8 @@ function LoadedMap({
       // Count the skill as proven even if the refresh fails or returns stale data.
       const fresh = await fetchProven(map.id).catch(() => proven);
       const next = { ...fresh, [nodeId]: fresh[nodeId] ?? "just-proven" };
-      const before = deriveNodeStates(map, { proven });
-      const after = deriveNodeStates(map, { proven: next });
+      const before = deriveNodeStates(map, { proven, unlocked });
+      const after = deriveNodeStates(map, { proven: next, unlocked });
       const unlockedIds = map.nodes
         .filter((node) => before[node.id] === "locked" && after[node.id] === "available")
         .map((node) => node.id);
@@ -254,7 +271,16 @@ function LoadedMap({
       setReward(null);
       void afterProof(nodeId).then(setReward);
     },
-    [map, proven, afterProof],
+    [map, proven, unlocked, afterProof],
+  );
+
+  // "Unlock anyway": the server saves it, then the skill opens here. Throws a sentence on failure.
+  const handleUnlock = useCallback(
+    async (nodeId: string) => {
+      const next = await unlockSkill(map.id, nodeId);
+      setUnlocked({ ...next, [nodeId]: next[nodeId] ?? new Date().toISOString() });
+    },
+    [map.id],
   );
 
   return (
@@ -357,6 +383,7 @@ function LoadedMap({
                   justUnlockedIds={notice?.unlockedIds ?? []}
                   dim={habits?.dim}
                   featuredId={habits?.topicOfTheDay}
+                  unlockedEarly={unlockedEarly}
                   onSelect={selectSkill}
                 />
               </div>
@@ -371,6 +398,7 @@ function LoadedMap({
                     onSelect={selectSkill}
                     dim={habits?.dim}
                     featuredId={habits?.topicOfTheDay}
+                    unlockedEarly={unlockedEarly}
                   />
                 </div>
               </div>
@@ -389,6 +417,8 @@ function LoadedMap({
               voiceReady={voiceReady}
               onSelect={selectSkill}
               onProven={handleProven}
+              onUnlock={handleUnlock}
+              unlockedEarly={unlockedEarly.has(selected.id)}
               onClose={closePanel}
               reward={reward && notice?.nodeId === selected.id && <ProofReward reward={reward} />}
               relight={

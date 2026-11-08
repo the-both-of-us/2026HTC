@@ -12,12 +12,14 @@ export {
   getOwnAttempt,
   getProgress,
   getProgressView,
+  isNodeLockedFor,
   listProvedNodes,
   MAX_ANSWER_CHARACTERS,
   MAX_EXPLANATION_CHARACTERS,
   MIN_EXPLANATION_WORDS,
   startAttempt,
   toLearnerView,
+  unlockNode,
 } from "./attempts";
 export type { LearnerAttempt, NewAttempt, ProgressView } from "./attempts";
 export { generateFollowUp, gradeFollowUp } from "./followUp";

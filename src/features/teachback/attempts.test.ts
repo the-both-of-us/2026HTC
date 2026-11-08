@@ -1,9 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AiUnavailableError, chatJSON } from "@/features/ai";
-import { getDoc, putDoc } from "@/shared/store";
+import { getDoc, listKeys, putDoc } from "@/shared/store";
 import type { Attempt, IntegritySignals, SkillMap, SkillNode } from "@/shared/types";
-import { answerFollowUp, getAttempt, getProgress, getProgressView, startAttempt, toLearnerView, type NewAttempt } from "./attempts";
+import {
+  answerFollowUp,
+  deleteLearnerData,
+  getAttempt,
+  getProgress,
+  getProgressView,
+  isNodeLockedFor,
+  startAttempt,
+  toLearnerView,
+  unlockNode,
+  type NewAttempt,
+} from "./attempts";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
@@ -421,5 +432,48 @@ describe("what is stored and sent", () => {
     const finished = await answerFollowUp(OWNER, attempt.id, "Not sure.");
 
     expect(toLearnerView(finished).grade.misconceptions).toEqual(["A false claim."]);
+  });
+});
+
+describe("unlock anyway", () => {
+  it("opens a locked skill for its owner, saves it, and lets them prove it", async () => {
+    const view = await unlockNode(OWNER, mapId, "second");
+
+    expect(view.states.second).toBe("available");
+    expect(Object.keys(view.unlocked)).toEqual(["second"]);
+    expect((await getProgress(mapId, OWNER))?.unlocked?.second).toEqual(expect.any(String));
+
+    modelGrades("full");
+    modelAsks();
+    await expect(startAttempt(OWNER, newAttempt({ nodeId: "second" }))).resolves.toMatchObject({ nodeId: "second" });
+  });
+
+  it("changes nothing for a skill that is already open", async () => {
+    const view = await unlockNode(OWNER, mapId, "first");
+    expect(view.unlocked).toEqual({});
+    expect(await listKeys(`unlocks/${mapId}/`)).toEqual([]);
+  });
+
+  it("refuses someone else's map and a skill that is not on it", async () => {
+    await expect(unlockNode("other-user", mapId, "second")).rejects.toMatchObject({ status: 403 });
+    await expect(unlockNode(OWNER, mapId, "../nope")).rejects.toMatchObject({ status: 404 });
+    expect(await listKeys(`unlocks/${mapId}/`)).toEqual([]);
+  });
+
+  it("tells other features whether a skill is still locked for a viewer", async () => {
+    const map = (await getDoc<SkillMap>(`maps/${mapId}`))!;
+    expect(await isNodeLockedFor(map, OWNER, "second")).toBe(true);
+    expect(await isNodeLockedFor(map, OWNER, "first")).toBe(false);
+
+    await unlockNode(OWNER, mapId, "second");
+    expect(await isNodeLockedFor(map, OWNER, "second")).toBe(false);
+    // Someone else's unlock never opens a skill for a reader of the course.
+    expect(await isNodeLockedFor(map, "reader", "second")).toBe(true);
+  });
+
+  it("is removed by Delete my data", async () => {
+    await unlockNode(OWNER, mapId, "second");
+    await deleteLearnerData(OWNER);
+    expect(await listKeys(`unlocks/${mapId}/${OWNER}/`)).toEqual([]);
   });
 });

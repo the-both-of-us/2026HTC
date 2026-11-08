@@ -1,5 +1,6 @@
 import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
+import { isNodeLockedFor } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
 import { deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -41,6 +42,10 @@ async function resolveNode(mapId: string, nodeId: string, viewerId: string) {
 export async function getOrCreateLesson(mapId: string, nodeId: string, viewerId: string): Promise<Lesson> {
   // Checked before joining a generation in flight, so nobody can wait on a private one.
   const { map, node, key } = await resolveNode(mapId, nodeId, viewerId);
+  // Nothing is written for a skill that is still locked: it may never be opened.
+  if (await isNodeLockedFor(map, viewerId, node.id)) {
+    throw new HttpError("This skill is still locked. Prove the skills it depends on first, or unlock it on the map.", 403);
+  }
 
   const pending = inFlight.get(key);
   if (pending) return pending;
