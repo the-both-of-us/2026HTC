@@ -163,7 +163,7 @@ export function CatchRound({ mapId, nodeId, integrity, onResult, onExplainInstea
                 className={clsx(
                   "flex min-h-11 w-full cursor-pointer items-start gap-3 rounded-control border px-3.5 py-2.5 text-left transition-control",
                   marked
-                    ? "border-amber bg-amber/10 shadow-[0_0_14px_rgb(210_156_68/0.25)]"
+                    ? "border-amber bg-amber/10"
                     : "border-rule-strong bg-raised/50 hover:border-control-edge hover:bg-raised",
                 )}
               >
@@ -242,7 +242,7 @@ export function CatchReveal({ attempt }: { attempt: Attempt }) {
           {falseAlarms > 0 && `, ${falseAlarms} false ${falseAlarms === 1 ? "alarm" : "alarms"}`}
         </p>
         {cleanSweep && (
-          <span className="catch-stamp inline-flex items-center gap-1 rounded-full border border-proven bg-proven/15 px-2.5 py-1 text-sm font-semibold text-proven">
+          <span className="catch-stamp inline-flex items-center gap-1 rounded-control border border-proven bg-proven/15 px-2.5 py-1 text-sm font-semibold text-proven">
             <Sparkles aria-hidden="true" size={14} />
             Clean sweep{seconds > 0 && seconds < 600 ? ` in ${seconds}s` : ""}
           </span>

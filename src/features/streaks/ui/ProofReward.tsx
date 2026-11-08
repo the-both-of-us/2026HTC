@@ -19,25 +19,25 @@ export function ProofReward({ reward }: { reward: Reward }) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
       {reward.combo >= 2 && (
-        <span className="combo-pop inline-flex items-center gap-1 rounded-full border border-amber/60 bg-amber/15 px-2.5 py-0.5 text-amber">
+        <span className="combo-pop inline-flex items-center gap-1 rounded-control border border-amber/60 bg-amber/15 px-2.5 py-0.5 text-amber">
           <Zap aria-hidden="true" size={14} />
           Combo x{reward.combo}
         </span>
       )}
       {reward.streakGrew && (
-        <span className="inline-flex items-center gap-1 rounded-full border border-amber/45 bg-amber/10 px-2.5 py-0.5 text-ink">
+        <span className="inline-flex items-center gap-1 rounded-control border border-amber/45 bg-amber/10 px-2.5 py-0.5 text-ink">
           <Flame aria-hidden="true" size={14} className="text-amber" />
           {streakText}
         </span>
       )}
       {reward.sparks > 0 && (
-        <span className="inline-flex items-center gap-1 rounded-full border border-rule-strong bg-raised px-2.5 py-0.5 text-ink">
+        <span className="inline-flex items-center gap-1 rounded-control border border-rule-strong bg-raised px-2.5 py-0.5 text-ink">
           <Sparkles aria-hidden="true" size={14} className="text-accent-bright" />+{reward.sparks} {reward.sparks === 1 ? "spark" : "sparks"}
           {reward.topicOfTheDay && ", topic of the day"}
         </span>
       )}
       {reward.goalReached && (
-        <span className="combo-pop inline-flex items-center gap-1 rounded-full border border-accent/50 bg-accent/15 px-2.5 py-0.5 text-ink">
+        <span className="combo-pop inline-flex items-center gap-1 rounded-control border border-accent/50 bg-accent/15 px-2.5 py-0.5 text-ink">
           <Trophy aria-hidden="true" size={14} className="text-accent-bright" />
           Weekly goal reached
         </span>

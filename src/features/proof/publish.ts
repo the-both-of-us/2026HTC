@@ -144,7 +144,7 @@ export function cleanDisplayName(input: string): string {
     .replace(/\s+/g, " ")
     .trim();
   if (!/[\p{L}\p{N}]/u.test(name)) {
-    throw new ProofError("Please enter the name you want employers to see.", 400);
+    throw new ProofError("Please enter the name you want people to see.", 400);
   }
   if (name.length > MAX_NAME_LENGTH) {
     throw new ProofError(`Please keep the name under ${MAX_NAME_LENGTH} characters.`, 400);

@@ -145,7 +145,7 @@ function ProvesAndDoesNot() {
           <ul className="mt-2 flex flex-col gap-2">
             <ClaimLine>Who wrote it. The name was typed by the person, and accounts here are anonymous.</ClaimLine>
             <ClaimLine>
-              That the job or employer is real. The person supplied the posting, PDF or topic, and no employer was involved in this
+              That the source is real. The person supplied the posting, PDF or topic, and nobody else was involved in this
               record.
             </ClaimLine>
             <ClaimLine>That no one helped. Nothing was proctored, so outside help or another AI cannot be ruled out.</ClaimLine>

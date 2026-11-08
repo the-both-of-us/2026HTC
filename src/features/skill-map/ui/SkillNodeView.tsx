@@ -4,7 +4,7 @@ import { Briefcase, FileText, Lock, Star } from "lucide-react";
 import type { CSSProperties } from "react";
 import { FormatBadge, type TopicFormat } from "@/features/teachback/client";
 import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
-import { NODE_STATE_LABELS, StateMark } from "@/shared/ui";
+import { NODE_STATE_LABELS, Seal, StateMark } from "@/shared/ui";
 import { NODE_HEIGHT, NODE_WIDTH } from "./layout";
 
 export type SkillNodeData = {
@@ -32,8 +32,8 @@ const CARD_CLASSES: Record<NodeState, string> = {
   locked:
     "border-dashed border-locked/70 bg-locked-surface text-ink/85 hover:border-ink-soft hover:text-ink",
   available:
-    "border-accent bg-available-surface text-ink shadow-glow hover:border-accent-bright hover:shadow-glow-strong",
-  proven: "border-proven bg-proven-surface text-ink shadow-glow-green hover:shadow-[0_0_24px_rgb(91_170_122/0.45)]",
+    "border-ink bg-sheet text-ink hover:bg-paper-hi",
+  proven: "border-proven bg-sheet text-ink hover:bg-paper-hi",
 };
 
 const HANDLE_COLOURS: Record<NodeState, string> = {
@@ -67,22 +67,23 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
       <Handle type="target" position={Position.Top} isConnectable={false} />
       <div
         className={clsx(
-          "flex size-full flex-col justify-between rounded-sheet border-[1.5px] px-[12px] py-[10px] transition-control hover:-translate-y-0.5",
+          "flex size-full flex-col justify-between rounded-sheet border-[1.5px] px-[12px] py-[10px] transition-control",
           CARD_CLASSES[state],
-          selected && "ring-2 ring-ink ring-offset-2 ring-offset-paper",
+          selected && "outline-2 outline-offset-2 outline-ink",
           reveal && "card-reveal",
           justProven && "card-proven",
           justUnlocked && "card-unlock",
           fading && DIM_CLASSES[dim],
-          featured && state === "available" && "ring-2 ring-amber/70",
+          featured && state === "available" && "outline-1 outline-offset-2 outline-dashed outline-ink-soft",
         )}
       >
         <div className="flex items-start gap-2">
-          <StateMark
-            state={state}
-            size={state === "proven" ? 17 : 14}
-            className={clsx("shrink-0", state === "proven" ? "mt-[1px]" : "mt-[3px]", justProven && "mark-land")}
-          />
+          {state === "proven" ? (
+            // A small seal struck from the skill id: the same mark the evidence page uses.
+            <Seal fingerprint={skill.id} size={20} className={clsx("-mt-[1px] shrink-0", justProven && "mark-land")} />
+          ) : (
+            <StateMark state={state} size={14} className="mt-[3px] shrink-0" />
+          )}
           <p title={skill.title} className="line-clamp-2 min-w-0 flex-1 text-[15px] leading-[1.25] font-medium">
             {skill.title}
           </p>
@@ -113,9 +114,9 @@ export function SkillNodeView({ data }: NodeProps<SkillFlowNode>) {
 export function JobAsksTag({ kind }: { kind?: SourceKind }) {
   const Icon = kind === "pdf" ? FileText : Briefcase;
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber/45 bg-amber/10 px-1.5 py-0.5 text-xs leading-none font-medium text-amber">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-control border border-dashed border-amber px-1.5 py-0.5 text-xs leading-none font-medium text-amber">
       <Icon aria-hidden="true" size={11} />
-      {kind === "pdf" ? "In your PDF" : "Job asks"}
+      {kind === "pdf" ? "In your notes" : "In the source"}
     </span>
   );
 }

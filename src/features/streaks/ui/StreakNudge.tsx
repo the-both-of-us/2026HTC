@@ -27,7 +27,7 @@ export function StreakNudge({ streak, topicOfTheDay, className }: StreakNudgePro
     <div className={clsx("flex flex-wrap items-center gap-2 text-sm", className)}>
       <span
         className={clsx(
-          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5",
+          "inline-flex items-center gap-1.5 rounded-control border px-2.5 py-0.5",
           streak.doneToday ? "border-amber/50 bg-amber/10 text-ink" : "border-rule-strong bg-raised text-ink-soft",
         )}
       >
@@ -41,7 +41,7 @@ export function StreakNudge({ streak, topicOfTheDay, className }: StreakNudgePro
           <span
             key={index}
             title={WEEKDAYS[index]}
-            className={clsx("size-2.5 rounded-full", lit ? "bg-amber shadow-[0_0_6px_rgb(210_156_68/0.6)]" : "bg-rule-strong")}
+            className={clsx("size-2.5 rounded-full", lit ? "bg-amber" : "bg-rule-strong")}
           />
         ))}
       </span>
@@ -65,7 +65,7 @@ export function StreakNudge({ streak, topicOfTheDay, className }: StreakNudgePro
         <button
           type="button"
           onClick={topicOfTheDay.onOpen}
-          className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full border border-amber/50 px-2.5 py-0.5 text-ink transition-control hover:bg-amber/10"
+          className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-control border border-amber/50 px-2.5 py-0.5 text-ink transition-control hover:bg-amber/10"
         >
           <Star aria-hidden="true" size={14} className="text-amber" />
           Topic of the day: {topicOfTheDay.title}

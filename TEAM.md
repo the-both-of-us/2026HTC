@@ -28,6 +28,7 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 
 **From Abdu to Mirza (Sat Nov 7).**
 
+- [ ] **One streak, please.** The dashboard counts its own streak, so it can disagree with the map. Show `getStreak(userId)` from `@/features/streaks` instead (server only; `StreakView.count` is the days in a row, plus `best`, `doneToday` and `frozen`), and drop the dashboard's own count.
 - [x] `POST /api/courses/[mapId]/start`: `copySkillMap` does not check who may read the original, so check `isPublished` (or the owner) first.
   - **Mirza: done.** Start refuses a private course with the same 404 as a missing one, and it's repeatable: one copy per learner, and "Continue this course" after that.
 - [x] `/api/flashcards` and `/api/quiz` read any map by id. They should refuse a private map too, or its skills can be read through them.

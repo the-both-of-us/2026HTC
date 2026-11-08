@@ -101,10 +101,10 @@
 
   @keyframes card-proven {
     from {
-      box-shadow: 0 0 0 0 rgb(91 170 122 / 0.65);
+      box-shadow: 0 0 0 0 rgb(0 103 94 / 0.45);
     }
     to {
-      box-shadow: 0 0 0 18px rgb(91 170 122 / 0);
+      box-shadow: 0 0 0 10px rgb(0 103 94 / 0);
     }
   }
 
@@ -120,15 +120,12 @@
   @keyframes card-unlock {
     0% {
       background-color: var(--color-locked-surface);
-      box-shadow: 0 0 0 0 rgb(75 143 212 / 0.8);
     }
     45% {
-      background-color: rgb(75 143 212 / 0.32);
-      box-shadow: 0 0 34px 8px rgb(75 143 212 / 0.55);
+      background-color: var(--color-raised);
     }
     100% {
       background-color: var(--color-available-surface);
-      box-shadow: var(--shadow-glow);
     }
   }
 
@@ -190,6 +187,6 @@
 
 /* The dotted background of the loading picture, matching the map's own. */
 .dotted-canvas {
-  background-image: radial-gradient(#27324a 1.5px, transparent 1.5px);
+  background-image: radial-gradient(var(--color-tint) 1px, transparent 1px);
   background-size: 22px 22px;
 }

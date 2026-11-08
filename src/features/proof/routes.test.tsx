@@ -181,7 +181,7 @@ describe("the public page", () => {
       "How this was checked",
       "does not show",
       "a posting this person supplied",
-      "That the job or employer is real",
+      "That the source is real",
       "SHA-256",
     ]) {
       expect(html).toContain(text);

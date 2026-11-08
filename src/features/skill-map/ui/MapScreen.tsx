@@ -112,7 +112,7 @@ export function MapScreen({
 function StateCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
     <PageShell width="reading">
-      <div className="my-auto flex flex-col items-center gap-4 rounded-sheet border border-rule-strong bg-sheet/90 px-6 py-12 text-center shadow-panel">
+      <div className="my-auto flex flex-col items-center gap-4 rounded-sheet border border-rule-strong bg-sheet px-6 py-12 text-center">
         <span className="flex size-13 items-center justify-center rounded-control border border-accent/40 bg-accent/10 text-accent-bright">
           {icon}
         </span>
@@ -154,7 +154,7 @@ export function MapScreenLoading() {
           </div>
           <p
             role="status"
-            className="absolute bottom-6 flex items-center gap-2.5 rounded-full border border-rule-strong bg-sheet/95 px-4 py-2 text-ink-soft"
+            className="absolute bottom-6 flex items-center gap-2.5 rounded-control border border-rule-strong bg-sheet/95 px-4 py-2 text-ink-soft"
           >
             <Spinner size={16} />
             Loading your skill map.
@@ -412,7 +412,7 @@ function TopicBadge({ title }: { title: string }) {
   return (
     <span
       aria-hidden="true"
-      className="flex size-13 shrink-0 items-center justify-center rounded-sheet border border-amber/50 bg-amber/10 text-lg font-semibold text-ink shadow-[0_0_18px_rgb(210_156_68/0.18)]"
+      className="flex size-13 shrink-0 items-center justify-center rounded-sheet border border-amber/50 bg-amber/10 text-lg font-semibold text-ink"
     >
       {initials}
     </span>

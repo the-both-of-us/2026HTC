@@ -18,7 +18,7 @@ export type SkillFlowEdge = Edge<SkillEdgeData, "skill">;
 
 /**
  * A curved line between two skills. Thin and dim until its source is proven, then thick
- * and bright with a soft halo. Thickness carries the meaning, so it reads in greyscale.
+ * and solid ink. Thickness carries the meaning, so it reads in greyscale.
  */
 export function SkillEdge({ sourceX, sourceY, targetX, targetY, data }: EdgeProps<SkillFlowEdge>) {
   const waypoints = data?.waypoints ?? [];
@@ -31,7 +31,8 @@ export function SkillEdge({ sourceX, sourceY, targetX, targetY, data }: EdgeProp
         d={path}
         fill="none"
         stroke="var(--color-violet-dim)"
-        strokeWidth={2}
+        strokeWidth={1.5}
+        strokeDasharray="4 4"
         style={style}
         className={clsx(data?.reveal && "line-reveal")}
       />
@@ -43,8 +44,7 @@ export function SkillEdge({ sourceX, sourceY, targetX, targetY, data }: EdgeProp
 
   return (
     <g style={style} className={clsx(data.reveal && "line-reveal")}>
-      <path d={path} fill="none" stroke="var(--color-violet)" strokeOpacity={0.22} strokeWidth={7} {...drawn} />
-      <path d={path} fill="none" stroke="var(--color-violet)" strokeWidth={3} {...drawn} />
+      <path d={path} fill="none" stroke="var(--color-violet)" strokeWidth={2} {...drawn} />
     </g>
   );
 }

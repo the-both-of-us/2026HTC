@@ -12,7 +12,7 @@ export function FormatBadge({ format, compact = false, className }: { format: To
     <span
       title={label.name}
       className={clsx(
-        "inline-flex shrink-0 items-center gap-1 rounded-full border border-accent/45 bg-accent/10 leading-none font-medium text-accent-bright",
+        "inline-flex shrink-0 items-center gap-1 rounded-control border border-accent/45 bg-accent/10 leading-none font-medium text-accent-bright",
         compact ? "px-1.5 py-0.5 text-xs" : "px-2.5 py-1 text-sm",
         className,
       )}

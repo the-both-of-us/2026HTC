@@ -19,13 +19,13 @@ export function CircleQr({ url, size = 240 }: { url: string; size?: number }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="rounded-control bg-white p-3">
+      <div className="rounded-control bg-sheet border border-rule-strong p-3">
         <QRCodeSVG
           value={url}
           size={size}
           level="M"
-          bgColor="#ffffff"
-          fgColor="#070a10"
+          bgColor="#f7f9f5"
+          fgColor="#0a3a37"
           marginSize={0}
           title="QR code that opens this study circle"
         />

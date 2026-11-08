@@ -13,7 +13,7 @@ const GROUPS: { state: NodeState; heading: string; empty: string }[] = [
 
 const ROW_CLASSES: Record<NodeState, string> = {
   locked: "border-dashed border-locked/50 bg-locked-surface/60 text-ink-soft hover:border-locked",
-  available: "border-accent/60 bg-sheet hover:border-accent-bright hover:shadow-glow",
+  available: "border-accent/60 bg-sheet hover:border-ink hover:bg-paper-hi",
   proven: "border-proven/50 bg-proven-surface/70 hover:border-proven",
 };
 

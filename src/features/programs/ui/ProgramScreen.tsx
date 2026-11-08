@@ -22,7 +22,7 @@ export function ProgramScreen({ program }: { program: ProgramView }) {
   return (
     <PageShell width="reading">
       <header className="flex flex-col gap-3">
-        <p className="inline-flex items-center gap-1.5 self-start rounded-full border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm text-accent-bright">
+        <p className="inline-flex items-center gap-1.5 self-start rounded-control border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm text-accent-bright">
           <GraduationCap aria-hidden="true" size={15} />
           Program · {program.courses.length} courses
         </p>
@@ -68,14 +68,14 @@ function ProgramStats({ proven, badges, courseCount }: { proven: number; badges:
           <strong className="font-semibold">{badges}</strong> of {courseCount} course badges
         </span>
       </p>
-      {/* One medal per course: earned ones glow, the rest wait. */}
+      {/* One medal per course: earned ones are filled, the rest wait. */}
       <div aria-hidden="true" className="flex gap-1.5">
         {Array.from({ length: courseCount }, (_, i) => (
           <span
             key={i}
             className={clsx(
               "size-3 rounded-full border",
-              i < badges ? "border-amber bg-amber shadow-[0_0_8px_rgb(210_156_68/0.6)]" : "border-rule-strong",
+              i < badges ? "border-amber bg-amber" : "border-rule-strong",
             )}
           />
         ))}
@@ -193,7 +193,7 @@ function CourseStep({
           course.state === "locked" && "border-dashed border-locked/70 bg-locked-surface/60",
           course.state === "done" && "border-proven/60 bg-proven/8",
           course.state === "open" && "border-rule-strong bg-sheet/90",
-          isUpNext && "border-accent/70 shadow-glow",
+          isUpNext && "border-ink border-2",
         )}
       >
         <p className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">

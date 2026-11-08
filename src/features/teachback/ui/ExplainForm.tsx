@@ -220,7 +220,7 @@ export function ExplainForm({
       {listening && (
         <div
           role="status"
-          className="flex items-start gap-3 rounded-control border border-accent/50 bg-available-surface px-3.5 py-3 shadow-glow"
+          className="flex items-start gap-3 rounded-control border border-accent/50 bg-available-surface px-3.5 py-3"
         >
           {voiceReady ? (
             <MicLevel getMeter={dictation.getMeter} />

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { METER_BANDS, type AudioMeter } from "../adapters/types";
 
 /**
- * A glowing sphere in OryxLearn's blue and violet. Its edge and glow follow the real audio:
+ * A sphere in OryxLearn's Seal inks (viridian and teal). Its edge and glow follow the real audio:
  * the question's voice while it speaks, the learner's microphone while they answer. Low
  * notes make broad swells, high notes fine ripples, and loudness swells the glow.
  *
@@ -36,15 +36,15 @@ type Rgb = [number, number, number];
 /** light: the lit side. body: the middle. deep: the shaded edge. glow: the halo. */
 type Palette = { light: Rgb; body: Rgb; deep: Rgb; glow: Rgb; glowStrength: number };
 
-// From the design tokens: accent #4b8fd4, accent-bright #7db3ea, focus #a5cdf7, violet #8d84e8,
-// violet-dim #6b64b5, available-surface #101d2e, proven #5baa7a, amber #d29c44.
+// From the Seal tokens: ink #0a3a37, ink-2 #37564f, tint #bfd1c7, foil teal #007a70, proven #00675e.
+// The halo is kept faint: the orb reads as printed ink, not a glow.
 const PALETTES: Record<OrbMood, Palette> = {
-  rest: { light: [125, 160, 205], body: [52, 82, 132], deep: [28, 30, 72], glow: [75, 143, 212], glowStrength: 0.22 },
-  thinking: { light: [190, 184, 250], body: [141, 132, 232], deep: [42, 40, 104], glow: [141, 132, 232], glowStrength: 0.45 },
-  voice: { light: [165, 205, 247], body: [75, 143, 212], deep: [76, 60, 160], glow: [75, 143, 212], glowStrength: 0.6 },
-  mic: { light: [226, 236, 250], body: [125, 179, 234], deep: [107, 100, 181], glow: [125, 179, 234], glowStrength: 0.7 },
-  proven: { light: [186, 232, 200], body: [91, 170, 122], deep: [20, 48, 31], glow: [91, 170, 122], glowStrength: 0.55 },
-  "not-yet": { light: [242, 206, 140], body: [210, 156, 68], deep: [74, 50, 22], glow: [210, 156, 68], glowStrength: 0.4 },
+  rest: { light: [143, 176, 164], body: [55, 86, 79], deep: [10, 58, 55], glow: [55, 86, 79], glowStrength: 0.08 },
+  thinking: { light: [191, 209, 199], body: [0, 122, 112], deep: [10, 58, 55], glow: [0, 122, 112], glowStrength: 0.12 },
+  voice: { light: [160, 204, 194], body: [0, 103, 94], deep: [4, 34, 32], glow: [0, 103, 94], glowStrength: 0.16 },
+  mic: { light: [210, 226, 218], body: [13, 75, 71], deep: [4, 34, 32], glow: [13, 75, 71], glowStrength: 0.18 },
+  proven: { light: [176, 222, 208], body: [0, 103, 94], deep: [4, 34, 32], glow: [0, 103, 94], glowStrength: 0.16 },
+  "not-yet": { light: [200, 210, 205], body: [55, 86, 79], deep: [10, 58, 55], glow: [55, 86, 79], glowStrength: 0.1 },
 };
 
 function rgba([r, g, b]: Rgb, alpha: number): string {
@@ -153,7 +153,7 @@ export function Orb({ mood, getMeter, className }: OrbProps) {
       }
       context.closePath();
 
-      // The body: lit from the upper left, shading to violet and navy at the far edge.
+      // The body: lit from the upper left, shading to deep ink at the far edge.
       const body = context.createRadialGradient(cx - radius * 0.35, cy - radius * 0.4, radius * 0.05, cx, cy, radius * 1.15);
       body.addColorStop(0, rgba(colour.light, 1));
       body.addColorStop(0.45, rgba(colour.body, 1));

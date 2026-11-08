@@ -19,7 +19,7 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
             {skill.title}
           </h3>
           <p className="mt-1 text-ink-soft">{skill.why}</p>
-          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm font-medium text-accent-bright">
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-control border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm font-medium text-accent-bright">
             {provedByLine(skill)}
           </p>
         </div>

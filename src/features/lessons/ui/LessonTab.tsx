@@ -83,7 +83,8 @@ function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
           <InlineText text={lesson.example.intro} />
         </p>
         {lesson.example.code && (
-          <pre className="overflow-x-auto rounded-control border border-rule-strong bg-paper p-4 font-mono text-sm leading-6">
+          // Focusable, so a keyboard can scroll a long line of code sideways.
+          <pre tabIndex={0} aria-label="Code example" className="overflow-x-auto rounded-control border border-rule-strong bg-paper p-4 font-mono text-sm leading-6">
             <code>{lesson.example.code}</code>
           </pre>
         )}

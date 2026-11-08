@@ -152,7 +152,7 @@ export function SkillPanel({
         ref={panelRef}
         aria-labelledby="skill-panel-title"
         className={clsx(
-          "panel-open fixed inset-x-0 bottom-0 z-30 max-h-[88dvh] overflow-y-auto rounded-t-2xl border-t border-rule-strong bg-sheet shadow-panel",
+          "panel-open fixed inset-x-0 bottom-0 z-30 max-h-[88dvh] overflow-y-auto border-t-2 border-ink bg-sheet",
           "lg:relative lg:max-h-none lg:w-[28rem] lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l",
         )}
       >

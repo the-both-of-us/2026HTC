@@ -132,7 +132,7 @@ function TimingChip({ attempt }: { attempt: Attempt }) {
 
   return (
     <p
-      className="inline-flex items-center gap-1.5 self-start rounded-full border border-rule-strong bg-raised/60 px-2.5 py-1 text-sm text-ink-soft tabular-nums"
+      className="inline-flex items-center gap-1.5 self-start rounded-control border border-rule-strong bg-raised/60 px-2.5 py-1 text-sm text-ink-soft tabular-nums"
       title="Measured on the server: the AI finding your exact words, then code checking each one and computing the score."
     >
       <Timer aria-hidden="true" size={14} />
@@ -299,7 +299,7 @@ function ProvenBanner({
   showNextStep: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-sheet border border-proven/70 bg-proven-surface p-5 shadow-glow-green">
+    <div className="flex flex-col gap-3 rounded-sheet border border-proven/70 bg-proven-surface p-5">
       <div className="flex items-center gap-4">
         <span className="animate-tick flex size-14 shrink-0 items-center justify-center rounded-full bg-proven text-on-proven">
           <Check aria-hidden="true" size={32} strokeWidth={3} />

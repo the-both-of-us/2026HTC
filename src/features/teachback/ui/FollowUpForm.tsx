@@ -41,7 +41,7 @@ export function FollowUpForm({
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="flex flex-col gap-4 rounded-sheet border border-accent bg-available-surface p-4 shadow-glow"
+      className="flex flex-col gap-4 rounded-sheet border border-accent bg-available-surface p-4"
     >
       <h3 id={questionId} className="text-lg leading-snug font-medium">
         <InlineText text={question} />

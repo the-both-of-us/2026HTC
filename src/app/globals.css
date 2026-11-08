@@ -40,9 +40,9 @@
   /* Actions and feedback */
   --color-accent: #0a3a37; /* primary buttons are ink */
   --color-accent-bright: #0d4b47; /* hover, and link-coloured text */
-  --color-amber: #37564f; /* missed checkpoints and the "Job asks" tag: offset ink, shown dashed */
-  --color-violet: #5a2fb8; /* foil violet, for lines on the map once they are open */
-  --color-violet-dim: #37564f; /* lines on the map that are not open yet */
+  --color-amber: #37564f; /* missed checkpoints and the "In the source" tag: offset ink, shown dashed */
+  --color-violet: #0a3a37; /* open lines on the map are ink (name kept for older screens) */
+  --color-violet-dim: #8ca69b; /* lines on the map that are not open yet */
   --color-danger: #96182c;
   --color-danger-surface: #f6e4e6;
   --color-focus: #0a3a37;
@@ -98,7 +98,7 @@
   --radius-sheet: 0.125rem;
 
   /* No glows: ink rules and a pressed-die shadow instead. Names kept for older screens. */
-  --shadow-panel: 0 10px 30px rgb(10 58 55 / 0.12);
+  --shadow-panel: none;
   --shadow-glow: inset 0 0 0 1.5px var(--color-ink);
   --shadow-glow-strong: inset 0 0 0 2.5px var(--color-ink);
   --shadow-glow-green: inset 0 0 0 1.5px var(--color-proven);

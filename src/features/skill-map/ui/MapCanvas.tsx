@@ -252,11 +252,11 @@ function Canvas({
           ariaLabelConfig={ARIA_LABELS}
           attributionPosition="top-right"
         >
-          <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} color="#27324a" />
+          <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} color="var(--color-tint)" />
 
           <Panel
             position="bottom-left"
-            className="flex flex-col divide-y divide-rule-strong rounded-control border border-rule-strong bg-raised/95 shadow-panel"
+            className="flex flex-col divide-y divide-rule-strong rounded-control border border-rule-strong bg-sheet"
           >
             <ZoomButton label="Zoom in" onClick={() => flow.zoomIn({ duration: motionMs(150) })}>
               <Plus aria-hidden="true" size={18} />
@@ -318,7 +318,7 @@ function ZoomButton({
 /** How to read the map: each state's dot and name, and the tag for what the posting or PDF names. */
 function Legend({ sourceKind }: { sourceKind: SourceKind }) {
   return (
-    <ul className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 rounded-full border border-rule-strong bg-sheet/95 px-4 py-1.5 text-sm text-ink-soft shadow-panel">
+    <ul className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 rounded-control border border-rule-strong bg-sheet px-4 py-1.5 text-sm text-ink-soft shadow-panel">
       <li className="inline-flex items-center gap-1.5">
         <StateMark state="proven" size={13} />
         Proven

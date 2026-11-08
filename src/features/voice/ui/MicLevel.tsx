@@ -47,7 +47,7 @@ export function MicLevel({ getMeter }: { getMeter: () => AudioMeter }) {
       {Array.from({ length: BARS }, (_, index) => (
         <span
           key={index}
-          className="h-full w-[3px] origin-center scale-y-[0.18] rounded-full bg-gradient-to-t from-accent to-violet motion-safe:transition-transform motion-safe:duration-75"
+          className="h-full w-[3px] origin-center scale-y-[0.18] rounded-full bg-ink motion-safe:transition-transform motion-safe:duration-75"
         />
       ))}
     </span>
