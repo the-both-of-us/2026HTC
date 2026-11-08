@@ -17,6 +17,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Put Mirza's reels relevance fix (`3e29d2e`) live on Vercel. Typecheck, lint and the reels tests pass on main.
 - Feed sound: M (or the button) turns sound on or off, and the choice lasts for the tab's session (sessionStorage). With sound on, the next Shorts load unmuted. If the browser refuses sound before any click (say, after a reload), the Short plays muted and the first click or key press turns sound on, with no pause. The player also corrects itself if YouTube reports the wrong mute state. Checked in Chrome: M, three Shorts in a row, a reload, then a click.
 - Put Mirza's Shorts inside each skill (`fd323a5`) live on Vercel. Typecheck, lint and the reels, lessons and feed tests pass on main.
 - Put Mirza's Shorts redesign (`c6a19c4`) live on Vercel. Typecheck, lint and the feed tests pass on main.
