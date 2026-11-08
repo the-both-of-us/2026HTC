@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- Removing the dev-only voice preview (`src/app/voice-preview`, `src/app/api/voice/preview-attempt`, the preview component in `features/voice`, Abdu's, owner's request) and the old draft `docs/submission/devpost.md`. No other changes.
 
 ## Next
 
