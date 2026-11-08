@@ -1,14 +1,39 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowUpRight, Bookmark, Heart, Play, Share2 } from "lucide-react";
+import { ArrowUpRight, Bookmark, Heart, MessageCircle, Play, Share2, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Badge, buttonClasses, ErrorNotice, PageShell, prefersReducedMotion, Spinner } from "@/shared/ui";
-import type { FeedCard, FeedItem, FeedPage, FeedShort, Interest } from "../types";
+import { FEED_FORMATS, parseFormat, type FeedFormat } from "../format";
+import type { FeedItem, FeedPage, FeedShort, Interest } from "../types";
+import { CommentsPanel } from "./CommentsPanel";
 import { InterestPicker } from "./InterestPicker";
 
 type View = "for-you" | "saved";
+
+const FORMAT_KEY = "oryx-feed-format";
+const FORMAT_LABELS: Record<FeedFormat, string> = { both: "Both", videos: "Videos", text: "Text" };
+
+function storedFormat(): FeedFormat {
+  try {
+    return parseFormat(window.localStorage.getItem(FORMAT_KEY));
+  } catch {
+    return "both";
+  }
+}
+
+function rememberFormat(format: FeedFormat) {
+  try {
+    window.localStorage.setItem(FORMAT_KEY, format);
+  } catch {
+    // A private window may refuse storage; the choice then lasts for this visit only.
+  }
+}
+
+const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+const countLabel = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+const titleOf = (item: FeedItem) => (item.kind === "card" ? item.title : item.short.title);
 type Status = "loading" | "ready" | "picking" | "error";
 
 /** "Go deeper": the landing with the subtopic filled in, to build a real course from it. */
@@ -28,8 +53,9 @@ function sendEvent(body: { itemId: string; event: "view"; dwellMs: number } | { 
 /** On screen means at least 60% visible. Shorter than this is not counted at all. */
 const MIN_REPORT_MS = 300;
 
-async function fetchPage(view: View, exclude: string[]): Promise<FeedPage> {
+async function fetchPage(view: View, format: FeedFormat, exclude: string[]): Promise<FeedPage> {
   const params = new URLSearchParams();
+  if (format !== "both") params.set("format", format);
   if (exclude.length > 0) params.set("exclude", exclude.slice(-120).join(","));
   if (view === "saved") params.set("view", "saved");
   const response = await fetch(`/api/feed?${params}`);
@@ -41,6 +67,9 @@ async function fetchPage(view: View, exclude: string[]): Promise<FeedPage> {
 /** The "For you" feed at /feed: one idea per screen, swiped up like reels, each with a way to prove it. */
 export function FeedScreen() {
   const [view, setView] = useState<View>("for-you");
+  // Null until the remembered choice is read in the browser, so the first fetch uses it.
+  const [format, setFormatState] = useState<FeedFormat | null>(null);
+  const [commentsFor, setCommentsFor] = useState<FeedItem | null>(null);
   const [items, setItems] = useState<FeedItem[]>([]);
   const [more, setMore] = useState(false);
   const [interests, setInterests] = useState<Interest[]>([]);
@@ -51,10 +80,10 @@ export function FeedScreen() {
   const scroller = useRef<HTMLDivElement>(null);
   const loadingMore = useRef(false);
 
-  const load = useCallback(async (nextView: View) => {
+  const load = useCallback(async (nextView: View, nextFormat: FeedFormat) => {
     setStatus("loading");
     try {
-      const page = await fetchPage(nextView, []);
+      const page = await fetchPage(nextView, nextFormat, []);
       setInterests(page.interests);
       if (page.needsInterests) {
         setStatus("picking");
@@ -72,16 +101,27 @@ export function FeedScreen() {
   }, []);
 
   useEffect(() => {
+    // localStorage exists only in the browser.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFormatState(storedFormat());
+  }, []);
+
+  useEffect(() => {
     // The first page comes from the server once the screen is in the browser.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load(view);
-  }, [load, view]);
+    if (format) void load(view, format);
+  }, [load, view, format]);
+
+  const setFormat = (next: FeedFormat) => {
+    rememberFormat(next);
+    setFormatState(next);
+  };
 
   const loadMore = useCallback(async () => {
-    if (!more || loadingMore.current) return;
+    if (!more || loadingMore.current || !format) return;
     loadingMore.current = true;
     try {
-      const page = await fetchPage(view, items.map((item) => item.id));
+      const page = await fetchPage(view, format, items.map((item) => item.id));
       const seen = new Set(items.map((item) => item.id));
       const fresh = page.items.filter((item) => !seen.has(item.id));
       setItems((before) => [...before, ...fresh.filter((item) => !before.some((old) => old.id === item.id))]);
@@ -91,7 +131,7 @@ export function FeedScreen() {
     } finally {
       loadingMore.current = false;
     }
-  }, [more, items, view]);
+  }, [more, items, view, format]);
 
   // Which card fills the screen, to fetch the next page before the end, and how long each item
   // stays on screen (at least 60% visible), reported when it leaves or the page is hidden.
@@ -154,16 +194,22 @@ export function FeedScreen() {
     return () => window.removeEventListener("keydown", onKey);
   }, [current]);
 
-  const react = useCallback(async (card: FeedCard, reaction: "like" | "save") => {
+  const react = useCallback(async (card: FeedItem, reaction: "like" | "save") => {
     const field = reaction === "like" ? "liked" : "saved";
     const on = !card[field];
+    const title = titleOf(card);
+    // A like moves the shown count at once; a failed save moves it back.
     const flip = (value: boolean) =>
-      setItems((before) => before.map((item) => (item.id === card.id ? { ...item, [field]: value } : item)));
+      setItems((before) =>
+        before.map((item) =>
+          item.id === card.id ? { ...item, [field]: value, ...(reaction === "like" && { likes: Math.max(0, item.likes + (value ? 1 : -1)) }) } : item,
+        ),
+      );
     flip(on);
     setAnnouncement(
       reaction === "like"
-        ? on ? `Liked "${card.title}".` : `Removed your like from "${card.title}".`
-        : on ? `Saved "${card.title}". Find it under Saved.` : `Removed "${card.title}" from Saved.`,
+        ? on ? `Liked "${title}".` : `Removed your like from "${title}".`
+        : on ? `Saved "${title}". Find it under Saved.` : `Removed "${title}" from Saved.`,
     );
     const response = await fetch(`/api/feed/${reaction}`, {
       method: "POST",
@@ -179,7 +225,7 @@ export function FeedScreen() {
   const share = useCallback(async (item: FeedItem) => {
     sendEvent({ itemId: item.id, event: "share" });
     const url = `${window.location.origin}${deeperHref(item.subtopic)}`;
-    const title = item.kind === "card" ? item.title : item.short.title;
+    const title = titleOf(item);
     try {
       if (navigator.share) {
         await navigator.share({ title, text: item.kind === "card" ? item.body : `${title}, on OryxLearn`, url });
@@ -194,16 +240,14 @@ export function FeedScreen() {
     }
   }, []);
 
-  const textCards = items.filter((item) => item.kind === "card");
-
   return (
     <PageShell width="full">
       <style>{`@keyframes feed-pop{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}`}</style>
       <div className="flex h-[calc(100dvh-3.5rem-1px)] flex-col lg:h-dvh">
         <h1 className="sr-only">For you</h1>
         {status !== "picking" && (
-        <div className="mx-auto flex w-full max-w-[460px] items-center justify-between gap-3 px-4 pt-3 pb-2 lg:px-0 lg:pt-5">
-          <div className="flex gap-5" role="group" aria-label="Which cards">
+        <div className="mx-auto flex w-full max-w-[460px] items-center justify-between gap-2 px-4 pt-3 pb-2 lg:px-0 lg:pt-5">
+          <div className="flex gap-4" role="group" aria-label="Which cards">
             {(
               [
                 ["for-you", "For you"],
@@ -224,9 +268,11 @@ export function FeedScreen() {
               </button>
             ))}
           </div>
+          {format && <FormatSwitch value={format} onChange={setFormat} />}
           {interests.length > 0 && (
-            <button type="button" onClick={() => setStatus("picking")} className={buttonClasses("quiet", "sm")}>
-              Edit interests
+            <button type="button" onClick={() => setStatus("picking")} className={clsx(buttonClasses("quiet", "sm"), "max-sm:size-10 max-sm:no-underline")}>
+              <SlidersHorizontal aria-hidden="true" size={20} className="sm:hidden" />
+              <span className="max-sm:sr-only">Edit interests</span>
             </button>
           )}
         </div>
@@ -245,17 +291,17 @@ export function FeedScreen() {
           <InterestPicker
             key={interests.map((interest) => interest.slug).join(",")}
             initial={interests}
-            onCancel={interests.length > 0 ? () => (items.length > 0 ? setStatus("ready") : void load(view)) : undefined}
+            onCancel={interests.length > 0 ? () => (items.length > 0 ? setStatus("ready") : void load(view, format ?? "both")) : undefined}
             onDone={(saved) => {
               setInterests(saved);
               setView("for-you");
-              void load("for-you");
+              void load("for-you", format ?? "both");
             }}
           />
         )}
         {status === "error" && (
           <div className="mx-auto w-full max-w-[460px] px-4 lg:px-0">
-            <ErrorNotice message={error} onRetry={() => void load(view)} />
+            <ErrorNotice message={error} onRetry={() => void load(view, format ?? "both")} />
           </div>
         )}
 
@@ -278,13 +324,15 @@ export function FeedScreen() {
                 {item.kind === "card" ? (
                   <TopicCard
                     card={item}
-                    onLike={() => void react(item, "like")}
-                    onSave={() => void react(item, "save")}
-                    onShare={() => void share(item)}
+                    rail={<ActionRail item={item} onReact={(reaction) => void react(item, reaction)} onComments={() => setCommentsFor(item)} onShare={() => void share(item)} />}
                     onDeeper={() => sendEvent({ itemId: item.id, event: "deeper" })}
                   />
                 ) : (
-                  <ShortCard item={item} onShare={() => void share(item)} onDeeper={() => sendEvent({ itemId: item.id, event: "deeper" })} />
+                  <ShortCard
+                    item={item}
+                    rail={<ActionRail item={item} onReact={(reaction) => void react(item, reaction)} onComments={() => setCommentsFor(item)} onShare={() => void share(item)} />}
+                    onDeeper={() => sendEvent({ itemId: item.id, event: "deeper" })}
+                  />
                 )}
               </section>
             ))}
@@ -292,9 +340,20 @@ export function FeedScreen() {
               data-index={items.length}
               className="mx-auto flex h-full w-full max-w-[460px] snap-start px-3 pb-3 lg:px-0 lg:pb-5"
             >
-              <EndCard view={view} empty={textCards.length === 0} more={more} />
+              <EndCard view={view} format={format ?? "both"} empty={items.length === 0} more={more} />
             </section>
           </div>
+        )}
+        {commentsFor && (
+          <CommentsPanel
+            key={commentsFor.id}
+            itemId={commentsFor.id}
+            itemTitle={titleOf(commentsFor)}
+            onClose={() => setCommentsFor(null)}
+            onCount={(change) =>
+              setItems((before) => before.map((item) => (item.id === commentsFor.id ? { ...item, comments: Math.max(0, item.comments + change) } : item)))
+            }
+          />
         )}
       </div>
     </PageShell>
@@ -327,14 +386,38 @@ function DeeperLink({ subtopic, size, onDeeper }: { subtopic: string; size: "sm"
   );
 }
 
+/** "Both", "Videos" or "Text": native radios, so arrow keys move the choice and screen readers hear a group. */
+function FormatSwitch({ value, onChange }: { value: FeedFormat; onChange: (format: FeedFormat) => void }) {
+  return (
+    <fieldset className="flex shrink-0 rounded-control p-0.5 shadow-[inset_0_0_0_1.5px_var(--color-control-edge)]">
+      <legend className="sr-only">Show</legend>
+      {FEED_FORMATS.map((format) => (
+        <label
+          key={format}
+          className={clsx(
+            "flex min-h-9 cursor-pointer items-center rounded-control px-2.5 text-sm font-semibold has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus",
+            value === format ? "bg-ink text-on-ink" : "text-ink-soft hover:text-ink",
+          )}
+        >
+          <input type="radio" name="feed-format" value={format} checked={value === format} onChange={() => onChange(format)} className="sr-only" />
+          {FORMAT_LABELS[format]}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
 function RailButton({
   label,
   pressed,
+  count,
   onClick,
   children,
 }: {
   label: string;
   pressed?: boolean;
+  /** Shown under the icon. The label already says it for screen readers. */
+  count?: number;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -344,26 +427,52 @@ function RailButton({
       aria-label={label}
       aria-pressed={pressed}
       onClick={onClick}
-      className="flex size-12 cursor-pointer items-center justify-center rounded-control text-ink transition-colors hover:bg-raised"
+      className="flex min-h-12 w-12 cursor-pointer flex-col items-center justify-center rounded-control py-1 text-ink transition-colors hover:bg-raised"
     >
       {children}
+      {count !== undefined && <span className="text-xs leading-tight font-semibold">{compact.format(count)}</span>}
     </button>
   );
 }
 
-function TopicCard({
-  card,
-  onLike,
-  onSave,
+/** Like, comment, save, share: the same four on every card and Short. */
+function ActionRail({
+  item,
+  onReact,
+  onComments,
   onShare,
-  onDeeper,
 }: {
-  card: FeedCard;
-  onLike: () => void;
-  onSave: () => void;
+  item: FeedItem;
+  onReact: (reaction: "like" | "save") => void;
+  onComments: () => void;
   onShare: () => void;
-  onDeeper: () => void;
 }) {
+  const title = titleOf(item);
+  const likes = countLabel(item.likes, "like", "likes");
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-1">
+      <RailButton label={item.liked ? `Unlike "${title}", ${likes}` : `Like "${title}", ${likes}`} pressed={item.liked} count={item.likes} onClick={() => onReact("like")}>
+        <Heart
+          aria-hidden="true"
+          size={26}
+          key={item.liked ? "on" : "off"}
+          className={clsx(item.liked && "fill-current motion-safe:animate-[feed-pop_320ms_var(--ease-out)]")}
+        />
+      </RailButton>
+      <RailButton label={`Comments on "${title}", ${countLabel(item.comments, "comment", "comments")}`} count={item.comments} onClick={onComments}>
+        <MessageCircle aria-hidden="true" size={24} />
+      </RailButton>
+      <RailButton label={item.saved ? `Remove "${title}" from Saved` : `Save "${title}"`} pressed={item.saved} onClick={() => onReact("save")}>
+        <Bookmark aria-hidden="true" size={24} className={clsx(item.saved && "fill-current")} />
+      </RailButton>
+      <RailButton label={`Share "${title}"`} onClick={onShare}>
+        <Share2 aria-hidden="true" size={24} />
+      </RailButton>
+    </div>
+  );
+}
+
+function TopicCard({ card, rail, onDeeper }: { card: FeedItem & { kind: "card" }; rail: ReactNode; onDeeper: () => void }) {
   return (
     <article className={clsx(frame, "p-5 sm:p-7")}>
       <div className="flex items-start justify-between gap-3">
@@ -375,22 +484,7 @@ function TopicCard({
           <h2 className="text-[1.75rem] leading-[1.08] font-bold font-stretch-[112%] sm:text-3xl">{card.title}</h2>
           <p className="mt-4 text-lg text-ink">{card.body}</p>
         </div>
-        <div className="-mr-2 flex shrink-0 flex-col items-center gap-1">
-          <RailButton label={card.liked ? `Unlike "${card.title}"` : `Like "${card.title}"`} pressed={card.liked} onClick={onLike}>
-            <Heart
-              aria-hidden="true"
-              size={26}
-              key={card.liked ? "on" : "off"}
-              className={clsx(card.liked && "fill-current motion-safe:animate-[feed-pop_320ms_var(--ease-out)]")}
-            />
-          </RailButton>
-          <RailButton label={card.saved ? `Remove "${card.title}" from Saved` : `Save "${card.title}"`} pressed={card.saved} onClick={onSave}>
-            <Bookmark aria-hidden="true" size={24} className={clsx(card.saved && "fill-current")} />
-          </RailButton>
-          <RailButton label={`Share "${card.title}"`} onClick={onShare}>
-            <Share2 aria-hidden="true" size={24} />
-          </RailButton>
-        </div>
+        <div className="-mr-2">{rail}</div>
       </div>
 
       <div className="mt-6 flex items-center gap-4 border-t border-rule pt-5">
@@ -402,7 +496,7 @@ function TopicCard({
 }
 
 /** An educational Short. The player loads only near the screen, and plays muted only while on it. */
-function ShortCard({ item, onShare, onDeeper }: { item: FeedShort; onShare: () => void; onDeeper: () => void }) {
+function ShortCard({ item, rail, onDeeper }: { item: FeedShort; rail: ReactNode; onDeeper: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [started, setStarted] = useState(false);
@@ -428,51 +522,51 @@ function ShortCard({ item, onShare, onDeeper }: { item: FeedShort; onShare: () =
         <Meta interest={item.interest.name} subtopic={item.subtopic} />
         <Badge tone="neutral" className="shrink-0">Short</Badge>
       </div>
-      <div ref={box} className="relative min-h-0 flex-1 bg-ink">
-        {playing ? (
-          <iframe
-            src={src}
-            title={`YouTube video: ${title}`}
-            loading="lazy"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            className="absolute inset-0 size-full"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setStarted(true)}
-            aria-label={`Play "${title}"`}
-            className="absolute inset-0 flex cursor-pointer items-center justify-center"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
-              alt=""
+      <div className="flex min-h-0 flex-1">
+        <div ref={box} className="relative min-h-0 flex-1 bg-ink">
+          {playing ? (
+            <iframe
+              src={src}
+              title={`YouTube video: ${title}`}
               loading="lazy"
-              className="absolute inset-0 size-full object-cover opacity-80"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 size-full"
             />
-            <span className="relative flex size-16 items-center justify-center bg-sheet text-ink">
-              <Play aria-hidden="true" size={28} className="fill-current" />
-            </span>
-          </button>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={() => setStarted(true)}
+              aria-label={`Play "${title}"`}
+              className="absolute inset-0 flex cursor-pointer items-center justify-center"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+                alt=""
+                loading="lazy"
+                className="absolute inset-0 size-full object-cover opacity-80"
+              />
+              <span className="relative flex size-16 items-center justify-center bg-sheet text-ink">
+                <Play aria-hidden="true" size={28} className="fill-current" />
+              </span>
+            </button>
+          )}
+        </div>
+        <div className="flex flex-col justify-end px-1 pb-2">{rail}</div>
       </div>
       <div className="flex items-center gap-3 p-4">
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 font-semibold leading-snug">{title}</p>
           <p className="truncate text-sm text-ink-soft">{channel} on YouTube</p>
         </div>
-        <RailButton label={`Share "${title}"`} onClick={onShare}>
-          <Share2 aria-hidden="true" size={22} />
-        </RailButton>
         <DeeperLink subtopic={item.subtopic} size="sm" onDeeper={onDeeper} />
       </div>
     </article>
   );
 }
 
-function EndCard({ view, empty, more }: { view: View; empty: boolean; more: boolean }) {
+function EndCard({ view, format, empty, more }: { view: View; format: FeedFormat; empty: boolean; more: boolean }) {
   if (more) {
     return (
       <div className={clsx(frame, "items-center justify-center gap-3 text-ink-soft")}>
@@ -480,13 +574,18 @@ function EndCard({ view, empty, more }: { view: View; empty: boolean; more: bool
       </div>
     );
   }
-  const heading = empty ? (view === "saved" ? "Nothing saved yet" : "Cards on the way") : "You're caught up";
+  const videos = format === "videos";
+  const heading = empty ? (view === "saved" ? "Nothing saved yet" : videos ? "Videos on the way" : "Cards on the way") : "You're caught up";
   const text =
     view === "saved"
-      ? "Tap the bookmark on a card to keep it here."
-      : empty
-        ? "New cards for your interests are being written. Come back in a minute, or add another interest."
-        : "Fresh cards for your interests are being written. Come back soon, or go deeper on one you liked.";
+      ? videos
+        ? "Tap the bookmark on a video to keep it here."
+        : "Tap the bookmark on a card to keep it here."
+      : videos
+        ? "More videos for your interests are being found. Come back soon, or switch to Both."
+        : empty
+          ? "New cards for your interests are being written. Come back in a minute, or add another interest."
+          : "Fresh cards for your interests are being written. Come back soon, or go deeper on one you liked.";
   return (
     <div className={clsx(frame, "justify-center gap-4 p-7")}>
       <h2 className="text-3xl font-bold font-stretch-[112%]">{heading}</h2>

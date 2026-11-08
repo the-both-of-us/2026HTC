@@ -1,5 +1,6 @@
 import { HttpError } from "@/shared/http";
 import { deleteDoc, listKeys, putDoc } from "@/shared/store";
+import { deleteViewerComments } from "./comments";
 import { deleteViewerEvents, removeEvent, UUID_PATTERN, writeEvent } from "./events";
 import { deleteInterests } from "./interests";
 import { slugOfItem } from "./validate";
@@ -30,9 +31,9 @@ export async function listReactions(userId: string, reaction: Reaction): Promise
   return new Set(keys.map((key) => key.slice(key.lastIndexOf("/") + 1)));
 }
 
-/** For "Delete my data": this viewer's interests, likes, saves and engagement. Running it twice is harmless. */
+/** For "Delete my data": this viewer's interests, likes, saves, comments and engagement. Running it twice is harmless. */
 export async function deleteFeedData(userId: string): Promise<void> {
   if (!UUID_PATTERN.test(userId)) return;
   const keys = (await Promise.all((["like", "save"] as const).map((reaction) => listKeys(prefix(reaction, userId))))).flat();
-  await Promise.all([...keys.map((key) => deleteDoc(key)), deleteInterests(userId), deleteViewerEvents(userId)]);
+  await Promise.all([...keys.map((key) => deleteDoc(key)), deleteInterests(userId), deleteViewerEvents(userId), deleteViewerComments(userId)]);
 }

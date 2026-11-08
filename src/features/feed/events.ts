@@ -8,7 +8,7 @@ import { slugOfItem } from "./validate";
  * keys under a prefix. Item ids start with the interest slug, so one listing per interest
  * (feed-ev/<slug>.) reads every count for that interest.
  */
-export const STORED_EVENTS = ["view", "skip", "long", "like", "save", "share", "deeper"] as const;
+export const STORED_EVENTS = ["view", "skip", "long", "like", "save", "share", "deeper", "comment"] as const;
 export type StoredEvent = (typeof STORED_EVENTS)[number];
 
 /** On screen this long is a view, under SKIP_MS is a skip, LONG_MS or more is a long look. */
@@ -92,6 +92,7 @@ export function statsOf(events: InterestEvents, itemId: string): ItemStats {
     saves: size("save"),
     shares: size("share"),
     deeper: size("deeper"),
+    comments: size("comment"),
   };
 }
 

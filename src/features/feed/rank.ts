@@ -17,9 +17,11 @@ export type ItemStats = {
   saves: number;
   shares: number;
   deeper: number;
+  /** Viewers who left at least one comment. */
+  comments: number;
 };
 
-export const EMPTY_STATS: ItemStats = { views: 0, skips: 0, exposures: 0, long: 0, likes: 0, saves: 0, shares: 0, deeper: 0 };
+export const EMPTY_STATS: ItemStats = { views: 0, skips: 0, exposures: 0, long: 0, likes: 0, saves: 0, shares: 0, deeper: 0, comments: 0 };
 
 /** What this viewer did with one item. */
 export type ViewerMarks = { seen: boolean; liked: boolean; saved: boolean; long: boolean; skipped: boolean };
@@ -37,7 +39,7 @@ const SEEN_DROP = 3;
  * a hit, minus a smoothed skip rate, plus a smoothed long-dwell rate.
  */
 export function engagement(stats: ItemStats): number {
-  const actions = 3 * stats.likes + 4 * stats.saves + 5 * stats.shares + 6 * stats.deeper;
+  const actions = 3 * stats.likes + 4 * stats.saves + 5 * (stats.shares + stats.comments) + 6 * stats.deeper;
   const base = (actions + PRIOR) / (stats.views + PRIOR_WEIGHT);
   const skipRate = (stats.skips + 1) / (stats.exposures + 4);
   const longRate = (stats.long + 0.5) / (stats.views + 4);

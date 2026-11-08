@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { getFeedPage } from "@/features/feed";
+import { getFeedPage, parseFormat } from "@/features/feed";
 import { errorResponse } from "@/shared/http";
 import { readUserId } from "@/shared/identity";
 
@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 /**
  * One page of the feed. ?exclude= lists the item ids already on screen (comma-separated), and
- * ?view=saved lists saved items. A viewer with no interests gets `needsInterests`.
+ * ?view=saved lists saved items, and ?format=both|videos|text picks the kind. A viewer with no interests gets `needsInterests`.
  */
 export async function GET(request: Request) {
   try {
@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const exclude = (params.get("exclude") ?? "").slice(0, 8000).split(",").filter(Boolean);
     const page = await getFeedPage(await readUserId(), {
       savedOnly: params.get("view") === "saved",
+      format: parseFormat(params.get("format")),
       exclude,
       schedule: (task) => after(task),
     });

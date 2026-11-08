@@ -18,6 +18,8 @@ export const SHORT_CAP = 8;
 /** Shorts are searched again after this long, or sooner when fewer than LOW_SHORTS still show. */
 const SHORTS_FRESH_MS = 3 * 24 * 60 * 60 * 1000;
 const SHORTS_RETRY_MS = 24 * 60 * 60 * 1000;
+/** In "Videos" a viewer who has seen nearly every Short of an interest may trigger a search this often. */
+const SHORTS_EAGER_MS = 6 * 60 * 60 * 1000;
 const LOW_SHORTS = 2;
 /** After the YouTube API fails (quota or key), stop searching for this long on this server. */
 const SHORTS_BACKOFF_MS = 30 * 60 * 1000;
@@ -141,12 +143,12 @@ export async function maybeGrow(interest: Interest, viewerId: string | null, now
  * Tops up an interest's Shorts when the pool is old or running low: one search with the
  * subtopic of a best-engaged card, keeping up to 5 new ones, then rotated down to SHORT_CAP.
  */
-export async function maybeTopUpShorts(interest: Interest, now = Date.now()): Promise<void> {
+export async function maybeTopUpShorts(interest: Interest, now = Date.now(), { eager = false }: { eager?: boolean } = {}): Promise<void> {
   if (!process.env.YOUTUBE_API_KEY || (globalState.oryxShortsBackoffUntil ?? 0) > now) return;
   const [doc, cards, events] = await Promise.all([shortDoc(interest, now, true), getCards(interest), interestEvents(interest.slug, now)]);
   const age = doc.searchedAt ? now - Date.parse(doc.searchedAt) : Infinity;
   const live = doc.shorts.filter((short) => !isRetiredShort(statsOf(events, short.id))).length;
-  if (!(age > SHORTS_FRESH_MS || (live < LOW_SHORTS && age > SHORTS_RETRY_MS))) return;
+  if (!(age > SHORTS_FRESH_MS || (live < LOW_SHORTS && age > SHORTS_RETRY_MS) || (eager && age > SHORTS_EAGER_MS))) return;
   if (!(await claimDoc(`feed-shorts-claim/${interest.slug}/${hourStamp(now)}`, { at: new Date(now).toISOString() }))) return;
 
   const usedSubtopics = new Set(doc.shorts.map((short) => short.subtopic.toLowerCase()));
@@ -170,4 +172,11 @@ export async function itemExists(slug: string, itemId: string, name = slug): Pro
   const interest = { slug, name };
   const [cards, shorts] = await Promise.all([getCards(interest), getShorts(interest)]);
   return cards.some((card) => card.id === itemId) || shorts.some((short) => short.id === itemId);
+}
+
+/** The title of a card or Short in its interest's pool, or null when it is not there. */
+export async function findItemTitle(slug: string, itemId: string): Promise<string | null> {
+  const interest = { slug, name: slug };
+  const [cards, shorts] = await Promise.all([getCards(interest), getShorts(interest)]);
+  return cards.find((card) => card.id === itemId)?.title ?? shorts.find((short) => short.id === itemId)?.title ?? null;
 }
