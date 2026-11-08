@@ -31,9 +31,9 @@ type PageShellProps = {
 export function PageShell({ width = "wide", headerActions, footer, children }: PageShellProps) {
   const footerControls = (
     <>
+      <AccountStatusLine />
       <ThemeSelect />
       <LearningModeToggle className="-mx-2" />
-      <AccountStatusLine />
     </>
   );
 

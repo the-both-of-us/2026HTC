@@ -4,7 +4,8 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "./Button";
+import { LogIn } from "lucide-react";
+import { Button, buttonClasses } from "./Button";
 
 /**
  * The account line in the shell, in Seal's style. Sign-in is the auth feature's (Mirza's):
@@ -69,20 +70,22 @@ export function AccountStatusLine() {
   }
 
   return (
-    <p className="text-sm text-ink-soft">
-      Learning as a guest. Your progress stays in this browser.{" "}
+    <div className="flex flex-col gap-2">
       {account && (
-        <>
-          <Link href={signInHref(pathname)} className="font-semibold text-ink underline underline-offset-4">
-            Sign in
-          </Link>{" "}
-          to keep it on every device.{" "}
-        </>
+        <Link href={signInHref(pathname)} className={clsx(buttonClasses("primary", "md"), "w-full gap-2")}>
+          <LogIn size={18} aria-hidden="true" />
+          Sign in
+        </Link>
       )}
-      <Link href="/trust" className="font-semibold text-ink underline underline-offset-4">
-        What we store
-      </Link>
-    </p>
+      <p className="text-sm text-ink-soft">
+        {account
+          ? "Learning as a guest. Sign in to keep your progress on every device. "
+          : "Learning as a guest. Your progress stays in this browser. "}
+        <Link href="/trust" className="font-semibold text-ink underline underline-offset-4">
+          What we store
+        </Link>
+      </p>
+    </div>
   );
 }
 
@@ -92,10 +95,8 @@ export function TopBarSignIn({ className }: { className?: string }) {
   const pathname = usePathname();
   if (!account || account.signedIn) return null;
   return (
-    <Link
-      href={signInHref(pathname)}
-      className={clsx("flex min-h-11 items-center px-1 text-sm font-semibold underline decoration-[1.5px] underline-offset-4", className)}
-    >
+    <Link href={signInHref(pathname)} className={clsx(buttonClasses("secondary", "sm"), "gap-1.5", className)}>
+      <LogIn size={16} aria-hidden="true" />
       Sign in
     </Link>
   );

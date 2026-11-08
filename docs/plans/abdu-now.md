@@ -6,7 +6,6 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- **A visible Sign in button** (owner's request): a real button at the top of the sidebar footer and an outlined button in the phone top bar, instead of an underlined link. Touches `src/shared/ui/Account.tsx` and `src/shared/ui/PageShell.tsx` only.
 - **Final live check on https://oryxlearn.vercel.app** (agent, running): every proving format with real AI (Explain it, Catch the mistake, Age 10, 30 seconds, Final interview), plus programs, circles, the evidence page, themes and sign-in. It fixes bugs it finds in Abdu's paths and deletes its own test data afterwards. Bugs in your paths go to TEAM.md for you, not edited. Touches: whatever is broken, mostly `features/teachback`, `features/skill-map`, `features/proof`, `features/programs`, `features/circles`.
 - **Root `README.md` for judges** (agent, running): the pitch, the loop, trust and eval numbers, architecture, how to run it, the team, AI disclosure, and prior work. Touches: `README.md` only.
 
@@ -18,6 +17,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Sign in is now a real button: solid at the top of the sidebar footer, outlined in the phone top bar.
 - Dark theme softened (`b250273`).
 - Sign-in placed in the shell, a `/sign-in` page, and Light, Dark and Eye comfort themes (`b1399b8`).
 - Map header in two short rows, map opens at full size (`e3bfe3d`, `dd032aa`).
