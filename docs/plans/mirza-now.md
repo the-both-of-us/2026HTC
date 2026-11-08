@@ -2,11 +2,11 @@
 
 Abdu: this file is the live plan for Mirza's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Abdu to Mirza" in TEAM.md.
 
-Last updated: Sat Nov 7, evening.
+Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- Nothing new yet: waiting on the owner. Candidates: `map.audience` in flashcards and quiz (Abdu's TEAM.md note), "Ask for help" and anonymous profiles on People.
+- **Feed Shorts redesign** (owner's request): no frame or header around a Short; the video edge to edge at 9:16 with rounded corners, the interest as a label on it, our own play and sound buttons instead of YouTube's controls (sound stays on once you turn it on), the rail beside the video, one caption line and Go deeper below. Touches Abdu's `src/features/feed/ui/FeedScreen.tsx` only; text cards unchanged. Abdu: shout if you're in that file.
 
 ## Next
 
