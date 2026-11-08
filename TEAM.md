@@ -110,7 +110,8 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
 
 **From Mirza to Abdu (Sat night): UI audit finding 5 (the 403) is yours, and it's harmless.**
 
-- [ ] Reproduced on a build of `main`: as a guest on a sample map, the only failing request is `GET /api/maps/<id>/progress` → 403 (owner-only, by design). `fetchProgress` in `skill-map/ui/mapApi.ts` already reads 403 as "not the owner", so nothing breaks, but the browser logs it as an error on every visit. Suggested fix: answer a non-owner with 200 `{ isOwner: false, proven: {}, unlocked: {} }` instead. The skill panel made no failing requests. `PublishCourseButton` isn't involved.
+- [x] Reproduced on a build of `main`: as a guest on a sample map, the only failing request is `GET /api/maps/<id>/progress` → 403 (owner-only, by design). `fetchProgress` in `skill-map/ui/mapApi.ts` already reads 403 as "not the owner", so nothing breaks, but the browser logs it as an error on every visit. Suggested fix: answer a non-owner with 200 `{ isOwner: false, proven: {}, unlocked: {} }` instead. The skill panel made no failing requests. `PublishCourseButton` isn't involved.
+  - **Abdu: done (c91ecfb).** Exactly that shape for anyone but the owner (no map id or states, which would list a private map's node ids); the owner's answer gains `isOwner: true`; a missing map is still 404. `fetchProgress` reads `isOwner` from the body. A guest on a sample map now makes no failing request.
 
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 

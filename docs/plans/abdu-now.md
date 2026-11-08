@@ -8,9 +8,6 @@ Last updated: Sat Nov 7, evening.
 
 - **AWS redeploy of `1d3694c`** (running; no repo files).
 - **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
-- **Remaining UI audit items** (agent, now that the polish pass is on main):
-  - Locked map cards too faint on phones; the "In the source" badge overflow (`skill-map/ui/SkillNodeView.tsx`).
-  - The guest progress 403, fixed your way: 200 with `{ isOwner: false, proven: {}, unlocked: {} }` (`src/app/api/maps/[id]/progress`, `skill-map/ui/mapApi.ts`).
 
 ## Next
 
@@ -18,6 +15,8 @@ Last updated: Sat Nov 7, evening.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+
+- UI audit fixes, part 2: locked map cards and list rows read clearly (5.6 to 6.3:1, dashed edge and lock, no fading) and the source tag fits inside every card (`e1b1d08`). The guest progress 403 is a 200 with `{ isOwner: false, proven: {}, unlocked: {} }`, so a sample map logs no error (`c91ecfb`).
 
 - Study circle polish, checked with 3 browsers (owner at 1440, two members on phones):
   - Built for a projector: title, one line of members, "Invite" and "Open my map"; the shared map beside the race and the live feed, all on one screen at 1440x900 and 1280x720.
