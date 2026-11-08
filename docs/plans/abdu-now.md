@@ -16,6 +16,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Put Mirza's wider full-page skill reading (`cdf9dbb`) live on Vercel. Typecheck, lint and the lessons, skill-map, flashcards and quiz tests pass on main.
 - Put Mirza's calmer People page (`78353a5`) live on Vercel. Typecheck, lint and the network tests pass on main.
 - Put Mirza's clickable People skills (`fc1925d`) live on Vercel. Typecheck, lint and the network and courses tests pass on main.
 - UI audit fixes, part 2: locked map cards and list rows read clearly (5.6 to 6.3:1, dashed edge and lock, no fading) and the source tag fits inside every card (`e1b1d08`). The guest progress 403 is a 200 with `{ isOwner: false, proven: {}, unlocked: {} }`, so a sample map logs no error (`c91ecfb`).
