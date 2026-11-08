@@ -8,7 +8,6 @@ Last updated: Sat Nov 7, night.
 
 The owner asked for all three on Abdu's side.
 
-- **"For you" feed with Shorts** (agent). A new `/feed`: full-screen swipe cards, each with one idea from your maps, plus every 4th card an educational YouTube Short (SafeSearch, cached). Each card has like, save, share and "Prove it" (opens the teach-back on that topic). Files: new `features/feed`, `src/app/feed`, `src/app/api/feed`, plus one sidebar link in `src/shared/ui/SideNav.tsx`.
 - New keys: `YOUTUBE_API_KEY`, `GNEWS_API_KEY`, `TADDY_API_KEY`, `TADDY_USER_ID` (in .env.local, Vercel and AWS).
 
 ## Next
@@ -17,6 +16,7 @@ The owner asked for all three on Abdu's side.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- **"For you" feed** (`cf4b279`): `/feed` swipe-up cards, one idea each from your maps (samples for a new visitor), with like, save, share and Prove it (opens that topic's teach-back). One AI call per map, saved; sample cards are saved with the code. Every 4th item is an educational YouTube Short (SafeSearch strict, cached 5 days per topic, text only if the quota runs out). "For you" is in the sidebar after Build.
 - **Resources tab on every skill** (`24b64fb`): Watch, Read, Listen and News from real APIs, cached 7 days, opened lazily; children get no news or podcasts.
 
 - Removed "Read the Grid" at the owner's request: the sidebar link, `/grid`, `/api/grid` and the strip on energy maps. The solve store stays, so old evidence pages and data deletion still work. Mirza: please drop the Grid part of point 7 in `docs/submission/devpost.md`.
