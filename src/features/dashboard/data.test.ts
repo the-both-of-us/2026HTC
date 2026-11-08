@@ -61,6 +61,7 @@ describe("assembleDashboard", () => {
         totalSkills: 3,
         isPublic: true,
         isCopy: false,
+        startedFrom: null,
         lastActivityAt: "2026-11-06T12:00:00.000Z",
       },
       {
@@ -71,6 +72,7 @@ describe("assembleDashboard", () => {
         totalSkills: 3,
         isPublic: false,
         isCopy: true,
+        startedFrom: copy.forkedFrom,
         lastActivityAt: "2026-11-02T12:00:00.000Z",
       },
     ]);

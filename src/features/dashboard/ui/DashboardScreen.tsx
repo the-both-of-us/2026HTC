@@ -1,12 +1,18 @@
-import { BookOpen, Globe, Lock, Medal, RotateCcw } from "lucide-react";
+import clsx from "clsx";
+import { ArrowRight, CircleCheck, Medal, Plus, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
+import { listCourses, type PublicCourse } from "@/features/courses";
+import { CourseCard, CourseCover } from "@/features/courses/client";
 import { getSession } from "@/shared/identity";
-import { Badge, buttonClasses, Card, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import { loadDashboard, type CourseRow, type DashboardData, type ProvenItem } from "../data";
-import { cardsLabel, provenLabel, timeAgo, timeUntil } from "../format";
+import { cardsLabel, timeAgo, timeUntil } from "../format";
 import { StreakCard } from "./StreakCard";
+
+/** At most this many public courses under "Start with a course". */
+const EXPLORE_COUNT = 3;
 
 /** /dashboard. The cookie is only known at request time, so the content waits behind Suspense. */
 export function DashboardScreen() {
@@ -31,64 +37,113 @@ function DashboardLoading() {
   );
 }
 
+/** Popular public courses this person has not started. A failure only hides the section. */
+async function exploreCourses(mine: CourseRow[]): Promise<PublicCourse[]> {
+  const started = new Set(mine.flatMap((course) => [course.mapId, course.startedFrom ?? ""]));
+  try {
+    const courses = await listCourses({ sort: "popular" });
+    return courses.filter((course) => !started.has(course.mapId)).slice(0, EXPLORE_COUNT);
+  } catch (error) {
+    console.error("[dashboard] could not list courses to explore", error);
+    return [];
+  }
+}
+
 async function DashboardContent() {
   // The store reads live data and its client uses the clock, so mark this as request time first.
   await connection();
   const session = await getSession();
-  const greeting = session.signedIn && session.displayName ? `Welcome back, ${session.displayName}.` : null;
-  if (!session.userId) return <Welcome greeting={greeting} />;
-
+  const name = session.signedIn ? session.displayName : null;
   const now = new Date();
-  let data: DashboardData;
-  try {
-    data = await loadDashboard(session.userId, now);
-  } catch (error) {
-    console.error("[dashboard] could not load", error);
-    return (
-      <>
-        <h1 className="text-3xl font-medium">Dashboard</h1>
-        <ErrorNotice
-          className="mt-6"
-          message="Your dashboard could not be loaded this time. Please refresh the page to try again."
-        />
-      </>
-    );
+
+  // A first visit has no data yet: the same page, with zeros and courses to start.
+  let data: DashboardData | null = null;
+  if (session.userId) {
+    try {
+      data = await loadDashboard(session.userId, now);
+    } catch (error) {
+      console.error("[dashboard] could not load", error);
+      return (
+        <>
+          <h1 className="text-3xl font-medium">Dashboard</h1>
+          <ErrorNotice
+            className="mt-6"
+            message="Your dashboard could not be loaded this time. Please refresh the page to try again."
+          />
+        </>
+      );
+    }
   }
-  if (data.courses.length === 0) return <Welcome greeting={greeting} />;
+
+  const courses = [...(data?.courses ?? [])].sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
+  const explore = await exploreCourses(courses);
+  const latest = courses[0] ?? null;
 
   return (
     <>
-      <h1 className="text-3xl font-medium">Dashboard</h1>
-      <p className="mt-2 text-lg text-ink-soft">{greeting ?? "Your maps, what you have proven, and what is due."}</p>
+      <Hero name={name} data={data} latest={latest} />
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <ProvenSummary data={data} />
-        <ReviewSummaryCard data={data} now={now} />
-        <StreakCard activity={data.activity} />
+        <ProvenTile data={data} />
+        <ReviewTile data={data} now={now} />
+        <StreakCard activity={data?.activity ?? []} />
       </div>
 
-      <section aria-labelledby="courses-heading" className="mt-10">
-        <h2 id="courses-heading" className="text-2xl font-medium">
-          Your courses
-        </h2>
-        <ul className="mt-4 grid gap-4 lg:grid-cols-2">
-          {data.courses.map((course) => (
-            <li key={course.mapId} className="min-w-0">
-              <CourseItem course={course} now={now} />
-            </li>
-          ))}
-        </ul>
-      </section>
+      {courses.length > 0 && (
+        <section aria-labelledby="courses-heading" className="mt-12">
+          <SectionHeading id="courses-heading" action={<SectionLink href="/">New map</SectionLink>}>
+            Your courses
+          </SectionHeading>
+          <ul className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {courses.map((course) => (
+              <li key={course.mapId} className="min-w-0">
+                <CourseCard
+                  href={`/map/${course.mapId}`}
+                  fingerprint={course.startedFrom ?? course.mapId}
+                  title={course.title}
+                  subtitle={`Last active ${timeAgo(course.lastActivityAt, now)}`}
+                  skillCount={course.totalSkills}
+                  progress={{ proven: course.provenCount, total: course.totalSkills }}
+                  coverLabel={course.isCopy ? "Your copy" : course.isPublic ? "Public" : "Private"}
+                  headingLevel="h3"
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-      {data.recentProven.length > 0 && (
-        <section aria-labelledby="proven-heading" className="mt-10">
-          <h2 id="proven-heading" className="text-2xl font-medium">
-            Recently proven
-          </h2>
-          <ul className="mt-4 flex flex-col divide-y divide-rule rounded-sheet border border-rule-strong bg-sheet/90">
+      {data && data.recentProven.length > 0 && (
+        <section aria-labelledby="proven-heading" className="mt-12">
+          <SectionHeading id="proven-heading">Recently proven</SectionHeading>
+          <ul className="mt-4 flex flex-col divide-y divide-rule overflow-hidden rounded-xl border border-rule-strong bg-sheet shadow-sm">
             {data.recentProven.map((item) => (
               <li key={`${item.mapId}/${item.nodeId}`}>
                 <ProvenRow item={item} now={now} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {explore.length > 0 && (
+        <section aria-labelledby="explore-heading" className="mt-12">
+          <SectionHeading id="explore-heading" action={<SectionLink href="/courses">All courses</SectionLink>}>
+            {courses.length > 0 ? "More to explore" : "Start with a course"}
+          </SectionHeading>
+          <ul className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {explore.map((course) => (
+              <li key={course.mapId} className="min-w-0">
+                <CourseCard
+                  href={`/courses/${course.mapId}`}
+                  fingerprint={course.mapId}
+                  title={course.title}
+                  subtitle={course.subtitle}
+                  authorName={course.authorName}
+                  skillCount={course.skillCount}
+                  likeCount={course.likeCount}
+                  headingLevel="h3"
+                />
               </li>
             ))}
           </ul>
@@ -98,136 +153,153 @@ async function DashboardContent() {
   );
 }
 
-function Welcome({ greeting }: { greeting: string | null }) {
+/** Buttons on the ink band: the colours turn around, so they read on it in either theme. */
+const onInkPrimary =
+  "inline-flex min-h-11 items-center gap-2 rounded-control bg-on-ink px-5 font-semibold text-ink transition-colors hover:bg-on-ink/90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-on-ink";
+const onInkSecondary =
+  "inline-flex min-h-11 items-center gap-2 rounded-control px-5 font-semibold text-on-ink shadow-[inset_0_0_0_1.5px_var(--color-on-ink-soft)] transition-colors hover:bg-on-ink/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-on-ink";
+
+/** A greeting, one line on where things stand, and the one thing to do next. */
+function Hero({ name, data, latest }: { name: string | null; data: DashboardData | null; latest: CourseRow | null }) {
+  const hasCourses = latest !== null;
+  const due = data?.review ? data.review.dueCount + data.review.newCount : 0;
+  const title = name ? `Welcome back, ${name}` : hasCourses ? "Welcome back" : "Welcome to OryxLearn";
+  const line = hasCourses
+    ? [
+        `${data?.provenTotal ?? 0} ${data?.provenTotal === 1 ? "skill" : "skills"} proven`,
+        due > 0 ? `${cardsLabel(due)} to review today` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ") + "."
+    : "Learn anything, then prove you get it. Start a course below, or build a map from a topic, a job posting or a PDF.";
+
   return (
-    <>
-      <h1 className="text-3xl font-medium">Welcome to OryxLearn</h1>
-      <Card className="mt-6 flex flex-col items-start gap-4">
-        <p className="text-lg">
-          {greeting ? `${greeting} ` : ""}This is where your maps, the skills you have proven, your review cards and
-          your streak will show up.
-        </p>
-        <p className="text-ink-soft">
-          Start by turning a job posting, a PDF or a topic into a skill map, or pick a course someone has shared.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/" className={buttonClasses("primary")}>
-            Build a map
+    <CourseCover
+      fingerprint={latest?.startedFrom ?? latest?.mapId ?? "oryxlearn-dashboard"}
+      className="flex flex-col gap-3 rounded-2xl px-6 py-8 sm:px-10 sm:py-10"
+      sealClassName="-right-20 size-[24rem] max-sm:-right-40 max-sm:opacity-60"
+    >
+      <p className="text-sm font-semibold tracking-wide text-on-ink-soft uppercase">Dashboard</p>
+      <h1 className="max-w-2xl text-3xl leading-tight font-medium tracking-tight break-words sm:text-[2.5rem]">{title}</h1>
+      <p className="max-w-xl text-lg text-on-ink-soft">{line}</p>
+      <div className="mt-3 flex flex-wrap gap-3">
+        {latest ? (
+          <Link href={`/map/${latest.mapId}`} className={onInkPrimary}>
+            <span className="max-w-[18rem] truncate">Continue {latest.title}</span>
+            <ArrowRight aria-hidden="true" size={18} className="shrink-0" />
           </Link>
-          <Link href="/courses" className={buttonClasses("secondary")}>
+        ) : (
+          <Link href="/courses" className={onInkPrimary}>
             Browse courses
+            <ArrowRight aria-hidden="true" size={18} />
           </Link>
-        </div>
-      </Card>
-    </>
+        )}
+        <Link href="/" className={onInkSecondary}>
+          <Plus aria-hidden="true" size={18} />
+          Build a map
+        </Link>
+      </div>
+    </CourseCover>
   );
 }
 
-function SummaryCard({ labelledBy, children }: { labelledBy: string; children: ReactNode }) {
+function SectionHeading({ id, action, children }: { id: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section
-      aria-labelledby={labelledBy}
-      className="flex flex-col gap-3 rounded-sheet border border-rule-strong bg-sheet/90 p-5 shadow-panel"
-    >
+    <div className="flex items-end justify-between gap-4">
+      <h2 id={id} className="text-2xl font-medium">
+        {children}
+      </h2>
+      {action}
+    </div>
+  );
+}
+
+function SectionLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className={clsx(buttonClasses("quiet", "sm"), "shrink-0 gap-1")}>
+      {children}
+      <ArrowRight aria-hidden="true" size={15} />
+    </Link>
+  );
+}
+
+/** A stat tile: an icon in a tinted circle, a big number, and one line. The streak tile matches it. */
+function StatTile({
+  labelledBy,
+  icon,
+  label,
+  value,
+  children,
+}: {
+  labelledBy: string;
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section aria-labelledby={labelledBy} className="flex flex-col gap-2 rounded-xl border border-rule-strong bg-sheet p-5 shadow-sm">
+      <h2 id={labelledBy} className="flex items-center gap-2.5 text-sm font-semibold text-ink-soft">
+        <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-proven/12 text-proven">
+          {icon}
+        </span>
+        {label}
+      </h2>
+      <p className="mt-1 text-4xl font-medium tabular-nums">{value}</p>
       {children}
     </section>
   );
 }
 
-function ProvenSummary({ data }: { data: DashboardData }) {
+function ProvenTile({ data }: { data: DashboardData | null }) {
+  const total = data?.provenTotal ?? 0;
+  const maps = data?.courses.filter((course) => course.provenCount > 0).length ?? 0;
   return (
-    <SummaryCard labelledBy="proven-summary-heading">
-      <h2 id="proven-summary-heading" className="flex items-center gap-2 text-base font-semibold text-ink-soft">
-        <Medal aria-hidden="true" size={18} />
-        Proven skills
-      </h2>
-      <p className="text-3xl font-medium">{data.provenTotal}</p>
+    <StatTile labelledBy="proven-summary-heading" icon={<Medal size={16} />} label="Proven skills" value={total}>
       <p className="text-ink-soft">
-        {data.provenTotal === 0
-          ? "Explain a skill in your own words to prove it."
-          : `Across ${data.courses.filter((course) => course.provenCount > 0).length} of your maps.`}
+        {total === 0 ? "Explain a skill in your own words to prove it." : `Across ${maps} of your ${maps === 1 ? "map" : "maps"}.`}
       </p>
-    </SummaryCard>
+    </StatTile>
   );
 }
 
-function ReviewSummaryCard({ data, now }: { data: DashboardData; now: Date }) {
-  const review = data.review;
+function ReviewTile({ data, now }: { data: DashboardData | null; now: Date }) {
+  const review = data?.review;
+  // With data but no review, review itself failed; with no data, there is nothing to review yet.
+  if (data && !review) {
+    return (
+      <StatTile labelledBy="review-summary-heading" icon={<RotateCcw size={16} />} label="Review" value="–">
+        <p className="text-ink-soft">Your review cards could not be loaded. Refresh the page to try again.</p>
+      </StatTile>
+    );
+  }
   const dueToday = review ? review.dueCount + review.newCount : 0;
   return (
-    <SummaryCard labelledBy="review-summary-heading">
-      <h2 id="review-summary-heading" className="flex items-center gap-2 text-base font-semibold text-ink-soft">
-        <RotateCcw aria-hidden="true" size={18} />
-        Review
-      </h2>
-      {!review ? (
-        <p>Your review cards could not be loaded. Refresh the page to try again.</p>
-      ) : review.totalCards === 0 ? (
+    <StatTile
+      labelledBy="review-summary-heading"
+      icon={<RotateCcw size={16} />}
+      label="Review"
+      value={
         <>
-          <p className="text-3xl font-medium">0</p>
-          <p className="text-ink-soft">Make flashcards on a skill and they come back here on a schedule.</p>
+          {dueToday} <span className="text-lg font-normal text-ink-soft">due today</span>
         </>
-      ) : (
-        <>
-          <p className="text-3xl font-medium">
-            {dueToday} <span className="text-lg font-normal text-ink-soft">due today</span>
-          </p>
-          <p className="text-ink-soft">
-            {dueToday > 0
-              ? `${cardsLabel(review.dueCount)} to review · ${review.newCount} new`
-              : review.nextDueAt
-                ? `All caught up. The next card is due ${timeUntil(review.nextDueAt, now)}.`
-                : "All caught up."}
-          </p>
-          {dueToday > 0 && (
-            <Link href="/review" className={`${buttonClasses("primary")} self-start`}>
-              Review now
-            </Link>
-          )}
-        </>
-      )}
-    </SummaryCard>
-  );
-}
-
-function CourseItem({ course, now }: { course: CourseRow; now: Date }) {
-  const percent = course.totalSkills === 0 ? 0 : Math.round((course.provenCount / course.totalSkills) * 100);
-  return (
-    <article className="flex h-full flex-col gap-3 rounded-sheet border border-control-edge bg-sheet p-5">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 text-xl leading-snug font-medium break-words">{course.title}</h3>
-        <Badge className="shrink-0">
-          {course.isPublic ? <Globe aria-hidden="true" size={14} /> : <Lock aria-hidden="true" size={14} />}
-          {course.isPublic ? "Public" : "Private"}
-        </Badge>
-      </div>
-      {course.subtitle && <p className="break-words text-ink-soft">{course.subtitle}</p>}
-      {course.isCopy && (
-        <p className="flex items-center gap-1.5 text-sm text-ink-soft">
-          <BookOpen aria-hidden="true" size={15} />
-          Your copy of a shared course
-        </p>
-      )}
-      <div className="flex flex-col gap-1.5">
-        <p className="text-sm font-semibold">{provenLabel(course.provenCount, course.totalSkills)}</p>
-        <div aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-raised">
-          <div className="h-full rounded-full bg-proven" style={{ width: `${percent}%` }} />
-        </div>
-      </div>
-      <p className="text-sm text-ink-soft">
-        Last active <time dateTime={course.lastActivityAt}>{timeAgo(course.lastActivityAt, now)}</time>
+      }
+    >
+      <p className="text-ink-soft">
+        {!review || review.totalCards === 0
+          ? "Make flashcards on a skill and they come back here on a schedule."
+          : dueToday > 0
+            ? `${cardsLabel(review.dueCount)} to review · ${review.newCount} new`
+            : review.nextDueAt
+              ? `All caught up. The next card is due ${timeUntil(review.nextDueAt, now)}.`
+              : "All caught up."}
       </p>
-      <div className="mt-auto flex flex-wrap gap-2 pt-1">
-        <Link href={`/map/${course.mapId}`} className={buttonClasses("secondary", "sm")}>
-          Open map<span className="sr-only">: {course.title}</span>
+      {dueToday > 0 && (
+        <Link href="/review" className={clsx(buttonClasses("primary", "sm"), "mt-1 self-start")}>
+          Review now
         </Link>
-        {course.isPublic && (
-          <Link href={`/courses/${course.mapId}`} className={buttonClasses("quiet", "sm")}>
-            Course page<span className="sr-only">: {course.title}</span>
-          </Link>
-        )}
-      </div>
-    </article>
+      )}
+    </StatTile>
   );
 }
 
@@ -235,14 +307,15 @@ function ProvenRow({ item, now }: { item: ProvenItem; now: Date }) {
   return (
     <Link
       href={`/map/${item.mapId}`}
-      className="flex flex-col gap-0.5 px-5 py-3 transition-control hover:bg-raised sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+      className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-raised"
     >
-      <span className="min-w-0 break-words">
+      <CircleCheck aria-hidden="true" size={20} className="shrink-0 text-proven" />
+      <span className="min-w-0 flex-1 break-words">
         <span className="font-medium">{item.skillTitle}</span>
         <span className="text-ink-soft"> · {item.mapTitle}</span>
       </span>
       <time dateTime={item.provenAt} className="shrink-0 text-sm text-ink-soft">
-        Proven {timeAgo(item.provenAt, now)}
+        {timeAgo(item.provenAt, now)}
       </time>
     </Link>
   );

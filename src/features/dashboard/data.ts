@@ -19,6 +19,8 @@ export type CourseRow = {
   isPublic: boolean;
   /** "Your copy of a shared course": started from a course or joined from a study circle. */
   isCopy: boolean;
+  /** The map this copy was started from, so "Start with a course" can leave that course out. */
+  startedFrom: string | null;
   /** The latest proof on this map, or when it was made. */
   lastActivityAt: string;
 };
@@ -65,6 +67,7 @@ export function assembleDashboard(
       totalSkills: map.nodes.length,
       isPublic,
       isCopy: Boolean(map.forkedFrom),
+      startedFrom: map.forkedFrom ?? null,
       lastActivityAt,
     };
   });

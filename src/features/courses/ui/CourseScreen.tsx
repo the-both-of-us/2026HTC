@@ -8,6 +8,7 @@ import { SignInPrompt } from "@/features/auth/client";
 import { type Ref, useEffect, useId, useRef, useState, useTransition } from "react";
 import type { NodeState } from "@/shared/types";
 import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { CourseCover } from "./CourseCard";
 import type { CourseDetail, CourseSkill, LikeResult, PublicCourse } from "../types";
 import { fetchCourse, setLike, startCourse } from "./api";
 import {
@@ -145,33 +146,33 @@ function LoadedCourse({
   const mainButtonId = useId();
 
   return (
-    <PageShell width="reading">
+    <PageShell width="wide">
       <Link href="/courses" className={`${buttonClasses("quiet", "sm")} -ml-0.5 self-start`}>
         <ArrowLeft aria-hidden="true" size={16} />
         All courses
       </Link>
 
-      <header className="mt-6 flex flex-col gap-3">
-        {(isSample || !published) && (
-          <div className="flex flex-wrap gap-2">
-            {isSample && <Badge tone="sample">Sample</Badge>}
-            {!published && (
-              <Badge>
-                <Lock aria-hidden="true" size={14} />
-                Private
-              </Badge>
-            )}
-          </div>
+      {/* The hero: the course's own seal behind its title, the same seal as its card in Courses. */}
+      <CourseCover
+        fingerprint={mapId}
+        className="mt-4 flex flex-col gap-3 rounded-2xl px-6 py-8 sm:px-10 sm:py-12"
+        sealClassName="-right-24 size-[28rem] max-sm:-right-40 max-sm:opacity-60"
+      >
+        {!published && (
+          <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-on-ink/15 px-3 py-1 text-sm font-semibold">
+            <Lock aria-hidden="true" size={14} />
+            Private
+          </span>
         )}
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="text-[2.25rem] leading-[1.08] font-medium tracking-tight break-words outline-none sm:text-[2.75rem]"
+          className="max-w-2xl text-[2.25rem] leading-[1.08] font-medium tracking-tight break-words outline-none sm:text-[3rem]"
         >
           {detail.title}
         </h1>
-        {detail.subtitle && <p className="text-lg break-words text-ink-soft">{detail.subtitle}</p>}
-        <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-base text-ink-soft">
+        {detail.subtitle && <p className="text-lg break-words text-on-ink-soft">{detail.subtitle}</p>}
+        <p className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 text-base text-on-ink-soft">
           {course && (
             <span className="inline-flex items-center gap-1.5">
               <UserRound aria-hidden="true" size={16} />
@@ -183,137 +184,142 @@ function LoadedCourse({
             <ListChecks aria-hidden="true" size={16} />
             {skillsLabel(skills.length)}
           </span>
-        </p>
-        {isSample && <p className="text-sm text-ink-soft">{SAMPLE_NOTE}</p>}
-      </header>
-
-      <section
-        aria-label="Your progress"
-        className="mt-8 flex flex-col gap-5 rounded-sheet border border-rule-strong bg-sheet p-5 sm:p-6"
-      >
-        {skillStates && (
-          <ProgressMeter
-            proven={provenCount(skillStates, skills.map((skill) => skill.id))}
-            total={skills.length}
-            isOwner={isOwner}
-          />
-        )}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          {openId ? (
-            <Link href={mapHref(openId)} className={clsx(buttonClasses("primary", "lg"), "gap-2")}>
-              {isOwner ? "Open your map" : "Continue this course"}
-              <ArrowRight aria-hidden="true" size={18} />
-            </Link>
-          ) : (
-            <Button
-              id={mainButtonId}
-              size="lg"
-              className="gap-2"
-              pending={starter.pendingTarget === MAIN_ACTION}
-              disabled={starter.pendingTarget !== null && starter.pendingTarget !== MAIN_ACTION}
-              onClick={() => void starter.start(MAIN_ACTION)}
-            >
-              Start this course
-              <ArrowRight aria-hidden="true" size={18} />
-            </Button>
-          )}
-          {published && course && !isOwner &&
-            (detail.signInRequired ? (
-              <div className="flex flex-col items-start gap-1">
-                <p className="text-base">{likesLabel(course.likeCount)}</p>
-                <SignInPrompt action="like" />
-              </div>
-            ) : (
-              <LikeToggle
-                key={course.publishedAt}
-                mapId={mapId}
-                initial={{ liked: detail.likedByMe, likeCount: course.likeCount }}
-              />
-            ))}
-        </div>
-        {!openId && (
-          <p className="text-sm text-ink-soft">
-            Starting gives you your own copy of the map, so you can prove each skill yourself.
-          </p>
-        )}
-        {starter.error && starter.target === MAIN_ACTION && (
-          <ErrorNotice
-            message={starter.error}
-            onRetry={() => {
-              // Retrying removes this notice and its button, so keep focus on the start button.
-              document.getElementById(mainButtonId)?.focus();
-              void starter.start(MAIN_ACTION);
-            }}
-          />
-        )}
-      </section>
-
-      {isOwner && (
-        <section
-          aria-labelledby="course-visibility"
-          className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-sheet border border-rule-strong p-4 sm:px-6"
-        >
-          <div className="flex min-w-0 items-start gap-3">
-            <span aria-hidden="true" className="mt-0.5 text-ink-soft">
-              {published ? <Globe size={20} /> : <Lock size={20} />}
+          {course && (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="sr-only">, </span>
+              <Heart aria-hidden="true" size={16} />
+              {likesLabel(course.likeCount)}
             </span>
-            <div className="min-w-0">
-              <h2 id="course-visibility" className="font-semibold">
-                {published ? "Public course" : "Private course"}
-              </h2>
-              <p className="text-sm text-ink-soft">
-                {published && course
-                  ? `Listed in Courses for anyone to start. ${likesLabel(course.likeCount)} from other learners.`
-                  : "Only you can see it. Publish it to list it in Courses."}
-              </p>
-            </div>
-          </div>
-          <PublishControls
-            mapId={mapId}
-            published={published}
-            onChange={onPublishChange}
-            showViewLink={false}
-            showStatus={false}
-            signInRequired={detail.signInRequired === true}
-            displayName={detail.displayName ?? null}
-          />
-        </section>
-      )}
-
-      <section aria-labelledby="course-skills" className="mt-12">
-        <h2 id="course-skills" className="text-2xl font-medium">
-          Skills, in learning order
-        </h2>
-        <p className="mt-1 text-ink-soft">
-          Each skill builds on the ones before it.{" "}
-          {openId ? "Choose one to read and study it." : "Choose one to start the course there."}
+          )}
         </p>
-        {starter.error && starter.target !== MAIN_ACTION && (
-          <div className="mt-4">
-            <ErrorNotice
-              message={starter.error}
-              onRetry={() => {
-                if (starter.target) void starter.start(starter.target);
-              }}
-            />
-          </div>
-        )}
-        <ol className="mt-5 flex flex-col gap-2">
-          {skills.map((skill, index) => (
-            <li key={skill.id}>
-              <SkillRow
-                skill={skill}
-                index={index}
-                state={skillStates?.[skill.id] ?? null}
-                href={openId ? skillHref(openId, skill.id) : null}
-                pending={starter.pendingTarget === skill.id}
-                disabled={starter.pendingTarget !== null}
-                onStart={() => void starter.start(skill.id)}
+      </CourseCover>
+
+      {/*
+        Two columns on a wide screen: the skills, and beside them a card that stays in view with
+        the way in. On a phone the card comes first, so the main action is at the top.
+      */}
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1">
+          <section aria-label="Your progress" className="flex flex-col gap-5 rounded-xl border border-rule-strong bg-sheet p-5 shadow-sm">
+            {skillStates && (
+              <ProgressMeter
+                proven={provenCount(skillStates, skills.map((skill) => skill.id))}
+                total={skills.length}
+                isOwner={isOwner}
               />
-            </li>
-          ))}
-        </ol>
-      </section>
+            )}
+            {openId ? (
+              <Link href={mapHref(openId)} className={clsx(buttonClasses("primary", "lg"), "w-full justify-center gap-2")}>
+                {isOwner ? "Open your map" : "Continue this course"}
+                <ArrowRight aria-hidden="true" size={18} />
+              </Link>
+            ) : (
+              <Button
+                id={mainButtonId}
+                size="lg"
+                className="w-full justify-center gap-2"
+                pending={starter.pendingTarget === MAIN_ACTION}
+                disabled={starter.pendingTarget !== null && starter.pendingTarget !== MAIN_ACTION}
+                onClick={() => void starter.start(MAIN_ACTION)}
+              >
+                Start this course
+                <ArrowRight aria-hidden="true" size={18} />
+              </Button>
+            )}
+            {!openId && (
+              <p className="-mt-2 text-sm text-ink-soft">Starting gives you your own copy of the map, so you can prove each skill yourself.</p>
+            )}
+            {starter.error && starter.target === MAIN_ACTION && (
+              <ErrorNotice
+                message={starter.error}
+                onRetry={() => {
+                  // Retrying removes this notice and its button, so keep focus on the start button.
+                  document.getElementById(mainButtonId)?.focus();
+                  void starter.start(MAIN_ACTION);
+                }}
+              />
+            )}
+            {published && course && !isOwner && (
+              <div className="border-t border-rule pt-4">
+                {detail.signInRequired ? (
+                  <div className="flex flex-col items-start gap-1">
+                    <p className="text-base">{likesLabel(course.likeCount)}</p>
+                    <SignInPrompt action="like" />
+                  </div>
+                ) : (
+                  <LikeToggle key={course.publishedAt} mapId={mapId} initial={{ liked: detail.likedByMe, likeCount: course.likeCount }} />
+                )}
+              </div>
+            )}
+          </section>
+
+          {isOwner && (
+            <section aria-labelledby="course-visibility" className="flex flex-col gap-3 rounded-xl border border-rule-strong bg-sheet p-5">
+              <div className="flex min-w-0 items-start gap-3">
+                <span aria-hidden="true" className="mt-0.5 text-ink-soft">
+                  {published ? <Globe size={20} /> : <Lock size={20} />}
+                </span>
+                <div className="min-w-0">
+                  <h2 id="course-visibility" className="font-semibold">
+                    {published ? "Public course" : "Private course"}
+                  </h2>
+                  <p className="text-sm text-ink-soft">
+                    {published && course
+                      ? `Listed in Courses for anyone to start. ${likesLabel(course.likeCount)} from other learners.`
+                      : "Only you can see it. Publish it to list it in Courses."}
+                  </p>
+                </div>
+              </div>
+              <PublishControls
+                mapId={mapId}
+                published={published}
+                onChange={onPublishChange}
+                showViewLink={false}
+                showStatus={false}
+                signInRequired={detail.signInRequired === true}
+                displayName={detail.displayName ?? null}
+              />
+            </section>
+          )}
+
+          {isSample && <p className="px-1 text-sm text-ink-soft">{SAMPLE_NOTE}</p>}
+        </aside>
+
+        <section aria-labelledby="course-skills" className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <h2 id="course-skills" className="text-2xl font-medium">
+            Skills, in learning order
+          </h2>
+          <p className="mt-1 text-ink-soft">
+            Each skill builds on the ones before it.{" "}
+            {openId ? "Choose one to read and study it." : "Choose one to start the course there."}
+          </p>
+          {starter.error && starter.target !== MAIN_ACTION && (
+            <div className="mt-4">
+              <ErrorNotice
+                message={starter.error}
+                onRetry={() => {
+                  if (starter.target) void starter.start(starter.target);
+                }}
+              />
+            </div>
+          )}
+          <ol className="mt-5 flex flex-col gap-3">
+            {skills.map((skill, index) => (
+              <li key={skill.id}>
+                <SkillRow
+                  skill={skill}
+                  index={index}
+                  state={skillStates?.[skill.id] ?? null}
+                  href={openId ? skillHref(openId, skill.id) : null}
+                  pending={starter.pendingTarget === skill.id}
+                  disabled={starter.pendingTarget !== null}
+                  onStart={() => void starter.start(skill.id)}
+                />
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
     </PageShell>
   );
 }
@@ -329,8 +335,8 @@ function ProgressMeter({ proven, total, isOwner }: { proven: number; total: numb
         </p>
         <p className="text-sm text-ink-soft">{isOwner ? "On your map" : "On your copy"}</p>
       </div>
-      <div aria-hidden="true" className="h-2 w-full overflow-hidden bg-raised">
-        <div className="h-full bg-ink transition-[width] duration-500" style={{ width: `${percent}%` }} />
+      <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-full bg-raised">
+        <div className="h-full rounded-full bg-proven transition-[width] duration-500" style={{ width: `${percent}%` }} />
       </div>
     </div>
   );
@@ -358,16 +364,16 @@ function SkillRow({
   onStart: () => void;
 }) {
   const className = clsx(
-    "group flex w-full items-start gap-4 rounded-sheet border border-rule-strong bg-sheet p-4 text-left transition-control sm:p-5",
-    "hover:border-ink hover:bg-raised disabled:cursor-wait disabled:hover:border-rule-strong disabled:hover:bg-sheet",
+    "group flex w-full items-start gap-4 rounded-xl border border-rule-strong bg-sheet p-4 text-left shadow-sm transition duration-200 sm:p-5",
+    "hover:border-control-edge hover:shadow-md motion-safe:hover:-translate-y-px disabled:cursor-wait disabled:hover:translate-y-0 disabled:hover:border-rule-strong disabled:hover:shadow-sm",
   );
   const content = (
     <>
       <span
         aria-hidden="true"
         className={clsx(
-          "flex size-9 shrink-0 items-center justify-center border-[1.5px] font-display text-base",
-          state === "proven" ? "border-ink bg-ink text-on-ink" : "border-rule-strong text-ink-soft",
+          "flex size-9 shrink-0 items-center justify-center rounded-full font-display text-base tabular-nums",
+          state === "proven" ? "bg-proven text-on-proven" : "bg-raised text-ink",
         )}
       >
         {index + 1}

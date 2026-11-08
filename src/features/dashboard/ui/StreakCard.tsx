@@ -17,9 +17,11 @@ export function StreakCard({ activity }: { activity: string[] }) {
   );
 
   return (
-    <section aria-labelledby="streak-heading" className="flex flex-col gap-3 rounded-sheet border border-rule-strong bg-sheet/90 p-5 shadow-panel">
-      <h2 id="streak-heading" className="flex items-center gap-2 text-base font-semibold text-ink-soft">
-        <Flame aria-hidden="true" size={18} />
+    <section aria-labelledby="streak-heading" className="flex flex-col gap-2 rounded-xl border border-rule-strong bg-sheet p-5 shadow-sm">
+      <h2 id="streak-heading" className="flex items-center gap-2.5 text-sm font-semibold text-ink-soft">
+        <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-proven/12 text-proven">
+          <Flame size={16} />
+        </span>
         Streak
       </h2>
       {inBrowser ? <StreakBody activity={activity} /> : <p className="text-ink-soft">Counting your days.</p>}
@@ -31,9 +33,11 @@ function StreakBody({ activity }: { activity: string[] }) {
   const streak = computeStreak(activity, new Date(), (date) => -date.getTimezoneOffset());
   return (
     <>
-      <p className="text-3xl font-medium">Day streak: {streak.count}</p>
+      <p className="mt-1 text-4xl font-medium tabular-nums">
+        {streak.count} <span className="text-lg font-normal text-ink-soft">{streak.count === 1 ? "day" : "days"}</span>
+      </p>
       <p className="text-ink-soft">{streakMessage(streak)}</p>
-      <ol aria-label="The last 7 days" className="flex gap-2">
+      <ol aria-label="The last 7 days" className="mt-1 flex gap-2">
         {streak.week.map((day) => {
           const date = new Date(`${day.dayKey}T12:00:00Z`);
           const short = date.toLocaleDateString(undefined, { weekday: "narrow", timeZone: "UTC" });

@@ -41,3 +41,5 @@ Times such as "3 hours ago" are elapsed time (`format.ts`), so the server can re
 ## Files
 
 `data.ts`, `streak.ts`, `format.ts`, `ui/DashboardScreen.tsx`, `ui/StreakCard.tsx`, with tests beside them.
+
+**Look:** a hero band (greeting, one line on where things stand, "Continue <latest course>" or "Browse courses", and "Build a map"), three stat tiles that show zeros on a first visit, your courses as `CourseCard`s with progress, recently proven skills, and up to 3 popular public courses you have not started ("Start with a course", or "More to explore"). `CourseRow.startedFrom` is what leaves started courses out.

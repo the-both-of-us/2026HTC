@@ -6,6 +6,8 @@ Every map is a private course that only its owner can open. Publishing lists it 
 
 The UI is exported from `@/features/courses/client`: `CoursesScreen` (`/courses`), `CourseScreen` (`/courses/[id]`) and `PublishCourseButton` (the map header). Everything else is server code from `@/features/courses`.
 
+**Look:** every course has a seal drawn from its map id (`CourseCover` in `ui/CourseCard.tsx`): the same course always gets the same seal, and its card cover one of three colours (ink, teal, violet) from the same id. `CourseCard` is the card in the directory and on the dashboard; the course page uses the cover as its hero, with the skills beside a start card that stays in view. Cards carry no "Sample" tag; the one line under the list says sample courses come from made-up job ads.
+
 **Status:** built, except the map header button (below).
 
 ## Storage

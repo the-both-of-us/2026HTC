@@ -1,22 +1,13 @@
 "use client";
 
 import clsx from "clsx";
-import { Heart, ListChecks } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { PublicPrograms } from "@/features/programs/client";
-import { Badge, Button, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { Button, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import type { CourseSort, PublicCourse } from "../types";
 import { fetchCourses, type Result } from "./api";
-import {
-  courseHref,
-  hasSample,
-  likesLabel,
-  resultsSummary,
-  SAMPLE_NOTE,
-  SEARCH_DEBOUNCE_MS,
-  skillsLabel,
-} from "./courseView";
+import { CourseCard } from "./CourseCard";
+import { courseHref, hasSample, resultsSummary, SAMPLE_NOTE, SEARCH_DEBOUNCE_MS } from "./courseView";
 
 type Loaded = { key: string; query: string; result: Result<{ courses: PublicCourse[] }> };
 
@@ -169,57 +160,32 @@ export function CoursesScreen() {
               <ul
                 aria-busy={stale || undefined}
                 className={clsx(
-                  "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+                  "grid gap-5 sm:grid-cols-2 xl:grid-cols-3",
                   stale && "motion-safe:transition-opacity opacity-70",
                 )}
               >
                 {courses.map((course) => (
                   <li key={course.mapId} className="min-w-0">
-                    <CourseCard course={course} />
+                    <CourseCard
+                      href={courseHref(course.mapId)}
+                      fingerprint={course.mapId}
+                      title={course.title}
+                      subtitle={course.subtitle}
+                      authorName={course.authorName}
+                      skillCount={course.skillCount}
+                      likeCount={course.likeCount}
+                    />
                   </li>
                 ))}
               </ul>
             )}
 
+            {/* No "Sample" tag on the cards; this one quiet line still says the job ads are made up. */}
             {hasSample(courses) && <p className="text-sm text-ink-soft">{SAMPLE_NOTE}</p>}
           </>
         ) : null}
       </div>
     </PageShell>
-  );
-}
-
-function CourseCard({ course }: { course: PublicCourse }) {
-  return (
-    <Link
-      href={courseHref(course.mapId)}
-      className="flex h-full flex-col gap-2 rounded-sheet border border-control-edge bg-sheet p-5 transition-control hover:border-ink"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="min-w-0 text-xl leading-snug font-medium break-words">{course.title}</h2>
-        {course.isSample && (
-          <Badge tone="sample" className="shrink-0">
-            Sample
-          </Badge>
-        )}
-      </div>
-      {course.subtitle && <p className="break-words text-ink-soft">{course.subtitle}</p>}
-      <p className="text-sm break-words">
-        <span className="sr-only">, </span>by {course.authorName}
-      </p>
-      <p className="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-2 text-sm text-ink-soft">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="sr-only">, </span>
-          <ListChecks aria-hidden="true" size={16} />
-          {skillsLabel(course.skillCount)}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="sr-only">, </span>
-          <Heart aria-hidden="true" size={16} />
-          {likesLabel(course.likeCount)}
-        </span>
-      </p>
-    </Link>
   );
 }
 
