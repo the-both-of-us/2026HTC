@@ -36,3 +36,8 @@ export async function fetchCircle(code: string): Promise<CircleView | "missing">
 export function circleUrl(code: string): string {
   return `${window.location.origin}/circle/${code}`;
 }
+
+/** One cheer on someone else's proof. Returns the proof's new count. */
+export function cheerProof(code: string, itemId: string) {
+  return post<{ cheers: number }>(`/api/circles/${code}/cheer`, { itemId }, "That cheer did not go through. Please try again.");
+}

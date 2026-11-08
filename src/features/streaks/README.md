@@ -9,7 +9,7 @@ The habit loop around learning: a reason to come back tomorrow, with no dark pat
 - **Keep the map lit.** A proved topic dims a step after 3, 7 and 14 days. A 60-second quick check (the follow-up question that proved it, graded again) relights it. Dimming is a nudge only: the evidence page never changes.
 - **Topic of the day.** One open topic per map per day, picked by a hash of the day and the map id, worth double sparks.
 - **Sparks and a weekly goal.** 1 spark per topic, 2 for the topic of the day, a goal of 10 a week, and a Mon-Sun strip of the days you proved something.
-- **Circle race** (`race.ts`, `ui/CircleRace`): on a study circle's page, this week's leaderboard and the first person to prove every topic. It reads only circles' public `CircleView`.
+- **Circle race** (`race.ts`, exported as `circleRace` from `client.ts`): who proved how many topics this week, and the first person to prove every topic. Circles' race board uses it. It reads only circles' public `CircleView`.
 
 Storage: one document per learner, `streaks/<userId>`. `deleteStreak` runs from "Delete my data".
 

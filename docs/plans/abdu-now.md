@@ -8,13 +8,7 @@ Last updated: Sat Nov 7, evening.
 
 - **AWS redeploy of `1d3694c`** (running; no repo files).
 - **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
-- **Study circle polish** (agent). Touches `features/circles` (all of it), `src/app/circle/**` and `src/app/api/circles/**`. It may add small exports to `features/skill-map` and `features/teachback`.
-  - The whole map fits, with bigger labels and visible member initials.
-  - The race and the live feed move to the top, built for a projector.
-  - A celebration toast when anyone proves a topic, and one-tap cheers.
-  - A "Share invite" button on phones (the native share sheet).
-  - No all-caps eyebrows or "·" meta strings.
-- **Then the remaining UI audit items** (same agent, after the polish agent's commits land):
+- **Remaining UI audit items** (agent, now that the polish pass is on main):
   - Locked map cards too faint on phones; the "In the source" badge overflow (`skill-map/ui/SkillNodeView.tsx`).
   - The guest progress 403, fixed your way: 200 with `{ isOwner: false, proven: {}, unlocked: {} }` (`src/app/api/maps/[id]/progress`, `skill-map/ui/mapApi.ts`).
 
@@ -24,6 +18,12 @@ Last updated: Sat Nov 7, evening.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+
+- Study circle polish, checked with 3 browsers (owner at 1440, two members on phones):
+  - Built for a projector: title, one line of members, "Invite" and "Open my map"; the shared map beside the race and the live feed, all on one screen at 1440x900 and 1280x720.
+  - The whole map fits, titles 15px or more on screen, initials under each proved topic with names in the tooltip (`b1178b5`).
+  - A proof shows "Sam just proved X" within about 2 s and pulses that card; history is never replayed on load. One-tap cheers, stored once per member, and "Lee cheered your proof" for the prover (`b11d9a5`).
+  - Invite: a big QR code in a dialog, and "Share invite" on phones (share sheet, or a copied link that says so). A solo circle says so and points to Invite; a skeleton on first load.
 
 - Polish pass, checked on a production build with real keys:
   - Phone map header: the map starts at 218 px on a 390x844 phone (was 385; 243 with a circle banner, was 410). The next skill plus a "More" menu with the labelled actions, the streak and today's topic on one line (`950c11b`).
