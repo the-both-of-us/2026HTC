@@ -16,7 +16,7 @@ The judged presentation is **3 minutes, then 2 minutes of Q&A**, and it is cut o
 | 1:25-1:50 | Mirza | Flashcards, then quiz, then Review | "Every skill has flashcards and a quiz, made by Gemini and saved, so nobody waits twice. Spaced repetition brings cards back on the day you're about to forget them." |
 | 1:50-2:15 | Abdu | Evidence page; a judge scans the QR | "When you prove skills, you get a public evidence page: what you wrote, the verified quotes, the follow-up and integrity signals. Scan the QR on your phone. Anyone can re-check it without trusting our AI." |
 | 2:15-2:45 | Mirza | Courses, then Start; People; Study circle QR | "It's also about people. Publish your map as a course, and anyone can start their own copy. On People, we match you with mentors who have *proved* the skills you're learning, using verified progress, not self-reported skills. And study circles let a class learn one map together, live." |
-| 2:45-3:00 | Mirza | Trust page or dashboard | "No login wall, delete your data any time, and live AESO and StatCan data, with nothing made up. OryxLearn: learn what a real job needs, and prove it." |
+| 2:45-3:00 | Mirza | Trust page or dashboard | "No login wall, delete your data any time, and live Statistics Canada numbers, with nothing made up. OryxLearn: learn what a real job needs, and prove it." |
 
 ## Q&A prep (both of us must be able to explain every part)
 
@@ -26,4 +26,4 @@ The judged presentation is **3 minutes, then 2 minutes of Q&A**, and it is cut o
 - **"What does it cost to run?"** About $0.0007 per grade (measured). Generated study tools are saved once per skill, and free tiers cover a demo.
 - **"Privacy?"** Guests by default and maps private until published. Strangers get "not found" for private content. Delete-my-data removes everything.
 - **"Scalability?"** Feature-based architecture, a stateless server, and S3 storage on AWS. The next steps are a real database for likes and matching, and caching.
-- **Know your own features:** Mirza covers flashcards, quiz, courses, auth, network, dashboard and review. Abdu covers skill map, teach-back, grading, voice, evidence pages, grid, labour, circles and trust. Walk each other through them on Sunday morning.
+- **Know your own features:** Mirza covers flashcards, quiz, courses, auth, network, dashboard and review. Abdu covers skill map, teach-back, grading, voice, evidence pages, labour, circles and trust. Walk each other through them on Sunday morning.

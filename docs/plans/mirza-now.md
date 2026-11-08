@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- **Submission docs: drop "Read the Grid"** now that Abdu removed it (`d62c14e`). Touches: `docs/submission/devpost.md`, `video-script.md`, `ai-disclosure.md` only.
+- Nothing new yet: waiting on the owner. Candidates: `map.audience` in flashcards and quiz (Abdu's TEAM.md note), "Ask for help" and anonymous profiles on People.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Submission docs: removed "Read the Grid" and AESO from the Devpost text, video script and AI disclosure, after `d62c14e`. StatCan numbers stay (still on the landing page).
 - Map header inside a study circle: the "In circle" row and "Start a study circle" are gone; a small "Your circle" button (to `/circle/<code>`) takes the latter's place, for the creator and every member. Circle buttons are now `sm` like the rest of the header, and the topic tag is one short "AI-made, no citations" with the full sentence as a tooltip. Touched Abdu's `app/map/[id]/page.tsx`, `circles/ui/{CircleBanner,StartCircleButton}.tsx`, `circles/client.ts`, `skill-map/ui/MapScreen.tsx`.
 - Full-page skill reading is bigger and wider: the column is 1024px (was 768), the lesson fills it at 20px text (was 17px, capped at 65ch), the title is 32px and the section headings 24px; flashcards and quiz grow to match. Only in full page (`data-reading-page` on the panel plus Tailwind `lg:in-data-[reading-page]:`); the side panel is unchanged. Touched Abdu's `SkillPanel.tsx` and `LessonTab.tsx`, and my flashcards and quiz tabs.
 - People page cleanup: compact cards (initials, name and city in one header, "Looking for" on one line, slim reason line, smaller wrapping skill chips with "+N more"), masonry columns so short cards don't stretch, one summary row with a search box (name, skill or city) and the demo note, lighter side panel, one "Practise ... on your map" link per mentor card. Touched `features/network/ui/**` only.

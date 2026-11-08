@@ -27,7 +27,7 @@ Alberta's unemployment rate is 7.3%, against 6.7% for Canada (Statistics Canada,
    - **Courses:** publish your map as a course, browse other people's, like them, and start your own copy.
    - **Study circles:** a group learns one map together, joining with a QR code and seeing progress live.
    - **People:** find mentors who have *proved* the skills you're still learning, and peers learning the same ones. Matching uses verified progress, not self-reported skills. *(confirm)*
-7. **Local and real data.** "Read the Grid" exercises use live AESO supply and demand data, computed by code, and labour numbers come live from Statistics Canada. Nothing is invented: if a source is down, the page says so.
+7. **Local and real data.** Alberta labour numbers come live from Statistics Canada. Nothing is invented: if a source is down, the page says so.
 8. **Trust and access.**
    - **No login wall.** Guests can do everything. Optional sign-in (Auth0) keeps your work on every device.
    - **Delete my data** removes everything you made.
@@ -53,7 +53,7 @@ Alberta's unemployment rate is 7.3%, against 6.7% for Canada (Statistics Canada,
 
 - A grade you can audit: every point is tied to a quote from the learner's own words, checked by code.
 - Evidence pages that anyone can re-verify without trusting our AI.
-- Real, live public data (AESO, Statistics Canada), with nothing made up. Demo profiles and sample postings are labelled as such everywhere.
+- Real, live public data (Statistics Canada), with nothing made up. Demo profiles and sample postings are labelled as such everywhere.
 
 ## What we learned
 

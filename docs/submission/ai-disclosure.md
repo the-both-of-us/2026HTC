@@ -17,4 +17,4 @@
 | Live follow-up question and its grading | gpt-oss-120b | The AI writes one question about the learner's own answer and judges the reply. |
 | Flashcards and quiz | **Google Gemini** first, then the same chain | The AI writes cards and questions. Code validates counts and lengths, removes duplicates and "all of the above" options, and shuffles answer positions. Citations come only from verified quotes. |
 | Voice (speech to text, spoken questions) | Deepgram Flux *(Abdu: confirm, and add ElevenLabs if it's used)* | Transcription only. The transcript goes to the same grader as typed text. |
-| Live grid data, labour data, matching people, streaks, spaced repetition | **No AI** | Computed by code from AESO, Statistics Canada and the learner's verified progress. |
+| Labour data, matching people, streaks, spaced repetition | **No AI** | Computed by code from Statistics Canada and the learner's verified progress. |
