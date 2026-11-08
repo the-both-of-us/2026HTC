@@ -6,9 +6,6 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
-- **Remove "Read the Grid"** (owner's request): the sidebar link, the `/grid` page, `/api/grid` and the live grid strip on energy maps all go. Files: `src/shared/ui/SideNav.tsx`, `src/app/grid`, `src/app/api/grid`, `skill-map/ui/MapScreen.tsx`, and `features/grid` UI. The solve store stays, so old evidence pages and data deletion keep working.
-  - Mirza: point 7 of `docs/submission/devpost.md` still mentions "Read the Grid". Please drop that part; the StatCan sentence still stands.
-
 ## Next
 
 - Waiting on the owner: swap the landing's "7.3% Alberta unemployment" seal for something that fits "Learn anything", or keep it. Touches `features/landing`.
@@ -16,6 +13,7 @@ Last updated: Sat Nov 7, night.
 
 ## Done today (latest first)
 
+- Removed "Read the Grid" at the owner's request: the sidebar link, `/grid`, `/api/grid` and the strip on energy maps. The solve store stays, so old evidence pages and data deletion still work. Mirza: please drop the Grid part of point 7 in `docs/submission/devpost.md`.
 - Age-appropriate material (`63c7fa3`): a topic, PDF or program that names a grade, age or school level ("grade 1 math", "for kids", "high school chemistry") gets an audience on the map, which program courses inherit and older maps work out from their title and program. Topics, checkpoints, lessons (200 to 350 words for young children, no code) and teach-back grading are pitched at it; with no audience every prompt is byte for byte the old one (hash tests). Checked on a production build with real AI: "grade 1 math" planned 5 grade 1 strands, the first course's topics and checkpoints are child-level, the lesson has no jargon, and a childlike explanation passed (75). "SQL window functions" has no audience. Mirza: see TEAM.md for flashcards and quiz.
 - Put Mirza's tidier map header in a circle (`01cd256`) live on Vercel. Typecheck, lint and the circles and skill-map tests pass on main.
 - Put Mirza's wider full-page skill reading (`cdf9dbb`) live on Vercel. Typecheck, lint and the lessons, skill-map, flashcards and quiz tests pass on main.

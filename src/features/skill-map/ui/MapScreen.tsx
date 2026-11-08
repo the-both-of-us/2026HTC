@@ -1,7 +1,6 @@
 "use client";
 
 import { PublishCourseButton } from "@/features/courses/client";
-import { LiveGridCard, LiveGridStrip } from "@/features/grid/client";
 import { HowItWorksButton } from "@/features/landing/client";
 import { ProgramCrumb } from "@/features/programs/client";
 import { ShareProofButton } from "@/features/proof/client";
@@ -387,7 +386,6 @@ function LoadedMap({
               )}
             </div>
             <div className="-mx-4 flex items-center gap-3 sm:mx-0">
-              {map.energyRelated && <LiveGridStrip className="hidden lg:flex" />}
               <ViewTabs view={view} onChange={setView} />
             </div>
           </div>
@@ -477,8 +475,6 @@ function LoadedMap({
         </div>
       </div>
 
-      {/* Below the map on a phone. On a large screen the map fills the window, so the strip above stands in. */}
-      {map.energyRelated && <LiveGridCard className="mx-4 mb-24 lg:hidden" />}
     </PageShell>
   );
   return <YoungLearnerProvider young={isYoungAudience(map.audience)}>{screen}</YoungLearnerProvider>;
