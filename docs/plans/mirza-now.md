@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- **Shorts inside each skill** (owner's request): a "Watch in 60 seconds" row of 3 or 4 relevant portrait Shorts at the end of the Read tab. One shared list per skill at `skill-reels/<topicKey>` (a hash of map title, skill id, skill title and audience), so a course and every learner's copy share one document and one YouTube search, made when the skill is first opened, never at map build. Shorts are checked to be portrait and 60 s or less (`videos.list`, 1 unit). New feature `src/features/reels` and `src/app/api/reels` (mine). Small edits in Abdu's code: the feed's Short player moves to a shared `src/shared/ui` component used by both, and one line in `lessons/ui/LessonTab.tsx` (or wherever the Read tab lives) for the row. Abdu: shout if you're in those files.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Done today (latest first)
 
+- Shorts inside each skill (`fd323a5`): "Quick videos" at the end of the Read tab, up to 4 portrait Shorts of 90 s or less, opening over the page in the feed's player (now `shared/ui/ShortPlayer`). One list per skill at `skill-reels/<topicKey>` (hash of map title, skill id, skill title, audience), shared by a course and every learner's copy; searched on first open only, at most once an hour. New `features/reels`, `api/reels`; small touches in Abdu's `FeedScreen.tsx`, `LessonTab.tsx`, `SkillPanel.tsx`, `feed/index.ts` (see TEAM.md).
 - Feed Shorts redesign (`c6a19c4`): no frame, header or badge; the video edge to edge at 9:16 with the rail beside it and one caption row (title, interest, channel link, Go deeper). YouTube's controls are off: tap to pause or play, and a sound button that stays on for later Shorts; the card loops each Short itself. Touched Abdu's `features/feed/ui/FeedScreen.tsx` and the feed README (see TEAM.md).
 - Submission docs: removed "Read the Grid" and AESO from the Devpost text, video script and AI disclosure, after `d62c14e`. StatCan numbers stay (still on the landing page).
 - Map header inside a study circle: the "In circle" row and "Start a study circle" are gone; a small "Your circle" button (to `/circle/<code>`) takes the latter's place, for the creator and every member. Circle buttons are now `sm` like the rest of the header, and the topic tag is one short "AI-made, no citations" with the full sentence as a tooltip. Touched Abdu's `app/map/[id]/page.tsx`, `circles/ui/{CircleBanner,StartCircleButton}.tsx`, `circles/client.ts`, `skill-map/ui/MapScreen.tsx`.
