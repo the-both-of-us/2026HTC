@@ -168,7 +168,7 @@ function NameForm({ name, provenCount, wasWithdrawn, updating, pending, onNameCh
         This creates a public page for {plural(provenCount, "proven skill")}. Anyone with the link can read your name and
         what you wrote for those skills. You can withdraw it at any time.
       </p>
-      <Field id={fieldId} label="Name to show" hint="Employers will see this exactly as you type it.">
+      <Field id={fieldId} label="Name to show" hint="Anyone with the link sees it exactly as you type it.">
         {(control) => (
           // The form appears once the check for an existing page finishes, so focus goes
           // straight to the one thing to fill in, and keyboard users never land on nothing.
