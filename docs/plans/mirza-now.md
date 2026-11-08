@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Nothing new yet: waiting on the owner for the next task.
+- **People: clickable skills.** Click any skill on a person's card to show only the people who proved it (with a clear "Showing people who proved X" bar to undo). On cards that could mentor you, a "Practise this" link opens that skill on your own map (`/map/<id>?skill=<nodeId>`, the full-page link from the course redesign). Touches: `src/features/network/**` only (UI, view types, skills).
 
 ## Next
 
