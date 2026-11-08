@@ -5,7 +5,7 @@ export const DEMO_NOTE = "Demo profiles are made up so you can see how matching 
 export const SIGN_IN_LEAD = "Sign in";
 export const SIGN_IN_REST = " to join the network, so people know it's really you.";
 /** How many proven skills a card shows before "Show all". */
-export const SKILLS_SHOWN = 8;
+export const SKILLS_SHOWN = 6;
 
 /** The sign-in link that comes back to /people. A plain URL, so it works without JavaScript. */
 export const LOGIN_HREF = `/api/auth/login?${new URLSearchParams({ returnTo: "/people" })}`;

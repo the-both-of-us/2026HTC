@@ -27,7 +27,6 @@ import {
   LOGIN_HREF,
   peopleCount,
   SIGN_IN_LEAD,
-  SIGN_IN_REST,
   SKILLS_SHOWN,
 } from "./view";
 
@@ -144,15 +143,22 @@ function LoadedNetwork({
   const total = peopleCount(view);
   // Clicking a skill on any card shows only the people who proved it.
   const [skillFilter, setSkillFilter] = useState<string | null>(null);
+  // Typing narrows by name, city, what they're looking for, or a skill.
+  const [search, setSearch] = useState("");
   const filterBar = useRef<HTMLDivElement>(null);
+  const searchId = useId();
+  const needle = search.trim().toLowerCase();
   const keep = (entries: Match[]) =>
-    skillFilter
-      ? entries.filter(({ profile }) => profile.provenSkills.some((skill) => skillsMatch(skill.title, skillFilter)))
-      : entries;
+    entries.filter(
+      ({ profile }) =>
+        (!skillFilter || profile.provenSkills.some((skill) => skillsMatch(skill.title, skillFilter))) &&
+        (!needle || searchText(profile).includes(needle)),
+    );
   const mentors = keep(view.mentors);
   const peers = keep(view.peers);
   const everyone = keep(view.everyone);
   const shownCount = mentors.length + peers.length + everyone.length;
+  const narrowed = skillFilter !== null || needle !== "";
 
   function pickSkill(title: string) {
     setSkillFilter((current) => (current !== null && skillsMatch(current, title) ? null : title));
@@ -161,41 +167,72 @@ function LoadedNetwork({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
-      <div className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-6">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:items-start">
+      <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-6">
         {view.me ? (
           <MyProfileCard me={view.me} headingRef={profileHeading} onSaved={onSaved} onLeft={onLeft} />
         ) : (
           <JoinCard view={view} headingRef={joinHeading} onSaved={onSaved} />
         )}
         {!view.viewerHasMaps && <NoMapsCard />}
-      </div>
+      </aside>
 
-      <div className="flex min-w-0 flex-col gap-8">
-        <p
-          ref={statusLine}
-          tabIndex={-1}
-          role="status"
-          className="flex flex-wrap items-center gap-2.5 text-base text-ink-soft outline-none"
-        >
-          {total === 0 ? "Nobody else has joined yet." : `${countLabel(total, "person", "people")} in the network.`}
-          {stale && (
-            <span className="inline-flex items-center gap-2">
-              <Spinner size={16} />
-              Updating.
-            </span>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex flex-col gap-3 border-b border-rule pb-5">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <p
+              ref={statusLine}
+              tabIndex={-1}
+              role="status"
+              className="flex flex-wrap items-center gap-2.5 text-base outline-none"
+            >
+              <span className="font-medium">
+                {total === 0
+                  ? "Nobody else has joined yet."
+                  : narrowed
+                    ? `Showing ${shownCount} of ${countLabel(total, "person", "people")}`
+                    : countLabel(total, "person", "people")}
+              </span>
+              {stale && (
+                <span className="inline-flex items-center gap-2 text-ink-soft">
+                  <Spinner size={16} />
+                  Updating.
+                </span>
+              )}
+            </p>
+            {total > 0 && (
+              <div className="relative w-full sm:w-72">
+                <label htmlFor={searchId} className="sr-only">
+                  Search people by name, skill or city
+                </label>
+                <Search
+                  aria-hidden="true"
+                  size={17}
+                  className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-soft"
+                />
+                <TextInput
+                  id={searchId}
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search name, skill or city"
+                  className="py-2! pl-9 text-sm"
+                />
+              </div>
+            )}
+          </div>
+          {(hasDemo(view) || total > 0) && (
+            <p className="text-sm text-ink-soft">
+              {hasDemo(view) && <>{DEMO_NOTE} </>}
+              {total > 0 && "Click any skill to see everyone who proved it."}
+            </p>
           )}
-        </p>
+        </div>
+
         {failedMessage && <ErrorNotice message={failedMessage} onRetry={onRetry} />}
 
-        {hasDemo(view) && (
-          <p className="rounded-control border border-dashed border-amber/60 bg-amber/10 px-4 py-3 text-base">
-            {DEMO_NOTE}
-          </p>
-        )}
-
-        {matching && !hasAnyMatch(view) && total > 0 && (
-          <p className="text-base">
+        {matching && !hasAnyMatch(view) && total > 0 && !narrowed && (
+          <p className="text-base text-ink-soft">
             Nobody matches your skills yet. As you and others prove more skills, matches show up here.
           </p>
         )}
@@ -205,19 +242,26 @@ function LoadedNetwork({
             ref={filterBar}
             tabIndex={-1}
             role="status"
-            className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sheet border border-proven/60 bg-proven/10 px-4 py-3 outline-none"
+            className="flex flex-wrap items-center gap-x-3 gap-y-2 border-l-4 border-proven bg-proven/10 px-4 py-3 outline-none"
           >
-            <p className="flex min-w-0 flex-1 basis-60 items-start gap-2 text-base">
-              <Filter aria-hidden="true" size={18} className="mt-1 shrink-0 text-proven" />
+            <p className="flex min-w-0 flex-1 basis-56 items-start gap-2 text-base">
+              <Filter aria-hidden="true" size={17} className="mt-1 shrink-0 text-proven" />
               <span className="min-w-0 break-words">
-                {shownCount === 0
-                  ? `Nobody here has proved ${skillFilter} yet.`
-                  : `Showing ${countLabel(shownCount, "person", "people")} who proved ${skillFilter}.`}
+                {shownCount === 0 ? (
+                  <>
+                    Nobody here has proved <strong className="font-medium">{skillFilter}</strong> yet.
+                  </>
+                ) : (
+                  <>
+                    {countLabel(shownCount, "person", "people")} proved{" "}
+                    <strong className="font-medium">{skillFilter}</strong>.
+                  </>
+                )}
               </span>
             </p>
             <a href={practiseHref(skillFilter)} className={buttonClasses("secondary", "sm")}>
               <Dumbbell aria-hidden="true" size={16} />
-              Practise {skillFilter}
+              Practise it
             </a>
             <Button variant="quiet" size="sm" onClick={() => setSkillFilter(null)}>
               <X aria-hidden="true" size={16} />
@@ -226,10 +270,14 @@ function LoadedNetwork({
           </div>
         )}
 
+        {narrowed && shownCount === 0 && !skillFilter && (
+          <p className="text-base text-ink-soft">Nobody matches “{search.trim()}”.</p>
+        )}
+
         {mentors.length > 0 && (
           <PeopleSection
             id="mentors"
-            icon={<GraduationCap aria-hidden="true" size={22} className="text-proven" />}
+            icon={<GraduationCap aria-hidden="true" size={20} className="text-proven" />}
             title="Could mentor you"
             description="They proved skills that you're still learning."
             entries={mentors}
@@ -240,7 +288,7 @@ function LoadedNetwork({
         {peers.length > 0 && (
           <PeopleSection
             id="peers"
-            icon={<Users aria-hidden="true" size={22} className="text-accent-bright" />}
+            icon={<Users aria-hidden="true" size={20} className="text-accent-bright" />}
             title="Learning what you're learning"
             description="Study together: they're working on the same skills as you."
             entries={peers}
@@ -251,7 +299,7 @@ function LoadedNetwork({
         {everyone.length > 0 && (
           <PeopleSection
             id="everyone"
-            icon={<Search aria-hidden="true" size={22} className="text-ink-soft" />}
+            icon={<Users aria-hidden="true" size={20} className="text-ink-soft" />}
             title={everyoneHeading(view)}
             description={everyoneDescription(view)}
             entries={everyone}
@@ -283,19 +331,20 @@ function PeopleSection({
 }) {
   const headingId = `${id}-heading`;
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-3">
+    <section aria-labelledby={headingId} className="flex flex-col gap-4">
       <div>
-        <h2 id={headingId} className="flex items-start gap-2.5 text-2xl font-medium">
-          <span className="mt-1 shrink-0">{icon}</span>
+        <h2 id={headingId} className="flex items-center gap-2 text-xl font-medium">
+          <span className="shrink-0">{icon}</span>
           <span className="min-w-0">
-            {title} <span className="text-base font-normal text-ink-soft">({entries.length})</span>
+            {title} <span className="text-base font-normal text-ink-soft">{entries.length}</span>
           </span>
         </h2>
-        <p className="mt-1 text-base text-ink-soft">{description}</p>
+        <p className="mt-0.5 text-sm text-ink-soft">{description}</p>
       </div>
-      <ul className="grid gap-4 xl:grid-cols-2">
+      {/* Columns, not a grid: a short card never stretches to match a tall neighbour. */}
+      <ul className="columns-1 gap-4 xl:columns-2">
         {entries.map(({ profile, reasons, mentorFor }) => (
-          <li key={profile.publicId} className="min-w-0">
+          <li key={profile.publicId} className="mb-4 min-w-0 break-inside-avoid">
             <PersonCard
               profile={profile}
               reasons={reasons}
@@ -326,37 +375,37 @@ function PersonCard({
 }) {
   const host = contactHost(profile.contactUrl);
   return (
-    <article className="flex h-full flex-col gap-3 rounded-sheet border border-control-edge bg-sheet p-5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="min-w-0 text-xl leading-snug font-medium break-words">{profile.displayName}</h3>
-        {profile.isDemo && (
-          <Badge tone="sample" className="shrink-0">
-            Demo profile
-          </Badge>
-        )}
-      </div>
-      {(profile.city || profile.lookingFor) && (
-        <dl className="flex flex-col gap-1 text-base">
+    <article className="flex flex-col gap-3.5 rounded-sheet border border-rule bg-sheet p-4 transition-control hover:border-rule-strong sm:p-5">
+      <header className="flex items-start gap-3">
+        <Initials name={profile.displayName} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h3 className="min-w-0 text-lg leading-snug font-medium break-words">{profile.displayName}</h3>
+            {profile.isDemo && (
+              <Badge tone="sample" className="text-xs">
+                Demo profile
+              </Badge>
+            )}
+          </div>
           {profile.city && (
-            <div className="flex items-start gap-2">
-              <dt className="mt-1 shrink-0">
-                <MapPin aria-hidden="true" size={16} className="text-ink-soft" />
-                <span className="sr-only">City</span>
-              </dt>
-              <dd className="min-w-0 break-words text-ink-soft">{profile.city}</dd>
-            </div>
+            <p className="mt-0.5 flex items-center gap-1 text-sm text-ink-soft">
+              <MapPin aria-hidden="true" size={13} className="shrink-0" />
+              <span className="sr-only">City: </span>
+              <span className="min-w-0 break-words">{profile.city}</span>
+            </p>
           )}
-          {profile.lookingFor && (
-            <div className="flex flex-wrap gap-x-1.5">
-              <dt className="font-semibold">Looking for:</dt>
-              <dd className="min-w-0 break-words">{profile.lookingFor}</dd>
-            </div>
-          )}
-        </dl>
+        </div>
+      </header>
+
+      {profile.lookingFor && (
+        <p className="text-base break-words">
+          <span className="text-ink-soft">Looking for </span>
+          {lowerFirst(profile.lookingFor)}
+        </p>
       )}
 
       {reasons.length > 0 && (
-        <ul className="flex flex-col gap-1.5 rounded-control bg-raised/70 px-3.5 py-2.5 text-base">
+        <ul className="flex flex-col gap-1 border-l-2 border-proven pl-3 text-sm">
           {reasons.map((reason) => (
             <li key={reason} className="break-words">
               {reason}
@@ -373,22 +422,13 @@ function PersonCard({
       />
 
       {mentorFor.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <p className="text-sm font-semibold">Practise on your map</p>
-          <ul className="flex flex-wrap gap-x-4 gap-y-1">
-            {mentorFor.slice(0, PRACTISE_LINKS_SHOWN).map((title) => (
-              <li key={title} className="min-w-0">
-                <a
-                  href={practiseHref(title)}
-                  className="inline-flex min-h-8 items-center gap-1.5 font-medium break-words text-accent-bright underline underline-offset-4 hover:text-ink"
-                >
-                  <Dumbbell aria-hidden="true" size={15} className="shrink-0" />
-                  {title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <a
+          href={practiseHref(mentorFor[0])}
+          className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-accent-bright underline underline-offset-4 hover:text-ink"
+        >
+          <Dumbbell aria-hidden="true" size={14} className="shrink-0" />
+          <span className="break-words">Practise {mentorFor[0]} on your map</span>
+        </a>
       )}
 
       {profile.contactUrl && host && (
@@ -396,14 +436,32 @@ function PersonCard({
           href={profile.contactUrl}
           target="_blank"
           rel="noopener noreferrer nofollow"
-          className="mt-auto inline-flex items-center gap-1.5 self-start font-semibold text-accent-bright underline underline-offset-4 hover:text-ink"
+          className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-accent-bright underline underline-offset-4 hover:text-ink"
         >
           Contact on {host}
-          <ExternalLink aria-hidden="true" size={15} />
+          <ExternalLink aria-hidden="true" size={14} />
           <span className="sr-only">(opens in a new tab)</span>
         </a>
       )}
     </article>
+  );
+}
+
+/** A quiet circle with someone's initials, so each card has an anchor for the eye. */
+function Initials({ name }: { name: string }) {
+  const letters = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => Array.from(word)[0]?.toUpperCase() ?? "")
+    .join("");
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-10 shrink-0 items-center justify-center rounded-full border border-rule-strong bg-raised text-sm font-semibold"
+    >
+      {letters || "?"}
+    </span>
   );
 }
 
@@ -422,70 +480,66 @@ function SkillChips({
   const [showAll, setShowAll] = useState(false);
   const listId = useId();
   if (skills.length === 0) {
-    return <p className="text-base text-ink-soft">No proven skills yet.</p>;
+    return <p className="text-sm text-ink-soft">No proven skills yet.</p>;
   }
   const shown = showAll ? skills : skills.slice(0, SKILLS_SHOWN);
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-semibold">
-        Proven skills ({skills.length})
-        {onPickSkill && <span className="font-normal text-ink-soft"> · click one to find others</span>}
+      <p className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
+        Proved {countLabel(skills.length, "skill", "skills")}
       </p>
       <ul id={listId} className="flex flex-wrap gap-1.5">
         {shown.map((skill) => {
           const active = activeSkill !== null && skillsMatch(skill.title, activeSkill);
           return (
-          <li key={skill.title} className="min-w-0 max-w-full">
-            <span
-              className={`inline-flex max-w-full items-center gap-1.5 rounded-full border py-0.5 pr-1 text-sm font-medium ${
-                active ? "border-proven bg-proven pl-1 text-paper" : "border-proven/70 bg-proven/10 pl-1 text-proven"
-              }`}
-            >
-              {onPickSkill ? (
-                <button
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => onPickSkill(skill.title)}
-                  title={`On ${skill.mapTitle}. Show everyone who proved it.`}
-                  className="min-h-7 min-w-0 cursor-pointer rounded-full px-1.5 text-left break-words hover:underline"
-                >
-                  {skill.title}
-                </button>
-              ) : (
-                <span className="min-w-0 px-1.5 break-words" title={`On ${skill.mapTitle}`}>
-                  {skill.title}
-                </span>
-              )}
-              {skill.evidenceUrl ? (
-                <a
-                  href={skill.evidenceUrl}
-                  className="inline-flex size-6 shrink-0 items-center justify-center rounded-full hover:bg-proven/20 hover:text-ink"
-                >
-                  <FileCheck aria-hidden="true" size={14} />
-                  <span className="sr-only">
-                    {`Evidence page for ${skill.title}, proved by ${owner}`}
+            <li key={skill.title} className="max-w-full min-w-0">
+              <span
+                className={`inline-flex max-w-full items-center rounded-full border text-[13px] leading-5 font-medium ${
+                  active ? "border-proven bg-proven text-paper" : "border-proven/50 bg-proven/10 text-proven"
+                }`}
+              >
+                {onPickSkill ? (
+                  <button
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => onPickSkill(skill.title)}
+                    title={`On ${skill.mapTitle}. Show everyone who proved it.`}
+                    className="min-h-7 min-w-0 cursor-pointer rounded-full px-2.5 py-0.5 break-words hover:underline"
+                  >
+                    {skill.title}
+                  </button>
+                ) : (
+                  <span className="min-w-0 px-2.5 py-0.5 break-words" title={`On ${skill.mapTitle}`}>
+                    {skill.title}
                   </span>
-                </a>
-              ) : (
-                <span className="w-1" aria-hidden="true" />
-              )}
-            </span>
-          </li>
+                )}
+                {skill.evidenceUrl && (
+                  <a
+                    href={skill.evidenceUrl}
+                    className="-ml-1 mr-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full hover:bg-proven/20 hover:text-ink"
+                  >
+                    <FileCheck aria-hidden="true" size={13} />
+                    <span className="sr-only">{`Evidence page for ${skill.title}, proved by ${owner}`}</span>
+                  </a>
+                )}
+              </span>
+            </li>
           );
         })}
+        {skills.length > SKILLS_SHOWN && (
+          <li>
+            <button
+              type="button"
+              aria-expanded={showAll}
+              aria-controls={listId}
+              onClick={() => setShowAll((value) => !value)}
+              className="min-h-7 cursor-pointer rounded-full px-2 text-[13px] font-medium text-ink-soft underline underline-offset-4 hover:text-ink"
+            >
+              {showAll ? "Show fewer" : `+${skills.length - SKILLS_SHOWN} more`}
+            </button>
+          </li>
+        )}
       </ul>
-      {skills.length > SKILLS_SHOWN && (
-        <Button
-          variant="quiet"
-          size="sm"
-          className="self-start"
-          aria-expanded={showAll}
-          aria-controls={listId}
-          onClick={() => setShowAll((value) => !value)}
-        >
-          {showAll ? "Show fewer" : `Show all ${skills.length}`}
-        </Button>
-      )}
     </div>
   );
 }
@@ -500,25 +554,22 @@ function JoinCard({
   onSaved: (me: MyProfileView) => void;
 }) {
   return (
-    <Card>
-      <h2 ref={headingRef} tabIndex={-1} className="text-2xl font-medium outline-none">
+    <Card className="border-rule sm:p-5">
+      <h2 ref={headingRef} tabIndex={-1} className="text-lg font-medium outline-none">
         Join the network
       </h2>
-      <p className="mt-2 text-base text-ink-soft">
-        Your profile shows everyone the skills you&apos;ve proved and the map each one is on. You can leave at any
-        time, which deletes it.
+      <p className="mt-1.5 text-sm text-ink-soft">
+        Show the skills you&apos;ve proved, so people learning them can find you. Leave any time, which deletes your
+        profile.
       </p>
-      <div className="mt-4">
+      <div className="mt-3">
         {view.signInRequired ? (
-          <p className="text-base">
-            <a
-              href={LOGIN_HREF}
-              className="font-semibold text-accent-bright underline underline-offset-4 hover:text-ink"
-            >
-              {SIGN_IN_LEAD}
+          <div className="flex flex-col gap-2">
+            <a href={LOGIN_HREF} className={`${buttonClasses("primary", "sm")} self-start`}>
+              {SIGN_IN_LEAD} to join
             </a>
-            {SIGN_IN_REST}
-          </p>
+            <p className="text-xs text-ink-soft">Signing in shows people it&apos;s really you.</p>
+          </div>
         ) : (
           <ProfileForm
             initial={{ displayName: view.displayName ?? "", city: "", lookingFor: "", contactUrl: "" }}
@@ -568,8 +619,8 @@ function MyProfileCard({
   }
 
   return (
-    <Card>
-      <h2 ref={headingRef} tabIndex={-1} className="text-2xl font-medium outline-none">
+    <Card className="border-rule sm:p-5">
+      <h2 ref={headingRef} tabIndex={-1} className="text-lg font-medium outline-none">
         Your profile
       </h2>
 
@@ -828,13 +879,13 @@ function ProfileForm({
 /** Shown when the viewer has no maps, so there is nothing to match on yet. */
 function NoMapsCard() {
   return (
-    <Card>
-      <h2 className="text-xl font-medium">No skill map yet</h2>
-      <p className="mt-2 text-base text-ink-soft">
-        Matching works from the skills on your maps. Build a map from a job posting, or start a course, and people who
-        proved those skills show up here.
+    <Card className="border-rule bg-raised/40 sm:p-5">
+      <h2 className="text-lg font-medium">No skill map yet</h2>
+      <p className="mt-1.5 text-sm text-ink-soft">
+        Matches come from the skills on your maps. Build one or start a course, and people who proved those skills show
+        up first.
       </p>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <Link href="/" className={buttonClasses("primary", "sm")}>
           Build a map
         </Link>
@@ -846,10 +897,20 @@ function NoMapsCard() {
   );
 }
 
-/** How many "Practise on your map" links a card shows. */
-const PRACTISE_LINKS_SHOWN = 3;
-
 /** "Practise this": the server redirects to that skill on your own map, or to courses teaching it. */
 function practiseHref(skillTitle: string): string {
   return `/api/network/practise?skill=${encodeURIComponent(skillTitle)}`;
+}
+
+/** Everything the search box looks through on a card, in lower case. */
+function searchText(profile: PublicProfile): string {
+  return [profile.displayName, profile.city, profile.lookingFor, ...profile.provenSkills.map((skill) => skill.title)]
+    .join(" ")
+    .toLowerCase();
+}
+
+/** "A study partner" reads as "Looking for a study partner". Acronyms like "SQL" stay as they are. */
+function lowerFirst(text: string): string {
+  const [first, second] = Array.from(text);
+  return first && second && second === second.toLowerCase() ? first.toLowerCase() + text.slice(first.length) : text;
 }
