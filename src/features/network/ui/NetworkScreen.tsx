@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  BellRing,
+  Check,
   Dumbbell,
   ExternalLink,
   FileCheck,
@@ -26,8 +28,20 @@ import {
   type ProfileErrors,
 } from "../rules";
 import { skillsMatch } from "../matching";
-import type { Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "../types";
-import { deleteProfile, fetchNetwork, removeFriend, saveProfile, setInNetwork, type Result } from "./api";
+import type { FriendCourse, Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "../types";
+import {
+  acceptFriendRequest,
+  deleteProfile,
+  dismissPing,
+  fetchNetwork,
+  pingFriend,
+  removeFriend,
+  removeFriendRequest,
+  saveProfile,
+  sendFriendRequest,
+  setInNetwork,
+  type Result,
+} from "./api";
 import { FriendInviteDialog, type FriendInviteHandle } from "./FriendInvite";
 import {
   canMatch,
@@ -241,6 +255,7 @@ function LoadedNetwork({
       {/* First on a phone, so the network setting and your friends come before the profile form. */}
       <div className="order-1 flex min-w-0 flex-col gap-6 lg:order-2">
         <FriendInviteDialog ref={inviteDialog} />
+        <Inbox view={view} onChanged={onChanged} />
         <NetworkControl
           inNetwork={view.inNetwork}
           // The empty state below carries the same two buttons, so they show once.
@@ -366,6 +381,7 @@ function LoadedNetwork({
                 activeSkill={skillFilter}
                 onPickSkill={pickSkill}
                 onRemove={unfriend}
+                onChanged={onChanged}
               />
             )}
             {mentors.length > 0 && (
@@ -377,6 +393,7 @@ function LoadedNetwork({
                 entries={mentors}
                 activeSkill={skillFilter}
                 onPickSkill={pickSkill}
+                onChanged={onChanged}
               />
             )}
             {peers.length > 0 && (
@@ -388,6 +405,7 @@ function LoadedNetwork({
                 entries={peers}
                 activeSkill={skillFilter}
                 onPickSkill={pickSkill}
+                onChanged={onChanged}
               />
             )}
             {everyone.length > 0 && (
@@ -399,6 +417,7 @@ function LoadedNetwork({
                 entries={everyone}
                 activeSkill={skillFilter}
                 onPickSkill={pickSkill}
+                onChanged={onChanged}
               />
             )}
           </>
@@ -508,6 +527,7 @@ function PeopleSection({
   activeSkill,
   onPickSkill,
   onRemove,
+  onChanged,
 }: {
   id: string;
   icon: ReactNode;
@@ -518,6 +538,8 @@ function PeopleSection({
   onPickSkill: (title: string) => void;
   /** On friends' cards: removes the friend, or returns a sentence saying why it failed. */
   onRemove?: (publicId: string) => Promise<string | null>;
+  /** Reloads the page after a friend request turns into a friendship. */
+  onChanged: () => void;
 }) {
   const headingId = `${id}-heading`;
   return (
@@ -533,15 +555,17 @@ function PeopleSection({
       </div>
       {/* Columns, not a grid: a short card never stretches to match a tall neighbour. */}
       <ul className="columns-1 gap-4 xl:columns-2">
-        {entries.map(({ profile, reasons, mentorFor }) => (
-          <li key={profile.publicId} className="mb-4 min-w-0 break-inside-avoid">
+        {entries.map((match) => (
+          <li key={match.profile.publicId} className="mb-4 min-w-0 break-inside-avoid">
             <PersonCard
-              profile={profile}
-              reasons={reasons}
-              mentorFor={mentorFor}
+              profile={match.profile}
+              reasons={match.reasons}
+              mentorFor={match.mentorFor}
               activeSkill={activeSkill}
               onPickSkill={onPickSkill}
               onRemove={onRemove}
+              match={match}
+              onChanged={onChanged}
             />
           </li>
         ))}
@@ -557,6 +581,8 @@ function PersonCard({
   activeSkill,
   onPickSkill,
   onRemove,
+  match,
+  onChanged,
 }: {
   profile: PublicProfile;
   reasons: string[];
@@ -565,6 +591,8 @@ function PersonCard({
   activeSkill: string | null;
   onPickSkill: (title: string) => void;
   onRemove?: (publicId: string) => Promise<string | null>;
+  match: Match;
+  onChanged: () => void;
 }) {
   const host = contactHost(profile.contactUrl);
   return (
@@ -637,9 +665,264 @@ function PersonCard({
         </a>
       )}
 
+      {onRemove && match.courses !== undefined && <FriendCourses name={profile.displayName} courses={match.courses} />}
+
+      {!onRemove && match.canRequest && (
+        <AddFriend
+          publicId={profile.publicId}
+          name={profile.displayName}
+          initiallySent={match.requestSent === true}
+          onFriends={onChanged}
+        />
+      )}
+
+      {onRemove && match.canPing && <PingButton publicId={profile.publicId} name={profile.displayName} />}
+
       {onRemove && <RemoveFriend name={profile.displayName} onRemove={() => onRemove(profile.publicId)} />}
     </article>
   );
+}
+
+/** Friend requests and pings waiting for the viewer, at the top of the page. */
+function Inbox({ view, onChanged }: { view: NetworkView; onChanged: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [gone, setGone] = useState<Set<string>>(new Set());
+  const requests = view.friendRequests.filter((entry) => !gone.has(`r:${entry.publicId}`));
+  const pings = view.pings.filter((entry) => !gone.has(`p:${entry.publicId}`));
+  if (requests.length === 0 && pings.length === 0 && !error) return null;
+
+  /** `busyKey` marks the pressed button; `doneKey` (`r:<publicId>` or `p:<publicId>`) hides the row. */
+  async function act(busyKey: string, doneKey: string, run: () => Promise<Result<object>>, reload: boolean) {
+    setBusy(busyKey);
+    setError(null);
+    const result = await run();
+    setBusy(null);
+    if (!result.ok) return setError(result.message);
+    setGone((previous) => new Set(previous).add(doneKey));
+    if (reload) onChanged();
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {requests.length > 0 && (
+        <section aria-labelledby="requests-heading" className="flex flex-col gap-3 rounded-sheet border border-proven bg-sheet p-4 sm:p-5">
+          <h2 id="requests-heading" className="flex items-center gap-2 text-lg font-medium">
+            <UserPlus aria-hidden="true" size={19} className="text-proven" />
+            Friend requests <span className="text-base font-normal text-ink-soft">{requests.length}</span>
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {requests.map((entry) => (
+              <li key={entry.publicId} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <p className="min-w-0 text-base break-words">
+                  <span className="font-medium">{entry.displayName}</span>
+                  {entry.city && <span className="text-ink-soft"> · {entry.city}</span>}
+                  <span className="text-ink-soft"> wants to be friends · {timeAgo(entry.since)}</span>
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    pending={busy === `r:accept:${entry.publicId}`}
+                    disabled={busy !== null && busy !== `r:accept:${entry.publicId}`}
+                    aria-label={`Accept ${entry.displayName}'s friend request`}
+                    onClick={() => act(`r:accept:${entry.publicId}`, `r:${entry.publicId}`, () => acceptFriendRequest(entry.publicId), true)}
+                  >
+                    <Check aria-hidden="true" size={16} />
+                    Accept
+                  </Button>
+                  <Button
+                    variant="quiet"
+                    size="sm"
+                    pending={busy === `r:decline:${entry.publicId}`}
+                    disabled={busy !== null && busy !== `r:decline:${entry.publicId}`}
+                    aria-label={`Decline ${entry.displayName}'s friend request`}
+                    onClick={() => act(`r:decline:${entry.publicId}`, `r:${entry.publicId}`, () => removeFriendRequest(entry.publicId), false)}
+                  >
+                    <X aria-hidden="true" size={16} />
+                    Decline
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {pings.length > 0 && (
+        <section aria-labelledby="pings-heading" className="flex flex-col gap-3 rounded-sheet border border-rule-strong bg-sheet p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="pings-heading" className="flex items-center gap-2 text-lg font-medium">
+              <BellRing aria-hidden="true" size={19} className="text-accent-bright" />
+              Pings <span className="text-base font-normal text-ink-soft">{pings.length}</span>
+            </h2>
+            <Link href="/dashboard" className={buttonClasses("secondary", "sm")}>
+              Keep learning
+            </Link>
+          </div>
+          <ul className="flex flex-col gap-2">
+            {pings.map((entry) => (
+              <li key={entry.publicId} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                <p className="min-w-0 text-base break-words">
+                  <span className="font-medium">{entry.displayName}</span> pinged you
+                  <span className="text-ink-soft"> · {timeAgo(entry.at)}</span>
+                </p>
+                <Button
+                  variant="quiet"
+                  size="sm"
+                  pending={busy === `p:${entry.publicId}`}
+                  aria-label={`Dismiss ${entry.displayName}'s ping`}
+                  onClick={() => act(`p:${entry.publicId}`, `p:${entry.publicId}`, () => dismissPing(entry.publicId), false)}
+                >
+                  <X aria-hidden="true" size={16} />
+                  Dismiss
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {error && <ErrorNotice message={error} />}
+    </div>
+  );
+}
+
+/** "Add friend" on a network card, then "Request sent" with a way to cancel. */
+function AddFriend({
+  publicId,
+  name,
+  initiallySent,
+  onFriends,
+}: {
+  publicId: string;
+  name: string;
+  initiallySent: boolean;
+  onFriends: () => void;
+}) {
+  const [sent, setSent] = useState(initiallySent);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send() {
+    setPending(true);
+    setError(null);
+    const result = await sendFriendRequest(publicId);
+    setPending(false);
+    if (!result.ok) return setError(result.message);
+    if (result.status === "friends") onFriends();
+    else setSent(true);
+  }
+
+  async function cancel() {
+    setPending(true);
+    setError(null);
+    const result = await removeFriendRequest(publicId);
+    setPending(false);
+    if (!result.ok) return setError(result.message);
+    setSent(false);
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-rule pt-3">
+      {sent ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="flex items-center gap-1.5 text-sm text-ink-soft" role="status">
+            <Check aria-hidden="true" size={15} className="text-proven" />
+            Request sent
+          </p>
+          <Button variant="quiet" size="sm" pending={pending} aria-label={`Cancel your friend request to ${name}`} onClick={cancel}>
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="secondary"
+          size="sm"
+          className="self-start"
+          pending={pending}
+          aria-label={`Add ${name} as a friend`}
+          onClick={send}
+        >
+          <UserPlus aria-hidden="true" size={16} />
+          Add friend
+        </Button>
+      )}
+      {error && <ErrorNotice message={error} />}
+    </div>
+  );
+}
+
+/** "Ping" on a friend's card: a nudge to study, at most once an hour. */
+function PingButton({ publicId, name }: { publicId: string; name: string }) {
+  const [pending, setPending] = useState(false);
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function ping() {
+    setPending(true);
+    setNote(null);
+    const result = await pingFriend(publicId);
+    setPending(false);
+    setNote(result.ok ? { ok: true, text: `Pinged ${name}.` } : { ok: false, text: result.message });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        variant="secondary"
+        size="sm"
+        pending={pending}
+        disabled={note?.ok === true}
+        aria-label={`Ping ${name}`}
+        onClick={ping}
+      >
+        <BellRing aria-hidden="true" size={16} />
+        Ping
+      </Button>
+      {note && (
+        <p role="status" className={note.ok ? "text-sm text-ink-soft" : "text-sm text-ink"}>
+          {note.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** A friend's courses: proven of total, with a thin bar like the course cards. */
+function FriendCourses({ name, courses }: { name: string; courses: FriendCourse[] | null }) {
+  if (courses === null) return <p className="text-sm text-ink-soft">{name} keeps their courses private.</p>;
+  if (courses.length === 0) return <p className="text-sm text-ink-soft">No courses yet.</p>;
+  return (
+    <div className="flex flex-col gap-2">
+      <h4 className="text-sm font-medium text-ink-soft">Studying</h4>
+      <ul className="flex flex-col gap-2.5">
+        {courses.map((course, index) => {
+          const percent = course.total > 0 ? Math.round((course.proven / course.total) * 100) : 0;
+          return (
+            <li key={`${course.title}-${index}`} className="flex flex-col gap-1">
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="min-w-0 break-words">{course.title}</span>
+                <span className="shrink-0 text-ink-soft">
+                  {course.proven} of {course.total} proven
+                </span>
+              </div>
+              <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-raised">
+                <div className="h-full rounded-full bg-proven" style={{ width: `${percent}%` }} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/** "5 min ago", "3 h ago", "2 days ago". */
+function timeAgo(iso: string): string {
+  const minutes = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
 }
 
 /** "Remove friend", with a second click to confirm, so a slip doesn't cost a friendship. */

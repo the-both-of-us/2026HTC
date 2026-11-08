@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { FriendsPrivacySettings } from "@/features/network/client";
 import { Card, LearningModeToggle, PageShell, TextSizeSelect, ThemeSelect } from "@/shared/ui";
 import { AiSettingsForm } from "./AiSettingsForm";
 
@@ -31,6 +32,11 @@ export function SettingsScreen() {
             </p>
           </Card>
           <Note>Saved in this browser only.</Note>
+        </Section>
+
+        <Section title="Friends and privacy">
+          <FriendsPrivacySettings />
+          <Note>Saved with your network profile.</Note>
         </Section>
 
         <Section title="AI models">

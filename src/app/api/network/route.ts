@@ -7,6 +7,7 @@ import {
   parseProfileBody,
   parseVisibilityBody,
   setInNetwork,
+  setPrivacySettings,
 } from "@/features/network";
 
 /** The network as this viewer sees it: their profile, who could mentor them, and everyone else. */
@@ -30,12 +31,17 @@ export async function PUT(request: Request) {
   }
 }
 
-/** Opts in to the network (`{inNetwork: true}`) or out of it, keeping your friends. */
+/**
+ * Opts in to the network (`{inNetwork: true}`) or out of it, keeping your friends, and/or
+ * saves the friends and privacy settings (`shareProgress`, `allowRequests`, `allowPings`).
+ */
 export async function PATCH(request: Request) {
   try {
-    const { inNetwork } = await parseVisibilityBody(request);
+    const { inNetwork, ...privacy } = await parseVisibilityBody(request);
     const userId = await getUserId();
-    return Response.json({ me: await setInNetwork(userId, inNetwork) });
+    let me = inNetwork === undefined ? null : await setInNetwork(userId, inNetwork);
+    if (Object.keys(privacy).length > 0) me = await setPrivacySettings(userId, privacy);
+    return Response.json({ me });
   } catch (error) {
     return networkErrorResponse(error);
   }

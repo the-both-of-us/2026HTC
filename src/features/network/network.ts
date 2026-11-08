@@ -15,6 +15,15 @@ import { deleteProfile, getProfile, isInNetwork, listProfiles, saveProfile, setP
 import { checkProfileInput, firstError } from "./rules";
 import { assertUserId, requireJoiner, viewerAccess } from "./session";
 import { computeSkills, demoSkillSet, NO_SKILLS } from "./skills";
+import {
+  deleteSocialData,
+  friendCourses,
+  listFriendRequests,
+  listPings,
+  outgoingRequestIds,
+  privacyOf,
+  setPrivacy,
+} from "./social";
 import type {
   InviteView,
   Match,
@@ -23,6 +32,7 @@ import type {
   ProfileInput,
   ProfileRecord,
   PublicProfile,
+  PrivacySettings,
   SkillSet,
 } from "./types";
 
@@ -66,6 +76,7 @@ function toMyProfile(record: ProfileRecord, skills: SkillSet): MyProfileView {
     inNetwork: isInNetwork(record),
     provenSkills: skills.proven.map((skill) => ({ ...skill })),
     learning: [...skills.learning],
+    ...privacyOf(record),
   };
 }
 
@@ -95,11 +106,13 @@ function directoryOrder(left: Match, right: Match): number {
  */
 export async function getNetwork(userId: string): Promise<NetworkView> {
   assertUserId(userId);
-  const [profiles, viewer, access, friendIds] = await Promise.all([
+  const [profiles, viewer, access, friendIds, friendRequests, pings] = await Promise.all([
     listProfiles(),
     computeSkills(userId),
     viewerAccess(),
     listFriendIds(userId),
+    listFriendRequests(userId),
+    listPings(userId),
   ]);
   const mine = profiles.find((profile) => profile.userId === userId && !profile.isDemo) ?? null;
   const viewerIn = mine !== null && isInNetwork(mine);
@@ -130,7 +143,24 @@ export async function getNetwork(userId: string): Promise<NetworkView> {
         return matchProfile(canMatch ? viewer : NO_SKILLS, skills, toPublicProfile(record, skills));
       }),
     );
-  const [friends, matches] = await Promise.all([matchAll(profiles.filter(isFriend)), matchAll(others)]);
+  const friendRecords = profiles.filter(isFriend);
+  const realOthers = others.filter((record) => !record.isDemo);
+  const [friendMatches, otherMatches, sent, courses] = await Promise.all([
+    matchAll(friendRecords),
+    matchAll(others),
+    mine ? outgoingRequestIds(userId, realOthers.map((record) => record.userId)) : Promise.resolve(new Set<string>()),
+    Promise.all(friendRecords.map((record) => friendCourses(record))),
+  ]);
+  const friends = friendMatches.map((match, index) => ({
+    ...match,
+    canPing: mine !== null && privacyOf(friendRecords[index]).allowPings,
+    courses: courses[index],
+  }));
+  const matches = otherMatches.map((match, index) => {
+    const record = others[index];
+    if (record.isDemo || !mine) return match;
+    return { ...match, canRequest: privacyOf(record).allowRequests, requestSent: sent.has(record.userId) };
+  });
   const { mentors, peers, rest } = canMatch ? groupMatches(matches) : { mentors: [], peers: [], rest: matches };
 
   return {
@@ -140,6 +170,8 @@ export async function getNetwork(userId: string): Promise<NetworkView> {
     mentors,
     peers,
     everyone: [...rest].sort(directoryOrder),
+    friendRequests,
+    pings,
     viewerHasMaps: viewer.hasMaps,
     signedIn: access.signedIn,
     signInRequired: access.signInRequired,
@@ -174,6 +206,15 @@ export async function setInNetwork(userId: string, inNetwork: boolean): Promise<
   return record ? toMyProfile(record, await computeSkills(userId)) : null;
 }
 
+/** Saves the friends and privacy settings. Needs a profile; never needs a sign-in. */
+export async function setPrivacySettings(
+  userId: string,
+  settings: Partial<PrivacySettings>,
+): Promise<MyProfileView> {
+  const record = await setPrivacy(userId, settings);
+  return toMyProfile(record, await computeSkills(userId));
+}
+
 /**
  * Deletes the viewer's profile, their friend links (both ways) and their invite link.
  * Never needs a sign-in, and deleting twice is fine.
@@ -181,6 +222,7 @@ export async function setInNetwork(userId: string, inNetwork: boolean): Promise<
 export async function leaveNetwork(userId: string): Promise<void> {
   assertUserId(userId);
   await deleteFriendData(userId);
+  await deleteSocialData(userId);
   await deleteProfile(userId);
 }
 

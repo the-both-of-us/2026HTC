@@ -25,6 +25,8 @@ const plain = (profile: PublicProfile): Match => ({
 const view = (overrides: Partial<NetworkView>): NetworkView => ({
   me: null,
   inNetwork: true,
+  friendRequests: [],
+  pings: [],
   friends: [],
   mentors: [],
   peers: [],

@@ -32,9 +32,31 @@ async function parse<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
   return result.data;
 }
 
-/** PATCH /api/network: `{inNetwork}`. */
-export function parseVisibilityBody(request: Request): Promise<{ inNetwork: boolean }> {
-  return parse(request, z.object({ inNetwork: z.boolean() }));
+export type SettingsBody = {
+  inNetwork?: boolean;
+  shareProgress?: boolean;
+  allowRequests?: boolean;
+  allowPings?: boolean;
+};
+
+/** PATCH /api/network: any of `{inNetwork, shareProgress, allowRequests, allowPings}`, at least one. */
+export function parseVisibilityBody(request: Request): Promise<SettingsBody> {
+  return parse(
+    request,
+    z
+      .object({
+        inNetwork: z.boolean().optional(),
+        shareProgress: z.boolean().optional(),
+        allowRequests: z.boolean().optional(),
+        allowPings: z.boolean().optional(),
+      })
+      .refine((body) => Object.values(body).some((value) => typeof value === "boolean")),
+  );
+}
+
+/** POST /api/network/requests and /api/network/pings: `{publicId}`. */
+export async function parsePublicIdBody(request: Request): Promise<{ publicId: string }> {
+  return parse(request, z.object({ publicId: z.string().min(1).max(100) }));
 }
 
 /** POST /api/network/invite: `{fresh?}`. An empty body is fine. */

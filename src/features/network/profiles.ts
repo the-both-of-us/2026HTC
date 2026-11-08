@@ -38,6 +38,10 @@ export async function saveProfile(userId: string, fields: CleanProfile, inNetwor
     isDemo: false,
     // Left out, an edit keeps the setting, and a new profile starts as friends only.
     inNetwork: inNetwork ?? existing?.inNetwork ?? false,
+    // Edits keep the friends and privacy settings.
+    ...(existing?.shareProgress !== undefined && { shareProgress: existing.shareProgress }),
+    ...(existing?.allowRequests !== undefined && { allowRequests: existing.allowRequests }),
+    ...(existing?.allowPings !== undefined && { allowPings: existing.allowPings }),
   };
   await putDoc(profileKey(userId), record);
   return record;

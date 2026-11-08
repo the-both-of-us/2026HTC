@@ -1,5 +1,5 @@
 /** Calls to the network API. Every failure becomes a sentence a person can act on. */
-import type { CleanProfile, InviteView, MyProfileView, NetworkView } from "../types";
+import type { CleanProfile, InviteView, MyProfileView, NetworkView, PrivacySettings } from "../types";
 
 export type Failure = { ok: false; message: string; status: number | null };
 export type Result<T> = ({ ok: true } & T) | Failure;
@@ -198,5 +198,91 @@ export function removeFriend(publicId: string): Promise<Result<object>> {
       timedOut: "Removing your friend took too long. Please try again.",
     },
     (body) => (field(body, "ok") === true ? {} : null),
+  );
+}
+
+const okBody = (body: unknown) => (field(body, "ok") === true ? {} : null);
+
+/** Sends a friend request, or accepts theirs if they already asked. */
+export function sendFriendRequest(publicId: string): Promise<Result<{ status: "sent" | "friends" }>> {
+  return request(
+    "/api/network/requests",
+    { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ publicId }) },
+    {
+      failed: "Your friend request could not be sent this time. Please try again.",
+      timedOut: "Sending your friend request took too long. Please try again.",
+    },
+    (body) => {
+      const status = field(body, "status");
+      return status === "sent" || status === "friends" ? { status } : null;
+    },
+  );
+}
+
+/** Accepts a friend request. */
+export function acceptFriendRequest(publicId: string): Promise<Result<object>> {
+  return request(
+    `/api/network/requests/${encodeURIComponent(publicId)}/accept`,
+    { method: "POST" },
+    {
+      failed: "The friend request could not be accepted this time. Please try again.",
+      timedOut: "Accepting the friend request took too long. Please try again.",
+    },
+    (body) => (typeof field(body, "friend") === "string" ? {} : null),
+  );
+}
+
+/** Declines a request to you, or cancels yours. */
+export function removeFriendRequest(publicId: string): Promise<Result<object>> {
+  return request(
+    `/api/network/requests/${encodeURIComponent(publicId)}`,
+    { method: "DELETE" },
+    {
+      failed: "The friend request could not be removed this time. Please try again.",
+      timedOut: "Removing the friend request took too long. Please try again.",
+    },
+    okBody,
+  );
+}
+
+/** Pings a friend. */
+export function pingFriend(publicId: string): Promise<Result<object>> {
+  return request(
+    "/api/network/pings",
+    { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ publicId }) },
+    {
+      failed: "Your ping could not be sent this time. Please try again.",
+      timedOut: "Sending your ping took too long. Please try again.",
+    },
+    okBody,
+  );
+}
+
+/** Dismisses a ping. */
+export function dismissPing(publicId: string): Promise<Result<object>> {
+  return request(
+    `/api/network/pings/${encodeURIComponent(publicId)}`,
+    { method: "DELETE" },
+    {
+      failed: "The ping could not be dismissed this time. Please try again.",
+      timedOut: "Dismissing the ping took too long. Please try again.",
+    },
+    okBody,
+  );
+}
+
+/** Saves one of the friends and privacy settings. */
+export function savePrivacy(settings: Partial<PrivacySettings>): Promise<Result<{ me: MyProfileView }>> {
+  return request(
+    "/api/network",
+    { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify(settings) },
+    {
+      failed: "Your setting could not be saved this time. Please try again.",
+      timedOut: "Saving your setting took too long. Please try again.",
+    },
+    (body) => {
+      const me = field(body, "me");
+      return isMyProfile(me) ? { me } : null;
+    },
   );
 }

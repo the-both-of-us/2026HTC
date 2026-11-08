@@ -1,6 +1,7 @@
 import { deleteFriendData } from "./friends";
 import { deleteProfile } from "./profiles";
 import { isUserId } from "./session";
+import { deleteSocialData } from "./social";
 
 /**
  * For "Delete my data": removes this person's network profile, their friend links (both
@@ -14,5 +15,6 @@ import { isUserId } from "./session";
 export async function deleteUserData(userId: string): Promise<{ profiles: number; friends: number }> {
   if (!isUserId(userId)) return { profiles: 0, friends: 0 };
   const { friends } = await deleteFriendData(userId);
+  await deleteSocialData(userId);
   return { profiles: (await deleteProfile(userId)) ? 1 : 0, friends };
 }

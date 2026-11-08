@@ -20,6 +20,11 @@ The UI is exported from `@/features/network/client`: `NetworkScreen` (`/people`)
 | `network/friends/<userId>/<friendUserId>` | `{since}`. Always written, and removed, for both people. |
 | `network/invites/<code>` | `{code, userId, createdAt}`, claimed with `claimDoc`. 12 random base32 characters (60 bits). Works for any number of friends until its owner makes a new one, which deletes it. |
 | `network/my-invite/<userId>` | `{code}`: the owner's current invite, so they get the same link back. |
+| `network/requests/<toUserId>/<fromUserId>` | `{since}`: a friend request waiting for an answer. Removed (both ways) on accept, decline or cancel. |
+| `network/pings/<toUserId>/<fromUserId>` | `{at}`: the latest ping, until the receiver dismisses it. |
+| `network/ping-sent/<fromUserId>/<toUserId>` | `{at}`: the last ping sent, so a dismissed ping still counts towards the once-an-hour limit. |
+
+Profiles also carry `shareProgress`, `allowRequests` and `allowPings` (missing means true): friends see my courses and progress; people in the network can send me friend requests; friends can ping me. Friends' courses (map title, proven of total, newest map first, at most 6) are worked out per request in `social.ts`, never stored, and never carry a map id.
 
 Skills are **never stored or typed**. They are worked out on each request from the person's own maps (`listMapsByOwner`) and progress (`getProgress`, then `deriveNodeStates`):
 
@@ -33,9 +38,14 @@ Everyone's skills are worked out afresh on every listing, so a skill proved a mo
 
 | Route | Does | Who |
 |---|---|---|
-| `GET /api/network` | `NetworkView`: `{me, inNetwork, friends, mentors, peers, everyone, viewerHasMaps, signedIn, signInRequired, displayName}`. Opted out: `mentors`, `peers` and `everyone` are empty and nobody else is read. | Anyone |
+| `GET /api/network` | `NetworkView`: `{me, inNetwork, friends, mentors, peers, everyone, friendRequests, pings, viewerHasMaps, signedIn, signInRequired, displayName}`. Opted out: `mentors`, `peers` and `everyone` are empty and nobody else is read. | Anyone |
 | `PUT /api/network` `{displayName, city?, lookingFor?, contactUrl?, inNetwork?}` | `{me}`: make or update your profile. `inNetwork` left out keeps the setting; a new profile starts opted out. | Signed in, once Auth0 is set up |
-| `PATCH /api/network` `{inNetwork}` | `{me}` (null with no profile): opt in or out | Opting in: a profile, and signed in once Auth0 is set up. Opting out: anyone. |
+| `PATCH /api/network` any of `{inNetwork, shareProgress, allowRequests, allowPings}` | `{me}` (null with no profile): opt in or out, and/or save the friends and privacy settings | Opting in: a profile, and signed in once Auth0 is set up. Opting out: anyone. Privacy settings: a profile. |
+| `POST /api/network/requests` `{publicId}` | `{status: "sent" \| "friends"}`: asks someone in the network; if they already asked you, you become friends at once. 403 when they turned requests off. | A profile, and signed in once Auth0 is set up |
+| `POST /api/network/requests/<publicId>/accept` | `{friend}`: accepts their request, 404 if there is none | A profile, and signed in once Auth0 is set up |
+| `DELETE /api/network/requests/<publicId>` | `{ok: true}`: declines theirs or cancels yours | Anyone. Twice is fine. |
+| `POST /api/network/pings` `{publicId}` | `{ok: true}`: pings a friend. 403 if not friends or they turned pings off, 429 within an hour of the last one. | A profile, and signed in once Auth0 is set up |
+| `DELETE /api/network/pings/<publicId>` | `{ok: true}`: dismisses their ping | Anyone. Twice is fine. |
 | `DELETE /api/network` | `{ok: true}`: deletes your profile, your friend links (both ways) and your invite | Anyone. Twice is fine. |
 | `POST /api/network/invite` `{fresh?}` | `{code}`: your invite for `/people/invite/<code>`, the same each time; `fresh` retires the old link | A profile, and signed in once Auth0 is set up |
 | `GET /api/network/invite/<code>` | `InviteView`: `{inviter: {displayName, city}, isYou, alreadyFriends, hasProfile, signInRequired, displayName}`, or 404 | Anyone |
@@ -43,7 +53,7 @@ Everyone's skills are worked out afresh on every listing, so a skill proved a mo
 | `DELETE /api/network/friends/<publicId>` | `{ok: true}`: removes that friend both ways | Anyone. Twice is fine. |
 | `GET /api/network/practise?skill=<title>` | 303 to that skill on the viewer's own map (`/map/<id>?skill=<nodeId>`), or to `/courses?q=<title>` if none of their maps has it | Anyone. Only the viewer's own maps are read, so a map id only reaches its owner, in a redirect. |
 
-Errors are `{error: "a sentence for people"}` with a 400, 401 or 500. Raw errors only go to the server log, prefixed `[network]`.
+Errors are `{error: "a sentence for people"}` with a 400, 401, 403, 404, 429 or 500. Raw errors only go to the server log, prefixed `[network]`.
 
 Every profile leaves the server through `toPublicProfile` (field by field) or `toMyProfile`. No response carries a user id, an owner id or a map id: `src/app/api/network/routes.test.ts` checks every body.
 
@@ -84,6 +94,7 @@ Six made-up people (`demo.ts`) whose skills are titles from the three sample map
 ## Files
 
 - `network.ts`: the view, join and leave. `matching.ts`: title matching and scoring, as plain functions. `skills.ts`: skills from maps and progress. `demo.ts`: the demo profiles.
+- `social.ts`: friend requests, pings, friends' courses and the privacy settings. `ui/FriendsPrivacySettings.tsx`: the "Friends and privacy" section of /settings.
 - `profiles.ts`: profile store reads and writes. `friends.ts`: friend links and invite codes. `rules.ts`: field checks. `session.ts`: the sign-in seam. `http.ts`: request parsing and error responses. `deleteData.ts`: "Delete my data".
 - `ui/api.ts`: fetch helpers that turn every failure into a sentence. `ui/view.ts`: labels, as plain functions. `ui/NetworkScreen.tsx`: the page. `ui/FriendInvite.tsx`: the invite link and QR dialog. `ui/InviteScreen.tsx`: the invite page.
 

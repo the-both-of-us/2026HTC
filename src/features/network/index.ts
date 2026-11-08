@@ -3,7 +3,7 @@ import "server-only";
 /** Server code for the network. Client components are exported from client.ts. */
 export { deleteUserData } from "./deleteData";
 export { NetworkError } from "./errors";
-export { networkErrorResponse, parseAcceptBody, parseInviteBody, parseProfileBody, parseVisibilityBody } from "./http";
+export { networkErrorResponse, parseAcceptBody, parseInviteBody, parseProfileBody, parsePublicIdBody, parseVisibilityBody } from "./http";
 export {
   acceptInvite,
   createInvite,
@@ -14,6 +14,8 @@ export {
   leaveNetwork,
   removeFriend,
   setInNetwork,
+  setPrivacySettings,
 } from "./network";
+export { acceptFriendRequest, dismissPing, pingFriend, removeFriendRequest, sendFriendRequest } from "./social";
 export { findCoursesHref, findPractiseLink } from "./practise";
-export type { InviteView, Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "./types";
+export type { FriendCourse, FriendRequestView, InviteView, PingView, PrivacySettings, Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "./types";

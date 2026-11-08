@@ -29,6 +29,12 @@ export type ProfileRecord = {
    * only). Demo profiles are always in the network, whatever this says.
    */
   inNetwork?: boolean;
+  /** Friends see my courses and progress. Missing means true. */
+  shareProgress?: boolean;
+  /** People in the network may send me friend requests. Missing means true. */
+  allowRequests?: boolean;
+  /** Friends may ping me. Missing means true. */
+  allowPings?: boolean;
   /**
    * Demo profiles only: their made-up skills, written by the seed (never by a person).
    * Real profiles never have this; their skills are worked out from their progress.
@@ -75,7 +81,27 @@ export type Match = {
   sharedProven: string[];
   /** The same, in words: "Proved SQL joins, which you're learning." */
   reasons: string[];
+  /** Network cards: the viewer may send a friend request (real, not a friend, allows requests). */
+  canRequest?: boolean;
+  /** Network cards: the viewer already asked and is waiting. */
+  requestSent?: boolean;
+  /** Friend cards: the friend allows pings. */
+  canPing?: boolean;
+  /** Friend cards: what they are studying, or null when they don't share it. */
+  courses?: FriendCourse[] | null;
 };
+
+/** One course a friend is studying. Never a map id. */
+export type FriendCourse = { title: string; proven: number; total: number };
+
+/** The three per-person settings. Missing on a profile means true. */
+export type PrivacySettings = { shareProgress: boolean; allowRequests: boolean; allowPings: boolean };
+
+/** A friend request waiting for the viewer. */
+export type FriendRequestView = { publicId: string; displayName: string; city: string; since: string };
+
+/** A ping from a friend, until the viewer dismisses it. */
+export type PingView = { publicId: string; displayName: string; at: string };
 
 /** The viewer's own profile. */
 export type MyProfileView = {
@@ -90,7 +116,7 @@ export type MyProfileView = {
   inNetwork: boolean;
   provenSkills: ProvenSkill[];
   learning: string[];
-};
+} & PrivacySettings;
 
 /** What GET /api/network returns. */
 export type NetworkView = {
@@ -108,6 +134,10 @@ export type NetworkView = {
    * the viewer also proved come first, with that reason; then real people, then demo profiles.
    */
   everyone: Match[];
+  /** Friend requests waiting for the viewer, newest first. */
+  friendRequests: FriendRequestView[];
+  /** Pings from friends, newest first. */
+  pings: PingView[];
   viewerHasMaps: boolean;
   signedIn: boolean;
   /** True when the viewer must sign in before joining (Auth0 is set up and they are a guest). */
