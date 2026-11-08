@@ -8,7 +8,7 @@ import { ShareProofButton } from "@/features/proof/client";
 import { ProofReward, RelightCheck, StreakNudge, useMapHabits, type ProofRewardData } from "@/features/streaks/client";
 import { FinalInterview } from "@/features/teachback/client";
 import clsx from "clsx";
-import { BookOpen, Compass, Network, Sparkles } from "lucide-react";
+import { BookOpen, Compass, Lock, Network, Sparkles, Upload } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
@@ -202,6 +202,7 @@ function LoadedMap({
 
   const states = useMemo(() => deriveNodeStates(map, { proven }), [map, proven]);
   const provenCount = map.nodes.filter((node) => states[node.id] === "proven").length;
+  const allProven = map.nodes.length > 0 && provenCount === map.nodes.length;
   const selected = map.nodes.find((node) => node.id === selectedId) ?? null;
   const nextSkill = map.nodes.find((node) => states[node.id] === "available") ?? null;
   const featured = map.nodes.find((node) => node.id === habits?.topicOfTheDay) ?? null;
@@ -259,31 +260,47 @@ function LoadedMap({
   return (
     <PageShell width="full">
       <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
-        {banner}
-        {/* Side by side only on wide screens: the title, streak line and actions each need room. */}
-        <header className="flex flex-col gap-3 border-b border-rule px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 flex-1 items-center gap-4">
-            <TopicBadge title={map.title} />
-            <div className="min-w-0">
+        {/* The circle line stays one slim row, so the map keeps the height. */}
+        {banner && <div className="[&>p]:py-1.5">{banner}</div>}
+        {/*
+          Two short rows: the title with its progress and the actions, then the streak, today's
+          topic and the final interview beside the view tabs. Everything else is one click away.
+        */}
+        <header className="flex flex-col gap-2 border-b border-rule px-4 pt-2.5 sm:px-6">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="min-w-0 flex-1 basis-72">
               {map.program && <ProgramCrumb program={map.program} proven={provenCount} total={map.nodes.length} />}
-              <div className="flex items-baseline gap-3">
-                <h1 className="line-clamp-2 min-w-0 text-xl leading-tight font-medium break-words sm:text-2xl" title={map.title}>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <h1 className="line-clamp-2 min-w-0 text-xl leading-tight font-medium break-words" title={map.title}>
                   {map.title}
                 </h1>
-                {map.subtitle && (
-                  <p className="hidden truncate text-sm text-ink-soft md:block">{map.subtitle}</p>
-                )}
+                {map.subtitle && <p className="hidden truncate text-sm text-ink-soft xl:block">{map.subtitle}</p>}
+                <Progress proven={provenCount} total={map.nodes.length} />
               </div>
-              {/* A topic has no source, so say plainly where the map came from. */}
-              {map.sourceKind === "topic" && (
-                <Badge tone="sample" className="mt-1 text-xs">
-                  AI-generated from a topic, with no citations
-                </Badge>
+            </div>
+            {/* Compact buttons with one primary: the next skill. */}
+            <div className="flex flex-wrap items-center gap-2 [&>button]:min-h-9! [&>button]:px-3! [&>button]:text-sm!">
+              <HowItWorksButton />
+              {isOwner && (
+                <>
+                  {ownerActions}
+                  <PublishMenu mapId={map.id} />
+                  {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
+                  {nextSkill && (
+                    <Button size="sm" onClick={() => selectSkill(nextSkill.id)} className="grow sm:grow-0">
+                      <Sparkles aria-hidden="true" size={16} />
+                      {provenCount === 0 ? "Start learning" : "Next skill"}
+                    </Button>
+                  )}
+                </>
               )}
-              <Progress proven={provenCount} total={map.nodes.length} />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 pb-2 text-sm">
               {isOwner && habits && (
                 <StreakNudge
-                  className="mt-2"
                   streak={habits.streak}
                   topicOfTheDay={
                     featured && states[featured.id] === "available"
@@ -292,34 +309,34 @@ function LoadedMap({
                   }
                 />
               )}
+              {isOwner && !allProven && (
+                <p className="inline-flex min-h-8 items-center gap-1.5 text-ink-soft" title="The final interview unlocks when every topic is proven.">
+                  <Lock aria-hidden="true" size={14} className="shrink-0" />
+                  <span>
+                    <span className="text-ink">Final interview</span>{" "}
+                    <span className="tabular-nums">in {map.nodes.length - provenCount}</span>
+                    <span className="sr-only"> topics: it unlocks when every topic is proven</span>
+                  </span>
+                </p>
+              )}
+              {/* A topic has no source, so say plainly where the map came from. */}
+              {map.sourceKind === "topic" && (
+                <Badge tone="sample" className="text-xs">
+                  AI-generated from a topic, with no citations
+                </Badge>
+              )}
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 lg:max-w-[50%] lg:justify-end">
-            <HowItWorksButton />
-            {isOwner && (
-              <>
-                {ownerActions}
-                <PublishCourseButton mapId={map.id} />
-                {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
-                {nextSkill && (
-                  <Button onClick={() => selectSkill(nextSkill.id)} className="grow sm:grow-0">
-                    <Sparkles aria-hidden="true" size={17} />
-                    {provenCount === 0 ? "Start learning" : "Next skill"}
-                  </Button>
-                )}
-              </>
-            )}
+            <div className="-mx-4 flex items-center gap-3 sm:mx-0">
+              {map.energyRelated && <LiveGridStrip className="hidden lg:flex" />}
+              <ViewTabs view={view} onChange={setView} />
+            </div>
           </div>
         </header>
 
-        {isOwner && (
+        {/* Once every topic is proven the final interview needs room, so it gets its own strip. */}
+        {isOwner && allProven && (
           <FinalInterview mapId={map.id} provenCount={provenCount} topicCount={map.nodes.length} voiceReady={voiceReady} />
         )}
-
-        <div className="flex items-center justify-between border-b border-rule">
-          <ViewTabs view={view} onChange={setView} />
-          {map.energyRelated && <LiveGridStrip className="hidden lg:flex" />}
-        </div>
 
         <div className="relative flex min-h-[60dvh] flex-1 lg:min-h-0">
           <div
@@ -401,21 +418,18 @@ function LoadedMap({
   );
 }
 
-/** A tile with the map's initials: "Data Analyst, Grid" becomes "DA". */
-function TopicBadge({ title }: { title: string }) {
-  const initials = title
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word.charAt(0).toUpperCase())
-    .join("");
-
+/** Publishing is occasional, so it sits behind one small button instead of a sentence in the header. */
+function PublishMenu({ mapId }: { mapId: string }) {
   return (
-    <span
-      aria-hidden="true"
-      className="flex size-13 shrink-0 items-center justify-center rounded-sheet border border-amber/50 bg-amber/10 text-lg font-semibold text-ink"
-    >
-      {initials}
-    </span>
+    <details className="relative">
+      <summary className={clsx(buttonClasses("subtle", "sm"), "min-h-9! list-none px-3! [&::-webkit-details-marker]:hidden")}>
+        <Upload aria-hidden="true" size={15} />
+        Publish
+      </summary>
+      <div className="absolute top-full right-0 z-30 mt-1.5 w-80 max-w-[calc(100vw-2rem)] rounded-control border border-rule-strong bg-sheet p-3.5 shadow-panel">
+        <PublishCourseButton mapId={mapId} />
+      </div>
+    </details>
   );
 }
 
@@ -423,8 +437,8 @@ function Progress({ proven, total }: { proven: number; total: number }) {
   const percent = total === 0 ? 0 : (proven / total) * 100;
 
   return (
-    <div className="mt-2 flex items-center gap-3">
-      <div aria-hidden="true" className="h-1.5 w-32 overflow-hidden rounded-full bg-rule-strong sm:w-48">
+    <div className="flex items-center gap-2.5">
+      <div aria-hidden="true" className="h-1.5 w-28 overflow-hidden rounded-full bg-rule-strong sm:w-36">
         <div className="progress-fill h-full rounded-full bg-proven" style={{ width: `${percent}%` }} />
       </div>
       <p role="status" className="text-sm text-ink-soft tabular-nums">
@@ -464,7 +478,7 @@ function ViewTabs({ view, onChange }: { view: View; onChange: (view: View) => vo
       role="tablist"
       aria-label="How to show the skills"
       onKeyDown={handleKeyDown}
-      className="flex gap-1 px-2 sm:px-4"
+      className="flex gap-1 px-2 sm:px-0"
     >
       {TABS.map(({ view: tab, label, icon: Icon }) => (
         <button
@@ -477,7 +491,7 @@ function ViewTabs({ view, onChange }: { view: View; onChange: (view: View) => vo
           tabIndex={view === tab ? 0 : -1}
           onClick={() => onChange(tab)}
           className={clsx(
-            "-mb-px flex min-h-11 cursor-pointer items-center gap-2 border-b-2 px-3.5 text-[0.9375rem] transition-control focus-visible:-outline-offset-2",
+            "-mb-px flex min-h-11 lg:min-h-10 cursor-pointer items-center gap-2 border-b-2 px-3.5 text-[0.9375rem] transition-control focus-visible:-outline-offset-2",
             view === tab
               ? "border-accent bg-accent/8 font-medium text-ink"
               : "border-transparent text-ink-soft hover:text-ink",

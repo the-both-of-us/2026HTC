@@ -26,8 +26,10 @@ import { JobAsksTag, SkillNodeView, type SkillFlowNode } from "./SkillNodeView";
 const LARGE_SCREEN = "(min-width: 1024px)";
 const PHONE_SCREEN = "(max-width: 640px)";
 const PAN_MS = 400;
-/** Below this zoom a card's words are too small to read. */
-const MIN_READABLE_ZOOM = 0.6;
+/** Below this zoom a card's words read under 14px, so the map opens at full size instead. */
+const MIN_READABLE_ZOOM = 0.93;
+/** Room above the top row when the map opens at full size. */
+const TOP_GAP = 28;
 
 /** Keeps the whole map clear of the legend and overview at the bottom and the zoom buttons on the left. */
 const FIT_VIEW = {
@@ -172,9 +174,14 @@ function Canvas({
     const first =
       layout.nodes.find((placed) => states[placed.id] === "available") ?? layout.nodes[0];
     if (phone && first) flow.setCenter(first.x + NODE_WIDTH / 2, first.y + NODE_HEIGHT / 2, { zoom: 1 });
-    // On a large screen the map runs downwards, so put that skill near the top with the rest below.
-    const height = containerRef.current?.clientHeight ?? 0;
-    if (!phone && first) flow.setCenter(first.x + NODE_WIDTH / 2, first.y + (height / 2 - 48) / 0.85, { zoom: 0.85 });
+    // On a large screen the map runs downwards: show the row above that skill (what it builds
+    // on) at the top, the skill centred across, and the rest below, at full size.
+    const width = containerRef.current?.clientWidth ?? 0;
+    if (!phone && first) {
+      const above = layout.nodes.reduce((top, placed) => (placed.y < first.y ? Math.max(top, placed.y) : top), -Infinity);
+      const topY = Number.isFinite(above) ? above : first.y;
+      flow.setViewport({ x: width / 2 - (first.x + NODE_WIDTH / 2), y: TOP_GAP - topY, zoom: 1 });
+    }
     // Only when the map first appears: later progress must not move the view.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
