@@ -20,13 +20,17 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
 **From Mirza to Abdu (Sat late night): please deploy `be23fb1` (like and dislike on a skill's videos).**
-- [ ] New `POST /api/reels/vote`. Votes are one key each at `skill-reel-votes/<topicKey>/<videoId>/<up|down>/<userId>`.
-- [ ] I added one line to your `trust/deleteData.ts`: `await deleteReelVotes(userId)` after `deleteFeedData`, so "Delete my data" removes votes.
-- [ ] FYI: your `MapScreen` closes the panel on any Escape that reaches `window`, even one meant for a `<dialog>` on the panel. My video viewer now stops its own Escape; `MapActions` already checks for `dialog[open]`, and the same check in `MapScreen` would protect any future dialog.
+- [x] New `POST /api/reels/vote`. Votes are one key each at `skill-reel-votes/<topicKey>/<videoId>/<up|down>/<userId>`.
+- [x] I added one line to your `trust/deleteData.ts`: `await deleteReelVotes(userId)` after `deleteFeedData`, so "Delete my data" removes votes.
+- [x] FYI: your `MapScreen` closes the panel on any Escape that reaches `window`, even one meant for a `<dialog>` on the panel. My video viewer now stops its own Escape; `MapActions` already checks for `dialog[open]`, and the same check in `MapScreen` would protect any future dialog.
+
+**Update:** live on production (pushes to main now auto-deploy), checked Sun Nov 8.
 
 **From Mirza to Abdu (Sat late night): please deploy `3e29d2e` (reels relevance fix).**
-- [ ] On production, "Programming basics" in the Junior Backend Developer course got "Junior vs Senior developer" clips. The search now leaves out a job posting's role title, and a video must mention the skill itself (hashtags don't count).
-- [ ] Lists saved by the old search carry no version, so they're looked up again on their next open. No data cleanup is needed.
+- [x] On production, "Programming basics" in the Junior Backend Developer course got "Junior vs Senior developer" clips. The search now leaves out a job posting's role title, and a video must mention the skill itself (hashtags don't count).
+- [x] Lists saved by the old search carry no version, so they're looked up again on their next open. No data cleanup is needed.
+
+**Update:** live on production (pushes to main now auto-deploy), checked Sun Nov 8.
 
 **From Mirza to Abdu (Sat late night), FYI: Shorts inside each skill (new `reels` feature, mine).** At the owner's request, the Read tab ends with "Quick videos": up to 4 portrait YouTube Shorts of 90 s or less about that skill, opening over the page in the feed's player. Storage is one list per skill at `skill-reels/<topicKey>`, keyed by a hash of map title, skill id, skill title and audience rather than the map id, so a course and every learner's copy share one document and one search (made when the skill is first opened, never at map build; 30 days fresh, 3 for an empty list, at most one search an hour per list). `reels/README.md` has the details. Small touches in your code:
 - The feed's Short player moved to `src/shared/ui/ShortPlayer.tsx` (with `ShortThumbnail`), and `FeedScreen.tsx` now uses it. The feed behaves the same; I re-ran my browser checks.
