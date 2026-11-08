@@ -10,6 +10,7 @@ import { TopBarSignIn } from "./Account";
 // Plain words, no icons, as in Seal. Mirza adds his pages' links here when they are ready.
 const NAV_ITEMS = [
   { href: "/", label: "Build" },
+  { href: "/feed", label: "For you" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/courses", label: "Courses" },
   { href: "/review", label: "Review" },

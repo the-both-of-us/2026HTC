@@ -1,5 +1,6 @@
 import { deleteCircleData } from "@/features/circles";
 import { isPublished, unpublishCourse } from "@/features/courses";
+import { deleteFeedData } from "@/features/feed";
 import { deleteGridSolves } from "@/features/grid";
 import { deleteLessonsForMaps } from "@/features/lessons";
 import { deleteUserData as deleteNetworkProfile } from "@/features/network";
@@ -60,6 +61,7 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
   const gridAnswers = await deleteGridSolves(userId);
   const { reviewRecords } = await deleteReviewData(userId);
   await deleteStreak(userId);
+  await deleteFeedData(userId);
   // Before the maps, so no circle points at a map that is gone.
   const { memberships } = await deleteCircleData(userId);
   await deleteProgramsByOwner(userId);

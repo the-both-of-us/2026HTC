@@ -1,0 +1,58 @@
+{
+  "sampleId": "data-analyst-grid",
+  "generatedAt": "2026-11-08T03:37:08.758Z",
+  "output": {
+    "cards": [
+      {
+        "nodeId": "relational-database-basics",
+        "title": "Primary Keys Prevent Duplicate Rows",
+        "body": "A primary key uniquely identifies each record, so duplicate rows cannot be inserted. When designing historian tables, choose a column that never changes, like a timestamp combined with an identifier. This makes joins reliable."
+      },
+      {
+        "nodeId": "python-basics",
+        "title": "List Comprehensions Reduce Loop Code",
+        "body": "A list comprehension builds a new list in a single line, replacing a for‑loop that appends items. Example: squares = [x*x for x in range(10)]. This pattern speeds up data‑processing scripts."
+      },
+      {
+        "nodeId": "time-series-fundamentals",
+        "title": "Regular Intervals Simplify Aggregation",
+        "body": "Time‑series records stored at consistent intervals (hourly or five‑minute) allow simple arithmetic aggregation. Summing five‑minute values yields the hourly total without extra alignment steps. Irregular intervals require interpolation before aggregation."
+      },
+      {
+        "nodeId": "sql-queries",
+        "title": "WHERE Narrows Rows Early",
+        "body": "A WHERE condition keeps only the rows you ask for, such as last month's records. Fewer rows means less to join, sort and sum. Many databases already move a filter ahead of a join on their own, but writing it plainly still makes the query easier to read."
+      },
+      {
+        "nodeId": "sql-joins",
+        "title": "Outer Join Preserves Missing Records",
+        "body": "A left outer join returns all rows from the left table, even if there is no matching row on the right. Use it when combining hourly and five‑minute tables to keep hours that lack five‑minute data. Missing values appear as NULL and can be filled later."
+      },
+      {
+        "nodeId": "pandas-data-manipulation",
+        "title": "Vectorized Operations Speed Up Calculations",
+        "body": "Pandas applies arithmetic to whole columns without explicit loops, which is called vectorization. Calculating load differences with df['diff'] = df['load'].diff() runs faster than iterating row by row. Leverage built‑in functions for efficient data cleaning."
+      },
+      {
+        "nodeId": "data-cleaning-time-series",
+        "title": "Detect Gaps With Timestamp Differences",
+        "body": "Subtracting consecutive timestamps reveals missing intervals; a gap larger than the expected step indicates absent data. Replace gaps with interpolated values or flag them for review. This ensures continuity before forecasting."
+      },
+      {
+        "nodeId": "power-bi-dashboard-development",
+        "title": "Bookmarks Enable Storytelling Views",
+        "body": "Power BI bookmarks capture the current filter and visual state, allowing you to jump between predefined perspectives. Create a bookmark for peak‑load view and another for outage summary. Users can navigate the dashboard like a slideshow."
+      },
+      {
+        "nodeId": "load-forecast-evaluation",
+        "title": "Mean Absolute Error Shows Average Miss",
+        "body": "Mean absolute error (MAE) adds the absolute differences between forecast and actual loads and divides by the number of points. It expresses the typical error in the same units as load, making it intuitive. Compare MAE across models to pick the most accurate one."
+      },
+      {
+        "nodeId": "grid-supply-demand-basics",
+        "title": "Balancing Requires Real‑Time Measurement",
+        "body": "Supply‑demand balance is maintained by matching generation output to instantaneous load. Operators monitor frequency; a deviation signals an imbalance that must be corrected within seconds. Understanding this feedback loop informs analysis of outage impacts."
+      }
+    ]
+  }
+}

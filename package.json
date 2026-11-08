@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "cache-samples": "tsx --conditions=react-server scripts/cache-samples.ts",
+    "cache-feed": "tsx --conditions=react-server scripts/cache-feed.ts",
     "eval": "tsx --conditions=react-server scripts/eval-grading.ts"
   },
   "dependencies": {

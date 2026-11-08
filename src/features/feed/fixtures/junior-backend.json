@@ -1,0 +1,58 @@
+{
+  "sampleId": "junior-backend",
+  "generatedAt": "2026-11-08T03:37:25.423Z",
+  "output": {
+    "cards": [
+      {
+        "nodeId": "programming-basics",
+        "title": "Variables Hold Mutable Data",
+        "body": "In most languages a variable is a name bound to a value that can change over time. Understanding the difference between mutable and immutable objects prevents unexpected side effects. For backend logic, prefer immutable data when possible to simplify reasoning."
+      },
+      {
+        "nodeId": "git-basics",
+        "title": "Commit Often, Describe Clearly",
+        "body": "Frequent small commits let you isolate changes and roll back easily. A good commit message explains what changed and why, making collaboration smoother. Avoid large, unrelated changes in a single commit."
+      },
+      {
+        "nodeId": "javascript-basics",
+        "title": "Asynchronous Code Uses Event Loop",
+        "body": "JavaScript handles non‑blocking operations via an event loop that processes callbacks after the current stack finishes. Promises and async/await are syntactic tools that schedule work on this loop. Blocking the loop with heavy computation stalls all requests."
+      },
+      {
+        "nodeId": "nodejs-typescript",
+        "title": "TypeScript Adds Compile‑Time Checks",
+        "body": "TypeScript extends JavaScript with static typing, catching mismatched types before the code runs. The compiler translates TypeScript into plain JavaScript that Node.js can execute. Declaring interfaces for request objects prevents runtime shape errors."
+      },
+      {
+        "nodeId": "http-fundamentals",
+        "title": "Status Codes Communicate Result",
+        "body": "HTTP status codes like 200, 404, and 500 tell the client whether a request succeeded, not found, or failed on the server. Use 201 for newly created resources and 204 when the response body is intentionally empty. Consistent codes improve API consumer experience."
+      },
+      {
+        "nodeId": "rest-api-design",
+        "title": "Resources, Not Actions, Define Endpoints",
+        "body": "REST APIs model nouns—such as invoices or payments—rather than verbs. Use plural nouns in URLs (e.g., /invoices) and standard methods (GET, POST) to manipulate them. This convention makes APIs predictable and easier to navigate."
+      },
+      {
+        "nodeId": "postgresql-db",
+        "title": "Schemas Organize Database Objects",
+        "body": "PostgreSQL lets you group tables, views, and functions into schemas, providing a namespace for logical separation. Default schema is public, but you can create custom schemas for different domains. Schemas help avoid name collisions in larger projects."
+      },
+      {
+        "nodeId": "sql-queries",
+        "title": "GROUP BY Aggregates Rows Efficiently",
+        "body": "The GROUP BY clause groups rows sharing column values, letting you compute aggregates like SUM or COUNT per group. Combine it with HAVING to filter groups based on aggregate conditions. Proper grouping reduces the need for multiple queries."
+      },
+      {
+        "nodeId": "database-indexing",
+        "title": "Indexes Speed Up Lookups",
+        "body": "An index creates a sorted structure on one or more columns, allowing the database to locate matching rows without scanning the whole table. Use indexes on columns frequently used in WHERE or JOIN clauses. Too many indexes can slow writes, so choose them wisely."
+      },
+      {
+        "nodeId": "automated-testing",
+        "title": "Unit Tests Guard Against Regressions",
+        "body": "A unit test verifies a small piece of code behaves as expected in isolation. When a test suite runs automatically on every change, it catches regressions early. Keep tests focused and fast to maintain developer productivity."
+      }
+    ]
+  }
+}
