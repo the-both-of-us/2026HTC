@@ -1,4 +1,5 @@
 import { chatJSON, type RouteName } from "@/features/ai";
+import { tierFor } from "@/features/settings";
 import { isPublished } from "@/features/courses";
 import { isNodeLockedFor } from "@/features/teachback";
 import { getSkillMap } from "@/features/skill-map";
@@ -101,17 +102,19 @@ export async function getOrCreateFlashcards(
   const pending = inFlight.get(key);
   if (pending) return pending;
 
-  const task = loadOrGenerate(key, map, node).finally(() => {
+  const task = loadOrGenerate(key, map, node, viewerId).finally(() => {
     if (inFlight.get(key) === task) inFlight.delete(key);
   });
   inFlight.set(key, task);
   return task;
 }
 
-async function loadOrGenerate(key: string, map: SkillMap, node: SkillNode): Promise<Flashcard[]> {
+async function loadOrGenerate(key: string, map: SkillMap, node: SkillNode, viewerId: string): Promise<Flashcard[]> {
   const saved = await readSaved(key);
   if (saved) return saved;
 
+  // The model router: the map's rating and this learner's settings. At most Haiku on Auto.
+  const tier = await tierFor("flashcards", viewerId, map.rating);
   const raw = await withDeadline(
     chatJSON({
       label: "flashcards",
@@ -121,6 +124,7 @@ async function loadOrGenerate(key: string, map: SkillMap, node: SkillNode): Prom
       maxTokens: 2000,
       timeoutMs: REQUEST_TIMEOUT_MS,
       preferredRoute: PREFERRED_ROUTE,
+      tier,
     }),
   );
   const items = validateDeck(raw, map.id, node);

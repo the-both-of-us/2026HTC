@@ -10,4 +10,9 @@ export type Lesson = {
   checks: { question: string; answer: string }[];
   /** Computed by code from the word count, at 200 words a minute. */
   readingMinutes: number;
+  /** Which model wrote it and how long that took. Absent on sample lessons and ones saved before this existed. */
+  writtenBy?: WrittenBy;
 };
+
+/** "Claude Sonnet" or "gpt-oss-120b", and the milliseconds the model call took. */
+export type WrittenBy = { model: string; ms: number };

@@ -15,6 +15,9 @@ import {
   type RawSkillMap,
 } from "./prompt";
 import { getSkillMap, toPublicMap } from "./storage";
+import { rawMapSchema, rawPdfMapSchema, rawTopicMapSchema } from "./prompt";
+import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
+import { z } from "zod";
 
 vi.mock("@/features/ai", () => ({ chatJSON: vi.fn() }));
 
@@ -240,5 +243,55 @@ describe("topic maps", () => {
     for (const system of [PDF_SYSTEM_PROMPT, TOPIC_SYSTEM_PROMPT]) {
       expect(system).not.toMatch(/posting|this job|company/i);
     }
+  });
+});
+
+describe("course rating for the model router", () => {
+  const topicReply = {
+    isTopic: true,
+    title: "Medication dosage",
+    nodes: ["units", "weight", "rates", "checks", "errors"].map((id, index, ids) =>
+      rawNode(id, { prerequisites: index ? [ids[index - 1]] : [] }),
+    ),
+  };
+
+  it("asks for difficulty and stakes through the schema, so the prompts stay byte for byte the same", () => {
+    for (const schema of [rawMapSchema, rawPdfMapSchema, rawTopicMapSchema]) {
+      const json = z.toJSONSchema(schema, { io: "input", unrepresentable: "any" }) as {
+        properties: Record<string, { description?: string }>;
+        required?: string[];
+      };
+      expect(json.properties.difficulty.description).toMatch(/1 easy.*3 advanced/);
+      expect(json.properties.stakes.description).toMatch(/medication/);
+      expect(json.required ?? []).not.toContain("stakes");
+    }
+  });
+
+  it("saves the model's rating on the map, clamped, and picks the outline's model from a guess", async () => {
+    vi.mocked(chatJSON).mockResolvedValue({ ...topicReply, difficulty: 2, stakes: 5 });
+
+    const map = await generateSkillMap({ text: "Medication dosage", kind: "topic", ownerId: "owner-1" });
+
+    expect(map.rating).toEqual({ difficulty: 2, stakes: 3 });
+    // The guess before the call: medication is high stakes, so the outline goes to Sonnet.
+    expect(vi.mocked(chatJSON).mock.calls[0][0]).toMatchObject({ tier: 3 });
+    expect((await getSkillMap(map.id))?.rating).toEqual({ difficulty: 2, stakes: 3 });
+  });
+
+  it("keeps an everyday topic's outline on tier 1, and uses the guess when the reply has no rating", async () => {
+    vi.mocked(chatJSON).mockResolvedValue({ ...topicReply, title: "SQL window functions" });
+
+    const map = await generateSkillMap({ text: "SQL window functions", kind: "topic", ownerId: "owner-1" });
+
+    expect(vi.mocked(chatJSON).mock.calls[0][0]).toMatchObject({ tier: 1 });
+    expect(map.rating).toEqual({ difficulty: 2, stakes: 2 });
+  });
+
+  it("rates a sample posting with no model call", async () => {
+    const map = await generateSkillMap({ text: SAMPLE_POSTINGS[0].text, kind: "posting", ownerId: "owner-1" });
+
+    expect(chatJSON).not.toHaveBeenCalled();
+    expect(map.rating?.difficulty).toBeGreaterThanOrEqual(1);
+    expect(map.rating?.stakes).toBeGreaterThanOrEqual(1);
   });
 });

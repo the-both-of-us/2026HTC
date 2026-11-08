@@ -1,6 +1,7 @@
 import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
 import { audienceKey } from "@/shared/audience";
+import { tierFor } from "@/features/settings";
 import { isNodeLockedFor } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
 import { deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
@@ -10,8 +11,11 @@ import { askModelForLesson } from "./generate";
 import type { Lesson } from "./types";
 import { toLesson } from "./validate";
 
-/** The whole model call gives up after this, inside the route's 60 second maxDuration. */
-export const GENERATION_DEADLINE_MS = 50_000;
+/**
+ * The whole model call gives up after this, inside the route's 120 second maxDuration. Long
+ * enough for a slow Claude model to time out and the normal chain to still answer.
+ */
+export const GENERATION_DEADLINE_MS = 100_000;
 
 /** What is stored at lessons/<mapId>/<nodeId>, or lessons/<mapId>/<nodeId>/<audience> for a map pitched at one. */
 type SavedLesson = { lesson: Lesson; createdAt: string };
@@ -53,19 +57,27 @@ export async function getOrCreateLesson(mapId: string, nodeId: string, viewerId:
   const pending = inFlight.get(key);
   if (pending) return pending;
 
-  const task = loadOrGenerate(key, map, node).finally(() => {
+  const task = loadOrGenerate(key, map, node, viewerId).finally(() => {
     if (inFlight.get(key) === task) inFlight.delete(key);
   });
   inFlight.set(key, task);
   return task;
 }
 
-async function loadOrGenerate(key: string, map: SkillMap, node: SkillNode): Promise<Lesson> {
+/** The model is picked for whoever opens the skill first: their settings and the map's rating. */
+async function loadOrGenerate(key: string, map: SkillMap, node: SkillNode, viewerId: string): Promise<Lesson> {
   const saved = await getDoc<SavedLesson>(key);
   if (saved?.lesson) return saved.lesson;
 
-  const raw = findSampleLesson(map, node) ?? (await withDeadline(askModelForLesson(map, node)));
-  const lesson = toLesson(raw);
+  const sample = findSampleLesson(map, node);
+  if (sample) return save(key, toLesson(sample));
+
+  const tier = await tierFor("lesson", viewerId, map.rating);
+  const { raw, writtenBy } = await withDeadline(askModelForLesson(map, node, tier));
+  return save(key, writtenBy ? { ...toLesson(raw), writtenBy } : toLesson(raw));
+}
+
+async function save(key: string, lesson: Lesson): Promise<Lesson> {
   await putDoc(key, { lesson, createdAt: new Date().toISOString() } satisfies SavedLesson);
   return lesson;
 }

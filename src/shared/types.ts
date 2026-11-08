@@ -56,7 +56,15 @@ export type SkillMap = {
    * means a general or adult learner. Lessons, teach-back, flashcards and quiz should pitch at it.
    */
   audience?: string;
+  /**
+   * How hard the course is and how much factual accuracy matters, rated when it was built.
+   * The model router uses it to pick a model per task. Absent on older maps, which count as 2 and 2.
+   */
+  rating?: CourseRating;
 };
+
+/** 1 to 3 each. Stakes: counting for kids is 1, general coding 2, medication, electrical safety, law or money 3. */
+export type CourseRating = { difficulty: 1 | 2 | 3; stakes: 1 | 2 | 3 };
 
 /** Where a course map sits in its program. Fixed when the course is built. */
 export type ProgramLink = {

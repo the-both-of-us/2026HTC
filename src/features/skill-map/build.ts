@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { chatJSON } from "@/features/ai";
+import { chatJSON, type Tier } from "@/features/ai";
 import { HttpError } from "@/shared/http";
 import type { SkillMap, SourceKind } from "@/shared/types";
 import {
@@ -69,7 +69,7 @@ export function checkTopicText(text: string): string {
 }
 
 /** One real model call. It can take a while, since it writes the whole map in one go. */
-export async function askModelForMap(posting: string): Promise<RawSkillMap> {
+export async function askModelForMap(posting: string, tier?: Tier): Promise<RawSkillMap> {
   return chatJSON({
     label: "skill-map",
     system: MAP_SYSTEM_PROMPT,
@@ -77,11 +77,12 @@ export async function askModelForMap(posting: string): Promise<RawSkillMap> {
     schema: rawMapSchema,
     maxTokens: 12_000,
     timeoutMs: 55_000,
+    tier,
   });
 }
 
 /** The same call for a PDF. Each node names the page its quote is on. An audience pitches it at that level. */
-export async function askModelForPdfMap(pages: string[], audience = ""): Promise<RawSkillMap> {
+export async function askModelForPdfMap(pages: string[], audience = "", tier?: Tier): Promise<RawSkillMap> {
   const reply = await chatJSON({
     label: "skill-map-pdf",
     system: pdfSystemPrompt(audience),
@@ -89,12 +90,20 @@ export async function askModelForPdfMap(pages: string[], audience = ""): Promise
     schema: rawPdfMapSchema,
     maxTokens: 12_000,
     timeoutMs: 55_000,
+    tier,
   });
-  return { isJobPosting: reply.hasSkills, title: reply.title, subtitle: reply.subtitle, nodes: reply.nodes };
+  return {
+    isJobPosting: reply.hasSkills,
+    title: reply.title,
+    subtitle: reply.subtitle,
+    nodes: reply.nodes,
+    difficulty: reply.difficulty,
+    stakes: reply.stakes,
+  };
 }
 
 /** The same call for a topic. Nothing can be quoted, so no node counts as from the source. */
-export async function askModelForTopicMap(topic: string, audience = ""): Promise<RawSkillMap> {
+export async function askModelForTopicMap(topic: string, audience = "", tier?: Tier): Promise<RawSkillMap> {
   const reply = await chatJSON({
     label: "skill-map-topic",
     system: topicSystemPrompt(audience),
@@ -102,12 +111,13 @@ export async function askModelForTopicMap(topic: string, audience = ""): Promise
     schema: rawTopicMapSchema,
     maxTokens: 12_000,
     timeoutMs: 55_000,
+    tier,
   });
   return topicReplyToRaw(reply);
 }
 
 /** One course of a program. Like a topic, nothing can be quoted. */
-export async function askModelForCourseMap(course: CourseContext): Promise<RawSkillMap> {
+export async function askModelForCourseMap(course: CourseContext, tier?: Tier): Promise<RawSkillMap> {
   const reply = await chatJSON({
     label: "skill-map-course",
     system: courseSystemPrompt(course.audience),
@@ -115,14 +125,21 @@ export async function askModelForCourseMap(course: CourseContext): Promise<RawSk
     schema: rawTopicMapSchema,
     maxTokens: 10_000,
     timeoutMs: 55_000,
+    tier,
   });
   return topicReplyToRaw(reply);
 }
 
 /** A topic or course reply has no quotes, so every node is a foundation with no citation. */
-export function topicReplyToRaw(reply: { isTopic: boolean; title: string; nodes: RawTopicNode[] }): RawSkillMap {
+export function topicReplyToRaw(reply: {
+  isTopic: boolean;
+  title: string;
+  nodes: RawTopicNode[];
+  difficulty?: number | null;
+  stakes?: number | null;
+}): RawSkillMap {
   const nodes = reply.nodes.map((node) => ({ ...node, fromSource: false, quote: null }));
-  return { isJobPosting: reply.isTopic, title: reply.title, subtitle: "", nodes };
+  return { isJobPosting: reply.isTopic, title: reply.title, subtitle: "", nodes, difficulty: reply.difficulty, stakes: reply.stakes };
 }
 
 /** What to tell the user when the model says the input is not something to learn from. */

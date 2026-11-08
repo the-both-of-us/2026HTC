@@ -16,12 +16,13 @@ const NAV_ITEMS = [
   { href: "/review", label: "Review" },
   { href: "/people", label: "People" },
   { href: "/trust", label: "Trust" },
+  { href: "/settings", label: "Settings" },
 ];
 
 /**
  * The site's links. On large screens a column of words down the sidebar, the current page
  * marked with an ink rule. On phones a "Menu" button that opens the same list under the top bar.
- * `children` sits under the links: appearance, the learning-mode switch and the account line.
+ * `children` sits under the links: the account line. Appearance and accessibility are on /settings.
  */
 export function SideNav({ children }: { children?: ReactNode }) {
   const pathname = usePathname();

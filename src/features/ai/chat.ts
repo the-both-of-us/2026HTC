@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { ROUTES, type Route, type RouteName } from "./routes";
+import { claudeRoute, ROUTES, type Route, type RouteName, type Tier } from "./routes";
 
 const DEFAULT_MAX_TOKENS = 4000;
 const DEFAULT_TIMEOUT_MS = 30_000;
 /** chatJSON only goes round the providers again if they failed faster than this. */
 const SECOND_GO_WITHIN_MS = 15_000;
+const ANTHROPIC_VERSION = "2023-06-01";
 
 /** Thrown when no provider could answer. The message is safe to show to a user. */
 export class AiUnavailableError extends Error {
@@ -27,13 +28,27 @@ export type ChatOptions = {
   label: string;
   /** Try this provider first, then the normal order. If it can't answer, the call still can. */
   preferredRoute?: RouteName;
+  /**
+   * How much model this call deserves (see the router in features/settings). 1 or unset is the
+   * normal chain. 2 to 4 try Claude Haiku, Sonnet or Opus first, then the normal chain, so a
+   * missing ANTHROPIC_API_KEY or a Claude failure never loses the call.
+   */
+  tier?: Tier;
+  /** Called once with the model that answered and how long the whole call took. */
+  onServed?: (servedBy: ServedBy) => void;
 };
+
+/** Which model answered, and how long the whole call took, for "Written by Claude Sonnet in 12 s". */
+export type ServedBy = { route: RouteName; model: string; ms: number };
 
 export type ChatJsonOptions<T> = ChatOptions & { schema: z.ZodType<T> };
 
 /** Asks for plain text. */
 export async function chatText(options: ChatOptions): Promise<string> {
-  return tryEachRoute(options, (route, token) => sendRequest(route, token, options, false));
+  const startedAt = Date.now();
+  const { value, route } = await tryEachRoute(options, (route, token) => sendRequest(route, token, options, false));
+  options.onServed?.({ route: route.name, model: route.model, ms: Date.now() - startedAt });
+  return value;
 }
 
 /**
@@ -61,31 +76,33 @@ export async function chatJSON<T>(options: ChatJsonOptions<T>): Promise<T> {
   };
 
   const startedAt = Date.now();
-  try {
-    return await tryEachRoute(options, askOneRoute);
-  } catch (error) {
+  const served = await tryEachRoute(options, askOneRoute).catch((error) => {
     // A provider that hung will not recover in time, and the learner is waiting.
     if (Date.now() - startedAt > SECOND_GO_WITHIN_MS) throw error;
     return tryEachRoute(options, askOneRoute);
-  }
+  });
+  options.onServed?.({ route: served.route.name, model: served.route.model, ms: Date.now() - startedAt });
+  return served.value;
 }
 
 /** Runs `attempt` on each available provider in order, until one succeeds. */
 async function tryEachRoute<T>(
-  { label, preferredRoute }: ChatOptions,
+  { label, preferredRoute, tier }: ChatOptions,
   attempt: (route: Route, token: string) => Promise<T>,
-): Promise<T> {
-  for (const route of routesInOrder(preferredRoute)) {
+): Promise<{ value: T; route: Route }> {
+  for (const route of routesInOrder(preferredRoute, tier)) {
     const token = await route.getToken();
     if (!token) continue;
 
     const startedAt = Date.now();
     try {
-      const result = await attempt(route, token);
-      console.info(`[ai] ${label}: served by ${route.name} in ${Date.now() - startedAt}ms`);
-      return result;
+      const value = await attempt(route, token);
+      console.info(`[ai] ${label}: served by ${route.name} (${route.model}) in ${Date.now() - startedAt}ms`);
+      return { value, route };
     } catch (error) {
-      console.warn(`[ai] ${label}: ${route.name} failed after ${Date.now() - startedAt}ms: ${failureReason(error)}`);
+      console.warn(
+        `[ai] ${label}: ${route.name} (${route.model}) failed after ${Date.now() - startedAt}ms: ${failureReason(error)}`,
+      );
     }
   }
 
@@ -93,9 +110,11 @@ async function tryEachRoute<T>(
   throw new AiUnavailableError();
 }
 
-function routesInOrder(preferred?: RouteName): Route[] {
+/** The Claude model for the tier (if any) first, then the preferred route, then the normal order. */
+function routesInOrder(preferred?: RouteName, tier?: Tier): Route[] {
+  const claude = claudeRoute(tier);
   const first = ROUTES.filter((route) => route.name === preferred);
-  return [...first, ...ROUTES.filter((route) => route.name !== preferred)];
+  return [...(claude ? [claude] : []), ...first, ...ROUTES.filter((route) => route.name !== preferred)];
 }
 
 /** Sends one request to one provider and returns the model's reply text. */
@@ -105,6 +124,8 @@ async function sendRequest(
   options: ChatOptions,
   wantJson: boolean,
 ): Promise<string> {
+  if (route.api === "anthropic") return sendAnthropicRequest(route, token, options);
+
   const messages = [
     ...(options.system ? [{ role: "system", content: options.system }] : []),
     { role: "user", content: options.prompt },
@@ -131,6 +152,46 @@ async function sendRequest(
   if (typeof content !== "string" || content.trim() === "") {
     throw new RouteFailure("empty reply");
   }
+  return content;
+}
+
+/**
+ * One request to the Claude Messages API. JSON comes from the system prompt's instructions and
+ * parseReply, as on the other routes. A refusal or a reply cut off at max_tokens is a failure,
+ * so the normal chain gets its turn.
+ */
+async function sendAnthropicRequest(route: Route, token: string, options: ChatOptions): Promise<string> {
+  const settings = route.claude;
+  const response = await fetch(`${route.baseUrl}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": token, "anthropic-version": ANTHROPIC_VERSION },
+    body: JSON.stringify({
+      model: route.model,
+      max_tokens: (options.maxTokens ?? DEFAULT_MAX_TOKENS) + (settings?.thinkingHeadroom ?? 0),
+      ...(options.system ? { system: options.system } : {}),
+      messages: [{ role: "user", content: options.prompt }],
+      ...(settings?.thinking ? { thinking: settings.thinking } : {}),
+      ...(settings ? { output_config: { effort: settings.effort } } : {}),
+    }),
+    signal: AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new RouteFailure(`HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (data.stop_reason === "refusal") throw new RouteFailure("refusal");
+  if (data.stop_reason === "max_tokens") throw new RouteFailure("cut off at max_tokens");
+  const blocks: unknown[] = Array.isArray(data.content) ? data.content : [];
+  const content = blocks
+    .filter((block): block is { type: "text"; text: string } => {
+      const candidate = block as { type?: unknown; text?: unknown };
+      return candidate.type === "text" && typeof candidate.text === "string";
+    })
+    .map((block) => block.text)
+    .join("");
+  if (content.trim() === "") throw new RouteFailure("empty reply");
   return content;
 }
 

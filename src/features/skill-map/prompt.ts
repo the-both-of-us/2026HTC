@@ -11,12 +11,33 @@ export const rawNodeSchema = z.object({
   checkpoints: z.array(z.string()),
 });
 
+/**
+ * The course rating, asked for through the schema's descriptions so the prompts above stay
+ * byte for byte the same (their hashes are pinned in audience.test.ts). Optional: a reply
+ * without them still counts, and the router falls back to a guess. See features/settings.
+ */
+const ratingFields = {
+  difficulty: z
+    .number()
+    .nullable()
+    .optional()
+    .describe("How hard this material is for its learners: 1 easy or introductory, 2 typical, 3 advanced or specialist."),
+  stakes: z
+    .number()
+    .nullable()
+    .optional()
+    .describe(
+      "How much factual accuracy matters if a detail is learned wrong: 1 low (hobbies, children's basics such as counting), 2 normal (most work skills, such as general coding), 3 high (health and medication, electrical or other safety work, law, money).",
+    ),
+};
+
 export const rawMapSchema = z.object({
   /** Saved sample output predates this field, and samples are postings, so it defaults to true. */
   isJobPosting: z.boolean().default(true),
   title: z.string(),
   subtitle: z.string(),
   nodes: z.array(rawNodeSchema),
+  ...ratingFields,
 });
 
 /** A PDF node also names the page its quote is on. */
@@ -25,6 +46,7 @@ export const rawPdfMapSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
   nodes: z.array(rawNodeSchema.extend({ page: z.number().int().nullable().default(null) })),
+  ...ratingFields,
 });
 
 /** A topic has no source to quote, so its nodes have no quote and nothing is "from the source". */
@@ -32,6 +54,7 @@ export const rawTopicMapSchema = z.object({
   isTopic: z.boolean(),
   title: z.string(),
   nodes: z.array(rawNodeSchema.omit({ fromSource: true, quote: true })),
+  ...ratingFields,
 });
 
 export type RawNode = z.infer<typeof rawNodeSchema> & { page?: number | null };

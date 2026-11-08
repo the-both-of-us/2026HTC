@@ -7,14 +7,18 @@ import { getVercelOidcToken } from "@vercel/oidc";
  * Gemini sits behind the others because grading needs speed: it was measured at
  * 4.7 to 13.2 s against under 1 s on Cerebras. Bedrock is the last resort.
  */
-export type RouteName = "cerebras" | "groq" | "gateway" | "gemini" | "bedrock";
+export type RouteName = "cerebras" | "groq" | "gateway" | "gemini" | "bedrock" | "anthropic";
 
 export type Route = {
   name: RouteName;
+  /** "openai" speaks /chat/completions; "anthropic" speaks the Messages API. */
+  api?: "openai" | "anthropic";
   baseUrl: string;
   model: string;
   /** Whether to ask this provider for its JSON mode on chatJSON calls. */
   jsonMode: boolean;
+  /** Messages API settings for a Claude route: how much it thinks and how hard it tries. */
+  claude?: ClaudeSettings;
   /** Returns null when this route has no credentials, so it gets skipped. */
   getToken: () => Promise<string | null>;
 };
@@ -69,4 +73,65 @@ async function getGatewayToken(): Promise<string | null> {
   } catch {
     return process.env.VERCEL_OIDC_TOKEN || null;
   }
+}
+
+/**
+ * How much model a call gets. 1 is the chain above (gpt-oss-120b, fast and good for general
+ * material). 2, 3 and 4 put one Claude model in front of that chain: Haiku, Sonnet, Opus.
+ */
+export type Tier = 1 | 2 | 3 | 4;
+
+type ClaudeTier = Exclude<Tier, 1>;
+
+type ClaudeSettings = {
+  /** Sent as `thinking`, or left out (adaptive thinking) when undefined. */
+  thinking?: { type: string };
+  effort: "low" | "medium" | "high";
+  /** Added to max_tokens, since thinking spends from the same budget. */
+  thinkingHeadroom: number;
+};
+
+/**
+ * Speed first: these calls write a lesson or a map while someone waits. Haiku and Sonnet run
+ * with thinking off ("between_tools" is Sonnet 5.5's off switch when no tools are sent). Opus
+ * cannot turn thinking off, so it gets room for it in max_tokens. No temperature: current
+ * models reject it.
+ */
+const CLAUDE_SETTINGS: Record<ClaudeTier, ClaudeSettings> = {
+  2: { thinking: { type: "disabled" }, effort: "medium", thinkingHeadroom: 0 },
+  3: { thinking: { type: "between_tools" }, effort: "medium", thinkingHeadroom: 0 },
+  4: { effort: "medium", thinkingHeadroom: 8000 },
+};
+
+/** The model ids, overridable per tier so a new release needs no code change. */
+const CLAUDE_MODELS: Record<ClaudeTier, { env: string; fallback: string; label: string }> = {
+  2: { env: "ANTHROPIC_MODEL_HAIKU", fallback: "claude-haiku-5-5", label: "Claude Haiku" },
+  3: { env: "ANTHROPIC_MODEL_SONNET", fallback: "claude-sonnet-5-5", label: "Claude Sonnet" },
+  4: { env: "ANTHROPIC_MODEL_OPUS", fallback: "claude-opus-5-5", label: "Claude Opus" },
+};
+
+/** The Claude route for a tier, or null for tier 1. It is skipped like any other when ANTHROPIC_API_KEY is unset. */
+export function claudeRoute(tier: Tier | undefined): Route | null {
+  if (!tier || tier === 1) return null;
+  const { env, fallback } = CLAUDE_MODELS[tier];
+  return {
+    name: "anthropic",
+    api: "anthropic",
+    baseUrl: "https://api.anthropic.com/v1",
+    model: process.env[env] || fallback,
+    jsonMode: false,
+    claude: CLAUDE_SETTINGS[tier],
+    getToken: async () => process.env.ANTHROPIC_API_KEY || null,
+  };
+}
+
+/** A short name for the model that wrote something, for people: "Claude Sonnet" or "gpt-oss-120b". */
+export function modelLabel(model: string): string {
+  const id = model.toLowerCase();
+  if (id.includes("haiku")) return CLAUDE_MODELS[2].label;
+  if (id.includes("sonnet")) return CLAUDE_MODELS[3].label;
+  if (id.includes("opus")) return CLAUDE_MODELS[4].label;
+  if (id.includes("gpt-oss")) return "gpt-oss-120b";
+  if (id.includes("gemini")) return "Gemini";
+  return model;
 }

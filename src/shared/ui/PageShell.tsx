@@ -2,11 +2,9 @@ import clsx from "clsx";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AccountStatusLine } from "./Account";
-import { LearningModeToggle } from "./LearningModeToggle";
 import { LogoMark } from "./LogoMark";
 import { SideNav } from "./SideNav";
 import { SkipLink } from "./SkipLink";
-import { ThemeSelect } from "./ThemeSelect";
 
 type PageWidth = "reading" | "wide" | "full";
 
@@ -29,13 +27,8 @@ type PageShellProps = {
 
 /** Every page's frame: skip link, the sidebar (a top bar with a menu on phones), and <main>. */
 export function PageShell({ width = "wide", headerActions, footer, children }: PageShellProps) {
-  const footerControls = (
-    <>
-      <AccountStatusLine />
-      <ThemeSelect />
-      <LearningModeToggle className="-mx-2" />
-    </>
-  );
+  // Appearance and Accessible learning mode live on /settings now.
+  const footerControls = <AccountStatusLine />;
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">

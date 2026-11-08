@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { chatJSON } from "@/features/ai";
+import { chatJSON, type Tier } from "@/features/ai";
 import type { Grade, SkillNode } from "@/shared/types";
 import { ANSWER_NOTE, forAudience, QUESTION_NOTE } from "./audience";
 import { numberedList } from "./grading";
@@ -18,13 +18,20 @@ ${LEARNER_TEXT_RULE}`;
 const questionReplySchema = z.object({ question: z.string().trim().min(1) });
 
 /** Writes one question about this learner's own words, aimed at their weakest area. */
-export async function generateFollowUp(node: SkillNode, explanation: string, grade: Grade, audience = ""): Promise<string> {
+export async function generateFollowUp(
+  node: SkillNode,
+  explanation: string,
+  grade: Grade,
+  audience = "",
+  tier?: Tier,
+): Promise<string> {
   const reply = await chatJSON({
     label: "teachback-followup-question",
     system: forAudience(QUESTION_SYSTEM, audience, QUESTION_NOTE),
     prompt: `Skill: ${node.title}\n\nWeakest area, which you must not reveal:\n${describeWeakestArea(grade)}\n\n${wrapLearnerText(explanation)}`,
     schema: questionReplySchema,
     timeoutMs: 20_000,
+    tier,
   });
   return reply.question;
 }
@@ -54,6 +61,7 @@ export async function gradeFollowUp(
   question: string,
   answer: string,
   audience = "",
+  tier?: Tier,
 ): Promise<FollowUpResult> {
   if (answer.trim() === "") {
     return { passed: false, feedback: "There was no answer to check, so this one did not pass." };
@@ -65,5 +73,6 @@ export async function gradeFollowUp(
     prompt: `Skill: ${node.title}\n\nTheir earlier explanation:\n${wrapLearnerText(explanation)}\n\nFollow-up question:\n${question}\n\nTheir answer:\n${wrapLearnerText(answer)}`,
     schema: answerReplySchema,
     timeoutMs: 20_000,
+    tier,
   });
 }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { chatJSON } from "@/features/ai";
+import { chatJSON, type Tier } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { CatchRecord, SkillMap, SkillNode } from "@/shared/types";
 import { audienceKey } from "@/shared/audience";
@@ -128,6 +128,7 @@ export async function checkCatch(
   challenge: CatchChallenge,
   picks: CatchPick[],
   audience = "",
+  tier?: Tier,
 ): Promise<CatchRecord> {
   const planted = new Map(challenge.mistakes.map((mistake) => [mistake.sentence, mistake]));
   const toCheck = picks.filter(
@@ -146,6 +147,7 @@ export async function checkCatch(
       prompt: `Topic: ${node.title}\n\n${items.join("\n\n")}`,
       schema: checkerReplySchema,
       timeoutMs: 15_000,
+      tier,
     });
     fixedSentences = new Set(toCheck.filter((_, index) => reply.fixed.includes(index + 1)).map((pick) => pick.sentence));
   }

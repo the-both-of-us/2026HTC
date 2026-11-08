@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { chatJSON } from "@/features/ai";
+import { chatJSON, type Tier } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { Attempt, SkillMap } from "@/shared/types";
 import { ANSWER_NOTE, FINAL_QUESTIONS_NOTE, forAudience } from "./audience";
@@ -92,7 +92,7 @@ export async function createFinal(map: SkillMap, ownerId: string): Promise<{ rec
   return { record, attempts };
 }
 
-export async function gradeFinalAnswer(map: SkillMap, question: string, answer: string) {
+export async function gradeFinalAnswer(map: SkillMap, question: string, answer: string, tier?: Tier) {
   if (answer.trim() === "") return { passed: false, feedback: "There was no answer to check." };
   const facts = map.nodes.map((node) => `- ${node.title}: ${node.checkpoints.join("; ")}`).join("\n");
   return chatJSON({
@@ -101,6 +101,7 @@ export async function gradeFinalAnswer(map: SkillMap, question: string, answer: 
     prompt: `Course: ${map.title}\n\nTopics and key facts:\n${facts}\n\nQuestion:\n${question}\n\nTheir answer:\n${wrapLearnerText(answer)}`,
     schema: answerSchema,
     timeoutMs: 20_000,
+    tier,
   });
 }
 

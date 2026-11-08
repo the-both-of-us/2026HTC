@@ -1,4 +1,5 @@
 import { chatJSON, type RouteName } from "@/features/ai";
+import { tierFor } from "@/features/settings";
 import { isPublished } from "@/features/courses";
 import { isNodeLockedFor } from "@/features/teachback";
 import { getSkillMap } from "@/features/skill-map";
@@ -91,17 +92,19 @@ export async function getOrCreateQuiz(
   const pending = inFlight.get(found.key);
   if (pending) return pending;
 
-  const work = loadOrGenerate(found, options).finally(() => {
+  const work = loadOrGenerate(found, options, viewerId).finally(() => {
     if (inFlight.get(found.key) === work) inFlight.delete(found.key);
   });
   inFlight.set(found.key, work);
   return work;
 }
 
-async function loadOrGenerate({ map, node, key }: Found, options: CreateOptions): Promise<QuizQuestion[]> {
+async function loadOrGenerate({ map, node, key }: Found, options: CreateOptions, viewerId: string): Promise<QuizQuestion[]> {
   const saved = await getDoc<SavedQuiz>(key);
   if (saved) return saved.items;
 
+  // The model router: the map's rating and this learner's settings. At most Haiku on Auto.
+  const tier = await tierFor("quiz", viewerId, map.rating);
   const raw = await withDeadline(
     chatJSON({
       label: "quiz",
@@ -111,6 +114,7 @@ async function loadOrGenerate({ map, node, key }: Found, options: CreateOptions)
       maxTokens: 2000,
       timeoutMs: REQUEST_TIMEOUT_MS,
       preferredRoute: PREFERRED_ROUTE,
+      tier,
     }),
   );
 

@@ -3,8 +3,8 @@ import type { Lesson } from "../types";
 
 export type LessonResult = { ok: true; lesson: Lesson } | { ok: false; message: string };
 
-/** The server gives up on the model after 50 seconds, inside its 60. This is longer, so its sentence arrives first. */
-const TIMEOUT_MS = 65_000;
+/** The server gives up on the model after 100 seconds, inside its 120. This is longer, so its sentence arrives first. */
+const TIMEOUT_MS = 115_000;
 const FAILED = "The lesson could not be loaded this time. Please try again.";
 
 /** The saved lesson, or one written now with one model call. */

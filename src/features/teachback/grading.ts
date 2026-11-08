@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { chatJSON } from "@/features/ai";
+import { chatJSON, type Tier } from "@/features/ai";
 import { normalizeForMatch, quoteAppearsIn } from "@/shared/quote";
 import type { CheckpointResult, Grade, SkillNode } from "@/shared/types";
 import { CHECKER_NOTE, forAudience, GRADER_NOTE } from "./audience";
@@ -41,13 +41,14 @@ const NOT_AN_ERROR = /^(none|nothing|n\/?a|no (factual )?errors?)\.?$/;
  * Asks the model for quotes and errors. The code below decides what they are worth.
  * `audience` is the map's: plain childlike wording then counts, but the facts must still be right.
  */
-export async function gradeExplanation(node: SkillNode, explanation: string, audience = ""): Promise<Grade> {
+export async function gradeExplanation(node: SkillNode, explanation: string, audience = "", tier?: Tier): Promise<Grade> {
   const reply = await chatJSON({
     label: "teachback-grade",
     system: forAudience(GRADER_SYSTEM, audience, GRADER_NOTE),
     prompt: `Skill: ${node.title}\n\nCheckpoints:\n${numberedList(node.checkpoints)}\n\n${wrapLearnerText(explanation)}`,
     schema: graderReplySchema,
     timeoutMs: 25_000,
+    tier,
   });
 
   let rejectedQuotes = 0;
@@ -62,7 +63,7 @@ export async function gradeExplanation(node: SkillNode, explanation: string, aud
     return { checkpoint, quote, met: true };
   });
 
-  const misconceptions = await confirmErrors(node, explanation, cleanErrors(reply.factualErrors), audience);
+  const misconceptions = await confirmErrors(node, explanation, cleanErrors(reply.factualErrors), audience, tier);
   const met = checkpoints.filter((result) => result.met).length;
 
   return {
@@ -105,7 +106,13 @@ function wordsOf(text: string): string[] {
  * grader called correct heat-pump physics false three times out of three. If the check
  * fails, the flags stand, so a timeout can't wave a false claim through.
  */
-async function confirmErrors(node: SkillNode, explanation: string, errors: string[], audience: string): Promise<string[]> {
+async function confirmErrors(
+  node: SkillNode,
+  explanation: string,
+  errors: string[],
+  audience: string,
+  tier?: Tier,
+): Promise<string[]> {
   if (errors.length === 0) return errors;
   try {
     const reply = await chatJSON({
@@ -114,6 +121,7 @@ async function confirmErrors(node: SkillNode, explanation: string, errors: strin
       prompt: `Skill: ${node.title}\n\nFlagged statements:\n${numberedList(errors)}\n\n${wrapLearnerText(explanation)}`,
       schema: checkerReplySchema,
       timeoutMs: 15_000,
+      tier,
     });
     return errors.filter((_, index) => reply.confirmed.includes(index + 1));
   } catch {

@@ -69,14 +69,19 @@ export function TrustScreen() {
               days.
             </li>
             <li>
-              <strong className="font-medium">Only in this browser:</strong> unsent drafts, and the
-              Accessible learning mode setting.
+              <strong className="font-medium">Settings:</strong> your AI speed and any model you
+              picked per task on /settings.
+            </li>
+            <li>
+              <strong className="font-medium">Only in this browser:</strong> unsent drafts, the
+              theme, the text size and the Accessible learning mode setting.
             </li>
           </ul>
           <p>
             It is kept in the app&apos;s cloud storage. Postings, explanations and answers are sent
             to an AI model (gpt-oss-120b, on Cerebras first, with other providers as backups) to
-            build maps and grade. When you speak instead of typing, the audio goes to a speech-to-text
+            build maps and grade. Hard or high-stakes courses, or the choices on /settings, can use
+            Claude models from Anthropic instead, with gpt-oss-120b as the backup. When you speak instead of typing, the audio goes to a speech-to-text
             service and we keep only the words.
           </p>
         </Section>

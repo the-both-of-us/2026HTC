@@ -3,6 +3,7 @@ import { Lexend, Mona_Sans } from "next/font/google";
 import { Suspense } from "react";
 import { SignInNotice } from "@/features/auth/client";
 import { LEARNING_MODE_SCRIPT } from "@/shared/ui/learningMode";
+import { TEXT_SIZE_SCRIPT } from "@/shared/ui/textSize";
 import { THEME_SCRIPT } from "@/shared/ui/theme";
 import "./globals.css";
 
@@ -43,10 +44,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // The scripts below may add data-learning-mode and data-theme before React loads, hence suppressHydrationWarning.
+    // The scripts below may add data-learning-mode, data-theme and a font size before React loads, hence suppressHydrationWarning.
     <html lang="en-CA" className={`${mona.variable} ${lexend.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT + LEARNING_MODE_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT + LEARNING_MODE_SCRIPT + TEXT_SIZE_SCRIPT }} />
       </head>
       <body>
         {/* It reads the URL, which a dynamic route only knows at request time. */}

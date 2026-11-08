@@ -36,7 +36,7 @@ async function main() {
       if (saved.lessons[node.id]?.title === node.title) continue;
       const startedAt = Date.now();
       try {
-        const lesson = await askModelForLesson(map, node);
+        const { raw: lesson } = await askModelForLesson(map, node);
         saved.lessons[node.id] = { title: node.title, lesson };
         saved.generatedAt = new Date().toISOString();
         // Written after every lesson, so a failure halfway keeps what worked.

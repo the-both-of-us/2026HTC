@@ -28,6 +28,13 @@ export type LessonTabProps = {
 
 type Phase = { kind: "loading" } | { kind: "ready"; lesson: Lesson } | { kind: "error"; message: string };
 
+/** "Written by AI (Claude Sonnet, 12 s)." when the lesson says which model wrote it. */
+function writtenByLine({ writtenBy }: Lesson): string {
+  if (!writtenBy) return "Written by AI. Check important facts.";
+  const seconds = Math.max(1, Math.round(writtenBy.ms / 1000));
+  return `Written by AI (${writtenBy.model}, ${seconds} s). Check important facts.`;
+}
+
 /** The Read tab: a 3 to 5 minute lesson, written on first open and saved for everyone after. */
 export function LessonTab(props: LessonTabProps) {
   // Keyed, so opening another skill starts from a clean slate.
@@ -76,7 +83,7 @@ function LessonBody({ mapId, skill, onReady, afterLesson }: LessonTabProps) {
           <span aria-hidden="true">·</span>
           {/* The model never sees the posting or PDF, so the lesson cannot quote it. Verified
               quotes stay in "Where this came from". */}
-          <span>Written by AI. Check important facts.</span>
+          <span>{writtenByLine(lesson)}</span>
         </p>
         <ReadAloudButton what="this lesson" text={lessonAloud(skill.title, lesson)} />
       </div>

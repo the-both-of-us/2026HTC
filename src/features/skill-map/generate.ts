@@ -1,4 +1,5 @@
-import type { ProgramLink, SkillMap } from "@/shared/types";
+import { guessRating, tierFor, toRating } from "@/features/settings";
+import type { CourseRating, ProgramLink, SkillMap } from "@/shared/types";
 import {
   askModelForCourseMap,
   askModelForMap,
@@ -12,13 +13,21 @@ import {
 import { cleanAudience, inferAudience } from "@/shared/audience";
 import { findCachedOutput } from "./fixtures";
 import { readPdfPages } from "./pdf";
-import { rawTopicMapSchema, type CourseContext } from "./prompt";
+import { rawTopicMapSchema, type CourseContext, type RawSkillMap } from "./prompt";
 import { saveSkillMap } from "./storage";
 import { PAGE_BREAK } from "./validate";
 
 /** Sets the audience on a map only when there is one, so a map for adults is saved as before. */
 function withAudience(map: SkillMap, audience: string): SkillMap {
   return audience ? { ...map, audience } : map;
+}
+
+/**
+ * The model's own rating of the course, or the guess made before the call for whatever it left
+ * out. Sample maps (saved output with no rating) get the guess, so they need no model call.
+ */
+function withRating(map: SkillMap, raw: RawSkillMap, guess: CourseRating): SkillMap {
+  return { ...map, rating: toRating(raw, guess) };
 }
 
 /**
@@ -37,11 +46,14 @@ export async function generateSkillMap(input: {
   if (input.kind === "topic") {
     const topic = checkTopicText(input.text);
     const audience = cleanAudience(input.audience) || inferAudience(topic);
-    map = withAudience(buildSkillMap(await askModelForTopicMap(topic, audience), topic, "topic", input.ownerId), audience);
+    const guess = guessRating(topic, audience);
+    const raw = await askModelForTopicMap(topic, audience, await tierFor("map", input.ownerId, guess));
+    map = withRating(withAudience(buildSkillMap(raw, topic, "topic", input.ownerId), audience), raw, guess);
   } else {
     const posting = checkPostingText(input.text);
-    const raw = findCachedOutput(posting) ?? (await askModelForMap(posting));
-    map = buildSkillMap(raw, posting, "posting", input.ownerId);
+    const guess = guessRating(posting);
+    const raw = findCachedOutput(posting) ?? (await askModelForMap(posting, await tierFor("map", input.ownerId, guess)));
+    map = withRating(buildSkillMap(raw, posting, "posting", input.ownerId), raw, guess);
   }
   await saveSkillMap(map);
   return map;
@@ -55,9 +67,12 @@ export async function generatePdfSkillMap(input: { file: Uint8Array; ownerId: st
   const pages = await readPdfPages(input.file);
   // Only the start of the document: a grade named there is what the document is for.
   const audience = inferAudience((pages[0] ?? "").slice(0, AUDIENCE_SCAN_CHARS));
-  const map = withAudience(
-    buildSkillMap(await askModelForPdfMap(pages, audience), pages.join(PAGE_BREAK), "pdf", input.ownerId),
-    audience,
+  const guess = guessRating(pages[0] ?? "", audience);
+  const raw = await askModelForPdfMap(pages, audience, await tierFor("map", input.ownerId, guess));
+  const map = withRating(
+    withAudience(buildSkillMap(raw, pages.join(PAGE_BREAK), "pdf", input.ownerId), audience),
+    raw,
+    guess,
   );
   await saveSkillMap(map);
   return map;
@@ -74,14 +89,17 @@ export async function generateCourseMap(input: {
   program: ProgramLink;
   cached?: unknown;
 }): Promise<SkillMap> {
+  const audience = cleanAudience(input.course.audience);
+  const guess = guessRating(`${input.course.courseTitle}: ${input.course.courseSummary}`, audience);
   const raw = input.cached
     ? topicReplyToRaw(rawTopicMapSchema.parse(input.cached))
-    : await askModelForCourseMap(input.course);
+    : await askModelForCourseMap(input.course, await tierFor("map", input.ownerId, guess));
   const built = buildSkillMap(raw, input.course.courseTitle, "topic", input.ownerId);
   // The program page names the course, so the map keeps that name too. It inherits the program's audience.
-  const map: SkillMap = withAudience(
-    { ...built, id: input.id, title: input.course.courseTitle, program: input.program },
-    cleanAudience(input.course.audience),
+  const map: SkillMap = withRating(
+    withAudience({ ...built, id: input.id, title: input.course.courseTitle, program: input.program }, audience),
+    raw,
+    guess,
   );
   await saveSkillMap(map);
   return map;

@@ -1,5 +1,6 @@
 import { after } from "next/server";
 import { getSkillMap } from "@/features/skill-map";
+import { isNodeLockedFor } from "@/features/teachback";
 import { getOrCreateLesson } from "./lessons";
 
 /**
@@ -24,5 +25,31 @@ export async function writeFirstLesson(mapId: string): Promise<void> {
     await getOrCreateLesson(map.id, node.id, map.ownerId);
   } catch (error) {
     console.warn(`[lessons] first lesson not written ahead: ${error instanceof Error ? error.message : "unknown error"}`);
+  }
+}
+
+/**
+ * When a learner opens one lesson, starts writing the next one they can open (the first skill
+ * after it, in the map's order, that is not locked for them), so clicking on is instant. At most
+ * one model call, and none when that lesson is already saved. Runs after the response is sent.
+ */
+export function writeNextLessonSoon(mapId: string, nodeId: string, viewerId: string): void {
+  after(() => writeNextLesson(mapId, nodeId, viewerId));
+}
+
+/** The work behind writeNextLessonSoon. Never throws: this is only a head start. */
+export async function writeNextLesson(mapId: string, nodeId: string, viewerId: string): Promise<void> {
+  try {
+    const map = await getSkillMap(mapId);
+    const index = map?.nodes.findIndex((candidate) => candidate.id === nodeId) ?? -1;
+    if (!map || index < 0) return;
+    for (const next of map.nodes.slice(index + 1)) {
+      if (await isNodeLockedFor(map, viewerId, next.id)) continue;
+      // The same access check and in-flight sharing as a real open.
+      await getOrCreateLesson(map.id, next.id, viewerId);
+      return;
+    }
+  } catch (error) {
+    console.warn(`[lessons] next lesson not written ahead: ${error instanceof Error ? error.message : "unknown error"}`);
   }
 }

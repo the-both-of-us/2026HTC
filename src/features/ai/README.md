@@ -36,18 +36,34 @@ const text = await chatText({ label: "summary", prompt: "..." });
 
 `chatJSON` adds the schema to the system prompt for you, so a prompt doesn't need to describe the shape. Only Cerebras is asked for `response_format: json_object`.
 
+## Tiers and Claude
+
+`tier` (1 to 4, picked by the router in `features/settings`) puts one Claude model in front of the chain above:
+
+| Tier | Model | Env override | Request |
+|---|---|---|---|
+| 1 or unset | the chain above, unchanged | | |
+| 2 | `claude-haiku-5-5` | `ANTHROPIC_MODEL_HAIKU` | thinking `disabled`, effort `medium` |
+| 3 | `claude-sonnet-5-5` | `ANTHROPIC_MODEL_SONNET` | thinking `between_tools` (off), effort `medium` |
+| 4 | `claude-opus-5-5` | `ANTHROPIC_MODEL_OPUS` | adaptive thinking (can't be off), effort `medium`, max_tokens + 8000 |
+
+- The route calls `https://api.anthropic.com/v1/messages` with `x-api-key: $ANTHROPIC_API_KEY` and `anthropic-version: 2023-06-01`, by `fetch` like the other routes (no SDK, so tests mock `fetch` the same way). No temperature.
+- No key means it is skipped. Any error status, a timeout, `stop_reason: "refusal"` or `"max_tokens"`, or bad JSON twice moves on to the normal chain (then `preferredRoute`, then the usual order), so a Claude problem never loses a call.
+- JSON comes from the same system-prompt instructions and `parseReply` as the other routes.
+- `onServed({ route, model, ms })` is called once with the model that answered and the whole call's time. `modelLabel(model)` gives "Claude Sonnet" or "gpt-oss-120b" for people. Lessons use both for "Written by AI (Claude Sonnet, 14 s)".
+
 ## Errors
 
 When no route can answer, both functions throw `AiUnavailableError`. Its message is safe to show to a user. Provider error text never reaches callers or the logs: the logs only record the route, the time taken and the reason, such as `HTTP 429`.
 
 ```
-[ai] grade: served by cerebras in 812ms
-[ai] grade: cerebras failed after 30001ms: timeout
+[ai] grade: served by cerebras (gpt-oss-120b) in 812ms
+[ai] lesson: anthropic (claude-sonnet-5-5) failed after 50001ms: timeout
 ```
 
 ## Files
 
-- `routes.ts`: the provider list. Add or reorder routes here.
+- `routes.ts`: the provider list, plus `claudeRoute(tier)` and `modelLabel`. Add or reorder routes here.
 - `chat.ts`: the fallback loop, the request and JSON validation.
 
 Tests mock `fetch`: `npm test -- ai`. The gateway free tier allows about 5 requests a minute per model, so spend real calls sparingly.

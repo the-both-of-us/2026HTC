@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { tierFor } from "@/features/settings";
 import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
 import { HttpError } from "@/shared/http";
 import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
@@ -100,14 +101,16 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   const explanation = input.explanation.trim();
   checkExplanationLength(explanation);
 
+  // The model router for answer checks: gpt-oss-120b unless the course's stakes are high or the learner chose otherwise.
+  const tier = await tierFor("checks", userId, map.rating);
   const gradeStarted = performance.now();
-  const grade = await gradeExplanation(node, explanation, map.audience);
+  const grade = await gradeExplanation(node, explanation, map.audience, tier);
   const gradeMs = Math.round(performance.now() - gradeStarted);
   // A 10-year-old's version must also read simply. Code measures that, not the AI.
   const level = format === "kid" ? readingGrade(explanation) : null;
   const plainLanguage = level === null ? null : { readingGrade: level, passed: level <= MAX_KID_GRADE };
   const status = grade.score < PASS_SCORE || plainLanguage?.passed === false ? "not-yet" : "needs-followup";
-  const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade, map.audience) : null;
+  const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade, map.audience, tier) : null;
 
   const attempt: Attempt = {
     id: randomUUID(),
@@ -145,8 +148,9 @@ async function startCatch(userId: string, map: SkillMap, node: SkillNode, input:
   const challenge = await loadCatchChallenge(map, node);
   const picks = cleanPicks(input.picks ?? [], challenge);
 
+  const tier = await tierFor("checks", userId, map.rating);
   const gradeStarted = performance.now();
-  const record = await checkCatch(node, challenge, picks, map.audience);
+  const record = await checkCatch(node, challenge, picks, map.audience, tier);
   const gradeMs = Math.round(performance.now() - gradeStarted);
   await markRevealed(map.id, userId, node.id);
 
@@ -298,10 +302,11 @@ export async function answerFollowUp(
   await claimAnswer(attempt.id);
   try {
     const trimmedAnswer = answer.trim();
+    const tier = await tierFor("checks", userId, map.rating);
     const followUpStarted = performance.now();
     const result = node
-      ? await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer, map.audience)
-      : await gradeFinalAnswer(map, attempt.followUp.question, trimmedAnswer);
+      ? await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer, map.audience, tier)
+      : await gradeFinalAnswer(map, attempt.followUp.question, trimmedAnswer, tier);
     const followUpMs = Math.round(performance.now() - followUpStarted);
 
     const finished: Attempt = {

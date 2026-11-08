@@ -5,7 +5,7 @@ import { chatJSON } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { getOrCreateLesson } from "./lessons";
-import { writeFirstLesson, writeFirstLessonSoon } from "./prewrite";
+import { writeFirstLesson, writeFirstLessonSoon, writeNextLesson, writeNextLessonSoon } from "./prewrite";
 import type { RawLesson } from "./prompt";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
@@ -95,5 +95,62 @@ describe("writing the first lesson ahead", () => {
     await expect(writeFirstLesson(randomUUID())).resolves.toBeUndefined();
     expect(await getDoc(`lessons/${mapId}/basics`)).toBeNull();
     warn.mockRestore();
+  });
+});
+
+describe("writing the next lesson ahead", () => {
+  it("only schedules the work, so the open lesson is not held up", () => {
+    writeNextLessonSoon(mapId, "basics", OWNER);
+    expect(mockAfter).toHaveBeenCalledOnce();
+    expect(mockChatJSON).not.toHaveBeenCalled();
+  });
+
+  it("writes the next skill in the map's order that is open, skipping locked ones", async () => {
+    mockChatJSON.mockResolvedValue(LESSON);
+    // "later" comes first but is locked; after "basics" the next open one is "other".
+    await writeNextLesson(mapId, "basics", OWNER);
+    expect(mockChatJSON).toHaveBeenCalledOnce();
+    expect(await getDoc(`lessons/${mapId}/other`)).not.toBeNull();
+    expect(await getDoc(`lessons/${mapId}/later`)).toBeNull();
+  });
+
+  it("does nothing after the last skill, or for a stranger's private map", async () => {
+    await writeNextLesson(mapId, "other", OWNER);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await writeNextLesson(mapId, "basics", randomUUID());
+    warn.mockRestore();
+    expect(mockChatJSON).not.toHaveBeenCalled();
+  });
+});
+
+describe("the model router on lessons", () => {
+  it("asks for a stronger model on a hard, high-stakes course and saves who wrote it", async () => {
+    const map = await getDoc<SkillMap>(`maps/${mapId}`);
+    await putDoc(`maps/${mapId}`, { ...map, rating: { difficulty: 3, stakes: 3 } });
+    mockChatJSON.mockImplementation(async (options) => {
+      options.onServed?.({ route: "anthropic", model: "claude-opus-5-5", ms: 12_400 });
+      return LESSON;
+    });
+
+    const lesson = await getOrCreateLesson(mapId, "basics", OWNER);
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 4 });
+    expect(lesson.writtenBy).toEqual({ model: "Claude Opus", ms: 12_400 });
+  });
+
+  it("keeps an everyday course on tier 1, and an old lesson without writtenBy still loads", async () => {
+    mockChatJSON.mockResolvedValue(LESSON);
+    const lesson = await getOrCreateLesson(mapId, "basics", OWNER);
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 1 });
+    expect(lesson.writtenBy).toBeUndefined();
+  });
+
+  it("follows the learner's settings: Fast keeps even a hard course on tier 1", async () => {
+    const map = await getDoc<SkillMap>(`maps/${mapId}`);
+    await putDoc(`maps/${mapId}`, { ...map, rating: { difficulty: 3, stakes: 3 } });
+    await putDoc(`settings/${OWNER}`, { speed: "fast", overrides: {} });
+    mockChatJSON.mockResolvedValue(LESSON);
+
+    await getOrCreateLesson(mapId, "basics", OWNER);
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 1 });
   });
 });

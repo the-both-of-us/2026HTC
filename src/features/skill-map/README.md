@@ -29,6 +29,10 @@ const mine = await listMapsByOwner(ownerId);                             // newe
 
 `map.audience` (such as "Grade 1 students (about 6 years old)") pitches a map at a grade or age. It comes from the program plan's `audience`, or `inferAudience` in `src/shared/audience.ts` for a topic or the start of a PDF that names a grade, age or school level. Program courses inherit it, and `getSkillMap` works it out for older maps from their title and program title. With an audience, the topic, course and PDF prompts get an AUDIENCE section and teacher-level checkpoint rules; with none, they are byte for byte the old prompts (`audience.test.ts` checks the hashes). Postings never get one.
 
+## Course rating
+
+Each new map stores `rating: { difficulty, stakes }` (1 to 3 each), which the model router in `features/settings` uses to pick a model per task. The map reply asks for both through the schema's field descriptions, so the prompts and their pinned hashes are unchanged; `toRating` clamps them. Before the call, `guessRating` (keywords on the topic or the first 400 characters, 1 and 1 for a young audience) picks the model for the outline itself and fills anything the reply left out. Sample postings and the sample program get the guess, with no model call. Older maps have no rating and count as 2 and 2.
+
 ## Citations
 
 A quote counts as verified only if code finds it in the posting (`@/shared/quote`), ignoring case, whitespace, curly quotes and long dash styles. An unverified citation has `verified: false` and an empty `quote`, so the UI has nothing false to show. Foundations have `citation: null`.
