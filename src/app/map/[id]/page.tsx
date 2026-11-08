@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { canReadMap } from "@/app/api/maps/[id]/access";
 import { findCircleForMap } from "@/features/circles";
-import { CircleBanner, StartCircleButton } from "@/features/circles/client";
+import { CircleLink, StartCircleButton } from "@/features/circles/client";
 import { getSkillMap } from "@/features/skill-map";
 import { MapScreen, MapScreenLoading } from "@/features/skill-map/client";
 import { isVoiceReady } from "@/features/voice";
@@ -36,8 +36,9 @@ async function MapFromRoute({ params }: MapPageProps) {
     <MapScreen
       mapId={id}
       voiceReady={voiceReady}
-      banner={circle && <CircleBanner code={circle.code} title={circle.title} />}
-      ownerActions={<StartCircleButton mapId={id} />}
+      // A map in a circle gets one "Your circle" button where "Start a study circle" would be:
+      // starting another circle from a circle's map makes no sense, and it saves a header row.
+      ownerActions={circle ? <CircleLink code={circle.code} title={circle.title} /> : <StartCircleButton mapId={id} />}
     />
   );
 }

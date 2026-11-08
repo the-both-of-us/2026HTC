@@ -6,7 +6,6 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Map header inside a study circle: no "In circle" row and no "Start a study circle"; one "Your circle" button instead, and a shorter AI-made tag. Files: `app/map/[id]/page.tsx`, `circles/ui/CircleBanner.tsx` + `circles/client.ts` (a `CircleLink`), `skill-map/ui/MapScreen.tsx` (the tag only). All Abdu's.
 - Nothing new yet: waiting on the owner. Candidates: "Ask for help" requests and an anonymous-profile option on People (undecided).
 
 ## Next
@@ -16,6 +15,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Map header inside a study circle: the "In circle" row and "Start a study circle" are gone; a small "Your circle" button (to `/circle/<code>`) takes the latter's place, for the creator and every member. Circle buttons are now `sm` like the rest of the header, and the topic tag is one short "AI-made, no citations" with the full sentence as a tooltip. Touched Abdu's `app/map/[id]/page.tsx`, `circles/ui/{CircleBanner,StartCircleButton}.tsx`, `circles/client.ts`, `skill-map/ui/MapScreen.tsx`.
 - Full-page skill reading is bigger and wider: the column is 1024px (was 768), the lesson fills it at 20px text (was 17px, capped at 65ch), the title is 32px and the section headings 24px; flashcards and quiz grow to match. Only in full page (`data-reading-page` on the panel plus Tailwind `lg:in-data-[reading-page]:`); the side panel is unchanged. Touched Abdu's `SkillPanel.tsx` and `LessonTab.tsx`, and my flashcards and quiz tabs.
 - People page cleanup: compact cards (initials, name and city in one header, "Looking for" on one line, slim reason line, smaller wrapping skill chips with "+N more"), masonry columns so short cards don't stretch, one summary row with a search box (name, skill or city) and the demo note, lighter side panel, one "Practise ... on your map" link per mentor card. Touched `features/network/ui/**` only.
 - People: clickable skills. A skill on any card filters to the people who proved it, with "Practise <skill>" and "Show everyone"; mentor cards get "Practise on your map" links. New `GET /api/network/practise` redirects to the skill on your own map or to `/courses?q=`; `/courses` now reads `?q=`. Touched `features/network/**`, `app/api/network/practise`, `features/courses/ui/CoursesScreen.tsx`.

@@ -372,10 +372,11 @@ function LoadedMap({
               )}
               {/* A topic has no source, so say plainly where the map came from. */}
               {map.sourceKind === "topic" && (
-                <Badge tone="sample" className="shrink-0 text-xs">
-                  <span className="sm:hidden">AI-made, no citations</span>
-                  <span className="max-sm:hidden">AI-generated from a topic, with no citations</span>
-                </Badge>
+                <span title="AI-generated from a topic, with no source to cite" className="shrink-0">
+                  <Badge tone="sample" className="text-xs">
+                    AI-made, no citations
+                  </Badge>
+                </span>
               )}
             </div>
             <div className="-mx-4 flex items-center gap-3 sm:mx-0">

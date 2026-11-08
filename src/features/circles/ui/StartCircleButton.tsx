@@ -34,8 +34,9 @@ export function StartCircleButton({ mapId }: { mapId: string }) {
 
   return (
     <>
-      <Button variant="secondary" onClick={() => dialogRef.current?.showModal()}>
-        <Users aria-hidden="true" size={17} />
+      {/* Small, like the other buttons in the map header. */}
+      <Button variant="secondary" size="sm" onClick={() => dialogRef.current?.showModal()}>
+        <Users aria-hidden="true" size={16} />
         Start a study circle
       </Button>
 
