@@ -2,11 +2,11 @@
 
 Abdu: this file is the live plan for Mirza's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Abdu to Mirza" in TEAM.md.
 
-Last updated: Sat Nov 7, late night.
+Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- Dashboard: one card per course. When you own both a course and a copy of it (a study circle does this), only your copy shows. Touches `features/dashboard/data.ts`, `data.test.ts`, `ui/DashboardScreen.tsx`, `README.md`.
 
 ## Next
 
