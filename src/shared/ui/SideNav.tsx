@@ -15,7 +15,6 @@ const NAV_ITEMS = [
   { href: "/courses", label: "Courses" },
   { href: "/review", label: "Review" },
   { href: "/people", label: "People" },
-  { href: "/trust", label: "Trust" },
   { href: "/settings", label: "Settings" },
 ];
 
@@ -71,7 +70,17 @@ export function SideNav({ children }: { children?: ReactNode }) {
             );
           })}
         </nav>
-        {children && <div className="mt-3 flex flex-col gap-2 border-t border-rule pt-3 lg:mt-auto lg:px-3 lg:py-4">{children}</div>}
+        <div className="mt-3 flex flex-col gap-2 border-t border-rule pt-3 lg:mt-auto lg:px-3 lg:py-4">
+          {children}
+          {/* Trust is a quiet footnote, not a main page. */}
+          <Link
+            href="/trust"
+            onClick={() => setOpen(false)}
+            className="self-start py-1 text-xs text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+          >
+            How we use AI and your data
+          </Link>
+        </div>
       </div>
     </>
   );
