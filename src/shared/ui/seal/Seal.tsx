@@ -20,6 +20,8 @@ type SealProps = {
   microtext?: string;
   /** Names the seal for screen readers. Without it the seal is decorative. */
   label?: string;
+  /** Ink lines in a soft teal gradient instead of flat ink. For the landing's hero seal. */
+  tint?: boolean;
   className?: string;
 };
 
@@ -31,7 +33,7 @@ function detailFor(size: number | undefined): SealDetail {
 }
 
 /** A guilloche seal drawn from a fingerprint. The same fingerprint always gives the same seal. */
-export function Seal({ fingerprint, size, state = "proven", detail, center = 27, microtext, label, className }: SealProps) {
+export function Seal({ fingerprint, size, state = "proven", detail, center = 27, microtext, label, tint = false, className }: SealProps) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const drawing = sealDrawing(fingerprint, {
     detail: detail ?? detailFor(size),
@@ -40,7 +42,7 @@ export function Seal({ fingerprint, size, state = "proven", detail, center = 27,
     micro: Boolean(microtext),
   });
   const paint = (p: SealPaint) =>
-    p === "foil" ? `url(#${id}-foil)` : p === "paper" ? "var(--color-paper)" : p === "on-ink" ? "var(--color-on-ink)" : "var(--color-ink)";
+    p === "foil" ? `url(#${id}-foil)` : p === "paper" ? "var(--color-paper)" : p === "on-ink" ? "var(--color-on-ink)" : tint ? `url(#${id}-tint)` : "var(--color-ink)";
   const r = drawing.microRadius;
 
   return (
@@ -54,6 +56,15 @@ export function Seal({ fingerprint, size, state = "proven", detail, center = 27,
       focusable="false"
       className={className}
     >
+      {tint && (
+        <defs>
+          <linearGradient id={`${id}-tint`} gradientUnits="userSpaceOnUse" x1="20" y1="20" x2="180" y2="180">
+            <stop offset="0" stopColor="var(--color-proven)" />
+            <stop offset=".55" stopColor="var(--color-accent-bright)" />
+            <stop offset="1" stopColor="var(--color-ink)" />
+          </linearGradient>
+        </defs>
+      )}
       {state === "proven" && (
         <defs>
           <linearGradient id={`${id}-foil`} gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">

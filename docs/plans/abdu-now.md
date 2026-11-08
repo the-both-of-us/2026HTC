@@ -6,8 +6,6 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
-- **The hero seal spins** (owner's request). The big landing seal turns slowly all the time in a teal tint, not plain ink. Typing speeds it up with momentum, and it eases back down when typing stops. It no longer redraws on every keystroke, and it stays still under reduced motion. Files: `features/landing/PostingForm.tsx`, plus a small `tint` option in `shared/ui/seal/Seal.tsx`.
-
 ## Next
 
 - Waiting on the owner: swap the landing's "7.3% Alberta unemployment" seal for something that fits "Learn anything", or keep it. Touches `features/landing`.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { Badge, Button, ErrorNotice, Seal, SealBlank, sha256Hex, Spinner, tabId, Tabs } from "@/shared/ui";
@@ -69,9 +69,8 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
     requestAnimationFrame(() => topicInput.current?.focus());
   }, []);
 
-  // The seal is drawn from what you have typed, so every posting gets its own. Deferred, so
-  // typing stays quick while the big seal redraws.
-  const seed = useDeferredValue("oryxlearn" + (mode === "posting" ? text : mode === "topic" ? topic : (file?.name ?? "")));
+  // The hero seal keeps one design and spins; typing gives it a push (see useSealSpin).
+  const [sealRef, pushSpin] = useSealSpin();
 
   // Count seconds for as long as the map is being built.
   useEffect(() => {
@@ -194,7 +193,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
       <section className="relative z-10 px-4 pt-4 pb-6 sm:px-7 lg:flex lg:min-h-[max(37.5rem,calc(100dvh-11.875rem))] lg:w-[min(40.625rem,50%)] lg:flex-col lg:justify-center lg:pt-6 lg:pb-10">
         <div className="flex flex-col gap-3.5">{children}</div>
 
-        <form onSubmit={handleSubmit} noValidate className="mt-5">
+        <form onSubmit={handleSubmit} onInput={pushSpin} noValidate className="mt-5">
           <Tabs
             label="What to build a map from"
             items={MODES}
@@ -350,7 +349,9 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
         className="order-last overflow-hidden pt-2 pb-5 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:top-0 lg:order-none lg:h-[max(37.5rem,calc(100dvh-11.875rem))] lg:p-0"
       >
         <div className="relative left-1/2 aspect-square w-[min(135vw,40rem)] -translate-x-1/2 lg:absolute lg:top-1/2 lg:left-[52%] lg:w-[min(48.75rem,118vh)] lg:translate-x-0 lg:-translate-y-1/2">
-          <Seal fingerprint={sha256Hex(seed)} state="ink" detail="hero" center={38} />
+          <div ref={sealRef} className="size-full will-change-transform">
+            <Seal fingerprint={HERO_SEAL} state="ink" detail="hero" center={38} tint />
+          </div>
           {figures && <div className="absolute inset-0 flex items-center justify-center">{figures}</div>}
         </div>
       </section>
@@ -425,4 +426,45 @@ function BuildStatus({ seconds, mode, planning }: { seconds: number; mode: Mode;
       </div>
     </div>
   );
+}
+
+const HERO_SEAL = sha256Hex("oryxlearn");
+
+/** Degrees a second: the idle drift, the most a burst of typing can reach, and what one keystroke adds. */
+const SPIN_IDLE = 4;
+const SPIN_MAX = 150;
+const SPIN_PUSH = 14;
+/** Seconds for the extra speed to fall to about a third once typing stops. */
+const SPIN_EASE = 0.9;
+
+/**
+ * Turns the hero seal for as long as the page is open. Each keystroke adds speed (capped), and
+ * the extra speed eases away exponentially, so typing feels like pushing a wheel. The transform is
+ * written straight to the element every frame, with no React render. Still under reduced motion.
+ */
+function useSealSpin() {
+  const ref = useRef<HTMLDivElement>(null);
+  const speed = useRef(SPIN_IDLE);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let angle = 0;
+    let last = performance.now();
+    let frame = requestAnimationFrame(function tick(now) {
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+      speed.current = SPIN_IDLE + (speed.current - SPIN_IDLE) * Math.exp(-dt / SPIN_EASE);
+      angle = (angle + speed.current * dt) % 360;
+      element.style.transform = `rotate(${angle.toFixed(2)}deg)`;
+      frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const push = useCallback(() => {
+    speed.current = Math.min(SPIN_MAX, speed.current + SPIN_PUSH);
+  }, []);
+
+  return [ref, push] as const;
 }
