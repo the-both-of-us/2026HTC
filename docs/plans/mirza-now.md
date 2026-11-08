@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Nothing new yet: waiting on the owner. Candidates: "Ask for help" requests and an anonymous-profile option on People (undecided).
+- **Submission docs: drop "Read the Grid"** now that Abdu removed it (`d62c14e`). Touches: `docs/submission/devpost.md`, `video-script.md`, `ai-disclosure.md` only.
 
 ## Next
 
