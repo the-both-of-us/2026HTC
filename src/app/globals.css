@@ -331,14 +331,14 @@ html[data-theme="dark"] {
  */
 html[data-theme="dark"] .on-ink {
   --color-ink: #1e3530;
-  --color-on-ink: #cdd6cf;
-  --color-on-ink-soft: #9fb3aa;
+  --color-on-ink: #dce5de;
+  --color-on-ink-soft: #a9bcb3;
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) .on-ink {
     --color-ink: #1e3530;
-    --color-on-ink: #cdd6cf;
-    --color-on-ink-soft: #9fb3aa;
+    --color-on-ink: #dce5de;
+    --color-on-ink-soft: #a9bcb3;
   }
 }
 

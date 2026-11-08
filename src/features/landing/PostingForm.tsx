@@ -373,12 +373,12 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
         </div>
       </section>
 
-      <section aria-labelledby="samples-heading" className="on-ink bg-ink px-4 pt-5.5 pb-6.5 text-on-ink sm:px-7 lg:min-h-[11.875rem] lg:pt-6 lg:pb-5.5">
+      <section aria-labelledby="samples-heading" className="border-t border-rule bg-(--color-cover-1) px-4 pt-5.5 pb-6.5 text-ink sm:px-7 lg:min-h-[11.875rem] lg:pt-6 lg:pb-5.5">
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
           <h2 id="samples-heading" className="text-[1.1875rem] font-semibold">
             Or start from a sample posting
           </h2>
-          <p className="text-[0.90625rem] text-on-ink-soft">Written for this demo, not real listings.</p>
+          <p className="text-[0.90625rem] text-ink-2">Written for this demo, not real listings.</p>
         </div>
         <ul className="mt-3 grid gap-1 md:grid-cols-3 md:gap-x-7.5">
           {SAMPLE_POSTINGS.map((sample) => (
@@ -390,13 +390,13 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
                 className="group flex w-full cursor-pointer items-center gap-4 py-2 pr-2 text-left disabled:cursor-default disabled:opacity-70"
               >
                 <span className="size-21 shrink-0 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-(--ease-out) motion-safe:group-hover:rotate-[14deg]">
-                  <Seal fingerprint={sha256Hex(sample.id)} state="on-ink" detail="mid" center={30} />
+                  <Seal fingerprint={sha256Hex(sample.id)} state="ink" detail="mid" center={30} />
                 </span>
                 <span className="min-w-0">
                   <span className="block text-lg leading-tight font-semibold tracking-[-0.005em] font-stretch-[108%] decoration-[1.5px] underline-offset-4 group-hover:underline">
                     {sample.label}
                   </span>
-                  <span className="mt-0.5 block text-[0.90625rem] leading-snug text-on-ink-soft">{locationLine(sample.text)}</span>
+                  <span className="mt-0.5 block text-[0.90625rem] leading-snug text-ink-2">{locationLine(sample.text)}</span>
                 </span>
               </button>
             </li>
