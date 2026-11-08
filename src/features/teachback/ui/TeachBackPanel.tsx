@@ -153,7 +153,11 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
     const result = await submitFollowUp(attemptId, answer, { inputMethod, startedAfterMs: startedAfterMs.current });
 
     setPending(false);
-    if (result.ok) return result.attempt;
+    // The spoken interview announces its own verdict, so "Checking" must not linger here until Continue.
+    if (result.ok) {
+      setAnnouncement("");
+      return result.attempt;
+    }
 
     // 409 means this answer was already sent: the reply was lost, or another click sent it.
     // Ask the server what became of it. While it is still being checked, the form stays.

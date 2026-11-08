@@ -106,6 +106,14 @@ export function ExplainForm({
   const clockRunning = clock !== null && clock.stoppedAt === undefined;
   const timeUp = clock?.stoppedAt !== undefined;
 
+  // A not-yet result keeps the text "for editing", so unlock it: the next edit starts a fresh clock.
+  // Without this the box stayed locked, and "Check again" could only resend the text that just failed.
+  const [wasPending, setWasPending] = useState(pending);
+  if (pending !== wasPending) {
+    setWasPending(pending);
+    if (!pending && timed && revising) setClock(null);
+  }
+
   const endsAt = clockRunning ? clock.endsAt : null;
   const stopDictatingRef = useRef(stopDictating);
   useEffect(() => {

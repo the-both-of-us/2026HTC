@@ -171,6 +171,7 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
                 key={current.attemptId}
                 attemptId={current.attemptId}
                 question={current.question}
+                final
                 onAnswer={(text, inputMethod) => answer(current.attemptId, text, inputMethod)}
                 onContinue={refresh}
                 onTypeInstead={() => {}}

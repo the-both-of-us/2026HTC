@@ -15,6 +15,8 @@ type AnswerHandler<Result> = (text: string, inputMethod: InputMethod) => Promise
 export type VoiceInterviewProps = {
   attemptId: string;
   question: string;
+  /** The course's final interview: the question mixes topics, so it isn't "about what you just explained". It also sits in a shorter box. */
+  final?: boolean;
   /** Called whenever the interview moves to typing, with whatever has been heard. */
   onTypeInstead: (partialText: string) => void;
   /** Called once, when the learner starts answering: the microphone opens, or they type a first letter. */
@@ -118,7 +120,7 @@ function announcementFor(state: VoiceState, heardText: string): string {
   }
 }
 
-function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onContinue, adapters, initial }: VoiceInterviewProps) {
+function Interview({ attemptId, question, final = false, onAnswer, onTypeInstead, onBegin, onContinue, adapters, initial }: VoiceInterviewProps) {
   const { session, snapshot } = useVoiceInterview({ attemptId, onAnswer, onTypeInstead, adapters, initial });
   const { state, finalText, interimText, text, micLive, countdownEndsAt } = snapshot;
   const { phase, closing, holding, countdown, editing, reason, notice, verdict } = state;
@@ -195,11 +197,19 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
   };
 
   const announcement = announcementFor(state, text);
-  const status = verdict ? (verdict.passed ? "Proven" : "Not yet") : closing ? "Finishing up" : STATUS[phase];
+  const status = verdict
+    ? verdict.passed
+      ? "Proven"
+      : "Not yet"
+    : closing
+      ? "Finishing up"
+      : final && phase === "ready"
+        ? "Final interview question"
+        : STATUS[phase];
 
   return (
     <section
-      aria-label="Spoken follow-up question"
+      aria-label={final ? "Final interview question" : "Spoken follow-up question"}
       className="@container rounded-sheet border border-rule bg-sheet"
     >
       <p aria-live="polite" role="status" className="sr-only">
@@ -212,7 +222,7 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
             mood={moodOf(state)}
             getMeter={() => session.activeMeter()}
             // On a phone, the answer needs the room more than the orb does.
-            className={`block aspect-square w-full @2xl:max-w-[22rem] ${
+            className={`block aspect-square w-full ${final ? "@2xl:max-w-[12rem]" : "@2xl:max-w-[22rem]"} ${
               phase === "heard" || phase === "type-instead"
                 ? "max-w-[4.5rem]"
                 : phase === "verdict"
@@ -222,7 +232,7 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
           />
         </div>
 
-        <div className="flex min-h-[23rem] min-w-0 flex-col @2xl:min-h-[26rem]">
+        <div className={`flex min-w-0 flex-col ${final ? "min-h-[16rem]" : "min-h-[23rem] @2xl:min-h-[26rem]"}`}>
           <div className="flex min-h-7 items-center gap-2">
             {verdict?.passed && <StateMark state="proven" size={18} />}
             {(phase === "listening" || holding) && !closing && <LiveDot />}
@@ -258,7 +268,7 @@ function Interview({ attemptId, question, onAnswer, onTypeInstead, onBegin, onCo
             {(phase === "ready" || phase === "thinking" || phase === "speaking") && (
               <p className="text-base text-ink-soft">
                 {phase === "ready"
-                  ? "It's about what you just explained. One tap: you'll hear the question, then just answer out loud."
+                  ? `${final ? "It mixes topics you proved." : "It's about what you just explained."} One tap: you'll hear the question, then just answer out loud.`
                   : "The microphone opens when the question ends. Tap Answer now to start sooner."}
               </p>
             )}
