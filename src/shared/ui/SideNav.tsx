@@ -3,14 +3,14 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Flame, LayoutDashboard, type LucideIcon, Network, RotateCcw, Settings, Sparkles, SquarePen } from "lucide-react";
+import { BookOpen, Flame, CirclePlay, LayoutDashboard, type LucideIcon, Network, RotateCcw, Settings, SquarePen } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { TopBarSignIn } from "./Account";
 
 // A word and a small line icon per page. Mirza adds his pages' links here when they are ready.
 const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/", label: "Build", Icon: SquarePen },
-  { href: "/feed", label: "FYP", Icon: Sparkles },
+  { href: "/feed", label: "FYP", Icon: CirclePlay },
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/courses", label: "Courses", Icon: BookOpen },
   { href: "/review", label: "Review", Icon: RotateCcw },
