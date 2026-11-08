@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Writing the 3-4 minute voiceover script for the Devpost video: new file `docs/submission/voiceover-script.md` only. No code.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sun Nov 8.
 
 ## Done today (latest first)
 
+- Voiceover script for the Devpost video (`a36f059`): `docs/submission/voiceover-script.md`, narration with a shot for each beat. Docs only.
 - Dashboard shows one card per course (`84781b3`): if you hold a course and a copy of it, only your copy shows (matched on title and skills). Proofs on both still count. `features/dashboard` only. Needs a deploy.
 - UI refresh (`81f2769`): a seal per course (cover in ink, teal or violet from the map id); Courses cards with it and no Sample tag; the course page as a seal hero with skills beside a sticky start card; the dashboard as a hero with Continue, stat tiles (zeros on a first visit), your courses with progress, and courses to start. My `features/courses/ui` and `features/dashboard` only.
 - Map header while reading (`ce29cab`): with a skill open only the title and progress stay; full page also hides the view tabs. Start learning only on the overview (it did nothing when its skill was already open). Publish only while private; a public course shows a "Course page" link. Touched Abdu's `MapScreen.tsx` and `app/map/[id]/page.tsx` (see TEAM.md).
