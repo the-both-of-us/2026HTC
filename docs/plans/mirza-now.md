@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- **Reels: second search when the first is thin** (owner's report: no videos on "Binary representation basics" in Bit masks in DP). When the search with the map title finds fewer than 2, search the skill alone and add those; bump `SEARCH_VERSION` so empty lists are retried now. Touches `features/reels` only.
+- **Map header while reading** (owner's request): with a skill open, only the title and progress stay (no action buttons, streak, today or final interview row; view tabs hide in full page). Start learning only on the overview (it did nothing when its skill was already open). Publish only while private; once published, a "Course page" link instead. Touches Abdu's `skill-map/ui/MapScreen.tsx` and `app/map/[id]/page.tsx`.
 
 ## Next
 
