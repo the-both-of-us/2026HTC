@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- **Feed Shorts redesign** (owner's request): no frame or header around a Short; the video edge to edge at 9:16 with rounded corners, the interest as a label on it, our own play and sound buttons instead of YouTube's controls (sound stays on once you turn it on), the rail beside the video, one caption line and Go deeper below. Touches Abdu's `src/features/feed/ui/FeedScreen.tsx` only; text cards unchanged. Abdu: shout if you're in that file.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Done today (latest first)
 
+- Feed Shorts redesign (`c6a19c4`): no frame, header or badge; the video edge to edge at 9:16 with the rail beside it and one caption row (title, interest, channel link, Go deeper). YouTube's controls are off: tap to pause or play, and a sound button that stays on for later Shorts; the card loops each Short itself. Touched Abdu's `features/feed/ui/FeedScreen.tsx` and the feed README (see TEAM.md).
 - Submission docs: removed "Read the Grid" and AESO from the Devpost text, video script and AI disclosure, after `d62c14e`. StatCan numbers stay (still on the landing page).
 - Map header inside a study circle: the "In circle" row and "Start a study circle" are gone; a small "Your circle" button (to `/circle/<code>`) takes the latter's place, for the creator and every member. Circle buttons are now `sm` like the rest of the header, and the topic tag is one short "AI-made, no citations" with the full sentence as a tooltip. Touched Abdu's `app/map/[id]/page.tsx`, `circles/ui/{CircleBanner,StartCircleButton}.tsx`, `circles/client.ts`, `skill-map/ui/MapScreen.tsx`.
 - Full-page skill reading is bigger and wider: the column is 1024px (was 768), the lesson fills it at 20px text (was 17px, capped at 65ch), the title is 32px and the section headings 24px; flashcards and quiz grow to match. Only in full page (`data-reading-page` on the panel plus Tailwind `lg:in-data-[reading-page]:`); the side panel is unchanged. Touched Abdu's `SkillPanel.tsx` and `LessonTab.tsx`, and my flashcards and quiz tabs.
