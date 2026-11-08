@@ -16,6 +16,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Put Mirza's tidier map header in a circle (`01cd256`) live on Vercel. Typecheck, lint and the circles and skill-map tests pass on main.
 - Put Mirza's wider full-page skill reading (`cdf9dbb`) live on Vercel. Typecheck, lint and the lessons, skill-map, flashcards and quiz tests pass on main.
 - Put Mirza's calmer People page (`78353a5`) live on Vercel. Typecheck, lint and the network tests pass on main.
 - Put Mirza's clickable People skills (`fc1925d`) live on Vercel. Typecheck, lint and the network and courses tests pass on main.
