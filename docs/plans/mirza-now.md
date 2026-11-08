@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- **Reels: second search when the first is thin** (owner's report: no videos on "Binary representation basics" in Bit masks in DP). When the search with the map title finds fewer than 2, search the skill alone and add those; bump `SEARCH_VERSION` so empty lists are retried now. Touches `features/reels` only.
 
 ## Next
 
