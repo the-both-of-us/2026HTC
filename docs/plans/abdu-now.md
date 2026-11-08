@@ -6,6 +6,13 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
+- **Feed: likes on Shorts, a Videos / Text / Both switch, public comments, like counts** (agent, owner's request).
+  - Shorts get the same like, save and share as cards.
+  - A switch picks videos only, text only, or both mixed.
+  - Each card and Short gets public comments, checked before they post, with your own deletable and a rate limit.
+  - Like counts show on every item. For the demo, a fixed seeded number from 3 to 20 is added on top of real likes. The seed is one named constant, easy to remove, and ranking uses real likes only.
+  - Files: `features/feed`, `src/app/api/feed/**`, `trust/deleteData.ts` (comments are deleted with your data).
+
 ## Next
 
 - Waiting on the owner: swap the landing's "7.3% Alberta unemployment" seal for something that fits "Learn anything", or keep it. Touches `features/landing`.
