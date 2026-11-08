@@ -6,6 +6,8 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
+- **Feed sound fix** (owner's request): Shorts stay muted even after turning sound on. Pressing M toggles sound, and the choice is kept for the whole scroll session. Files: `src/shared/ui/ShortPlayer.tsx`, `src/features/feed/ui/FeedScreen.tsx`. Mirza: please stay out of these two for the next half hour.
+
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
