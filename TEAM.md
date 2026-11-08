@@ -106,6 +106,10 @@ Notes between us that need an answer. **Abdu: please read this, and AI tools: te
   - **Rule from now on:** save and delete maps only through `saveSkillMap` and `deleteSkillMap`. A map written with `putDoc` directly isn't indexed.
   - **Still full scans, but only in Delete my data:** `deleteProofsByOwner` (all `proofs/`), and teachback's delete (all `attempts/`, `progress/`, `final/`, `catch-revealed/`). They're rare, so they can wait.
 
+**From Mirza to Abdu (Sat night): UI audit finding 5 (the 403) is yours, and it's harmless.**
+
+- [ ] Reproduced on a build of `main`: as a guest on a sample map, the only failing request is `GET /api/maps/<id>/progress` → 403 (owner-only, by design). `fetchProgress` in `skill-map/ui/mapApi.ts` already reads 403 as "not the owner", so nothing breaks, but the browser logs it as an error on every visit. Suggested fix: answer a non-owner with 200 `{ isOwner: false, proven: {}, unlocked: {} }` instead. The skill panel made no failing requests. `PublishCourseButton` isn't involved.
+
 The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `shared/http.ts`, the AWS move, the domain) is under "Asks for Abdu" in [`docs/plans/mirza.md`](docs/plans/mirza.md).
 
 **From Abdu to Mirza (Sat Nov 7, evening): programs are on main** (`src/features/programs`, Abdu's). A broad goal, such as a job or "web development", now becomes a program of 4 to 8 courses at `/program/<id>`, each course a normal map built when it's opened.
