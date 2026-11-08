@@ -10,6 +10,8 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
+- **Read tab as formatted Markdown, plus a slimmer reading header** (owner's request): lessons render light Markdown (bold key terms, lists, tip callouts, colour-coded sections, highlighted code), and new lessons are asked to use it; old saved lessons still read fine. In full page, the skill's header becomes one slim sticky row and "why / where this came from / built on" fold into one "About this skill" line. Touches `features/lessons` (new `ui/LessonMarkdown.tsx`, `prompt.ts`), `skill-map/ui/SkillPanel.tsx`, `app/globals.css` (reading colour tokens). Not touching `features/reels` (Mirza's votes).
+
 ## Next
 
 
