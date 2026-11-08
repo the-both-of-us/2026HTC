@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- **Like and dislike on a skill's Quick videos** (owner's request): thumbs up and down in the video viewer. Disliking hides it for you; a video with 2+ dislikes and more dislikes than likes is removed from the course for everyone, and the next saved video takes its place (lists keep 8, show 4), with no new search. Votes are one key each at `skill-reel-votes/<topicKey>/<videoId>/<up|down>/<user>`. Touches my `features/reels`, new `api/reels/vote`, and one line in Abdu's `trust/deleteData.ts` so "Delete my data" removes votes.
 
 ## Next
 
