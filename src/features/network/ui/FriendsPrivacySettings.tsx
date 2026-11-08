@@ -47,11 +47,17 @@ export function FriendsPrivacySettings() {
 
   async function toggle(name: keyof PrivacySettings, value: boolean) {
     if (state.status !== "ready") return;
+    const before = state.settings;
+    // Shows the change at once, and puts it back if saving fails.
+    setState({ status: "ready", settings: { ...before, [name]: value } });
     setSaving(name);
     setError(null);
     const result = await savePrivacy({ [name]: value });
     setSaving(null);
-    if (!result.ok) return setError(result.message);
+    if (!result.ok) {
+      setState({ status: "ready", settings: before });
+      return setError(result.message);
+    }
     const { shareProgress, allowRequests, allowPings } = result.me;
     setState({ status: "ready", settings: { shareProgress, allowRequests, allowPings } });
   }
