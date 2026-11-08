@@ -38,8 +38,8 @@ function DashboardLoading() {
 }
 
 /** Popular public courses this person has not started. A failure only hides the section. */
-async function exploreCourses(mine: CourseRow[]): Promise<PublicCourse[]> {
-  const started = new Set(mine.flatMap((course) => [course.mapId, course.startedFrom ?? ""]));
+async function exploreCourses(startedIds: string[]): Promise<PublicCourse[]> {
+  const started = new Set(startedIds);
   try {
     const courses = await listCourses({ sort: "popular" });
     return courses.filter((course) => !started.has(course.mapId)).slice(0, EXPLORE_COUNT);
@@ -76,7 +76,7 @@ async function DashboardContent() {
   }
 
   const courses = [...(data?.courses ?? [])].sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
-  const explore = await exploreCourses(courses);
+  const explore = await exploreCourses(data?.startedIds ?? []);
   const latest = courses[0] ?? null;
 
   return (
@@ -250,7 +250,7 @@ function StatTile({
 
 function ProvenTile({ data }: { data: DashboardData | null }) {
   const total = data?.provenTotal ?? 0;
-  const maps = data?.courses.filter((course) => course.provenCount > 0).length ?? 0;
+  const maps = data?.provenCourseCount ?? 0;
   return (
     <StatTile labelledBy="proven-summary-heading" icon={<Medal size={16} />} label="Proven skills" value={total}>
       <p className="text-ink-soft">

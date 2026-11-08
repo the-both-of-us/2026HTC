@@ -28,8 +28,13 @@ export type CourseRow = {
 export type ProvenItem = { mapId: string; nodeId: string; skillTitle: string; mapTitle: string; provenAt: string };
 
 export type DashboardData = {
+  /** One row per course: your copy stands in for the course it came from. */
   courses: CourseRow[];
   provenTotal: number;
+  /** Courses with at least one proof, counting a course and your copy of it once. */
+  provenCourseCount: number;
+  /** Every map you hold and every map one was copied from, so "Start with a course" can leave them out. */
+  startedIds: string[];
   recentProven: ProvenItem[];
   /** Null when review could not be read: the rest of the page still shows. */
   review: ReviewSummary | null;
@@ -39,6 +44,31 @@ export type DashboardData = {
 
 export type MapFacts = { map: SkillMap; proved: { nodeId: string; provenAt: string }[]; isPublic: boolean };
 
+/** A copy keeps its title and skills, so this also matches a copy whose original it was not made from. */
+function courseKey(map: SkillMap): string {
+  return JSON.stringify([map.title, map.nodes.map((node) => node.title).sort()]);
+}
+
+/** Of two copies of one course, the one with more proven, then the one used last. */
+function betterCopy(a: CourseRow, b: CourseRow): CourseRow {
+  if (a.provenCount !== b.provenCount) return a.provenCount > b.provenCount ? a : b;
+  return a.lastActivityAt >= b.lastActivityAt ? a : b;
+}
+
+/**
+ * Drops the extra rows for a course held more than once: the best copy stays, and the
+ * original and other copies go. Maps with no copy all stay, even with matching titles.
+ */
+function onePerCourse(rows: { key: string; row: CourseRow }[]): CourseRow[] {
+  const copies = new Map<string, CourseRow>();
+  for (const { key, row } of rows) {
+    if (!row.isCopy) continue;
+    const other = copies.get(key);
+    copies.set(key, other ? betterCopy(other, row) : row);
+  }
+  return rows.filter(({ key, row }) => (copies.get(key) ?? row) === row).map(({ row }) => row);
+}
+
 /** Puts the dashboard together from what was read. Pure, so it can be tested on its own. */
 export function assembleDashboard(
   facts: MapFacts[],
@@ -47,7 +77,7 @@ export function assembleDashboard(
   now: Date,
 ): DashboardData {
   const proven: ProvenItem[] = [];
-  const courses = facts.map(({ map, proved, isPublic }): CourseRow => {
+  const rows = facts.map(({ map, proved, isPublic }): { key: string; row: CourseRow } => {
     const titles = new Map(map.nodes.map((node) => [node.id, node.title]));
     // Only skills still on the map, once each.
     const seen = new Set<string>();
@@ -59,7 +89,7 @@ export function assembleDashboard(
       proven.push({ mapId: map.id, nodeId: record.nodeId, skillTitle, mapTitle: map.title, provenAt: record.provenAt });
       if (record.provenAt > lastActivityAt) lastActivityAt = record.provenAt;
     }
-    return {
+    const row: CourseRow = {
       mapId: map.id,
       title: map.title,
       subtitle: map.subtitle,
@@ -70,6 +100,7 @@ export function assembleDashboard(
       startedFrom: map.forkedFrom ?? null,
       lastActivityAt,
     };
+    return { key: courseKey(map), row };
   });
 
   proven.sort((a, b) => b.provenAt.localeCompare(a.provenAt));
@@ -78,7 +109,15 @@ export function assembleDashboard(
     .filter((iso) => iso >= since)
     .sort();
 
-  return { courses, provenTotal: proven.length, recentProven: proven.slice(0, RECENT_PROVEN), review, activity };
+  return {
+    courses: onePerCourse(rows),
+    provenTotal: proven.length,
+    provenCourseCount: new Set(rows.filter(({ row }) => row.provenCount > 0).map(({ key }) => key)).size,
+    startedIds: facts.flatMap(({ map }) => (map.forkedFrom ? [map.id, map.forkedFrom] : [map.id])),
+    recentProven: proven.slice(0, RECENT_PROVEN),
+    review,
+    activity,
+  };
 }
 
 /** Logs a failed section and returns its fallback, so one broken read never blanks the page. */

@@ -86,6 +86,61 @@ describe("assembleDashboard", () => {
     expect(JSON.stringify(data)).not.toContain("secret source");
   });
 
+  describe("a course held more than once", () => {
+    const original = () => map({ title: "Calculus" });
+    const copyOf = (source: SkillMap, overrides: Partial<SkillMap> = {}) => map({ title: source.title, forkedFrom: source.id, ...overrides });
+    const facts = (entries: [SkillMap, MapFacts["proved"]?][]): MapFacts[] =>
+      entries.map(([item, proved]) => ({ map: item, proved: proved ?? [], isPublic: !item.forkedFrom }));
+    const ids = (data: ReturnType<typeof assembleDashboard>) => data.courses.map((course) => course.mapId);
+
+    it("shows only your copy, not the public original", () => {
+      const source = original();
+      const copy = copyOf(source);
+      expect(ids(assembleDashboard(facts([[source], [copy]]), null, [], NOW))).toEqual([copy.id]);
+    });
+
+    it("matches a copy that came through someone else's map", () => {
+      const source = original();
+      const copy = copyOf(source, { forkedFrom: randomUUID() });
+      expect(ids(assembleDashboard(facts([[source], [copy]]), null, [], NOW))).toEqual([copy.id]);
+    });
+
+    it("keeps the copy with more proven when there are two", () => {
+      const source = original();
+      const idle = copyOf(source, { createdAt: "2026-11-05T12:00:00.000Z" });
+      const used = copyOf(source);
+      const data = assembleDashboard(facts([[idle], [used, [{ nodeId: "a", provenAt: "2026-11-02T12:00:00.000Z" }]]]), null, [], NOW);
+      expect(ids(data)).toEqual([used.id]);
+    });
+
+    it("still counts proofs on the hidden original, and leaves it out of courses to start", () => {
+      const source = original();
+      const copy = copyOf(source);
+      const data = assembleDashboard(
+        facts([[source, [{ nodeId: "a", provenAt: "2026-11-02T12:00:00.000Z" }]], [copy, [{ nodeId: "b", provenAt: "2026-11-03T12:00:00.000Z" }]]]),
+        null,
+        [],
+        NOW,
+      );
+      expect(data.provenTotal).toBe(2);
+      expect(data.provenCourseCount).toBe(1);
+      expect(data.recentProven.map((item) => item.mapId)).toEqual([copy.id, source.id]);
+      expect(data.startedIds).toEqual(expect.arrayContaining([source.id, copy.id]));
+    });
+
+    it("keeps two maps you built yourself, even with the same title and skills", () => {
+      const first = original();
+      const second = original();
+      expect(ids(assembleDashboard(facts([[first], [second]]), null, [], NOW))).toEqual([first.id, second.id]);
+    });
+
+    it("keeps a copy of a different course that shares only the title", () => {
+      const source = original();
+      const other = copyOf(source, { nodes: [{ ...source.nodes[0], id: "x", title: "Something else" }] });
+      expect(ids(assembleDashboard(facts([[source], [other]]), null, [], NOW))).toEqual([source.id, other.id]);
+    });
+  });
+
   it("keeps the 8 most recent proofs and sends only the last 60 days of activity, oldest first", () => {
     const big = map({ nodes: Array.from({ length: 10 }, (_, i) => ({ ...map().nodes[0], id: `n${i}`, title: `S${i}` })) });
     const proved = big.nodes.map((node, i) => ({ nodeId: node.id, provenAt: `2026-11-0${(i % 7) + 1}T0${i}:00:00.000Z` }));
