@@ -20,6 +20,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Delete a course: the owner gets "Delete course" on the course page (two-step, no browser dialog). `DELETE /api/maps/[id]` removes the map and its Courses listing; others' copies stay; program courses are kept (409).
 - Router is two models now (owner's call from the benchmark): gpt-oss-120b by default; Claude Sonnet writes maps and lessons for hard or high-stakes courses and for psychology, health, law and quantum. Haiku and Opus are not used. The verdict is stated at the top of `/settings/models`.
 - Model benchmarks at `/settings/models` (small link in Settings): 64 public MMLU/MMLU-Pro questions per model. gpt-oss-120b 85.9%, Haiku 87.5%, Sonnet 95.3%, Opus 96.9%; gpt-oss ties Claude on math and CS, Claude is clearly better on psychology, health and law.
 - Model router and `/settings`: gpt-oss-120b by default; harder or higher-stakes courses use Claude Haiku, Sonnet or Opus per task (live-checked: all four tiers answer in 0.4–1.3 s). Theme, text size and learning mode moved into Settings.

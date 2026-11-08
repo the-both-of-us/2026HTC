@@ -21,6 +21,7 @@ import {
   skillHref,
   skillsLabel,
 } from "./courseView";
+import { DeleteCourse } from "./DeleteCourse";
 import { PublishControls } from "./PublishCourseButton";
 
 type LoadState =
@@ -279,6 +280,9 @@ function LoadedCourse({
                 signInRequired={detail.signInRequired === true}
                 displayName={detail.displayName ?? null}
               />
+              <div className="border-t border-rule pt-2">
+                <DeleteCourse mapId={mapId} published={published} />
+              </div>
             </section>
           )}
 

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readUserId } from "@/shared/identity";
-import { putDoc } from "@/shared/store";
+import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
-import { GET } from "./route";
+import { DELETE, GET } from "./route";
 
 vi.mock("@/shared/identity", () => ({ readUserId: vi.fn() }));
 const mockReadUserId = vi.mocked(readUserId);
@@ -79,5 +79,31 @@ describe("GET /api/maps/[id]", () => {
 
     expect(response.status).toBe(404);
     expect((await response.json()).error).toMatch(/could not find/i);
+  });
+});
+
+function remove(id: string) {
+  return DELETE(new Request(`http://test/api/maps/${id}`, { method: "DELETE" }), { params: Promise.resolve({ id }) });
+}
+
+describe("DELETE /api/maps/[id]", () => {
+  it("lets the owner delete their course, and only them", async () => {
+    const map = await savedMap();
+    mockReadUserId.mockResolvedValue("other-user");
+    expect((await remove(map.id)).status).toBe(403);
+    expect(await getDoc(`maps/${map.id}`)).not.toBeNull();
+
+    mockReadUserId.mockResolvedValue(OWNER);
+    expect((await remove(map.id)).status).toBe(200);
+    expect(await getDoc(`maps/${map.id}`)).toBeNull();
+    expect((await remove(map.id)).status).toBe(404);
+  });
+
+  it("keeps a course that belongs to a program", async () => {
+    const map = await savedMap();
+    await putDoc(`maps/${map.id}`, { ...map, program: { id: crypto.randomUUID(), title: "P", position: 1, total: 2 } });
+    mockReadUserId.mockResolvedValue(OWNER);
+    expect((await remove(map.id)).status).toBe(409);
+    expect(await getDoc(`maps/${map.id}`)).not.toBeNull();
   });
 });
