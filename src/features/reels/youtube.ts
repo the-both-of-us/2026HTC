@@ -6,8 +6,8 @@ const SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 const VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos";
 const TIMEOUT_MS = 5_000;
 
-/** At most this many on a skill. */
-export const MAX_REELS = 4;
+/** Kept from one search: more than are shown, so a removed video's place is taken without searching again. */
+export const MAX_SAVED = 8;
 /** Longer than this is not a quick watch. YouTube's own "short" filter means under 4 minutes. */
 export const MAX_SECONDS = 90;
 
@@ -99,12 +99,19 @@ async function getJSON(url: string): Promise<Json> {
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 /**
- * Up to MAX_REELS Shorts for one skill, most relevant first. One search (100 of the 10,000 daily
+ * Up to MAX_SAVED Shorts for one skill, most relevant first, leaving out the ids in `skip`
+ * (videos voted off this skill). One search (100 of the 10,000 daily
  * quota units) and one videos.list call (1 unit) for the length and frame shape, since YouTube's
  * own "short" filter lets through landscape videos up to 4 minutes. Throws when YouTube itself
  * failed (quota, network), so the caller keeps what it had and saves nothing.
  */
-export async function searchReels(skillTitle: string, mapTitle: string, audience: string | undefined, apiKey: string): Promise<Reel[]> {
+export async function searchReels(
+  skillTitle: string,
+  mapTitle: string,
+  audience: string | undefined,
+  apiKey: string,
+  skip: ReadonlySet<string> = new Set(),
+): Promise<Reel[]> {
   const search = new URLSearchParams({
     part: "snippet",
     type: "video",
@@ -123,7 +130,7 @@ export async function searchReels(skillTitle: string, mapTitle: string, audience
     const videoId = entry?.id?.videoId;
     const title = unescape(String(entry?.snippet?.title ?? "")).trim();
     if (typeof videoId !== "string" || !/^[\w-]{11}$/.test(videoId) || !title) continue;
-    if (candidates.some((candidate) => candidate.videoId === videoId)) continue;
+    if (skip.has(videoId) || candidates.some((candidate) => candidate.videoId === videoId)) continue;
     if (!looksEducational(title, `${skillTitle} ${mapTitle}`)) continue;
     const score = relevance(`${title} ${unescape(String(entry.snippet.description ?? ""))}`, skillTitle, mapTitle);
     if (score === 0) continue;
@@ -149,6 +156,6 @@ export async function searchReels(skillTitle: string, mapTitle: string, audience
   }
   return reels
     .sort((a, b) => b.score - a.score || a.order - b.order)
-    .slice(0, MAX_REELS)
+    .slice(0, MAX_SAVED)
     .map(({ videoId, title, channel, seconds }) => ({ videoId, title, channel, seconds }));
 }

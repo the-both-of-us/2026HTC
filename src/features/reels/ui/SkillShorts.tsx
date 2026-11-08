@@ -1,14 +1,15 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import clsx from "clsx";
+import { ChevronLeft, ChevronRight, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Button, ShortPlayer, ShortThumbnail } from "@/shared/ui";
-import type { Reel } from "../types";
+import type { ShownReel, Vote, VoteResult } from "../types";
 
 /** "1:05" from 65. */
 const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-async function fetchReels(mapId: string, nodeId: string): Promise<Reel[]> {
+async function fetchReels(mapId: string, nodeId: string): Promise<ShownReel[]> {
   try {
     const response = await fetch("/api/reels", {
       method: "POST",
@@ -16,16 +17,31 @@ async function fetchReels(mapId: string, nodeId: string): Promise<Reel[]> {
       body: JSON.stringify({ mapId, nodeId }),
     });
     const body = await response.json().catch(() => null);
-    return response.ok && Array.isArray(body?.reels) ? (body.reels as Reel[]) : [];
+    return response.ok && Array.isArray(body?.reels) ? (body.reels as ShownReel[]) : [];
   } catch {
     return [];
   }
 }
 
+async function sendVote(mapId: string, nodeId: string, videoId: string, vote: Vote): Promise<VoteResult | null> {
+  try {
+    const response = await fetch("/api/reels/vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mapId, nodeId, videoId, vote }),
+    });
+    return response.ok ? ((await response.json()) as VoteResult) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * "Quick videos": a row of YouTube Shorts for one skill, at the end of its lesson. Tapping one
- * opens it over the page, with the others a tap or an arrow key away. Shows nothing until there
- * are videos, and nothing at all when there are none, since the lesson stands on its own.
+ * opens it over the page, with the others a tap or an arrow key away, and a like and a dislike.
+ * A dislike hides the video from you once the viewer closes; enough dislikes remove it from the
+ * course for everyone (on the server). Shows nothing until there are videos, and nothing at all
+ * when there are none, since the lesson stands on its own.
  */
 export function SkillShorts({ mapId, nodeId }: { mapId: string; nodeId: string }) {
   // Keyed, so opening another skill starts from a clean slate.
@@ -33,7 +49,7 @@ export function SkillShorts({ mapId, nodeId }: { mapId: string; nodeId: string }
 }
 
 function ShortsRow({ mapId, nodeId }: { mapId: string; nodeId: string }) {
-  const [reels, setReels] = useState<Reel[]>([]);
+  const [reels, setReels] = useState<ShownReel[]>([]);
   const [open, setOpen] = useState<number | null>(null);
   // Tapping a video means you want to hear it; turning sound off holds for the rest of the row.
   const [sound, setSound] = useState(true);
@@ -48,6 +64,28 @@ function ShortsRow({ mapId, nodeId }: { mapId: string; nodeId: string }) {
       cancelled = true;
     };
   }, [mapId, nodeId]);
+
+  // Shown at once, then put right by the server's count; a failed vote goes back as it was.
+  async function vote(videoId: string, next: Vote): Promise<boolean> {
+    const before = reels.find((reel) => reel.videoId === videoId);
+    if (!before) return false;
+    const set = (myVote: Vote, likes: number) =>
+      setReels((current) => current.map((reel) => (reel.videoId === videoId ? { ...reel, myVote, likes } : reel)));
+    set(next, Math.max(0, before.likes + (next === 1 ? 1 : 0) - (before.myVote === 1 ? 1 : 0)));
+    const result = await sendVote(mapId, nodeId, videoId, next);
+    if (!result) {
+      set(before.myVote, before.likes);
+      return false;
+    }
+    set(result.myVote, result.likes);
+    return true;
+  }
+
+  // Videos you disliked leave the row once the viewer closes, so a mis-tap can be undone first.
+  function closeViewer() {
+    setOpen(null);
+    setReels((current) => current.filter((reel) => reel.myVote !== -1));
+  }
 
   if (reels.length === 0) return null;
 
@@ -79,13 +117,15 @@ function ShortsRow({ mapId, nodeId }: { mapId: string; nodeId: string }) {
           </li>
         ))}
       </ul>
-      {open !== null && <ShortsViewer reels={reels} index={open} onIndex={setOpen} onClose={() => setOpen(null)} sound={sound} onSound={setSound} />}
+      {open !== null && (
+        <ShortsViewer reels={reels} index={open} onIndex={setOpen} onClose={closeViewer} onVote={vote} sound={sound} onSound={setSound} />
+      )}
     </section>
   );
 }
 
 /** The player is as tall as the screen allows, at 9:16, and never wider than the screen. */
-const PLAYER_WIDTH = "min(calc(100vw - 3rem), calc((96dvh - 10rem) * 9 / 16), 24rem)";
+const PLAYER_WIDTH = "min(calc(100vw - 3rem), calc((96dvh - 17.5rem) * 9 / 16), 24rem)";
 
 /** One Short over the page, with previous and next. Closing it removes the player, so the sound stops. */
 function ShortsViewer({
@@ -93,17 +133,20 @@ function ShortsViewer({
   index,
   onIndex,
   onClose,
+  onVote,
   sound,
   onSound,
 }: {
-  reels: Reel[];
+  reels: ShownReel[];
   index: number;
   onIndex: (index: number) => void;
   onClose: () => void;
+  onVote: (videoId: string, vote: Vote) => Promise<boolean>;
   sound: boolean;
   onSound: (on: boolean) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [status, setStatus] = useState("");
   const reel = reels[index];
   const hasPrevious = index > 0;
   const hasNext = index < reels.length - 1;
@@ -112,9 +155,26 @@ function ShortsViewer({
     dialogRef.current?.showModal();
   }, []);
 
+  // A vote's message is about the video it was cast on.
+  function go(next: number) {
+    setStatus("");
+    onIndex(next);
+  }
+
+  async function vote(next: Vote) {
+    const videoId = reel.videoId;
+    setStatus(next === 1 ? "Liked." : next === -1 ? "Disliked: hidden when you close this. Tap again to undo." : "Vote taken back.");
+    if (!(await onVote(videoId, next))) setStatus("Your vote did not save. Please try again.");
+  }
+
   function onKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
-    if (event.key === "ArrowLeft" && hasPrevious) onIndex(index - 1);
-    else if (event.key === "ArrowRight" && hasNext) onIndex(index + 1);
+    // The dialog closes itself on Escape. Stop it there, or the map's own Escape closes the skill too.
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      return;
+    }
+    if (event.key === "ArrowLeft" && hasPrevious) go(index - 1);
+    else if (event.key === "ArrowRight" && hasNext) go(index + 1);
     else return;
     event.preventDefault();
   }
@@ -156,18 +216,58 @@ function ShortsViewer({
               {reel.channel} on YouTube
             </a>
           </div>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <VoteButton
+              label={reel.myVote === 1 ? `Take back your like, ${reel.likes} likes` : `Like, ${reel.likes} likes`}
+              pressed={reel.myVote === 1}
+              onClick={() => void vote(reel.myVote === 1 ? 0 : 1)}
+            >
+              <ThumbsUp aria-hidden="true" size={18} className={clsx(reel.myVote === 1 && "fill-current")} />
+              <span className="tabular-nums">{reel.likes}</span>
+            </VoteButton>
+            <VoteButton
+              label={reel.myVote === -1 ? "Take back your dislike" : "Dislike: not helpful for this skill"}
+              pressed={reel.myVote === -1}
+              onClick={() => void vote(reel.myVote === -1 ? 0 : -1)}
+            >
+              <ThumbsDown aria-hidden="true" size={18} className={clsx(reel.myVote === -1 && "fill-current")} />
+            </VoteButton>
+          </div>
           {reels.length > 1 && (
             <div className="flex shrink-0 gap-2">
-              <Button variant="secondary" size="sm" onClick={() => onIndex(index - 1)} disabled={!hasPrevious} aria-label="Previous video">
+              <Button variant="secondary" size="sm" onClick={() => go(index - 1)} disabled={!hasPrevious} aria-label="Previous video">
                 <ChevronLeft aria-hidden="true" size={18} />
               </Button>
-              <Button variant="secondary" size="sm" onClick={() => onIndex(index + 1)} disabled={!hasNext} aria-label="Next video">
+              <Button variant="secondary" size="sm" onClick={() => go(index + 1)} disabled={!hasNext} aria-label="Next video">
                 <ChevronRight aria-hidden="true" size={18} />
               </Button>
             </div>
           )}
         </div>
+        <p className="min-h-5 text-sm text-ink-soft" aria-live="polite">
+          {status}
+        </p>
       </div>
     </dialog>
+  );
+}
+
+/** Like or dislike: an outlined button, solid ink while it is your vote. */
+function VoteButton({ label, pressed, onClick, children }: { label: string; pressed: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={clsx(
+        "flex min-h-10 min-w-10 cursor-pointer items-center justify-center gap-1.5 rounded-control px-2.5 text-sm font-semibold shadow-[inset_0_0_0_1.5px_var(--color-control-edge)] transition-colors",
+        pressed ? "bg-ink text-on-ink" : "text-ink hover:bg-raised",
+      )}
+    >
+      {children}
+    </button>
   );
 }
