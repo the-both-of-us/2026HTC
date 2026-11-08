@@ -2,7 +2,7 @@
 
 **Owner:** Mirza. See `TEAM.md`.
 
-**Quick videos** at the end of a skill's Read tab: up to 4 YouTube Shorts about that skill. Tapping one opens it over the page in the same player as the feed (`ShortPlayer` in `src/shared/ui`): tap to pause, a sound button, previous and next, arrow keys, and a like and a dislike. With no videos the row is not shown at all.
+**Quick videos** at the end of a skill's Read tab: up to 4 YouTube Shorts about that skill, as rounded portrait cards in a row that scrolls sideways (title, channel and length on each), with **Play all**. Tapping one opens it full screen over a dimmed page in the same player as the feed (`ShortPlayer` in `src/shared/ui`): tap to pause, a sound button, and a rail beside it with like, dislike, previous and next (arrow keys too); the title and channel sit under the video, never on it, so they don't clash with captions. With no videos the row is not shown at all.
 
 `SkillShorts` is exported from `@/features/reels/client` and passed to `LessonTab` as `afterLesson` by `SkillPanel`. The server code is `getSkillReels` from `@/features/reels`.
 
