@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Dashboard: one card per course. When you own both a course and a copy of it (a study circle does this), only your copy shows. Touches `features/dashboard/data.ts`, `data.test.ts`, `ui/DashboardScreen.tsx`, `README.md`.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sun Nov 8.
 
 ## Done today (latest first)
 
+- Dashboard shows one card per course (`84781b3`): if you hold a course and a copy of it, only your copy shows (matched on title and skills). Proofs on both still count. `features/dashboard` only. Needs a deploy.
 - UI refresh (`81f2769`): a seal per course (cover in ink, teal or violet from the map id); Courses cards with it and no Sample tag; the course page as a seal hero with skills beside a sticky start card; the dashboard as a hero with Continue, stat tiles (zeros on a first visit), your courses with progress, and courses to start. My `features/courses/ui` and `features/dashboard` only.
 - Map header while reading (`ce29cab`): with a skill open only the title and progress stay; full page also hides the view tabs. Start learning only on the overview (it did nothing when its skill was already open). Publish only while private; a public course shows a "Course page" link. Touched Abdu's `MapScreen.tsx` and `app/map/[id]/page.tsx` (see TEAM.md).
 - Quick videos redesign (`449aef2`) and a second search on the skill alone when the first is thin (`35e130d`).
