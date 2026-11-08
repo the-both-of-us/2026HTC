@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- Rewriting the voiceover script around why learning is boring and lonely, with topic courses, Network, FYP and per-topic resources: `docs/submission/voiceover-script.md` only. No code.
 
 ## Next
 
