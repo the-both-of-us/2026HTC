@@ -8,9 +8,8 @@ Last updated: Sun Nov 8, just after midnight.
 
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
-Working in Mirza's `network` and `/people` now (owner's request), plus a section on `/settings`.
+Nothing on Mirza's paths now: `network` and `/people` are free again (friends work below touched them).
 
-- **Friends** (owner's request): an Add friend button on people in the network (a request the other person accepts), pinging a friend (a nudge they see on Network), and seeing friends' courses and progress. Settings gets a Friends and privacy section to turn each of those off.
 
 
 
@@ -22,6 +21,7 @@ Working in Mirza's `network` and `/people` now (owner's request), plus a section
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Friends: Add friend on network cards (request, accept or decline), Ping a friend (once an hour, shown on Network), friends' courses with progress bars, and a Friends and privacy section in Settings to turn off sharing progress, requests and pings.
 - Delete a course: the owner gets "Delete course" on the course page (two-step, no browser dialog). `DELETE /api/maps/[id]` removes the map and its Courses listing; others' copies stay; program courses are kept (409).
 - Router is two models now (owner's call from the benchmark): gpt-oss-120b by default; Claude Sonnet writes maps and lessons for hard or high-stakes courses and for psychology, health, law and quantum. Haiku and Opus are not used. The verdict is stated at the top of `/settings/models`.
 - Model benchmarks at `/settings/models` (small link in Settings): 64 public MMLU/MMLU-Pro questions per model. gpt-oss-120b 85.9%, Haiku 87.5%, Sonnet 95.3%, Opus 96.9%; gpt-oss ties Claude on math and CS, Claude is clearly better on psychology, health and law.
