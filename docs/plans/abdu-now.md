@@ -10,7 +10,6 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
-- **`/admin`** (owner's request): a passcode-protected page listing everyone who has used the app (signed-in accounts and guests), with their maps, courses, programs, what they typed to build them, feed interests and People profile. Passcode lives only in env (`ADMIN_PASSCODE`), never in the repo. New `features/admin`, `app/admin`, `app/api/admin`. Read-only: it changes nothing.
 - **Share a program, not just a course** (owner's request): publish a program so anyone with the link (and the /courses directory) can see it and start their own copy, like courses. Touches `features/programs`, `app/program/[id]`, `app/api/programs`, and a Programs section in `features/courses/ui/CoursesScreen.tsx` (Mirza's, small, noted in TEAM.md).
 
 
@@ -21,6 +20,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- `/admin`: passcode-protected (`ADMIN_PASSCODE`, env only: `.env.local` and Vercel; not on AWS yet). Lists everyone (accounts and guests) with their maps, courses, programs, what they typed, proofs, feed interests, People profile and streak, plus a newest-first list of everything typed, with a filter. Signed httpOnly cookie for 8 h, 5 wrong tries lock an address for 10 min, noindex, not in the sidebar. Names show only where someone typed one (we store no email or name at sign-in, as the Trust page says).
 - Read tab: lessons render light Markdown (bold key terms with a marker stroke, "- " and "1. " lists, a "> Tip:" callout, highlighted code) and each section has its own colour (idea teal, example violet, mistakes red with green fixes, checks amber), with tokens per theme in `globals.css`. New lessons are asked for it (lesson prompt hash updated); the 42 saved sample lessons got bold terms, a few lists and tips. Full page: the skill header is one slim sticky row (badges hidden on phones) and why / where it came from / built on fold into "About this skill". Also put Mirza's reel votes live (`be23fb1`) and fixed its test, which failed in the last minute of every hour (`now` and `now + 1 min` crossed the hourly claim).
 - Hero seal, take 2: typing pushes it up to 420°/s (was 150), and it eases back over about a second. The faster it turns, the brighter a soft halo and a band of light that sweeps round the rim (`--color-shine` per theme; still under reduced motion). Checked in Chrome, light and dark.
 - Put Mirza's reels relevance fix (`3e29d2e`) live on Vercel. Typecheck, lint and the reels tests pass on main.
