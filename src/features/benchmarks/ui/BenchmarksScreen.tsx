@@ -76,7 +76,7 @@ export function BenchmarksScreen({ results }: { results: BenchResults }) {
         </Section>
 
         <Section title="Accuracy by subject">
-          <div className="overflow-x-auto rounded-md border border-rule-strong bg-sheet">
+          <div className="relative overflow-x-auto rounded-md border border-rule-strong bg-sheet">
             <table className="w-full min-w-[40rem] border-collapse text-sm">
               <caption className="sr-only">Percent of questions answered correctly, per subject and model</caption>
               <thead>
@@ -148,7 +148,7 @@ export function BenchmarksScreen({ results }: { results: BenchResults }) {
         </Section>
 
         <Section title="Speed and cost">
-          <div className="overflow-x-auto rounded-md border border-rule-strong bg-sheet">
+          <div className="relative overflow-x-auto rounded-md border border-rule-strong bg-sheet">
             <table className="w-full min-w-[44rem] border-collapse text-sm">
               <caption className="sr-only">Speed and cost per model</caption>
               <thead>
