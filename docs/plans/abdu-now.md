@@ -21,6 +21,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again (friends wo
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Put Mirza's 475d388 9b7a078 84781b3 live (auto-check: typecheck and tests pass).
 - Friends: Add friend on network cards (request, accept or decline), Ping a friend (once an hour, shown on Network), friends' courses with progress bars, and a Friends and privacy section in Settings to turn off sharing progress, requests and pings.
 - Delete a course: the owner gets "Delete course" on the course page (two-step, no browser dialog). `DELETE /api/maps/[id]` removes the map and its Courses listing; others' copies stay; program courses are kept (409).
 - Router is two models now (owner's call from the benchmark): gpt-oss-120b by default; Claude Sonnet writes maps and lessons for hard or high-stakes courses and for psychology, health, law and quantum. Haiku and Opus are not used. The verdict is stated at the top of `/settings/models`.
