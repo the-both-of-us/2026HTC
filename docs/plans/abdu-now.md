@@ -6,14 +6,7 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
-- **The feed becomes interest-based** (agent, owner's request). It replaces the map-based feed and the earlier ranking plan.
-  - The feed is for passive scrolling and the maps are for active learning, so the feed no longer comes from maps.
-  - First visit: pick at least 3 interests from suggestions (game theory, stoicism, black holes…) or type your own, like TikTok's onboarding. You can edit them later.
-  - Cards and Shorts are stored per interest in a shared pool, so everyone's likes rank the same items. Ranking is by engagement (views, time on card, skips, likes, saves, shares, "Go deeper" taps), with a boost for new items, and seen items drop. Interests you like get more weight.
-  - Popular interests get fresh batches. One YouTube search keeps up to 5 Shorts per interest.
-  - "Go deeper" turns a card into a real course (the bridge to active learning).
-  - Pools for the suggested interests are pre-made, so the demo needs no AI call.
-  - Files: `features/feed`, `src/app/feed`, `src/app/api/feed/**`, `trust/deleteData.ts` (one line), and possibly a `?topic=` prefill on the landing input (`features/landing`).
+- Nothing right now.
 
 ## Next
 
@@ -21,6 +14,7 @@ Last updated: Sat Nov 7, night.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- **Interest-based feed** (`3e4ebfa`): first visit picks 3+ interests (24 suggestions or your own, checked), "Edit interests" any time. Cards and Shorts live in a shared pool per interest, pre-made for all 24 suggestions (no AI call for the demo). Ranked by everyone's engagement (views, time on card, skips, likes, saves, shares, Go deeper) with a boost for new items; seen items drop and liked interests get more room. Popular pools get a new batch (once an hour) written in the vein of the best-liked cards, and the weakest well-viewed items rotate out (40 cards, 8 Shorts per interest). "Go deeper" replaces "Prove it" and opens the landing with the card's subtopic filled in. Mirza: the demo video's feed step is now "pick interests, scroll, Go deeper".
 - **"For you" feed** (`cf4b279`): `/feed` swipe-up cards, one idea each from your maps (samples for a new visitor), with like, save, share and Prove it (opens that topic's teach-back). One AI call per map, saved; sample cards are saved with the code. Every 4th item is an educational YouTube Short (SafeSearch strict, cached 5 days per topic, text only if the quota runs out). "For you" is in the sidebar after Build.
 - **Resources tab on every skill** (`24b64fb`): Watch, Read, Listen and News from real APIs, cached 7 days, opened lazily; children get no news or podcasts.
 
