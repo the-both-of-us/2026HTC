@@ -134,6 +134,23 @@ describe("programs", () => {
     expect(view.courses[1].state).toBe("open");
   });
 
+  it("gives the course badge only once the final interview is passed, as the map says", async () => {
+    const owner = randomUUID();
+    const { programId } = (await createProgramOrMap({ text: SAMPLE, kind: "posting", shape: "program", ownerId: owner })) as {
+      programId: string;
+    };
+    const [first] = (await getProgram(programId))!.courses;
+    const { mapId } = (await openCourse(programId, first.slug, owner)) as { mapId: string };
+    await proveFirst(mapId, owner, (await getSkillMap(mapId))!.nodes.length);
+
+    const done = (await getProgramView(programId, owner))!.courses[0];
+    expect(done).toMatchObject({ state: "done", badge: false });
+
+    const result = { passed: true, passedCount: 2, spokenCount: 0, finishedAt: "2026-11-07T11:00:00.000Z" };
+    await putDoc(`final/${mapId}`, { mapId, ownerId: owner, attemptIds: [], topics: [], startedAt: "", result });
+    expect((await getProgramView(programId, owner))!.courses[0]).toMatchObject({ state: "done", badge: true });
+  });
+
   it("is private to its owner, and goes with Delete my data", async () => {
     const owner = randomUUID();
     const { programId } = (await createProgramOrMap({ text: SAMPLE, kind: "posting", shape: "program", ownerId: owner })) as {

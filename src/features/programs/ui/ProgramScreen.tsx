@@ -16,7 +16,7 @@ const GIVE_UP_MS = 150_000;
 /** A program as a path of courses: one card each, with the next one to do lit up. */
 export function ProgramScreen({ program }: { program: ProgramView }) {
   const proven = program.courses.reduce((sum, course) => sum + course.proven, 0);
-  const badges = program.courses.filter((course) => course.state === "done").length;
+  const badges = program.courses.filter((course) => course.badge).length;
   const upNext = program.courses.find((course) => course.state === "open") ?? null;
 
   return (
@@ -52,7 +52,7 @@ export function ProgramScreen({ program }: { program: ProgramView }) {
   );
 }
 
-/** Topics proved across the program, and a badge for each finished course. */
+/** Topics proved across the program, and a badge for each course whose final interview was passed. */
 function ProgramStats({ proven, badges, courseCount }: { proven: number; badges: number; courseCount: number }) {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-sheet border border-rule-strong bg-sheet/90 px-4 py-3">
@@ -89,7 +89,7 @@ function ProgramStats({ proven, badges, courseCount }: { proven: number; badges:
  * near goal is what keeps a long path moving.
  */
 function NextGoal({ courses }: { courses: CourseView[] }) {
-  if (courses.every((course) => course.state === "done")) {
+  if (courses.every((course) => course.badge)) {
     return (
       <p className="flex items-center gap-2 rounded-sheet border border-proven/60 bg-proven/8 px-4 py-3 font-medium">
         <PartyPopper aria-hidden="true" size={18} className="text-proven" />
@@ -126,7 +126,8 @@ function Celebration({ program }: { program: ProgramView }) {
 
   useEffect(() => {
     const key = `program-seen/${program.id}`;
-    const now = Object.fromEntries(program.courses.map((course) => [course.slug, course.state]));
+    // "badge" is one step past "done": every topic proved, then the final interview passed.
+    const now = Object.fromEntries(program.courses.map((course) => [course.slug, course.badge ? "badge" : course.state]));
     try {
       const before = JSON.parse(localStorage.getItem(key) ?? "null") as Record<string, string> | null;
       localStorage.setItem(key, JSON.stringify(now));
@@ -134,7 +135,10 @@ function Celebration({ program }: { program: ProgramView }) {
       const lines = program.courses.flatMap((course) => {
         const was = before[course.slug];
         if (was === "locked" && course.state !== "locked") return [`New course open: ${course.title}`];
-        if (was && was !== "done" && course.state === "done") return [`Badge earned: ${course.title}`];
+        if (was && was !== "badge" && course.badge) return [`Badge earned: ${course.title}`];
+        if (was && was !== "done" && was !== "badge" && course.state === "done") {
+          return [`Every topic proved in ${course.title}. Its final interview is open.`];
+        }
         return [];
       });
       // A moment after the page appears, so the cheer is noticed and the server render still matches.
@@ -195,7 +199,8 @@ function CourseStep({
         <p className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
           Course {course.number}
           {isUpNext && <Badge tone="available">Up next</Badge>}
-          {course.state === "done" && <Badge tone="proven">Badge earned</Badge>}
+          {course.badge && <Badge tone="proven">Badge earned</Badge>}
+          {course.state === "done" && !course.badge && <Badge tone="available">Final interview open</Badge>}
         </p>
         <h2 className="mt-1 text-xl font-medium">{course.title}</h2>
         {course.summary && <p className="mt-1 text-ink-soft">{course.summary}</p>}
@@ -263,9 +268,9 @@ function CourseAction({ programId, course }: { programId: string; course: Course
         </div>
         <Link
           href={`/map/${course.mapId}`}
-          className={clsx(buttonClasses(course.state === "done" ? "secondary" : "primary"), "grow sm:grow-0")}
+          className={clsx(buttonClasses(course.badge ? "secondary" : "primary"), "grow sm:grow-0")}
         >
-          {course.state === "done" ? "Review course" : course.proven === 0 ? "Start course" : "Continue"}
+          {course.badge ? "Review course" : course.state === "done" ? "Take the final interview" : course.proven === 0 ? "Start course" : "Continue"}
           <ChevronRight aria-hidden="true" size={17} />
         </Link>
       </div>

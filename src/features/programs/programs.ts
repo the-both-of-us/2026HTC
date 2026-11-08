@@ -6,7 +6,7 @@ import {
   generateSkillMap,
   getSkillMap,
 } from "@/features/skill-map";
-import { getProgress } from "@/features/teachback";
+import { getPassedFinal, getProgress } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
 import type { ProgramLink } from "@/shared/types";
 import { findSampleProgram, isSamplePosting, sampleCourseOutput } from "./fixtures";
@@ -78,7 +78,9 @@ async function loadOwnProgram(programId: string, userId: string | null) {
       if (!map) return undefined;
       const progress = await getProgress(map.id, stored.ownerId);
       const proven = map.nodes.filter((node) => progress?.proven[node.id]).length;
-      return { proven, total: map.nodes.length, mapId: map.id };
+      // Only read once every topic is proved, because the final interview can't open before that.
+      const badge = proven === map.nodes.length && (await getPassedFinal(map.id)) !== null;
+      return { proven, total: map.nodes.length, mapId: map.id, badge };
     }),
   );
   const progress = Object.fromEntries(program.courses.map((course, i) => [course.slug, counts[i]]));
@@ -99,6 +101,7 @@ export async function getProgramView(programId: string, userId: string | null): 
     mapId: progress[course.slug]?.mapId ?? null,
     proven: progress[course.slug]?.proven ?? 0,
     total: progress[course.slug]?.total ?? null,
+    badge: progress[course.slug]?.badge ?? false,
     ...states[course.slug],
   }));
   return {

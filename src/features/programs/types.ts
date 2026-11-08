@@ -42,6 +42,8 @@ export type CourseView = {
   /** Topics in the course, or null before it is built. */
   total: number | null;
   state: CourseState;
+  /** The course badge: its final interview was passed. Proving every topic opens that interview. */
+  badge: boolean;
   /** What stands between a locked course and opening it. */
   blockers: { title: string; needed: number | null }[];
 };
