@@ -1,10 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowUpRight, Bookmark, Heart, MessageCircle, Play, Share2, SlidersHorizontal } from "lucide-react";
+import { ArrowUpRight, Bookmark, Heart, MessageCircle, Play, Share2, SlidersHorizontal, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Badge, buttonClasses, ErrorNotice, PageShell, prefersReducedMotion, Spinner } from "@/shared/ui";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { buttonClasses, ErrorNotice, PageShell, prefersReducedMotion, Spinner } from "@/shared/ui";
 import { FEED_FORMATS, parseFormat, type FeedFormat } from "../format";
 import type { FeedItem, FeedPage, FeedShort, Interest } from "../types";
 import { CommentsPanel } from "./CommentsPanel";
@@ -77,6 +77,8 @@ export function FeedScreen() {
   const [error, setError] = useState("");
   const [current, setCurrent] = useState(0);
   const [announcement, setAnnouncement] = useState("");
+  // Sound on Shorts: off until the viewer turns it on, then on for every Short this visit.
+  const [sound, setSound] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const loadingMore = useRef(false);
 
@@ -330,6 +332,8 @@ export function FeedScreen() {
                 ) : (
                   <ShortCard
                     item={item}
+                    sound={sound}
+                    onSound={setSound}
                     rail={<ActionRail item={item} onReact={(reaction) => void react(item, reaction)} onComments={() => setCommentsFor(item)} onShare={() => void share(item)} />}
                     onDeeper={() => sendEvent({ itemId: item.id, event: "deeper" })}
                   />
@@ -495,12 +499,60 @@ function TopicCard({ card, rail, onDeeper }: { card: FeedItem & { kind: "card" }
   );
 }
 
-/** An educational Short. The player loads only near the screen, and plays muted only while on it. */
-function ShortCard({ item, rail, onDeeper }: { item: FeedShort; rail: ReactNode; onDeeper: () => void }) {
+const YOUTUBE = "https://www.youtube-nocookie.com";
+/** Room under the video for the caption, and beside it for the rail. */
+const CAPTION_HEIGHT = "4.5rem";
+const RAIL_WIDTH = "3.25rem";
+
+/**
+ * The embed without YouTube's own controls: our buttons drive it through the player API. No
+ * loop=1: that needs playlist=<id>, which brings back YouTube's previous and next buttons, so the
+ * card restarts the video itself when it ends.
+ */
+function embedSrc(videoId: string) {
+  const params = new URLSearchParams({
+    autoplay: "1",
+    mute: "1",
+    controls: "0",
+    playsinline: "1",
+    rel: "0",
+    iv_load_policy: "3",
+    disablekb: "1",
+    fs: "0",
+    enablejsapi: "1",
+    origin: window.location.origin,
+  });
+  return `${YOUTUBE}/embed/${videoId}?${params}`;
+}
+
+/** A round button over the video, readable on any frame. */
+const overlayButton =
+  "flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white";
+
+/**
+ * An educational Short, edge to edge at 9:16 with the rail beside it. The player loads only near
+ * the screen and plays muted while on it; sound, once turned on, stays on for the next Shorts.
+ */
+function ShortCard({
+  item,
+  rail,
+  sound,
+  onSound,
+  onDeeper,
+}: {
+  item: FeedShort;
+  rail: ReactNode;
+  sound: boolean;
+  onSound: (on: boolean) => void;
+  onDeeper: () => void;
+}) {
   const box = useRef<HTMLDivElement>(null);
+  const player = useRef<HTMLIFrameElement>(null);
   const [visible, setVisible] = useState(false);
   const [started, setStarted] = useState(false);
   const [calm, setCalm] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const soundOn = useRef(sound);
 
   useEffect(() => {
     const element = box.current;
@@ -514,53 +566,139 @@ function ShortCard({ item, rail, onDeeper }: { item: FeedShort; rail: ReactNode;
   const { videoId, title, channel } = item.short;
   // Autoplay muted while on screen, unless motion is reduced: then only after a tap.
   const playing = visible && (!calm || started);
-  const src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=${started ? 0 : 1}&playsinline=1&loop=1&playlist=${videoId}&rel=0&modestbranding=1`;
+
+  const send = useCallback((message: object) => {
+    player.current?.contentWindow?.postMessage(JSON.stringify(message), YOUTUBE);
+  }, []);
+  const command = useCallback((func: string, args: unknown[] = []) => send({ event: "command", func, args }), [send]);
+
+  // The player says when it is ready and when it pauses or plays (also from a tap on the video).
+  useEffect(() => {
+    if (!playing) return;
+    function onMessage(event: MessageEvent) {
+      if (event.origin !== YOUTUBE || event.source !== player.current?.contentWindow) return;
+      let data: { event?: string; info?: { playerState?: number } | number } | null = null;
+      try {
+        data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      } catch {
+        return;
+      }
+      if (data?.event === "onReady" && soundOn.current) command("unMute");
+      const state = typeof data?.info === "number" ? data.info : data?.info?.playerState;
+      if (state === 1) setPaused(false);
+      if (state === 2) setPaused(true);
+      if (state === 0) {
+        command("seekTo", [0, true]);
+        command("playVideo");
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [playing, command]);
+
+  // Turning sound on or off applies to the Short on screen at once.
+  useEffect(() => {
+    soundOn.current = sound;
+    if (playing) command(sound ? "unMute" : "mute");
+  }, [sound, playing, command]);
+
+  const onLoad = () => {
+    setPaused(false);
+    // Ask for the player's events; it answers with onReady, then each state change.
+    send({ event: "listening", id: item.id, channel: "widget" });
+    if (soundOn.current) command("unMute");
+  };
+
+  const togglePause = () => {
+    command(paused ? "playVideo" : "pauseVideo");
+    setPaused(!paused);
+  };
+
+  const sized = {
+    "--short-w": `min(calc(100cqw - ${RAIL_WIDTH}), calc((100cqh - ${CAPTION_HEIGHT}) * 9 / 16))`,
+  } as CSSProperties;
 
   return (
-    <article className={clsx(frame, "overflow-hidden")}>
-      <div className="flex items-start justify-between gap-3 p-4 pb-3">
-        <Meta interest={item.interest.name} subtopic={item.subtopic} />
-        <Badge tone="neutral" className="shrink-0">Short</Badge>
-      </div>
-      <div className="flex min-h-0 flex-1">
-        <div ref={box} className="relative min-h-0 flex-1 bg-ink">
-          {playing ? (
-            <iframe
-              src={src}
-              title={`YouTube video: ${title}`}
-              loading="lazy"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              className="absolute inset-0 size-full"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setStarted(true)}
-              aria-label={`Play "${title}"`}
-              className="absolute inset-0 flex cursor-pointer items-center justify-center"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
-                alt=""
-                loading="lazy"
-                className="absolute inset-0 size-full object-cover opacity-80"
-              />
-              <span className="relative flex size-16 items-center justify-center bg-sheet text-ink">
-                <Play aria-hidden="true" size={28} className="fill-current" />
-              </span>
-            </button>
-          )}
+    <article className="flex min-w-0 flex-1 items-center justify-center [container-type:size]" style={sized}>
+      <div className="flex flex-col" style={{ width: `calc(var(--short-w) + ${RAIL_WIDTH})` }}>
+        <div className="flex items-end gap-1">
+          <div ref={box} className="relative aspect-[9/16] w-(--short-w) shrink-0 overflow-hidden rounded-lg bg-black">
+            {playing ? (
+              <>
+                <iframe
+                  ref={player}
+                  src={embedSrc(videoId)}
+                  title={`YouTube video: ${title}`}
+                  onLoad={onLoad}
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  className="absolute inset-0 size-full"
+                />
+                {/* Tap to pause or play, like reels. Covering the player also keeps YouTube's hover controls away. */}
+                <button
+                  type="button"
+                  onClick={togglePause}
+                  aria-label={paused ? `Play "${title}"` : `Pause "${title}"`}
+                  className={clsx(
+                    "absolute inset-0 flex cursor-pointer items-center justify-center focus-visible:outline-3 focus-visible:-outline-offset-4 focus-visible:outline-white",
+                    paused && "bg-black/20",
+                  )}
+                >
+                  {paused && (
+                    <span className="flex size-16 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+                      <Play aria-hidden="true" size={28} className="ml-1 fill-current" />
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSound(!sound)}
+                  aria-label={sound ? "Sound on. Turn it off" : "Sound off. Turn it on"}
+                  aria-pressed={sound}
+                  className={clsx(overlayButton, "absolute top-3 right-3")}
+                >
+                  {sound ? <Volume2 aria-hidden="true" size={20} /> : <VolumeX aria-hidden="true" size={20} />}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setStarted(true);
+                  onSound(true);
+                }}
+                aria-label={`Play "${title}"`}
+                className="absolute inset-0 flex cursor-pointer items-center justify-center"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" loading="lazy" className="absolute inset-0 size-full object-cover opacity-85" />
+                <span className="relative flex size-16 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+                  <Play aria-hidden="true" size={28} className="ml-1 fill-current" />
+                </span>
+              </button>
+            )}
+          </div>
+          <div className="pb-1">{rail}</div>
         </div>
-        <div className="flex flex-col justify-end px-1 pb-2">{rail}</div>
-      </div>
-      <div className="flex items-center gap-3 p-4">
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 font-semibold leading-snug">{title}</p>
-          <p className="truncate text-sm text-ink-soft">{channel} on YouTube</p>
+        <div className="flex items-center gap-3 pt-3" style={{ height: CAPTION_HEIGHT }}>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold leading-snug" title={title}>
+              {title}
+            </p>
+            <p className="truncate text-sm text-ink-soft">
+              {item.interest.name} ·{" "}
+              <a
+                href={`https://www.youtube.com/shorts/${videoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-2 hover:text-ink hover:underline"
+                aria-label={`${channel} on YouTube (opens a new tab)`}
+              >
+                {channel}
+              </a>
+            </p>
+          </div>
+          <DeeperLink subtopic={item.subtopic} size="sm" onDeeper={onDeeper} />
         </div>
-        <DeeperLink subtopic={item.subtopic} size="sm" onDeeper={onDeeper} />
       </div>
     </article>
   );
