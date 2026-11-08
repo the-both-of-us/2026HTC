@@ -105,7 +105,7 @@ export function NetworkScreen() {
 
   return (
     <PageShell width="wide">
-      <h1 className="text-3xl font-medium">People</h1>
+      <h1 className="text-3xl font-medium">Network</h1>
       <p className="mt-2 max-w-2xl text-lg text-ink-soft">
         See what your friends have proved. Join the network to find people who proved the skills you&apos;re learning.
       </p>

@@ -3,19 +3,19 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame } from "lucide-react";
+import { BookOpen, Flame, LayoutDashboard, type LucideIcon, Network, RotateCcw, Settings, Sparkles, SquarePen } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { TopBarSignIn } from "./Account";
 
-// Plain words, no icons, as in Seal. Mirza adds his pages' links here when they are ready.
-const NAV_ITEMS = [
-  { href: "/", label: "Build" },
-  { href: "/feed", label: "For you" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/courses", label: "Courses" },
-  { href: "/review", label: "Review" },
-  { href: "/people", label: "People" },
-  { href: "/settings", label: "Settings" },
+// A word and a small line icon per page. Mirza adds his pages' links here when they are ready.
+const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
+  { href: "/", label: "Build", Icon: SquarePen },
+  { href: "/feed", label: "FYP", Icon: Sparkles },
+  { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/courses", label: "Courses", Icon: BookOpen },
+  { href: "/review", label: "Review", Icon: RotateCcw },
+  { href: "/people", label: "Network", Icon: Network },
+  { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
 /**
@@ -50,7 +50,7 @@ export function SideNav({ children }: { children?: ReactNode }) {
       >
         <StreakFlame streak={streak} className="hidden lg:mx-3 lg:flex" />
         <nav aria-label="Main" className="flex flex-col lg:px-3 lg:pt-2">
-          {NAV_ITEMS.map(({ href, label }) => {
+          {NAV_ITEMS.map(({ href, label, Icon }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
@@ -59,12 +59,13 @@ export function SideNav({ children }: { children?: ReactNode }) {
                 onClick={() => setOpen(false)}
                 aria-current={active ? "page" : undefined}
                 className={clsx(
-                  "flex min-h-[2.875rem] items-center text-[1.0625rem] transition-control lg:min-h-11 lg:px-3 lg:text-[0.9375rem]",
+                  "flex min-h-[2.875rem] items-center gap-3 text-[1.0625rem] transition-control lg:min-h-11 lg:px-3 lg:text-[0.9375rem]",
                   active
                     ? "font-bold text-ink lg:shadow-[inset_3px_0_0_0_var(--color-ink)]"
                     : "font-medium text-ink-soft hover:text-ink lg:hover:shadow-[inset_2px_0_0_0_var(--color-ink)]",
                 )}
               >
+                <Icon aria-hidden="true" size={18} strokeWidth={active ? 2.25 : 1.75} className="shrink-0" />
                 {label}
               </Link>
             );
