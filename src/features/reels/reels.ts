@@ -7,7 +7,7 @@ import type { SkillMap, SkillNode } from "@/shared/types";
 import { topicKey } from "./key";
 import type { Reel, SavedReels, ShownReel, Vote, VoteResult } from "./types";
 import { isRemoved, setVote, tallyVotes, type Tally } from "./votes";
-import { reelQuery, searchReels } from "./youtube";
+import { MAX_SAVED, reelQuery, searchReels } from "./youtube";
 
 const DAY_MS = 86_400_000;
 /** At most this many on a skill at once. */
@@ -17,8 +17,8 @@ export const FRESH_DAYS = 30;
 /** An empty list is tried again sooner: the search may have been unlucky. */
 export const EMPTY_RETRY_DAYS = 3;
 /** Raised when the search or its filters change, so lists saved by the old one are looked up again. */
-export const SEARCH_VERSION = 2;
-/** Votes left fewer videos than this, and the list is looked up again. */
+export const SEARCH_VERSION = 3;
+/** Votes left fewer videos than this, and the list is looked up again; a first search finding fewer gets a second. */
 const MIN_LEFT = 2;
 
 const listKey = (topic: string) => `skill-reels/${topic}`;
@@ -121,10 +121,20 @@ async function lookUp(
   // A job posting's title is a role ("Junior backend developer"), which finds career clips, not the skill.
   const context = map.sourceKind === "posting" ? "" : map.title;
   try {
-    const reels = await searchReels(node.title, context, map.audience, apiKey, removed);
+    let reels = await searchReels(node.title, context, map.audience, apiKey, removed);
+    let query = reelQuery(node.title, context, map.audience);
+    // A long map title can pull a basic skill's search off course ("Binary representation basics"
+    // in "Bit masks in dynamic programming" finds bitmask lectures). When that finds too little,
+    // search the skill alone as well. Only thin results pay for a second search.
+    if (context && reels.length < MIN_LEFT) {
+      const skip = new Set([...removed, ...reels.map((reel) => reel.videoId)]);
+      const more = await searchReels(node.title, "", map.audience, apiKey, skip);
+      reels = [...reels, ...more].slice(0, MAX_SAVED);
+      query = `${query} | ${reelQuery(node.title, "", map.audience)}`;
+    }
     await putDoc(listKey(topic), {
       reels,
-      query: reelQuery(node.title, context, map.audience),
+      query,
       searchedAt: new Date(now).toISOString(),
       version: SEARCH_VERSION,
     } satisfies SavedReels);

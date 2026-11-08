@@ -28,7 +28,8 @@ Each list stores the title, channel and length next to each video id. That is a 
 
 1. One search (100 of the 10,000 daily quota units): the skill title, then the map title for a topic or PDF map (not for a job posting, whose title is a role such as "Junior backend developer" and finds career clips), "for kids" for a young audience, then "explained #shorts". `safeSearch=strict`, embeddable only, YouTube's "short" length (under 4 minutes), English.
 2. Titles that look like entertainment are dropped (`looksEducational` from the feed), and so is any video whose title and description do not mention the skill itself (hashtags don't count). Map words only help the order, so the most clearly relevant come first.
-3. One `videos.list` call (1 unit) for the rest: only portrait videos of 90 seconds or less are kept, since YouTube's "short" filter lets through landscape videos up to 4 minutes.
+3. If the search with the map title keeps fewer than 2 (a long title such as "Bit masks in dynamic programming" can pull a basic skill like "Binary representation basics" toward lectures), a second search on the skill alone adds its results. Only thin results pay for it.
+4. One `videos.list` call (1 unit) per search for the rest: only portrait videos of 90 seconds or less are kept, since YouTube's "short" filter lets through landscape videos up to 4 minutes.
 
 ## Likes and dislikes (`votes.ts`)
 

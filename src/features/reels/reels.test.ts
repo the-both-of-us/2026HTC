@@ -206,6 +206,39 @@ describe("getSkillReels", () => {
     expect(new URL(yt.calls[0]).searchParams.get("q")).toBe(`SQL joins ${map.title} explained #shorts`);
   });
 
+  it("searches the skill alone too when the map title leaves too few videos, but only then", async () => {
+    await putDoc(`maps/${map.id}`, { ...map, sourceKind: "topic" });
+    const queries: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL) => {
+        const url = new URL(String(input));
+        if (url.pathname.endsWith("/search")) {
+          const q = url.searchParams.get("q")!;
+          queries.push(q);
+          // With the map title: one off-topic lecture. Alone: two real Shorts.
+          const items = q.includes(map.title)
+            ? [{ id: { videoId: id(1) }, snippet: { title: "Bitmask DP full lecture", description: "", channelTitle: "Uni" } }]
+            : [id(2), id(3)].map((videoId) => ({ id: { videoId }, snippet: { title: "SQL joins in 60 seconds", description: "", channelTitle: "Teacher" } }));
+          return json({ items });
+        }
+        const asked = url.searchParams.get("id")!.split(",");
+        return json({ items: asked.map((videoId) => ({ id: videoId, contentDetails: { duration: "PT40S" }, player: { embedWidth: 360, embedHeight: 640 } })) });
+      }),
+    );
+    const reels = await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key" });
+    expect(reels.map((reel) => reel.videoId)).toEqual([id(2), id(3)]);
+    expect(queries).toEqual([`SQL joins ${map.title} explained #shorts`, "SQL joins explained #shorts"]);
+    expect((await getDoc<SavedReels>(`skill-reels/${topicKey(map, map.nodes[0])}`))?.query).toContain(" | SQL joins explained #shorts");
+
+    // A search that finds enough the first time pays for no second one.
+    const other = { ...map, id: randomUUID(), title: `Another ${randomUUID().slice(0, 8)}`, sourceKind: "topic" as const };
+    await putDoc(`maps/${other.id}`, other);
+    const yt = mockYouTube([{ id: id(4), title: "SQL joins quickly" }, { id: id(5), title: "SQL joins again" }]);
+    await getSkillReels(other.id, "sql-joins", OWNER, { apiKey: "key" });
+    expect(yt.searches()).toBe(1);
+  });
+
   it("looks again at a list saved by an older search, however new it is", async () => {
     const key = `skill-reels/${topicKey(map, map.nodes[0])}`;
     const old = { videoId: id(9), title: "Junior vs senior", channel: "Meme", seconds: 13 };
