@@ -53,9 +53,10 @@ function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
   const { lesson } = phase;
 
   return (
-    <article className="flex max-w-[65ch] flex-col gap-6 text-[1.0625rem] leading-7">
+    // In the full-page view (data-reading-page on the panel), the lesson fills the column in larger type.
+    <article className="flex max-w-[65ch] flex-col gap-6 text-[1.0625rem] leading-7 lg:in-data-[reading-page]:max-w-none lg:in-data-[reading-page]:gap-8 lg:in-data-[reading-page]:text-[1.25rem] lg:in-data-[reading-page]:leading-8">
       <div className="flex flex-col items-start gap-3">
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft lg:in-data-[reading-page]:text-base">
           <span className="inline-flex items-center gap-1.5 font-medium text-ink">
             <Clock aria-hidden="true" size={15} />
             {lesson.readingMinutes} min read
@@ -69,7 +70,7 @@ function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
       </div>
 
       <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold">The idea</h4>
+        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">The idea</h4>
         {lesson.idea.map((paragraph, index) => (
           <p key={index}>
             <InlineText text={paragraph} />
@@ -78,13 +79,13 @@ function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold">An example</h4>
+        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">An example</h4>
         <p>
           <InlineText text={lesson.example.intro} />
         </p>
         {lesson.example.code && (
           // Focusable, so a keyboard can scroll a long line of code sideways.
-          <pre tabIndex={0} aria-label="Code example" className="overflow-x-auto rounded-control border border-rule-strong bg-paper p-4 font-mono text-sm leading-6">
+          <pre tabIndex={0} aria-label="Code example" className="overflow-x-auto rounded-control border border-rule-strong bg-paper p-4 font-mono text-sm leading-6 lg:in-data-[reading-page]:text-base lg:in-data-[reading-page]:leading-7">
             <code>{lesson.example.code}</code>
           </pre>
         )}
@@ -94,7 +95,7 @@ function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold">Common mistakes</h4>
+        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">Common mistakes</h4>
         <ul className="flex flex-col gap-3">
           {lesson.mistakes.map((item, index) => (
             <li key={index} className="border-l-2 border-rule-strong pl-3">
@@ -110,7 +111,7 @@ function LessonBody({ mapId, skill, onReady }: LessonTabProps) {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h4 className="font-display text-lg font-semibold">Check yourself</h4>
+        <h4 className="font-display text-lg font-semibold lg:in-data-[reading-page]:text-2xl">Check yourself</h4>
         {lesson.checks.map((check, index) => (
           <CheckQuestion key={index} question={check.question} answer={check.answer} />
         ))}

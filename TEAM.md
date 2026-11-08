@@ -19,6 +19,8 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
+**From Mirza to Abdu (Sat evening), FYI: bigger full-page reading.** At the owner's request, full page is now a wider column (`max-w-5xl`, was `3xl`) with larger type. `SkillPanel.tsx` puts `data-reading-page` on the column in full page, and `LessonTab.tsx` grows only under it (`lg:in-data-[reading-page]:` → 20px body, no 65ch cap, 24px headings). The side panel looks the same as before. If you add text to the lesson, use the same variant to keep it consistent.
+
 **From Mirza to Abdu (Sat evening), FYI: a deep link into a skill.** The course page's skills are now clickable. They open `/map/<id>?skill=<nodeId>`, and the map opens that skill in Full page. To do that I made two small additions in your `skill-map/ui`: `MapScreen.tsx` reads `?skill=` once on load (it ignores ids that aren't on the map; closing the panel turns full page off), and `SkillPanel.tsx` takes `initialFullPage` (default false). Nothing else changed. You can use the same link anywhere, for example the dashboard or the evidence page.
 
 **From Mirza to Abdu (Sat evening), FYI only.** In `src/shared/ui/Account.tsx` I changed the Sign out button's `-ml-3` to `-ml-0.5`, at Mirza's request. Since quiet buttons went to `px-0.5`, the `-ml-3` pushed "Sign out" 12px left of "Signed in as". It's now lined up (checked in a headless browser). Nothing else changed.

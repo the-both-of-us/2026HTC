@@ -174,10 +174,12 @@ export function SkillPanel({
       >
         {/* The extra bottom padding keeps the end of the sheet clear of the phone's nav pill. */}
         <div
+          // Lets what's inside (the lesson) read larger in full page: Tailwind's in-data-[reading-page]:.
+          data-reading-page={fullPage || undefined}
           className={clsx(
             "flex flex-col gap-5 p-5 pb-24 lg:pb-6",
-            // A reading column: about 75 characters a line, like a page of a book.
-            fullPage && "mx-auto w-full max-w-3xl lg:gap-6 lg:px-8 lg:pt-10 lg:pb-16",
+            // A wide reading page with larger text, so it uses the screen without long, small lines.
+            fullPage && "mx-auto w-full max-w-5xl lg:gap-7 lg:px-10 lg:pt-10 lg:pb-16",
           )}
         >
           <header className="flex items-start justify-between gap-3">
@@ -186,7 +188,10 @@ export function SkillPanel({
                 id="skill-panel-title"
                 ref={headingRef}
                 tabIndex={-1}
-                className="text-xl leading-snug font-medium outline-none"
+                className={clsx(
+                  "text-xl leading-snug font-medium outline-none",
+                  fullPage && "lg:text-[2rem] lg:leading-tight",
+                )}
               >
                 {skill.title}
               </h2>
@@ -232,7 +237,7 @@ export function SkillPanel({
           {/* Just proven: the verdict moves up, so the payoff is the first thing in view. */}
           {!ownNotice && (
             <>
-              <p className="text-ink-soft">
+              <p className={clsx("text-ink-soft", fullPage && "lg:text-xl")}>
                 <InlineText text={skill.why} />
               </p>
 

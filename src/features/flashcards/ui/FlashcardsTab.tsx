@@ -152,7 +152,8 @@ function Deck({ cards, focusOnMount }: { cards: Flashcard[]; focusOnMount: boole
         aria-label="Flashcard. Space or Enter flips it, the arrow keys move between cards."
         onKeyDown={onKeyDown}
         className={clsx(
-          "min-h-40 rounded-control border-2 bg-paper p-5",
+          // Taller, roomier card in the full-page view (data-reading-page on the skill panel).
+          "min-h-40 rounded-control border-2 bg-paper p-5 lg:in-data-[reading-page]:min-h-56 lg:in-data-[reading-page]:p-8",
           state.flipped ? "border-ink" : "border-control-edge",
         )}
       >
@@ -166,7 +167,13 @@ function Deck({ cards, focusOnMount }: { cards: Flashcard[]; focusOnMount: boole
               <span className="sr-only">{cardCounter(state.index, total)}, </span>
               {side}
             </p>
-            <p className={state.flipped ? "text-base" : "font-display text-lg font-medium"}>
+            <p
+              className={
+                state.flipped
+                  ? "text-base lg:in-data-[reading-page]:text-xl lg:in-data-[reading-page]:leading-8"
+                  : "font-display text-lg font-medium lg:in-data-[reading-page]:text-2xl"
+              }
+            >
               {state.flipped ? card.back : card.front}
             </p>
             {state.flipped && card.citation?.verified && <CardCitation citation={card.citation} />}

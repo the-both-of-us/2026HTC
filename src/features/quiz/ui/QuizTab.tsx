@@ -262,7 +262,7 @@ function QuizRunner({
         id={promptId}
         ref={questionHeading}
         tabIndex={-1}
-        className="font-display text-lg leading-7 outline-none"
+        className="font-display text-lg leading-7 outline-none lg:in-data-[reading-page]:text-2xl lg:in-data-[reading-page]:leading-9"
       >
         <span className="sr-only">
           Question {run.position + 1} of {run.order.length}:{" "}
@@ -322,6 +322,7 @@ function OptionButton({
       onClick={answered ? undefined : onPick}
       className={clsx(
         "flex min-h-11 w-full items-start gap-3 rounded-control border-2 px-3 py-2.5 text-left",
+        "lg:in-data-[reading-page]:px-4 lg:in-data-[reading-page]:py-3.5 lg:in-data-[reading-page]:text-lg",
         "motion-safe:transition-colors",
         !answered && "cursor-pointer border-control-edge bg-sheet hover:border-ink",
         answered && "cursor-default",

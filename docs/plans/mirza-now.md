@@ -6,7 +6,6 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Full-page skill reading: a wider column and bigger text (title, summary, lesson body). Files: `skill-map/ui/SkillPanel.tsx` (full-page column only) and `lessons/ui/LessonTab.tsx` (text sizes that grow only in full page). Both Abdu's; the side panel is unchanged.
 - Nothing new yet: waiting on the owner. Candidates: "Ask for help" requests and an anonymous-profile option on People (undecided).
 
 ## Next
@@ -16,6 +15,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Full-page skill reading is bigger and wider: the column is 1024px (was 768), the lesson fills it at 20px text (was 17px, capped at 65ch), the title is 32px and the section headings 24px; flashcards and quiz grow to match. Only in full page (`data-reading-page` on the panel plus Tailwind `lg:in-data-[reading-page]:`); the side panel is unchanged. Touched Abdu's `SkillPanel.tsx` and `LessonTab.tsx`, and my flashcards and quiz tabs.
 - People page cleanup: compact cards (initials, name and city in one header, "Looking for" on one line, slim reason line, smaller wrapping skill chips with "+N more"), masonry columns so short cards don't stretch, one summary row with a search box (name, skill or city) and the demo note, lighter side panel, one "Practise ... on your map" link per mentor card. Touched `features/network/ui/**` only.
 - People: clickable skills. A skill on any card filters to the people who proved it, with "Practise <skill>" and "Show everyone"; mentor cards get "Practise on your map" links. New `GET /api/network/practise` redirects to the skill on your own map or to `/courses?q=`; `/courses` now reads `?q=`. Touched `features/network/**`, `app/api/network/practise`, `features/courses/ui/CoursesScreen.tsx`.
 - Course page redesign: a progress card ("3 of 14 skills proven" plus your main action), a compact Public/Private bar for owners, and skills as clickable cards with Ready/Locked/Proven. A skill opens in your map as a full page via `/map/<id>?skill=<nodeId>`; for a learner who hasn't started, it starts the course first. Small additions in Abdu's `MapScreen.tsx` and `SkillPanel.tsx` (see TEAM.md).
