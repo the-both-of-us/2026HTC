@@ -8,7 +8,7 @@ Last updated: Sun Nov 8, just after midnight.
 
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
-Nothing on Mirza's paths now: `network` and `/people` are free again (friends work below touched them).
+- Restructuring the voiceover script into demo order (problem, solution, create a course, Read → flashcards → quiz → resources → teach-back, FYP, Network, Review), owner's request. Touches `docs/submission/voiceover-script.md` only.
 
 
 
