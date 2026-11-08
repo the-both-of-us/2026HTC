@@ -14,4 +14,4 @@ export type ReelList = { reels: Reel[] };
  * The saved list for one skill, at `skill-reels/<topicKey>`. One document serves the course and
  * every learner's copy of it. `searchedAt` decides when it is looked up again.
  */
-export type SavedReels = { reels: Reel[]; query: string; searchedAt: string };
+export type SavedReels = { reels: Reel[]; query: string; searchedAt: string; version?: number };

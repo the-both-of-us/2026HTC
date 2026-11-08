@@ -14,7 +14,8 @@ export const MAX_SECONDS = 90;
 const clean = (text: string) => text.replace(/[^\p{L}\p{N} '&+\-.]/gu, " ").replace(/\s+/g, " ").trim();
 
 /**
- * The search words: the skill, the map title for context (unless the skill already holds it),
+ * The search words: the skill, the context (the map title for a topic or PDF; empty for a job
+ * posting, whose title is a role and pulls in career clips) unless the skill already holds it,
  * "for kids" for a young audience, then "explained #shorts" to lean toward teaching Shorts.
  */
 export function reelQuery(skillTitle: string, mapTitle: string, audience: string | undefined): string {
@@ -69,13 +70,20 @@ function mentions(haystack: string[], word: string): boolean {
 
 /**
  * How clearly a video is about the skill: 2 for each skill word its title or description
- * mentions, 1 for each map word. 0 means it shares nothing with either, so it is dropped.
+ * mentions, plus 1 for each map word. It must mention the skill itself, or it scores 0 and is
+ * dropped: a clip that only shares the map's words ("Junior vs senior developer" on a junior
+ * developer map) is not about the skill. Hashtags are ignored, since "#programming" is tagging,
+ * not teaching.
  */
 export function relevance(text: string, skillTitle: string, mapTitle: string): number {
-  const haystack = keywords(text);
+  const haystack = keywords(text.replace(/#[\p{L}\p{N}_]+/gu, " "));
   const skillWords = keywords(skillTitle);
   const mapWords = keywords(mapTitle).filter((word) => !skillWords.includes(word));
-  return skillWords.filter((word) => mentions(haystack, word)).length * 2 + mapWords.filter((word) => mentions(haystack, word)).length;
+  const skillHits = skillWords.filter((word) => mentions(haystack, word)).length;
+  const mapHits = mapWords.filter((word) => mentions(haystack, word)).length;
+  // A skill title of only filler words ("Basics") leaves the map's words to decide.
+  if (skillWords.length > 0 && skillHits === 0) return 0;
+  return skillHits * 2 + mapHits;
 }
 
 /** YouTube returns titles HTML-escaped. */

@@ -13,6 +13,8 @@ const DAY_MS = 86_400_000;
 export const FRESH_DAYS = 30;
 /** An empty list is tried again sooner: the search may have been unlucky. */
 export const EMPTY_RETRY_DAYS = 3;
+/** Raised when the search or its filters change, so lists saved by the old one are looked up again. */
+export const SEARCH_VERSION = 2;
 
 const listKey = (key: string) => `skill-reels/${key}`;
 const hourStamp = (now: number) => new Date(now).toISOString().slice(0, 13);
@@ -21,6 +23,7 @@ const hourStamp = (now: number) => new Date(now).toISOString().slice(0, 13);
 const inFlight = new Map<string, Promise<Reel[]>>();
 
 function isFresh(saved: SavedReels, now: number): boolean {
+  if ((saved.version ?? 1) !== SEARCH_VERSION) return false;
   const age = now - Date.parse(saved.searchedAt);
   return age < (saved.reels.length > 0 ? FRESH_DAYS : EMPTY_RETRY_DAYS) * DAY_MS;
 }
@@ -68,12 +71,15 @@ async function lookUp(key: string, map: SkillMap, node: SkillNode, saved: SavedR
   if (!(await claimDoc(`skill-reels-claim/${key}/${hourStamp(now)}`, { at: new Date(now).toISOString() }))) {
     return saved?.reels ?? [];
   }
+  // A job posting's title is a role ("Junior backend developer"), which finds career clips, not the skill.
+  const context = map.sourceKind === "posting" ? "" : map.title;
   try {
-    const reels = await searchReels(node.title, map.title, map.audience, apiKey);
+    const reels = await searchReels(node.title, context, map.audience, apiKey);
     await putDoc(listKey(key), {
       reels,
-      query: reelQuery(node.title, map.title, map.audience),
+      query: reelQuery(node.title, context, map.audience),
       searchedAt: new Date(now).toISOString(),
+      version: SEARCH_VERSION,
     } satisfies SavedReels);
     return reels;
   } catch (error) {

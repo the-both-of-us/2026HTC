@@ -23,14 +23,14 @@ Each list stores the title, channel and length next to each video id. That is a 
 
 ## How videos are picked (`youtube.ts`)
 
-1. One search (100 of the 10,000 daily quota units): the skill title, the map title unless the skill already holds it, "for kids" for a young audience, then "explained #shorts". `safeSearch=strict`, embeddable only, YouTube's "short" length (under 4 minutes), English.
-2. Titles that look like entertainment are dropped (`looksEducational` from the feed), and so is any video whose title and description share no word with the skill or the map. Skill words count twice as much as map words, so the most clearly relevant come first.
+1. One search (100 of the 10,000 daily quota units): the skill title, then the map title for a topic or PDF map (not for a job posting, whose title is a role such as "Junior backend developer" and finds career clips), "for kids" for a young audience, then "explained #shorts". `safeSearch=strict`, embeddable only, YouTube's "short" length (under 4 minutes), English.
+2. Titles that look like entertainment are dropped (`looksEducational` from the feed), and so is any video whose title and description do not mention the skill itself (hashtags don't count). Map words only help the order, so the most clearly relevant come first.
 3. One `videos.list` call (1 unit) for the rest: only portrait videos of 90 seconds or less are kept, since YouTube's "short" filter lets through landscape videos up to 4 minutes.
 
 ## When it searches
 
 - Only when someone opens the skill's Read tab, never when a map is built (a 14-skill map would cost 1,400 units).
-- A list with videos is kept 30 days; an empty one is tried again after 3.
+- A list with videos is kept 30 days; an empty one is tried again after 3. Lists also store `version` (`SEARCH_VERSION` in `reels.ts`): raise it when the search or its filters change, and older lists are looked up again on their next open.
 - A failed search (quota, network) saves nothing and keeps the old list if there is one. With no `YOUTUBE_API_KEY` (local development), nothing is searched and the row stays hidden.
 
 Tests mock YouTube: `npm test -- reels`.

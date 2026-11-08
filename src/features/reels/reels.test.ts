@@ -5,7 +5,7 @@ import { copySkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { topicKey } from "./key";
-import { EMPTY_RETRY_DAYS, FRESH_DAYS, getSkillReels } from "./reels";
+import { EMPTY_RETRY_DAYS, FRESH_DAYS, getSkillReels, SEARCH_VERSION } from "./reels";
 import type { SavedReels } from "./types";
 import { keywords, MAX_REELS, parseDuration, reelQuery, relevance, searchReels } from "./youtube";
 
@@ -87,8 +87,17 @@ describe("the search words and filters", () => {
     expect(keywords("How to use the SQL JOIN, explained!")).toEqual(["sql", "join"]);
     expect(relevance("SQL joins in 60 seconds", "SQL joins", "Data analyst")).toBe(4);
     expect(relevance("Joining tables for a data analyst", "SQL joins", "Data analyst")).toBe(4);
-    expect(relevance("A day in the life of an analyst", "SQL joins", "Data analyst")).toBe(1);
     expect(relevance("Funny cat compilation", "SQL joins", "Data analyst")).toBe(0);
+  });
+
+  it("drops a video that only shares the map's words, or names the skill only in a hashtag", () => {
+    expect(relevance("A day in the life of an analyst", "SQL joins", "Data analyst")).toBe(0);
+    expect(relevance("Junior vs Senior Backend developer #programming #java", "Programming basics", "Junior Backend Developer")).toBe(0);
+    expect(relevance("Programming basics in 60 seconds #shorts", "Programming basics", "")).toBe(2);
+  });
+
+  it("lets the map's words decide when the skill title is only filler", () => {
+    expect(relevance("Fractions for kids", "The basics", "Fractions")).toBe(1);
   });
 });
 
@@ -179,7 +188,26 @@ describe("getSkillReels", () => {
     expect(yt.searches()).toBe(1);
 
     const saved = await getDoc<SavedReels>(`skill-reels/${topicKey(map, map.nodes[0])}`);
-    expect(saved?.query).toContain("SQL joins");
+    // A job posting's title is a role, so only the skill is searched.
+    expect(saved?.query).toBe("SQL joins explained #shorts");
+  });
+
+  it("searches with the map title for a topic map", async () => {
+    await putDoc(`maps/${map.id}`, { ...map, sourceKind: "topic" });
+    const yt = mockYouTube(ONE);
+    await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key" });
+    expect(new URL(yt.calls[0]).searchParams.get("q")).toBe(`SQL joins ${map.title} explained #shorts`);
+  });
+
+  it("looks again at a list saved by an older search, however new it is", async () => {
+    const key = `skill-reels/${topicKey(map, map.nodes[0])}`;
+    const old = { videoId: id(9), title: "Junior vs senior", channel: "Meme", seconds: 13 };
+    await putDoc(key, { reels: [old], query: "q", searchedAt: new Date().toISOString() } satisfies SavedReels);
+    const yt = mockYouTube(ONE);
+    const reels = await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key" });
+    expect(reels.map((reel) => reel.videoId)).toEqual([id(1)]);
+    expect(yt.searches()).toBe(1);
+    expect((await getDoc<SavedReels>(key))?.version).toBe(SEARCH_VERSION);
   });
 
   it("hides a private map from strangers and refuses a locked skill, before any search", async () => {
@@ -214,7 +242,7 @@ describe("getSkillReels", () => {
     const key = `skill-reels/${topicKey(map, map.nodes[0])}`;
     const now = Date.now();
     const reel = { videoId: id(1), title: "SQL joins in 60 seconds", channel: "Teacher", seconds: 58 };
-    await putDoc(key, { reels: [reel], query: "q", searchedAt: new Date(now - (FRESH_DAYS - 1) * DAY).toISOString() } satisfies SavedReels);
+    await putDoc(key, { reels: [reel], query: "q", searchedAt: new Date(now - (FRESH_DAYS - 1) * DAY).toISOString(), version: SEARCH_VERSION } satisfies SavedReels);
     const yt = mockYouTube([], { searchStatus: 500 });
     expect(await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key", now })).toEqual([reel]);
     expect(yt.calls).toHaveLength(0);
@@ -223,7 +251,7 @@ describe("getSkillReels", () => {
     expect(await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key", now: now + 2 * DAY })).toEqual([reel]);
     expect(yt.searches()).toBe(1);
 
-    await putDoc(key, { reels: [], query: "q", searchedAt: new Date(now - (EMPTY_RETRY_DAYS + 1) * DAY).toISOString() } satisfies SavedReels);
+    await putDoc(key, { reels: [], query: "q", searchedAt: new Date(now - (EMPTY_RETRY_DAYS + 1) * DAY).toISOString(), version: SEARCH_VERSION } satisfies SavedReels);
     mockYouTube(ONE);
     expect(await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key", now: now + 5 * DAY })).toHaveLength(1);
   });
