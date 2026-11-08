@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- Writing the 3-4 minute voiceover script for the Devpost video: new file `docs/submission/voiceover-script.md` only. No code.
 
 ## Next
 
