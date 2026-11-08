@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- **People: clickable skills.** Click any skill on a person's card to show only the people who proved it (with a clear "Showing people who proved X" bar to undo). On cards that could mentor you, a "Practise this" link opens that skill on your own map (`/map/<id>?skill=<nodeId>`, the full-page link from the course redesign). Touches: `src/features/network/**` only (UI, view types, skills).
+- Nothing new yet: waiting on the owner. Next candidates: "Ask for help" requests on People, and an anonymous-profile option (undecided).
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- People: clickable skills. A skill on any card filters to the people who proved it, with "Practise <skill>" and "Show everyone"; mentor cards get "Practise on your map" links. New `GET /api/network/practise` redirects to the skill on your own map or to `/courses?q=`; `/courses` now reads `?q=`. Touched `features/network/**`, `app/api/network/practise`, `features/courses/ui/CoursesScreen.tsx`.
 - Course page redesign: a progress card ("3 of 14 skills proven" plus your main action), a compact Public/Private bar for owners, and skills as clickable cards with Ready/Locked/Proven. A skill opens in your map as a full page via `/map/<id>?skill=<nodeId>`; for a learner who hasn't started, it starts the course first. Small additions in Abdu's `MapScreen.tsx` and `SkillPanel.tsx` (see TEAM.md).
 - Sidebar "Sign out" now lines up with "Signed in as" (`-ml-3` became `-ml-0.5` in `src/shared/ui/Account.tsx`, Abdu's file, at the owner's request).
 - Locked skills: no lesson, flashcards or quiz is generated for a locked skill (UI hides them; lessons, flashcards and quiz return 403 before any model call). The owner can press "Unlock anyway": saved at `unlocks/<mapId>/<ownerId>/<nodeId>`, the skill becomes available everywhere including proving, and shows "Unlocked early". New `POST /api/maps/[id]/unlock`, `unlockNode` and `isNodeLockedFor` in teachback, `unlockedEarlyIds` in skill-map; `MapProgress.unlocked` in shared types. The sample script passes `ignoreLock`.

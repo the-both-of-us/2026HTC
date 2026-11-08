@@ -29,6 +29,7 @@ Everyone's skills are worked out afresh on every listing, so a skill proved a mo
 | `GET /api/network` | `NetworkView`: `{me, mentors, peers, everyone, viewerHasMaps, signedIn, signInRequired, displayName}` | Anyone |
 | `PUT /api/network` `{displayName, city?, lookingFor?, contactUrl?}` | `{me}`: join, or update your profile | Signed in, once Auth0 is set up |
 | `DELETE /api/network` | `{ok: true}`: leave, which deletes your profile | Anyone. Leaving twice is fine. |
+| `GET /api/network/practise?skill=<title>` | 303 to that skill on the viewer's own map (`/map/<id>?skill=<nodeId>`), or to `/courses?q=<title>` if none of their maps has it | Anyone. Only the viewer's own maps are read, so a map id only reaches its owner, in a redirect. |
 
 Errors are `{error: "a sentence for people"}` with a 400, 401 or 500. Raw errors only go to the server log, prefixed `[network]`.
 
@@ -76,3 +77,7 @@ Six made-up people (`demo.ts`) whose skills are titles from the three sample map
 ## Tests
 
 `npm test -- network` runs the feature's tests and the route test. The AI is mocked and never reached.
+
+## Clickable skills
+
+Every skill on someone's card is a button: it filters the page to the people who proved it (`skillsMatch`, so close wordings count), with a bar that says how many, a "Practise <skill>" link and "Show everyone". Cards that could mentor you also list up to 3 "Practise on your map" links for the skills they proved that you're learning. Practise links go through `GET /api/network/practise` (`practise.ts`), which prefers a skill you can start now, then a locked one, then one you proved, newest map first.

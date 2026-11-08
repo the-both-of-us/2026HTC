@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { Heart, ListChecks } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Badge, Button, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import type { CourseSort, PublicCourse } from "../types";
 import { fetchCourses, type Result } from "./api";
@@ -36,6 +36,16 @@ export function CoursesScreen() {
   const loadingLine = useRef<HTMLParagraphElement>(null);
 
   const requestKey = `${sort}\n${query}\n${attempt}`;
+
+  // A link such as /courses?q=SQL%20joins (from "Practise this" on People) starts with that
+  // search. The server renders no search, and the browser applies the link's once.
+  const linkedQuery = useSyncExternalStore(subscribeToNothing, readLinkedQuery, () => "");
+  const [appliedLink, setAppliedLink] = useState("");
+  if (linkedQuery && linkedQuery !== appliedLink) {
+    setAppliedLink(linkedQuery);
+    setInput(linkedQuery);
+    setQuery(linkedQuery);
+  }
 
   // Search once typing pauses, not on every key.
   useEffect(() => {
@@ -209,4 +219,14 @@ function CourseCard({ course }: { course: PublicCourse }) {
       </p>
     </Link>
   );
+}
+
+/** The address never changes while this page is open, so there is nothing to subscribe to. */
+function subscribeToNothing(): () => void {
+  return () => {};
+}
+
+/** The search from a link like /courses?q=SQL%20joins, or "". */
+function readLinkedQuery(): string {
+  return new URLSearchParams(window.location.search).get("q")?.trim().slice(0, 200) ?? "";
 }

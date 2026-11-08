@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, FileCheck, GraduationCap, MapPin, Search, Users } from "lucide-react";
+import { Dumbbell, ExternalLink, FileCheck, Filter, GraduationCap, MapPin, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 import { Badge, Button, buttonClasses, Card, ErrorNotice, Field, PageShell, Spinner, TextInput } from "@/shared/ui";
@@ -12,6 +12,7 @@ import {
   MAX_NAME_LENGTH,
   type ProfileErrors,
 } from "../rules";
+import { skillsMatch } from "../matching";
 import type { Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "../types";
 import { fetchNetwork, leaveNetwork, saveProfile, type Result } from "./api";
 import {
@@ -141,6 +142,23 @@ function LoadedNetwork({
 }) {
   const matching = canMatch(view);
   const total = peopleCount(view);
+  // Clicking a skill on any card shows only the people who proved it.
+  const [skillFilter, setSkillFilter] = useState<string | null>(null);
+  const filterBar = useRef<HTMLDivElement>(null);
+  const keep = (entries: Match[]) =>
+    skillFilter
+      ? entries.filter(({ profile }) => profile.provenSkills.some((skill) => skillsMatch(skill.title, skillFilter)))
+      : entries;
+  const mentors = keep(view.mentors);
+  const peers = keep(view.peers);
+  const everyone = keep(view.everyone);
+  const shownCount = mentors.length + peers.length + everyone.length;
+
+  function pickSkill(title: string) {
+    setSkillFilter((current) => (current !== null && skillsMatch(current, title) ? null : title));
+    // Move to the bar, so the change is announced and "Show everyone" is one Tab away.
+    requestAnimationFrame(() => filterBar.current?.focus());
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
@@ -182,31 +200,63 @@ function LoadedNetwork({
           </p>
         )}
 
-        {view.mentors.length > 0 && (
+        {skillFilter && (
+          <div
+            ref={filterBar}
+            tabIndex={-1}
+            role="status"
+            className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sheet border border-proven/60 bg-proven/10 px-4 py-3 outline-none"
+          >
+            <p className="flex min-w-0 flex-1 basis-60 items-start gap-2 text-base">
+              <Filter aria-hidden="true" size={18} className="mt-1 shrink-0 text-proven" />
+              <span className="min-w-0 break-words">
+                {shownCount === 0
+                  ? `Nobody here has proved ${skillFilter} yet.`
+                  : `Showing ${countLabel(shownCount, "person", "people")} who proved ${skillFilter}.`}
+              </span>
+            </p>
+            <a href={practiseHref(skillFilter)} className={buttonClasses("secondary", "sm")}>
+              <Dumbbell aria-hidden="true" size={16} />
+              Practise {skillFilter}
+            </a>
+            <Button variant="quiet" size="sm" onClick={() => setSkillFilter(null)}>
+              <X aria-hidden="true" size={16} />
+              Show everyone
+            </Button>
+          </div>
+        )}
+
+        {mentors.length > 0 && (
           <PeopleSection
             id="mentors"
             icon={<GraduationCap aria-hidden="true" size={22} className="text-proven" />}
             title="Could mentor you"
             description="They proved skills that you're still learning."
-            entries={view.mentors}
+            entries={mentors}
+            activeSkill={skillFilter}
+            onPickSkill={pickSkill}
           />
         )}
-        {view.peers.length > 0 && (
+        {peers.length > 0 && (
           <PeopleSection
             id="peers"
             icon={<Users aria-hidden="true" size={22} className="text-accent-bright" />}
             title="Learning what you're learning"
             description="Study together: they're working on the same skills as you."
-            entries={view.peers}
+            entries={peers}
+            activeSkill={skillFilter}
+            onPickSkill={pickSkill}
           />
         )}
-        {view.everyone.length > 0 && (
+        {everyone.length > 0 && (
           <PeopleSection
             id="everyone"
             icon={<Search aria-hidden="true" size={22} className="text-ink-soft" />}
             title={everyoneHeading(view)}
             description={everyoneDescription(view)}
-            entries={view.everyone}
+            entries={everyone}
+            activeSkill={skillFilter}
+            onPickSkill={pickSkill}
           />
         )}
       </div>
@@ -220,12 +270,16 @@ function PeopleSection({
   title,
   description,
   entries,
+  activeSkill,
+  onPickSkill,
 }: {
   id: string;
   icon: ReactNode;
   title: string;
   description: string;
   entries: Match[];
+  activeSkill: string | null;
+  onPickSkill: (title: string) => void;
 }) {
   const headingId = `${id}-heading`;
   return (
@@ -240,9 +294,15 @@ function PeopleSection({
         <p className="mt-1 text-base text-ink-soft">{description}</p>
       </div>
       <ul className="grid gap-4 xl:grid-cols-2">
-        {entries.map(({ profile, reasons }) => (
+        {entries.map(({ profile, reasons, mentorFor }) => (
           <li key={profile.publicId} className="min-w-0">
-            <PersonCard profile={profile} reasons={reasons} />
+            <PersonCard
+              profile={profile}
+              reasons={reasons}
+              mentorFor={mentorFor}
+              activeSkill={activeSkill}
+              onPickSkill={onPickSkill}
+            />
           </li>
         ))}
       </ul>
@@ -250,7 +310,20 @@ function PeopleSection({
   );
 }
 
-function PersonCard({ profile, reasons }: { profile: PublicProfile; reasons: string[] }) {
+function PersonCard({
+  profile,
+  reasons,
+  mentorFor,
+  activeSkill,
+  onPickSkill,
+}: {
+  profile: PublicProfile;
+  reasons: string[];
+  /** Their proven skills that the viewer is still learning. */
+  mentorFor: string[];
+  activeSkill: string | null;
+  onPickSkill: (title: string) => void;
+}) {
   const host = contactHost(profile.contactUrl);
   return (
     <article className="flex h-full flex-col gap-3 rounded-sheet border border-control-edge bg-sheet p-5">
@@ -292,7 +365,31 @@ function PersonCard({ profile, reasons }: { profile: PublicProfile; reasons: str
         </ul>
       )}
 
-      <SkillChips skills={profile.provenSkills} owner={profile.displayName} />
+      <SkillChips
+        skills={profile.provenSkills}
+        owner={profile.displayName}
+        activeSkill={activeSkill}
+        onPickSkill={onPickSkill}
+      />
+
+      {mentorFor.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm font-semibold">Practise on your map</p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1">
+            {mentorFor.slice(0, PRACTISE_LINKS_SHOWN).map((title) => (
+              <li key={title} className="min-w-0">
+                <a
+                  href={practiseHref(title)}
+                  className="inline-flex min-h-8 items-center gap-1.5 font-medium break-words text-accent-bright underline underline-offset-4 hover:text-ink"
+                >
+                  <Dumbbell aria-hidden="true" size={15} className="shrink-0" />
+                  {title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {profile.contactUrl && host && (
         <a
@@ -310,7 +407,18 @@ function PersonCard({ profile, reasons }: { profile: PublicProfile; reasons: str
   );
 }
 
-function SkillChips({ skills, owner }: { skills: ProvenSkill[]; owner: string }) {
+function SkillChips({
+  skills,
+  owner,
+  activeSkill = null,
+  onPickSkill,
+}: {
+  skills: ProvenSkill[];
+  owner: string;
+  /** Without onPickSkill the chips are plain labels, as on your own profile. */
+  activeSkill?: string | null;
+  onPickSkill?: (title: string) => void;
+}) {
   const [showAll, setShowAll] = useState(false);
   const listId = useId();
   if (skills.length === 0) {
@@ -319,14 +427,35 @@ function SkillChips({ skills, owner }: { skills: ProvenSkill[]; owner: string })
   const shown = showAll ? skills : skills.slice(0, SKILLS_SHOWN);
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-semibold">Proven skills ({skills.length})</p>
+      <p className="text-sm font-semibold">
+        Proven skills ({skills.length})
+        {onPickSkill && <span className="font-normal text-ink-soft"> · click one to find others</span>}
+      </p>
       <ul id={listId} className="flex flex-wrap gap-1.5">
-        {shown.map((skill) => (
+        {shown.map((skill) => {
+          const active = activeSkill !== null && skillsMatch(skill.title, activeSkill);
+          return (
           <li key={skill.title} className="min-w-0 max-w-full">
-            <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-proven/70 bg-proven/10 py-0.5 pr-1 pl-2.5 text-sm font-medium text-proven">
-              <span className="min-w-0 break-words" title={`On ${skill.mapTitle}`}>
-                {skill.title}
-              </span>
+            <span
+              className={`inline-flex max-w-full items-center gap-1.5 rounded-full border py-0.5 pr-1 text-sm font-medium ${
+                active ? "border-proven bg-proven pl-1 text-paper" : "border-proven/70 bg-proven/10 pl-1 text-proven"
+              }`}
+            >
+              {onPickSkill ? (
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onPickSkill(skill.title)}
+                  title={`On ${skill.mapTitle}. Show everyone who proved it.`}
+                  className="min-h-7 min-w-0 cursor-pointer rounded-full px-1.5 text-left break-words hover:underline"
+                >
+                  {skill.title}
+                </button>
+              ) : (
+                <span className="min-w-0 px-1.5 break-words" title={`On ${skill.mapTitle}`}>
+                  {skill.title}
+                </span>
+              )}
               {skill.evidenceUrl ? (
                 <a
                   href={skill.evidenceUrl}
@@ -342,7 +471,8 @@ function SkillChips({ skills, owner }: { skills: ProvenSkill[]; owner: string })
               )}
             </span>
           </li>
-        ))}
+          );
+        })}
       </ul>
       {skills.length > SKILLS_SHOWN && (
         <Button
@@ -714,4 +844,12 @@ function NoMapsCard() {
       </div>
     </Card>
   );
+}
+
+/** How many "Practise on your map" links a card shows. */
+const PRACTISE_LINKS_SHOWN = 3;
+
+/** "Practise this": the server redirects to that skill on your own map, or to courses teaching it. */
+function practiseHref(skillTitle: string): string {
+  return `/api/network/practise?skill=${encodeURIComponent(skillTitle)}`;
 }

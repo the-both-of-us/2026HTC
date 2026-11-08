@@ -5,4 +5,5 @@ export { deleteUserData } from "./deleteData";
 export { NetworkError } from "./errors";
 export { networkErrorResponse, parseProfileBody } from "./http";
 export { getMyProfile, getNetwork, joinNetwork, leaveNetwork } from "./network";
+export { findCoursesHref, findPractiseLink } from "./practise";
 export type { Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "./types";
