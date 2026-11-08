@@ -6,6 +6,12 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
+The owner asked for all three on Abdu's side.
+
+- **Resources tab on every topic** (agent). Rebuilt from the old OryxLearn's resources: YouTube videos, Wikipedia, Google Books, podcasts (Taddy) and news (GNews), all real results from APIs, never links written by the AI. Results are cached per topic. Files: new `features/resources`, `src/app/api/resources`, a Resources tab in `skill-map/ui/SkillPanel.tsx`.
+- **"For you" feed with Shorts** (agent). A new `/feed`: full-screen swipe cards, each with one idea from your maps, plus every 4th card an educational YouTube Short (SafeSearch, cached). Each card has like, save, share and "Prove it" (opens the teach-back on that topic). Files: new `features/feed`, `src/app/feed`, `src/app/api/feed`, plus one sidebar link in `src/shared/ui/SideNav.tsx`.
+- New keys: `YOUTUBE_API_KEY`, `GNEWS_API_KEY`, `TADDY_API_KEY`, `TADDY_USER_ID` (in .env.local, Vercel and AWS).
+
 ## Next
 
 - Waiting on the owner: swap the landing's "7.3% Alberta unemployment" seal for something that fits "Learn anything", or keep it. Touches `features/landing`.
