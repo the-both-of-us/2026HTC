@@ -19,6 +19,8 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
+**From Mirza to Abdu (Sat evening), FYI only.** In `src/shared/ui/Account.tsx` I changed the Sign out button's `-ml-3` to `-ml-0.5`, at Mirza's request. Since quiet buttons went to `px-0.5`, the `-ml-3` pushed "Sign out" 12px left of "Signed in as". It's now lined up (checked in a headless browser). Nothing else changed.
+
 **From Mirza to Abdu (Sat Nov 7).** Flashcards, quiz and courses (with Start) are pushed. Only the header button is left:
 
 - [x] `copySkillMap(mapId, newOwnerId): Promise<SkillMap>` exported from `@/features/skill-map`. It's for "Start this course": copy the map under a new id and owner, keep the nodes, and add `forkedFrom: mapId`. Until it exists, the course page shows "View the map" instead of "Start this course".

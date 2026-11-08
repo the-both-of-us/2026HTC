@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Sidebar "Sign out" alignment: it hung 12px left of "Signed in as". One class in `src/shared/ui/Account.tsx` (Abdu's file; the owner asked for it). Nothing else touched.
+- Nothing new yet: waiting on the owner for the next task.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Sidebar "Sign out" now lines up with "Signed in as" (`-ml-3` became `-ml-0.5` in `src/shared/ui/Account.tsx`, Abdu's file, at the owner's request).
 - Locked skills: no lesson, flashcards or quiz is generated for a locked skill (UI hides them; lessons, flashcards and quiz return 403 before any model call). The owner can press "Unlock anyway": saved at `unlocks/<mapId>/<ownerId>/<nodeId>`, the skill becomes available everywhere including proving, and shows "Unlocked early". New `POST /api/maps/[id]/unlock`, `unlockNode` and `isNodeLockedFor` in teachback, `unlockedEarlyIds` in skill-map; `MapProgress.unlocked` in shared types. The sample script passes `ignoreLock`.
 - Full-page reading for a skill: a "Full page" button beside the ✕ in the skill panel. On large screens it covers the map area with a centred reading column; on phones it's a full-screen sheet above the top bar. "Back to map" returns. Touched `skill-map/ui/SkillPanel.tsx` only, with Abdu's OK.
 - Owner indexes: `listMapsByOwner` and `listProgramsByOwner` read only that owner's documents, and likes are counted from keys (`85d20eb`). Touched `skill-map/storage.ts`, `skill-map/index.ts`, `programs/storage.ts`, with Abdu's OK.

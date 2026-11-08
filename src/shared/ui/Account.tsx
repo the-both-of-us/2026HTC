@@ -59,9 +59,10 @@ export function AccountStatusLine() {
         <p className="break-words text-ink-soft">
           Signed in as <span className="font-semibold text-ink">{account.displayName || "Learner"}</span>
         </p>
-        {/* A real form post: the auth feature only signs out on a same-site POST. */}
+        {/* A real form post: the auth feature only signs out on a same-site POST.
+            A quiet button keeps only px-0.5, so -ml-0.5 lines the word up with the text above. */}
         <form method="post" action="/api/auth/logout">
-          <Button type="submit" variant="quiet" size="sm" className="-ml-3">
+          <Button type="submit" variant="quiet" size="sm" className="-ml-0.5">
             Sign out
           </Button>
         </form>
