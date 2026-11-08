@@ -70,7 +70,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
   }, []);
 
   // The hero seal keeps one design and spins; typing gives it a push (see useSealSpin).
-  const [sealRef, pushSpin] = useSealSpin();
+  const [sealRef, glowRef, sheenRef, pushSpin] = useSealSpin();
 
   // Count seconds for as long as the map is being built.
   useEffect(() => {
@@ -349,8 +349,25 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
         className="order-last overflow-hidden pt-2 pb-5 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:top-0 lg:order-none lg:h-[max(37.5rem,calc(100dvh-11.875rem))] lg:p-0"
       >
         <div className="relative left-1/2 aspect-square w-[min(135vw,40rem)] -translate-x-1/2 lg:absolute lg:top-1/2 lg:left-[52%] lg:w-[min(48.75rem,118vh)] lg:translate-x-0 lg:-translate-y-1/2">
-          <div ref={sealRef} className="size-full will-change-transform">
+          {/* A soft halo that brightens with the spin. */}
+          <div
+            ref={glowRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-[6%] rounded-full opacity-0 blur-2xl will-change-[opacity]"
+            style={{ background: "radial-gradient(circle, transparent 34%, var(--color-shine) 52%, transparent 71%)" }}
+          />
+          <div ref={sealRef} className="relative size-full will-change-transform">
             <Seal fingerprint={HERO_SEAL} state="ink" detail="hero" center={38} tint />
+            {/* A band of light that turns with the seal, so the shine sweeps round the rim. */}
+            <div
+              ref={sheenRef}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 rounded-full opacity-0 mix-blend-plus-lighter will-change-[opacity]"
+              style={{
+                background: "conic-gradient(from 0deg, transparent 0turn, var(--color-shine) .06turn, transparent .14turn, transparent .5turn, var(--color-shine) .56turn, transparent .64turn)",
+                mask: "radial-gradient(circle, transparent 37%, #000 42%, #000 69%, transparent 73%)",
+              }}
+            />
           </div>
           {figures && <div className="absolute inset-0 flex items-center justify-center">{figures}</div>}
         </div>
@@ -432,22 +449,27 @@ const HERO_SEAL = sha256Hex("oryxlearn");
 
 /** Degrees a second: the idle drift, the most a burst of typing can reach, and what one keystroke adds. */
 const SPIN_IDLE = 4;
-const SPIN_MAX = 150;
-const SPIN_PUSH = 14;
+const SPIN_MAX = 420;
+const SPIN_PUSH = 34;
 /** Seconds for the extra speed to fall to about a third once typing stops. */
-const SPIN_EASE = 0.9;
+const SPIN_EASE = 1.1;
 
 /**
  * Turns the hero seal for as long as the page is open. Each keystroke adds speed (capped), and
  * the extra speed eases away exponentially, so typing feels like pushing a wheel. The transform is
- * written straight to the element every frame, with no React render. Still under reduced motion.
+ * written straight to the element every frame, with no React render. The faster it turns, the
+ * more the halo and the sweeping band of light show. Still under reduced motion.
  */
 function useSealSpin() {
   const ref = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const sheenRef = useRef<HTMLDivElement>(null);
   const speed = useRef(SPIN_IDLE);
 
   useEffect(() => {
     const element = ref.current;
+    const glow = glowRef.current;
+    const sheen = sheenRef.current;
     if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let angle = 0;
     let last = performance.now();
@@ -457,6 +479,10 @@ function useSealSpin() {
       speed.current = SPIN_IDLE + (speed.current - SPIN_IDLE) * Math.exp(-dt / SPIN_EASE);
       angle = (angle + speed.current * dt) % 360;
       element.style.transform = `rotate(${angle.toFixed(2)}deg)`;
+      // 0 at the idle drift, 1 at full speed; eased so a few keys already glow a little.
+      const shine = Math.sqrt(Math.max(0, (speed.current - SPIN_IDLE) / (SPIN_MAX - SPIN_IDLE)));
+      if (glow) glow.style.opacity = (shine * 0.75).toFixed(3);
+      if (sheen) sheen.style.opacity = (shine * 0.9).toFixed(3);
       frame = requestAnimationFrame(tick);
     });
     return () => cancelAnimationFrame(frame);
@@ -466,5 +492,5 @@ function useSealSpin() {
     speed.current = Math.min(SPIN_MAX, speed.current + SPIN_PUSH);
   }, []);
 
-  return [ref, push] as const;
+  return [ref, glowRef, sheenRef, push] as const;
 }

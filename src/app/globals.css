@@ -62,6 +62,7 @@
   --color-available: #0a3a37;
   --color-available-surface: #f7f9f5;
   --color-proven: #00675e; /* foil teal darkened for text */
+  --color-shine: #6fd6c4; /* the hero seal's glow while you type; decoration only */
   --color-proven-surface: #d3e6df;
   --color-on-proven: #f7f9f5;
 
@@ -226,6 +227,7 @@ html[data-theme="dark"] {
   --color-available: #cdd6cf;
   --color-available-surface: #172c27;
   --color-proven: #55b9a6;
+  --color-shine: #7ee8d4;
   --color-proven-surface: #183a32;
   --color-on-proven: #12241f;
   --color-forest: #b5cbbf;
@@ -269,6 +271,7 @@ html[data-theme="dark"] {
     --color-available: #cdd6cf;
     --color-available-surface: #172c27;
     --color-proven: #55b9a6;
+    --color-shine: #7ee8d4;
     --color-proven-surface: #183a32;
     --color-on-proven: #12241f;
     --color-forest: #b5cbbf;
@@ -338,6 +341,7 @@ html[data-theme="eye"] {
   --color-available: #3a3125;
   --color-available-surface: #f6eedb;
   --color-proven: #3f6a33;
+  --color-shine: #d9c27a;
   --color-proven-surface: #dfe3c4;
   --color-on-proven: #f6eedb;
   --color-forest: #3a3125;
