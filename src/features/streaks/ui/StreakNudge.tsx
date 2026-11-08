@@ -16,7 +16,8 @@ type StreakNudgeProps = {
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /**
- * One short line in the map's header: the streak chip and today's topic. The chip opens the
+ * One short line in the map's header: the streak chip and today's topic. On a phone it never
+ * wraps: the chip drops the word "days" and today's topic shrinks to fit. The chip opens the
  * details (this week's days, sparks and freeze), so they don't take a row of their own.
  * It never scolds: it says what one topic would do.
  */
@@ -49,8 +50,8 @@ export function StreakNudge({ streak, topicOfTheDay, className }: StreakNudgePro
   }, []);
 
   return (
-    <div className={clsx("flex flex-wrap items-center gap-2 text-sm", className)}>
-      <details ref={details} className="group relative">
+    <div className={clsx("flex items-center gap-2 text-sm sm:flex-wrap", className)}>
+      <details ref={details} className="group relative shrink-0">
         <summary
           title={`${message}. ${streak.sparksThisWeek}/${WEEKLY_SPARK_GOAL} sparks this week. ${freeze}.`}
           className={clsx(
@@ -62,7 +63,7 @@ export function StreakNudge({ streak, topicOfTheDay, className }: StreakNudgePro
         >
           <Flame aria-hidden="true" size={15} className={clsx("text-amber", streak.doneToday && "flame-lit")} />
           <span className="font-medium text-ink">{streak.count}</span>
-          <span>{streak.count === 1 ? "day" : "days"}</span>
+          <span className="max-sm:sr-only">{streak.count === 1 ? "day" : "days"}</span>
           <span className="sr-only">. {message}. Show this week.</span>
         </summary>
 
@@ -98,12 +99,12 @@ export function StreakNudge({ streak, topicOfTheDay, className }: StreakNudgePro
           type="button"
           onClick={topicOfTheDay.onOpen}
           title={`Topic of the day: ${topicOfTheDay.title}. Double sparks.`}
-          className="inline-flex min-h-8 max-w-full cursor-pointer items-center gap-1.5 rounded-control border border-amber/60 px-2.5 text-ink transition-control hover:bg-amber/10"
+          className="inline-flex min-h-8 max-w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-control border border-amber/60 px-2.5 text-ink transition-control hover:bg-amber/10"
         >
           <Star aria-hidden="true" size={14} className="shrink-0 text-amber" />
-          <span className="text-ink-soft">Today:</span>
-          <span className="max-w-[14rem] truncate font-medium">{topicOfTheDay.title}</span>
-          <span className="shrink-0 text-ink-soft">2× sparks</span>
+          <span className="shrink-0 text-ink-soft">Today:</span>
+          <span className="min-w-0 truncate font-medium sm:max-w-[14rem]">{topicOfTheDay.title}</span>
+          <span className="shrink-0 text-ink-soft max-sm:hidden">2× sparks</span>
         </button>
       )}
     </div>

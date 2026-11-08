@@ -15,6 +15,7 @@ import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import { deriveNodeStates, unlockedEarlyIds } from "../states";
 import type { PublicSkillMap } from "../storage";
+import { MapActions } from "./MapActions";
 import { MapCanvas } from "./MapCanvas";
 import { fetchMapWithProgress, fetchProven, unlockSkill } from "./mapApi";
 import { SkillList } from "./SkillList";
@@ -296,17 +297,21 @@ function LoadedMap({
     <PageShell width="full">
       <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
         {/* The circle line stays one slim row, so the map keeps the height. */}
-        {banner && <div className="[&>p]:py-1.5">{banner}</div>}
+        {banner && <div className="[&>p]:py-1 max-sm:[&>p]:text-xs">{banner}</div>}
         {/*
-          Two short rows: the title with its progress and the actions, then the streak, today's
-          topic and the final interview beside the view tabs. Everything else is one click away.
+          Short rows: the title with its progress and the actions, then the streak, today's
+          topic and the final interview beside the view tabs. On a phone the actions fold into
+          "More", so the map starts high on the screen. Everything else is one click away.
         */}
-        <header className="flex flex-col gap-2 border-b border-rule px-4 pt-2.5 sm:px-6">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <div className="min-w-0 flex-1 basis-72">
+        <header className="flex flex-col gap-1.5 border-b border-rule px-4 pt-2 sm:gap-2 sm:px-6 sm:pt-2.5">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+            <div className="min-w-0 flex-1 basis-full sm:basis-72">
               {map.program && <ProgramCrumb program={map.program} proven={provenCount} total={map.nodes.length} />}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <h1 className="line-clamp-2 min-w-0 text-xl leading-tight font-medium break-words" title={map.title}>
+              <div className="flex items-center gap-x-4 gap-y-1 sm:flex-wrap">
+                <h1
+                  className="min-w-0 text-lg leading-tight font-medium break-words max-sm:flex-1 max-sm:truncate sm:line-clamp-2 sm:text-xl"
+                  title={map.title}
+                >
                   {map.title}
                 </h1>
                 {map.subtitle && <p className="hidden truncate text-sm text-ink-soft xl:block">{map.subtitle}</p>}
@@ -314,28 +319,35 @@ function LoadedMap({
               </div>
             </div>
             {/* Compact buttons with one primary: the next skill. */}
-            <div className="flex flex-wrap items-center gap-2 [&>button]:min-h-9! [&>button]:px-3! [&>button]:text-sm!">
-              <HowItWorksButton />
-              {isOwner && (
-                <>
-                  {ownerActions}
-                  <PublishMenu mapId={map.id} />
-                  {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
-                  {nextSkill && (
-                    <Button size="sm" onClick={() => selectSkill(nextSkill.id)} className="grow sm:grow-0">
+            {isOwner ? (
+              <MapActions
+                more={
+                  <>
+                    <HowItWorksButton />
+                    {ownerActions}
+                    <PublishMenu mapId={map.id} />
+                    {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
+                  </>
+                }
+                primary={
+                  nextSkill && (
+                    <Button size="sm" onClick={() => selectSkill(nextSkill.id)}>
                       <Sparkles aria-hidden="true" size={16} />
                       {provenCount === 0 ? "Start learning" : "Next skill"}
                     </Button>
-                  )}
-                </>
-              )}
-            </div>
+                  )
+                }
+              />
+            ) : (
+              <HowItWorksButton className="min-h-9! px-3! text-sm!" />
+            )}
           </div>
 
-          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-2 pb-2 text-sm">
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1.5 sm:gap-y-2">
+            <div className="flex min-w-0 items-center gap-2 text-sm max-sm:w-full sm:flex-wrap sm:pb-2">
               {isOwner && habits && (
                 <StreakNudge
+                  className="min-w-0"
                   streak={habits.streak}
                   topicOfTheDay={
                     featured && states[featured.id] === "available"
@@ -344,8 +356,12 @@ function LoadedMap({
                   }
                 />
               )}
+              {/* On a phone the progress count already says how many are left. */}
               {isOwner && !allProven && (
-                <p className="inline-flex min-h-8 items-center gap-1.5 text-ink-soft" title="The final interview unlocks when every topic is proven.">
+                <p
+                  className="inline-flex min-h-8 items-center gap-1.5 text-ink-soft max-sm:hidden"
+                  title="The final interview unlocks when every topic is proven."
+                >
                   <Lock aria-hidden="true" size={14} className="shrink-0" />
                   <span>
                     <span className="text-ink">Final interview</span>{" "}
@@ -356,8 +372,9 @@ function LoadedMap({
               )}
               {/* A topic has no source, so say plainly where the map came from. */}
               {map.sourceKind === "topic" && (
-                <Badge tone="sample" className="text-xs">
-                  AI-generated from a topic, with no citations
+                <Badge tone="sample" className="shrink-0 text-xs">
+                  <span className="sm:hidden">AI-made, no citations</span>
+                  <span className="max-sm:hidden">AI-generated from a topic, with no citations</span>
                 </Badge>
               )}
             </div>
@@ -477,13 +494,14 @@ function Progress({ proven, total }: { proven: number; total: number }) {
   const percent = total === 0 ? 0 : (proven / total) * 100;
 
   return (
-    <div className="flex items-center gap-2.5">
-      <div aria-hidden="true" className="h-1.5 w-28 overflow-hidden rounded-full bg-rule-strong sm:w-36">
+    <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+      <div aria-hidden="true" className="h-1.5 w-12 overflow-hidden rounded-full bg-rule-strong sm:w-36">
         <div className="progress-fill h-full rounded-full bg-proven" style={{ width: `${percent}%` }} />
       </div>
       <p role="status" className="text-sm text-ink-soft tabular-nums">
         <span aria-hidden="true">
-          {proven}/{total} proven
+          {proven}/{total}
+          <span className="max-sm:hidden"> proven</span>
         </span>
         <span className="sr-only">
           {proven} of {total} skills proven

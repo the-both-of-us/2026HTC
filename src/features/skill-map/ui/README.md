@@ -3,6 +3,7 @@
 The map screen. `MapScreen` is the only thing other code needs: import it from `@/features/skill-map/client`.
 
 - `MapScreen.tsx`: loads the map and progress, holds the selected skill and view, handles a proven skill.
+- `MapActions.tsx`: the header's buttons. One row on large screens; on a phone only the next skill and a "More" menu with the rest, labelled, so the map starts near the top (about 220 px down at 390x844).
 - `MapCanvas.tsx`: the graph (`@xyflow/react`). Positions come from `layout.ts`; progress never moves anything.
 - `layout.ts`: pure top-to-bottom layout (longest path, barycentre ordering, waypoints for long lines). Tests in `layout.test.ts`.
 - `SkillNodeView.tsx`, `SkillEdge.tsx`: one node, one line.
