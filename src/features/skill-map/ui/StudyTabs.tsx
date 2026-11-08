@@ -3,7 +3,10 @@
 import { useId, useState, type ReactNode } from "react";
 import { tabId, Tabs } from "@/shared/ui";
 
-export type StudyTab = { id: string; label: string; content: ReactNode };
+export type StudyTab = { id: string; label: string; content: ReactNode;
+  /** Mounted only once the tab is first opened, for content that costs a lookup. */
+  lazy?: boolean;
+};
 
 /**
  * Read, Flashcards and Quiz for one skill. Every panel stays mounted and is only hidden,
@@ -11,6 +14,7 @@ export type StudyTab = { id: string; label: string; content: ReactNode };
  */
 export function StudyTabs({ tabs }: { tabs: StudyTab[] }) {
   const [selected, setSelected] = useState(tabs[0]?.id ?? "");
+  const [opened, setOpened] = useState<string[]>([]);
   const idPrefix = useId();
   const panelId = `${idPrefix}-panel`;
 
@@ -20,7 +24,10 @@ export function StudyTabs({ tabs }: { tabs: StudyTab[] }) {
         label="Study this skill"
         items={tabs}
         value={selected}
-        onChange={setSelected}
+        onChange={(next) => {
+          setSelected(next);
+          setOpened((ids) => (ids.includes(next) ? ids : [...ids, next]));
+        }}
         idPrefix={idPrefix}
         panelId={panelId}
         className="border-b border-rule"
@@ -37,7 +44,7 @@ export function StudyTabs({ tabs }: { tabs: StudyTab[] }) {
             // The Flashcards and Quiz parts draw their own top rule, which a tab does not need.
             className="[&>section]:border-t-0 [&>section]:pt-0"
           >
-            {tab.content}
+            {tab.lazy && !active && !opened.includes(tab.id) ? null : tab.content}
           </div>
         );
       })}

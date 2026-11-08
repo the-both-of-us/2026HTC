@@ -2,6 +2,7 @@ import { FlashcardsTab } from "@/features/flashcards/client";
 import { LessonTab } from "@/features/lessons/client";
 import { ShareProofButton } from "@/features/proof/client";
 import { QuizTab } from "@/features/quiz/client";
+import { ResourcesTab } from "@/features/resources/client";
 import { assignFormats, FormatBadge, TeachBackPanel } from "@/features/teachback/client";
 import clsx from "clsx";
 import { BadgeCheck, ChevronRight, LockOpen, Maximize2, Minimize2, X } from "lucide-react";
@@ -112,6 +113,8 @@ export function SkillPanel({
               { id: "flashcards", label: "Flashcards", content: <FlashcardsTab mapId={mapId} skill={studySkill} /> },
               { id: "quiz", label: "Quiz", content: <QuizTab mapId={mapId} skill={studySkill} /> },
             ]),
+        // Looked up when the tab first opens, since each lookup spends a search quota.
+        { id: "resources", label: "Resources", lazy: true, content: <ResourcesTab mapId={mapId} nodeId={skill.id} /> },
       ]}
     />
   );
