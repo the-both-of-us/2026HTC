@@ -1,101 +1,104 @@
 # OryxLearn demo video: voiceover script
 
-Read the quoted lines over screen footage. Target length is about 3:38. Timings assume a steady 150 words a minute, so check them with a stopwatch.
+Read the quoted lines over screen footage. Target length is about 3:39. Timings assume a steady 150 words a minute, so check them with a stopwatch.
 
 ## 0:00 The problem
 
-**Screen:** landing page, holding on "Learn anything. Prove you get it." and the Alberta figure.
+**Screen:** a slow, plain shot of the landing page. Let the words carry this part.
 
-> AI can write the essay, summarize the course, and finish the quiz. So what does it mean, now, to say you know something?
+> Think about the last time you tried to learn something on your own. A long video. A wall of text. Nobody beside you. And somewhere around minute twenty, you picked up your phone.
 >
-> In Alberta, that question has a price. Unemployment here is 7.3 percent, and everyone is being told to upskill. But a certificate only shows you finished a course. It doesn't show you understood it.
+> Learning is boring. It's lonely. And every day, it loses to apps built to keep you scrolling.
 
-## 0:22 The promise
+## 0:20 The promise
 
-**Screen:** slow pan across the landing page, then the sample postings.
+**Screen:** landing page, holding on "Learn anything. Prove you get it."
 
-> This is OryxLearn. Learn anything, then prove you get it, in your own words, with evidence anyone can check.
+> OryxLearn is learning built the way those apps are built: short, social, and always one tap from the next thing.
 
-## 0:30 From a goal to a path
+## 0:28 Any curiosity becomes a course
 
-**Screen:** choose One course and the Junior Backend Developer sample. Show the map, then open a skill's citation.
+**Screen:** type a topic, choose One course, cut the loading, land on the map. Quick flash of the posting tab and a sample posting.
 
-> Start with a job posting, your notes as a PDF, or just a topic. Here's a sample posting for a junior backend developer.
+> Curious about something? Just type it. How planes fly. How the stock market works. Got a specific job in mind? Paste the posting instead.
 >
-> It becomes a map of fourteen skills, foundations first. Each one cites the exact line of the posting it came from, and code confirms that line is really there. So an invented requirement can't pass as a real one.
+> In seconds, that curiosity is a course: a map of small topics, foundations first, each one opening the next.
 
-## 0:55 Learn
+## 0:45 Everything for this topic, on this page
 
-**Screen:** open Programming fundamentals. Show Read, flip one flashcard, show one quiz question.
+**Screen:** open a topic. Read tab, then flashcards and quiz for a second each. Resources tab: scroll YouTube, Wikipedia, books and podcasts, then play a video on the page and hold.
 
-> Every skill has a short lesson with a worked example, flashcards, and a quiz.
+> Every topic has a short lesson, flashcards, and a quiz. And it comes with its own real resources: YouTube videos, a Wikipedia article, books, podcasts, all matched to that one topic.
 >
-> Reading is the easy part. Here's where it gets harder.
+> You know what happens when you go looking yourself. You search YouTube for one video, and forty minutes later you're watching something else. Here, the video plays right on the page. No homepage. No sidebar of recommendations. You stay on the topic you came for.
 
-## 1:04 Prove it: catch the mistake
+## 1:15 Prove it
 
-**Screen:** the Catch the mistake round on Programming fundamentals. Tap a sentence, type the fix, pass. Hold on the next skills opening.
+**Screen:** a Catch the mistake round for a few seconds, then an Explain it topic: answer, follow-up, Proven, next topic opening.
 
-> To open the next skill, you have to prove this one. This format is called Catch the Mistake. The AI gives a confident explanation with errors planted inside. You find them, and you say what's actually true.
+> Then you prove it. Sometimes the AI hides mistakes in a confident explanation, and you catch them. Sometimes you explain the topic in your own words, typing or just talking, and it asks a follow-up about what you said.
 >
-> Knowing when AI is wrong is a job skill now too. Pass, and the next skills open.
+> The AI doesn't hand out the grade. It has to quote your words, and code checks those quotes and calculates the score.
 
-## 1:26 Prove it: explain it
+## 1:40 Learn with people
 
-**Screen:** Git version control, Explain it. Speak or type an answer. Show the "Graded in" chip, then the follow-up, then Proven.
+**Screen:** Network tab: Friends with their courses and progress, a ping, the invite QR. Then a study circle: race and "just proved" toast. Back to Network, "Could mentor you".
 
-> Next is Git, and this time I explain it myself. I can type, or just talk, hands-free.
+> And you don't do it alone. This is the Network tab. Invite friends with a link or a QR code, see what they're learning and how far they've got, and ping them to get back at it.
 >
-> It's graded in about a second. Then OryxLearn does what a good interviewer does. It asks one follow-up about my own answer. I can't pass without getting it right.
+> Start a study circle and race through the same course, with a live feed of who just proved what.
 >
-> Other skills ask you to explain it to a ten-year-old, or say it in thirty seconds.
+> Opt in to the wider network, and you can find people who have actually proved the skills you're learning. Real progress, not a self-reported list.
 
-## 1:51 Why you can trust the grade
+## 2:12 The FYP
 
-**Screen:** the Proven result. Open the quotes and hold, so the checkpoints and quoted words are readable.
+**Screen:** phone-sized FYP. Pick interests, swipe a text card, swipe a Short, like one, tap Go deeper and land on the new course input.
 
-> Here's what we're proudest of. The AI never gets to hand you a grade.
+> Then there's the moment every learning app loses: you, on the couch, scrolling. So we built the FYP. Pick your interests and swipe through one idea at a time, mixed with educational Shorts. It learns what you linger on. And when something grabs you, Go Deeper turns it into a course of its own.
 >
-> When we let a model score answers freely, fluent nonsense got as high as 85 out of 100. So now the AI can only point to quotes from your answer, one for each checkpoint. Code confirms those words are really yours, and code calculates the score. Those empty answers now top out at 25.
+> Same thumb, same ten minutes. Except you come out knowing something.
+
+## 2:38 Why not just ask ChatGPT?
+
+**Screen:** fast montage: map, Resources tab, circle race, FYP.
+
+> So why not just ask ChatGPT? It's great at answers. But you have to know what to ask, and when you close it, you've got a conversation. No path, no friends learning beside you, nothing to show anyone. Video courses give everyone the same hours of footage. OryxLearn puts the path, the sources, the people, and the proof in one place.
+
+## 3:02 From curious to employable
+
+**Screen:** the published evidence page and QR, click "Check this record now". End on the landing page's Alberta figure.
+
+> And that proof matters. Prove your skills, and you get a public evidence page an employer can read, showing what you actually wrote. Anyone can re-check it, with no AI involved.
 >
-> On our 71-answer test set, it passed none of the 48 that should fail, and wrongly failed one of 23. That set is small and AI-labelled, and our trust page says so.
+> That's how a curious person becomes an employable one. In Alberta, where unemployment is 7.3 percent, that matters. When people can pick up new skills on their own time, and show it, the whole economy adapts faster.
 
-## 2:31 Evidence anyone can check
+## 3:30 The close
 
-**Screen:** the published evidence page and QR. Scroll through the explanation, follow-up and signals. Click "Check this record now", then "See what changing one score would do".
+**Screen:** quick montage of topic, map, friends, FYP. End on the tagline for the last few seconds.
 
-> When you're ready, you publish an evidence page, with a link and a QR code. An employer can read what you wrote, the follow-up, and signals like whether the text was pasted.
->
-> And they don't have to trust us. This button re-checks the record with no AI involved: the fingerprint, every quote, every score. Change one score, and the fingerprint stops matching.
->
-> It won't stop a determined cheater, and we say so plainly. What it gives you is something a certificate never did: the work itself.
-
-## 3:05 Learning with people
-
-**Screen:** study circle QR, race and live "just proved" toast. Quick cut to Review, then Network with its "Could mentor you" section.
-
-> Friends scan a QR code to join a study circle, race through the same map, and cheer when someone proves a skill. Streaks and spaced repetition bring you back.
->
-> On the Network page, you can find people who have actually proved the skills you're learning. Real progress, not a self-reported list.
-
-## 3:26 The close
-
-**Screen:** quick montage of goal, map, explanation, evidence page. End on the tagline for the last few seconds.
-
-> For anyone staring at a job posting, wondering where to start, OryxLearn takes you from "I think I understand this" to "let me show you."
+> Learning shouldn't be the thing you put off. Now it can be the thing you scroll to.
 >
 > OryxLearn. Learn anything. Prove you get it.
 
 ## Before you record
 
-- **Skill order:** on the Junior Backend sample, Programming fundamentals is Catch the mistake and has no follow-up. It unlocks Git version control, which is Explain it. That's the order the script follows.
-- **Prepare ahead:** have a published evidence page ready from the same course, plus a circle with real activity, so nothing in the video waits on AI.
+- **Topic build:** a typed topic makes a live AI call, so build it ahead or cut the wait. Topic maps show an "AI-made, no citations" tag, so leave it in frame.
+- **Skill order:** on any map, the first topic is Catch the mistake, with no follow-up. The second is Explain it, which has the follow-up. Prove the first one before filming if you want to go straight to the follow-up.
+- **FYP like counts:** the numbers shown include a made-up seed of 3 to 20 per item (`DEMO_LIKE_SEED` in the feed feature). Keep them out of frame or have Abdu set it to `null`, since the rules say no made-up data shown as real.
+- **Network:** keep the demo-profile note in frame, since those people are sample data. Use real friends for the Friends and circle shots.
+- **Resources:** videos play on the page. Wikipedia, books and podcasts open their own sites, so only play a video for the "stays on the page" line. Check that the topic you film has all the sources, since any one can be missing.
 - **Alberta figure:** the landing number is live from Statistics Canada. If it isn't 7.3 on the day, change the line to match.
-- **Network:** keep the demo-profile note in frame, since those people are sample data.
-- **"Graded in about a second":** the on-screen chip shows the real time. Hold on it, and cut loading anywhere else.
+- **Prepare ahead:** have a published evidence page and a circle with real activity ready, so nothing in the video waits on AI.
 - **Real content only:** use the follow-up question the app actually generates, and your own answer.
 
 ## If you need to change the length
 
-- **Too long:** cut "Other skills ask you..." and the Network paragraph. That saves about 20 seconds.
-- **Too short:** let the Catch the mistake and evidence-check footage breathe, with no extra narration.
+- **Too long:** cut "Video courses give everyone..." and the "Sometimes the AI hides mistakes" sentence. That saves about 15 seconds.
+- **Too short:** let the FYP and Resources footage breathe, with no extra narration.
+
+## If a judge asks
+
+These were cut from the narration, but they're good answers in Q&A.
+
+- **Grading:** free-form model scoring gave fluent nonsense up to 85 out of 100. With quotes checked by code, those answers top out at 25. On 71 test answers it passed none of the 48 that should fail, and wrongly failed one of 23. The set is small and AI-labelled, and the trust page says so.
+- **Cheating:** the evidence page shows signals like pasted text and typing time. It won't stop a determined cheater, and we say so.
