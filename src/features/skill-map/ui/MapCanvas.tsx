@@ -26,6 +26,8 @@ import { JobAsksTag, SkillNodeView, type SkillFlowNode } from "./SkillNodeView";
 const LARGE_SCREEN = "(min-width: 1024px)";
 const PHONE_SCREEN = "(max-width: 640px)";
 const PAN_MS = 400;
+/** Below this zoom a card's words are too small to read. */
+const MIN_READABLE_ZOOM = 0.6;
 
 /** Keeps the whole map clear of the legend and overview at the bottom and the zoom buttons on the left. */
 const FIT_VIEW = {
@@ -41,10 +43,11 @@ const ARIA_LABELS = {
   "minimap.ariaLabel": "Overview of the whole map",
 };
 
+// Theme tokens, so the minimap follows the app's colours instead of a fixed dark navy.
 const MINIMAP_COLOURS: Record<NodeState, string> = {
-  locked: "#3a4356",
-  available: "#4b8fd4",
-  proven: "#5baa7a",
+  locked: "var(--color-rule-strong)",
+  available: "var(--color-accent-bright)",
+  proven: "var(--color-proven)",
 };
 
 /** A movement should take no time for people who prefer reduced motion, or use Learning Mode. */
@@ -161,15 +164,17 @@ function Canvas({
     }));
   }, [layout, states, justProvenId, reveal]);
 
-  // On a phone the whole map would be too small to read, so start at the first skill
-  // the learner can act on, at full size so the words stay readable, and let them pan.
+  // On a phone, or when a long map only fits at a size too small to read, start at the first
+  // skill the learner can act on, at a readable size, and let them pan.
   useEffect(() => {
-    if (!ready || !window.matchMedia(PHONE_SCREEN).matches) return;
+    const phone = window.matchMedia(PHONE_SCREEN).matches;
+    if (!ready || (!phone && flow.getViewport().zoom >= MIN_READABLE_ZOOM)) return;
     const first =
       layout.nodes.find((placed) => states[placed.id] === "available") ?? layout.nodes[0];
-    if (first) {
-      flow.setCenter(first.x + NODE_WIDTH / 2, first.y + NODE_HEIGHT / 2, { zoom: 1 });
-    }
+    if (phone && first) flow.setCenter(first.x + NODE_WIDTH / 2, first.y + NODE_HEIGHT / 2, { zoom: 1 });
+    // On a large screen the map runs downwards, so put that skill near the top with the rest below.
+    const height = containerRef.current?.clientHeight ?? 0;
+    if (!phone && first) flow.setCenter(first.x + NODE_WIDTH / 2, first.y + (height / 2 - 48) / 0.85, { zoom: 0.85 });
     // Only when the map first appears: later progress must not move the view.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
@@ -276,9 +281,9 @@ function Canvas({
             pannable
             zoomable
             style={{ width: 150, height: 96 }}
-            bgColor="#0c1018"
-            maskColor="rgb(7 10 16 / 0.72)"
-            maskStrokeColor="#2a3446"
+            bgColor="var(--color-sheet)"
+            maskColor="color-mix(in srgb, var(--color-paper) 70%, transparent)"
+            maskStrokeColor="var(--color-rule-strong)"
             nodeBorderRadius={18}
             nodeColor={(node) => MINIMAP_COLOURS[node.data.state]}
           />

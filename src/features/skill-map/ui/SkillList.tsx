@@ -1,5 +1,6 @@
 import clsx from "clsx";
-import { Lock } from "lucide-react";
+import { Lock, Star } from "lucide-react";
+import { assignFormats, FormatBadge } from "@/features/teachback/client";
 import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import { StateMark } from "@/shared/ui";
 import { JobAsksTag } from "./SkillNodeView";
@@ -22,13 +23,18 @@ type SkillListProps = {
   selectedId: string | null;
   sourceKind: SourceKind;
   onSelect: (nodeId: string) => void;
+  /** As on the map: how far each proved topic has faded, and today's topic. */
+  dim?: Record<string, number>;
+  featuredId?: string | null;
 };
 
 /** The same skills as the map, as plain lists. The default on phones, and for screen readers. */
-export function SkillList({ skills, states, selectedId, sourceKind, onSelect }: SkillListProps) {
+export function SkillList({ skills, states, selectedId, sourceKind, onSelect, dim, featuredId }: SkillListProps) {
   // In a topic map every skill is AI-generated, so calling each one a foundation would mislead.
   const fromTopic = sourceKind === "topic";
   const titleOf = (id: string) => skills.find((skill) => skill.id === id)?.title ?? id;
+  // The same format each card shows on the map, so phones see it too.
+  const formats = assignFormats(skills);
 
   return (
     <div className="flex flex-col gap-8 pb-8">
@@ -49,6 +55,9 @@ export function SkillList({ skills, states, selectedId, sourceKind, onSelect }: 
               <ul className="flex flex-col gap-2">
                 {group.map((skill) => {
                   const waitingOn = skill.prerequisites.filter((id) => states[id] !== "proven");
+                  const fading = state === "proven" && (dim?.[skill.id] ?? 0) > 0;
+                  const today = state === "available" && featuredId === skill.id;
+                  const format = state === "proven" ? null : formats[skill.id];
                   return (
                     <li key={skill.id}>
                       <button
@@ -67,8 +76,21 @@ export function SkillList({ skills, states, selectedId, sourceKind, onSelect }: 
                           <span className="mt-0.5 line-clamp-2 block text-sm text-ink-soft">
                             {state === "locked" && waitingOn.length > 0
                               ? `Needs ${waitingOn.map(titleOf).join(", ")}`
-                              : skill.why}
+                              : fading
+                                ? "Fading, relight it"
+                                : skill.why}
                           </span>
+                          {(today || format) && (
+                            <span className="mt-1.5 flex flex-wrap items-center gap-2">
+                              {today && (
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber">
+                                  <Star aria-hidden="true" size={12} />
+                                  Topic of the day
+                                </span>
+                              )}
+                              {format && <FormatBadge format={format} />}
+                            </span>
+                          )}
                         </span>
                         {skill.fromSource ? (
                           <JobAsksTag kind={skill.citation?.kind} />

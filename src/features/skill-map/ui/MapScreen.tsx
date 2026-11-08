@@ -260,8 +260,9 @@ function LoadedMap({
     <PageShell width="full">
       <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
         {banner}
-        <header className="flex flex-col gap-3 border-b border-rule px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex min-w-0 items-center gap-4">
+        {/* Side by side only on wide screens: the title, streak line and actions each need room. */}
+        <header className="flex flex-col gap-3 border-b border-rule px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
             <TopicBadge title={map.title} />
             <div className="min-w-0">
               {map.program && <ProgramCrumb program={map.program} proven={provenCount} total={map.nodes.length} />}
@@ -293,7 +294,7 @@ function LoadedMap({
               )}
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5 lg:max-w-[50%] lg:justify-end">
             <HowItWorksButton />
             {isOwner && (
               <>
@@ -351,6 +352,8 @@ function LoadedMap({
                     selectedId={selectedId}
                     sourceKind={map.sourceKind}
                     onSelect={selectSkill}
+                    dim={habits?.dim}
+                    featuredId={habits?.topicOfTheDay}
                   />
                 </div>
               </div>
