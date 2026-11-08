@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- Nothing new yet: waiting on the owner for the next task.
+- Course page redesign (`/courses/[id]`): a cleaner header with one action row, a compact owner bar, and skills as clickable cards that open the skill in your map, in full-page reading view (a guest who hasn't started yet starts the course first). Per-skill progress (proven, ready, locked) for the owner or someone who started it. Files: `src/features/courses/**` (mine), plus a small deep link in Abdu's `skill-map/ui/MapScreen.tsx` (read `?skill=<nodeId>` once on load) and `skill-map/ui/SkillPanel.tsx` (an `initialFullPage` prop).
 
 ## Next
 
