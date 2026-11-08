@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- Resources tab: long titles stop squeezing into a narrow column (two-line limit, Play here moves under the text). Abdu's `src/features/resources/ui/ResourcesTab.tsx` only, at the owner's request.
 
 ## Next
 
