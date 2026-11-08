@@ -187,7 +187,7 @@ function LoadedCircle({
       let since = now - RECENT_CHEER_MS;
       try {
         const stored = Date.parse(localStorage.getItem(SEEN_CHEERS(served.code)) ?? "");
-        if (Number.isFinite(stored)) since = Math.min(since, stored);
+        if (Number.isFinite(stored)) since = stored;
       } catch {
         // Storage blocked: fall back to the last two minutes.
       }
