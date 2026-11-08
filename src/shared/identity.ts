@@ -104,7 +104,12 @@ async function setUserCookie(userId: string): Promise<void> {
  */
 export async function readUserId(): Promise<string | null> {
   const cookieStore = await cookies();
-  const value = unseal(USER_COOKIE, cookieStore.get(USER_COOKIE)?.value);
+  return userIdFromCookies((name) => cookieStore.get(name)?.value);
+}
+
+/** The same as readUserId, for code that has the request's cookies but not next/headers: src/proxy.ts. */
+export function userIdFromCookies(read: (name: string) => string | undefined): string | null {
+  const value = unseal(USER_COOKIE, read(USER_COOKIE));
   return value && UUID_PATTERN.test(value) ? value : null;
 }
 

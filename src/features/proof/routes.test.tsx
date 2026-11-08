@@ -4,13 +4,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DELETE } from "@/app/api/proof/[id]/route";
 import { GET as verify } from "@/app/api/proof/[id]/verify/route";
 import { GET, POST } from "@/app/api/proof/route";
+import ProofPage from "@/app/proof/[id]/page";
+import { proxy } from "@/proxy";
 import { readUserId } from "@/shared/identity";
 import { putDoc } from "@/shared/store";
 import type { Attempt, SkillMap } from "@/shared/types";
+import { isProofGone } from "./page";
 import { getProof } from "./publish";
 import { ProofScreen } from "./ui/ProofScreen";
 
-vi.mock("@/shared/identity", () => ({ readUserId: vi.fn(), getUserId: vi.fn() }));
+vi.mock("@/shared/identity", () => ({ readUserId: vi.fn(), getUserId: vi.fn(), userIdFromCookies: () => null }));
+vi.mock("next/server", async (original) => ({ ...(await original<object>()), connection: async () => {} }));
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ host: "oryx.example", "x-forwarded-proto": "https" }),
 }));
@@ -193,10 +197,11 @@ describe("the public page", () => {
     expect(html).not.toContain("PRIVATE POSTING TEXT");
   });
 
-  it("says when a record was withdrawn, and keeps none of it", async () => {
+  it("tells the owner when their record was withdrawn, and keeps none of it", async () => {
     const id = await publishAsOwner();
     await DELETE(new Request("http://test"), asParams(id));
     const html = await renderPage(id);
+    expect(html).toContain("Back to your map");
     expect(html).toContain("This record was withdrawn");
     expect(html).toContain("the public copy has been removed");
     expect(html).not.toContain("deleted");
@@ -204,7 +209,40 @@ describe("the public page", () => {
     expect(html).not.toContain("keeps only rows");
   });
 
-  it("says plainly when there is no such record", async () => {
+  it("says plainly when there is no such record, and a withdrawn one is gone for strangers", async () => {
     expect(await renderPage("aaaaaaaaaaaaaaaa")).toContain("We could not find this evidence record");
+    const id = await publishAsOwner();
+    await DELETE(new Request("http://test"), asParams(id));
+    mockUser.mockResolvedValue(null);
+    expect(await renderPage(id)).toContain("We could not find this evidence record");
+  });
+
+  it("sends a missing or withdrawn record to the static 404 in the proxy, before the page streams", async () => {
+    const { NextRequest } = await import("next/server");
+    const rewriteOf = async (id: string) =>
+      (await proxy(new NextRequest(`http://oryx.example/proof/${id}`))).headers.get("x-middleware-rewrite");
+    expect(await rewriteOf("aaaaaaaaaaaaaaaa")).toBe("http://oryx.example/proof/gone");
+    const id = await publishAsOwner();
+    expect(await rewriteOf(id)).toBeNull();
+    await DELETE(new Request("http://test"), asParams(id));
+    expect(await rewriteOf(id)).toBe("http://oryx.example/proof/gone"); // no cookie: a stranger
+    expect(await isProofGone(id, OWNER)).toBe(false); // the owner still sees when it was taken down
+  });
+
+  it("still says not found if the record goes between the proxy and the page", async () => {
+    const statusOf = (id: string) =>
+      ProofPage(asParams(id)).then(
+        () => 200,
+        (error: { digest?: string }) => Number(error.digest?.split(";").at(-1)),
+      );
+    expect(await statusOf("aaaaaaaaaaaaaaaa")).toBe(404);
+    const id = await publishAsOwner();
+    mockUser.mockResolvedValue(null);
+    expect(await statusOf(id)).toBe(200);
+    mockUser.mockResolvedValue(OWNER);
+    await DELETE(new Request("http://test"), asParams(id));
+    expect(await statusOf(id)).toBe(200); // the owner still sees when it was taken down
+    mockUser.mockResolvedValue(null);
+    expect(await statusOf(id)).toBe(404);
   });
 });

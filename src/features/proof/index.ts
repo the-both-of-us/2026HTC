@@ -9,7 +9,7 @@ export {
   revokeProof,
   toOwnerView,
 } from "./publish";
+export { isProofGone, loadProofPage, type ProofPageData } from "./page";
 export { toPublicSnapshot } from "./redact";
 export type { LiveProof, OwnerProofView, ProofCheckResult, ProofRecord, ProofSnapshot } from "./types";
-export { ProofLoading } from "./ui/ProofLoading";
-export { ProofScreen } from "./ui/ProofScreen";
+export { ProofNotFound, ProofScreen } from "./ui/ProofScreen";

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
-import { getProof, ProofLoading, ProofScreen } from "@/features/proof";
+import { getProof, loadProofPage, ProofScreen } from "@/features/proof";
 
 type ProofPageProps = { params: Promise<{ id: string }> };
 
@@ -24,17 +24,18 @@ export async function generateMetadata({ params }: ProofPageProps): Promise<Meta
   };
 }
 
-/** The id and the record are only known at request time, so they wait behind Suspense. */
-export default function ProofPage({ params }: ProofPageProps) {
-  return (
-    <Suspense fallback={<ProofLoading />}>
-      <ProofFromRoute params={params} />
-    </Suspense>
-  );
-}
+/**
+ * src/proxy.ts answers a missing or withdrawn record with a real 404 before this runs. The page
+ * still checks, in case the record went between the two reads; that late notFound() can only
+ * show the message, because the status was sent with the shell (node_modules/next/dist/docs/
+ * 01-app/02-guides/streaming.md, "The HTTP contract"). `instant = false`: the page may block.
+ */
+export const instant = false;
 
-async function ProofFromRoute({ params }: ProofPageProps) {
+export default async function ProofPage({ params }: ProofPageProps) {
   await connection();
   const { id } = await params;
-  return <ProofScreen id={id} />;
+  const data = await loadProofPage(id);
+  if (data.kind === "gone") notFound();
+  return <ProofScreen id={id} data={data} />;
 }

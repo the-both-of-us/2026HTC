@@ -3,20 +3,19 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { readUserId } from "@/shared/identity";
-import { getProof } from "../publish";
+import { loadProofPage, type ProofPageData } from "../page";
 import { toPublicSnapshot } from "../redact";
-import type { ProofRecord } from "../types";
 import { formatDateTime } from "./format";
 import { ProofDocument } from "./ProofDocument";
 import { ProofFrame } from "./ProofFrame";
 
-/** The public page. Anyone with the link can read it, with no account. */
-export async function ProofScreen({ id }: { id: string }) {
-  let record: ProofRecord | null;
-  try {
-    record = await getProof(id);
-  } catch (error) {
-    console.error("[proof] could not read a record", error);
+/**
+ * The public page. Anyone with the link can read it, with no account. The route loads `data`
+ * first (so a missing record is a real 404); without it, the screen loads the record itself.
+ */
+export async function ProofScreen({ id, data }: { id: string; data?: ProofPageData }) {
+  const page = data ?? (await loadProofPage(id));
+  if (page.kind === "unreadable") {
     return (
       <ProofFrame>
         <Notice icon={<FileQuestion size={28} aria-hidden="true" />} title="This record could not be loaded right now">
@@ -26,16 +25,9 @@ export async function ProofScreen({ id }: { id: string }) {
     );
   }
 
-  if (!record) {
-    return (
-      <ProofFrame>
-        <Notice icon={<FileQuestion size={28} aria-hidden="true" />} title="We could not find this evidence record">
-          Check that the link is complete, or ask the person who shared it for a new one.
-        </Notice>
-      </ProofFrame>
-    );
-  }
+  if (page.kind === "gone") return <ProofNotFound />;
 
+  const { record } = page;
   const backLink = (await readUserId()) === record.ownerId && <BackToMap mapId={record.mapId} />;
 
   if (record.state === "revoked") {
@@ -54,6 +46,21 @@ export async function ProofScreen({ id }: { id: string }) {
     <ProofFrame>
       {backLink}
       <ProofDocument snapshot={toPublicSnapshot(record.snapshot)} hash={record.hash} url={await pageUrl(id)} />
+    </ProofFrame>
+  );
+}
+
+/**
+ * No such record, or one its owner withdrew. src/proxy.ts sends those to /proof/gone, whose 404
+ * shows this through the app's not-found page, with the more general title.
+ */
+export function ProofNotFound({ title = "We could not find this evidence record" }: { title?: string }) {
+  return (
+    <ProofFrame>
+      <Notice icon={<FileQuestion size={28} aria-hidden="true" />} title={title}>
+        Check that the link is complete. An evidence record also disappears when its owner withdraws it, so ask the
+        person who shared it for a new link.
+      </Notice>
     </ProofFrame>
   );
 }
