@@ -51,6 +51,11 @@ export type SkillMap = {
   forkedFrom?: string;
   /** Set when this map is one course of a program, so its header can link back. */
   program?: ProgramLink;
+  /**
+   * Who the map is pitched at, such as "Grade 1 students (about 6 years old)". Absent or empty
+   * means a general or adult learner. Lessons, teach-back, flashcards and quiz should pitch at it.
+   */
+  audience?: string;
 };
 
 /** Where a course map sits in its program. Fixed when the course is built. */

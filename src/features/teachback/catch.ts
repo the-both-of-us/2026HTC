@@ -2,6 +2,8 @@ import { z } from "zod";
 import { chatJSON } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { CatchRecord, SkillMap, SkillNode } from "@/shared/types";
+import { audienceKey } from "@/shared/audience";
+import { CATCH_CHECKER_NOTE, CATCH_WRITER_NOTE, forAudience } from "./audience";
 import { numberedList } from "./grading";
 import { countWords, LEARNER_TEXT_RULE, wrapLearnerText } from "./learnerText";
 
@@ -25,7 +27,7 @@ export type CatchPick = { sentence: number; correction: string };
 /** A correction needs enough words to say what is true. It also becomes a quote on the evidence page. */
 export const MIN_CORRECTION_WORDS = 3;
 
-const WRITER_SYSTEM = `You write a short, confident explanation of a topic for a curious learner, with mistakes planted in it on purpose. The learner's job is to find them.
+export const WRITER_SYSTEM = `You write a short, confident explanation of a topic for a curious learner, with mistakes planted in it on purpose. The learner's job is to find them.
 
 - Write 5 to 8 short sentences in plain words. Each sentence states one idea.
 - Plant exactly the number of mistakes you are asked for. Each mistake is one sentence that states something clearly false about one of the numbered facts, in a way that sounds believable. Use a different fact for each mistake.
@@ -33,7 +35,7 @@ const WRITER_SYSTEM = `You write a short, confident explanation of a topic for a
 - Never hint at a mistake: no "some say", no hedging, no odd emphasis.
 - For each mistake, give its sentence number, the fact number it breaks, and "why": one sentence saying what is wrong and what is true.`;
 
-const CHECKER_SYSTEM = `A learner found planted mistakes in an explanation and wrote a correction for each. For each numbered item you get the wrong sentence, what was really wrong with it, and the learner's correction.
+export const CHECKER_SYSTEM = `A learner found planted mistakes in an explanation and wrote a correction for each. For each numbered item you get the wrong sentence, what was really wrong with it, and the learner's correction.
 
 Return the numbers of the corrections that fix the mistake: they say what is true, or clearly say what is false about it. Plain or short wording is fine. A correction that only says "this is wrong", repeats the sentence, or fixes something else does not count.
 
@@ -73,14 +75,15 @@ function writerSchema(wanted: number, checkpoints: number) {
  * topic and shared by every copy of a course, so a started sample course never waits on the AI.
  */
 export async function loadCatchChallenge(map: SkillMap, node: SkillNode): Promise<CatchChallenge> {
-  const key = `catch/${map.forkedFrom ?? map.id}/${node.id}`;
+  // A round for an audience is kept apart, so an adult round written earlier is never shown to a child.
+  const key = `catch/${map.forkedFrom ?? map.id}/${node.id}${map.audience ? `/${audienceKey(map.audience)}` : ""}`;
   const saved = await getDoc<CatchChallenge>(key);
   if (saved) return saved;
 
   const wanted = mistakesFor(node);
   const reply = await chatJSON({
     label: "teachback-catch-write",
-    system: WRITER_SYSTEM,
+    system: forAudience(WRITER_SYSTEM, map.audience, CATCH_WRITER_NOTE),
     prompt: `Topic: ${node.title}\n\nFacts:\n${numberedList(node.checkpoints)}\n\nPlant ${wanted} mistake${wanted === 1 ? "" : "s"}.`,
     schema: writerSchema(wanted, node.checkpoints.length),
     timeoutMs: 20_000,
@@ -120,7 +123,12 @@ export async function markRevealed(mapId: string, ownerId: string, nodeId: strin
  * Then one AI call checks only the corrections on real mistakes. A correction under three words
  * can't fix anything, so it never reaches the AI.
  */
-export async function checkCatch(node: SkillNode, challenge: CatchChallenge, picks: CatchPick[]): Promise<CatchRecord> {
+export async function checkCatch(
+  node: SkillNode,
+  challenge: CatchChallenge,
+  picks: CatchPick[],
+  audience = "",
+): Promise<CatchRecord> {
   const planted = new Map(challenge.mistakes.map((mistake) => [mistake.sentence, mistake]));
   const toCheck = picks.filter(
     (pick) => planted.has(pick.sentence) && countWords(pick.correction) >= MIN_CORRECTION_WORDS,
@@ -134,7 +142,7 @@ export async function checkCatch(node: SkillNode, challenge: CatchChallenge, pic
     });
     const reply = await chatJSON({
       label: "teachback-catch-check",
-      system: CHECKER_SYSTEM,
+      system: forAudience(CHECKER_SYSTEM, audience, CATCH_CHECKER_NOTE),
       prompt: `Topic: ${node.title}\n\n${items.join("\n\n")}`,
       schema: checkerReplySchema,
       timeoutMs: 15_000,

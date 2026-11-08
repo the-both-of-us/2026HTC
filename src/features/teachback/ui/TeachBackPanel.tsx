@@ -6,13 +6,14 @@ import { VoiceInterview, type InputMethod, type VoiceVerdict } from "@/features/
 import type { Attempt, NodeState, PublicSkillNode } from "@/shared/types";
 import { ErrorNotice, Spinner } from "@/shared/ui";
 import { fetchAttempt, fetchProvenAttempt, submitExplanation, submitFollowUp } from "./api";
-import { FORMAT_LABELS, type TopicFormat } from "../formats";
+import { formatLabel, type TopicFormat } from "../formats";
 import { AttemptResult } from "./AttemptResult";
 import { CatchResult, CatchRound } from "./CatchRound";
 import { clearDraft, loadDraft, saveDraft } from "./draft";
 import { ExplainForm } from "./ExplainForm";
 import { FollowUpForm } from "./FollowUpForm";
 import { FormatBadge } from "./FormatBadge";
+import { useYoungLearner } from "./YoungLearner";
 import { resultAnnouncement } from "./format";
 import { useIntegrity } from "./useIntegrity";
 
@@ -40,6 +41,7 @@ export function TeachBackPanel(props: TeachBackPanelProps) {
 function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceReady = false, format = "explain" }: TeachBackPanelProps) {
   // This panel only mounts after a click in the browser, so sessionStorage is safe to read here.
   const [draft] = useState(() => loadDraft(mapId, node.id));
+  const young = useYoungLearner();
   const [text, setText] = useState(draft?.text ?? "");
   const [attempt, setAttempt] = useState<Attempt | null>(draft?.openAttempt ?? null);
   const [pending, setPending] = useState(false);
@@ -221,7 +223,7 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
   const formatHeader = !(attempt?.status === "proven") && (
     <div className="flex flex-col items-start gap-2">
       <FormatBadge format={active} />
-      <p className="text-sm text-ink-soft">{FORMAT_LABELS[active].prompt}</p>
+      <p className="text-sm text-ink-soft">{formatLabel(active, young).prompt}</p>
       {/* One swap per topic, and only before a follow-up question is waiting. */}
       {format !== "explain" && !swapped && attempt?.status !== "needs-followup" && !catchResult && (
         <button

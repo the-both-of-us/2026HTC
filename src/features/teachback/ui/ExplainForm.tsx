@@ -9,6 +9,7 @@ import { MIN_WORDS, wordCountMessage } from "./format";
 import { PendingNote } from "./PendingNote";
 import type { Integrity } from "./useIntegrity";
 import "./challenges.css";
+import { useYoungLearner } from "./YoungLearner";
 import { useSpeech, useSpeechSupported } from "./useSpeech";
 
 type ExplainFormProps = {
@@ -61,6 +62,7 @@ export function ExplainForm({
   voiceReady,
   format = "explain",
 }: ExplainFormProps) {
+  const young = useYoungLearner();
   const [tooShort, setTooShort] = useState(false);
   const [dictationError, setDictationError] = useState<string | null>(null);
   const dictationStartedAt = useRef(0);
@@ -178,7 +180,7 @@ export function ExplainForm({
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       <h3 className="text-lg font-medium">
-        {revising && !timed ? "Revise your explanation" : HEADINGS[format](skillTitle)}
+        {revising && !timed ? "Revise your explanation" : young && format === "kid" ? `Explain ${skillTitle} to a friend.` : HEADINGS[format](skillTitle)}
       </h3>
       {format === "kid" && (
         <p className="-mt-2 text-sm text-ink-soft">
@@ -223,7 +225,7 @@ export function ExplainForm({
       <p id={countId} className="text-sm text-ink-soft tabular-nums">
         {wordCountMessage(words)}
       </p>
-      {format === "kid" && words > 0 && <ReadingLevel grade={readingGrade(text)} />}
+      {format === "kid" && words > 0 && <ReadingLevel grade={readingGrade(text)} young={young} />}
 
       {listening && (
         <div
@@ -288,11 +290,11 @@ const HEADINGS = {
 };
 
 /** The live reading level for "Explain it to a 10-year-old". The server measures it again. */
-function ReadingLevel({ grade }: { grade: number }) {
+function ReadingLevel({ grade, young }: { grade: number; young: boolean }) {
   const ok = grade <= MAX_KID_GRADE;
   return (
     <p className={`text-sm font-medium tabular-nums ${ok ? "text-proven" : "text-amber"}`}>
-      Reading level: grade {Math.round(grade)}. {ok ? "A 10-year-old could follow this." : "Try shorter sentences and smaller words."}
+      Reading level: grade {Math.round(grade)}. {ok ? (young ? "A friend could follow this." : "A 10-year-old could follow this.") : "Try shorter sentences and smaller words."}
     </p>
   );
 }

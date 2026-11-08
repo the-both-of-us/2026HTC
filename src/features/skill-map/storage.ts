@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
 import type { PublicSkillNode, SkillMap } from "@/shared/types";
+import { audienceForMap } from "@/shared/audience";
 import { SkillMapError } from "./build";
 import { isEnergyRelated } from "./energy";
 
@@ -12,7 +13,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * act as them. sourceText is left out because no reader of the map needs it.
  * Checkpoint text is left out because it is the answer key: see PublicSkillNode.
  */
-export type PublicSkillMap = Pick<SkillMap, "id" | "title" | "subtitle" | "sourceKind" | "createdAt" | "program"> & {
+export type PublicSkillMap = Pick<SkillMap, "id" | "title" | "subtitle" | "sourceKind" | "createdAt" | "program" | "audience"> & {
   nodes: PublicSkillNode[];
   /** True when the posting is energy related, so the map can show the live grid card. */
   energyRelated: boolean;
@@ -28,6 +29,8 @@ export function toPublicMap(map: SkillMap): PublicSkillMap {
     energyRelated: isEnergyRelated(map.sourceText),
     createdAt: map.createdAt,
     program: map.program,
+    // Only when there is one, so a map for adults looks exactly as before.
+    ...(map.audience && { audience: map.audience }),
   };
 }
 
@@ -79,7 +82,11 @@ export async function saveSkillMap(map: SkillMap): Promise<void> {
 /** Returns the full map, or null. The id comes from a URL, so it must look like one of ours. */
 export async function getSkillMap(id: string): Promise<SkillMap | null> {
   if (!UUID_PATTERN.test(id)) return null;
-  return getDoc<SkillMap>(`maps/${id}`);
+  const map = await getDoc<SkillMap>(`maps/${id}`);
+  if (!map || map.audience !== undefined) return map;
+  // Saved before audiences existed: a grade or age its title or program names still counts.
+  const audience = audienceForMap(map);
+  return audience ? { ...map, audience } : map;
 }
 
 /**

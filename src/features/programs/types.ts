@@ -22,6 +22,8 @@ export type Program = {
   sourceText: string;
   /** Set when the program came from a sample posting, so the page can say it is sample text. */
   sampleId?: string;
+  /** Who the program is pitched at, such as "Grade 1 students (about 6 years old)". Every course inherits it. */
+  audience?: string;
   courses: ProgramCourse[];
   createdAt: string;
 };

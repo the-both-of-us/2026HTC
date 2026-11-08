@@ -1,5 +1,6 @@
 import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
+import { audienceKey } from "@/shared/audience";
 import { isNodeLockedFor } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
 import { deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
@@ -12,7 +13,7 @@ import { toLesson } from "./validate";
 /** The whole model call gives up after this, inside the route's 60 second maxDuration. */
 export const GENERATION_DEADLINE_MS = 50_000;
 
-/** What is stored at lessons/<mapId>/<nodeId>. */
+/** What is stored at lessons/<mapId>/<nodeId>, or lessons/<mapId>/<nodeId>/<audience> for a map pitched at one. */
 type SavedLesson = { lesson: Lesson; createdAt: string };
 
 /** Generation in progress, by store key, so two quick opens cost one model call. Per server instance. */
@@ -31,7 +32,9 @@ async function resolveNode(mapId: string, nodeId: string, viewerId: string) {
   if (!map || !mayRead) throw new HttpError(MAP_NOT_FOUND, 404);
   const node = map.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new HttpError("We could not find that skill on this map.", 404);
-  return { map, node, key: `lessons/${map.id}/${node.id}` };
+  // The audience is part of the key, so a map whose audience was only just worked out never gets its adult lesson.
+  const audience = map.audience ? `/${audienceKey(map.audience)}` : "";
+  return { map, node, key: `lessons/${map.id}/${node.id}${audience}` };
 }
 
 /**

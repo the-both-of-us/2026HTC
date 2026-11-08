@@ -16,6 +16,14 @@ export const FORMAT_LABELS: Record<TopicFormat, { name: string; short: string; p
   timed: { name: "Say it in 30 seconds", short: "30 sec", prompt: "Beat the clock. Talk, or type if you can't." },
 };
 
+/** For young children, who may be younger than 10 themselves, the "kid" format is explaining to a friend. */
+const YOUNG_KID_LABEL = { name: "Explain it to a friend", short: "Friend", prompt: "Short sentences and everyday words." };
+
+/** A format's label. `young` is true on a map pitched at children of about 9 and under. */
+export function formatLabel(format: TopicFormat, young = false): { name: string; short: string; prompt: string } {
+  return young && format === "kid" ? YOUNG_KID_LABEL : FORMAT_LABELS[format];
+}
+
 type Topic = { id: string; prerequisites: string[] };
 
 /**

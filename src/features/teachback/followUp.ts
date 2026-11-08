@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { chatJSON } from "@/features/ai";
 import type { Grade, SkillNode } from "@/shared/types";
+import { ANSWER_NOTE, forAudience, QUESTION_NOTE } from "./audience";
 import { numberedList } from "./grading";
 import { LEARNER_TEXT_RULE, wrapLearnerText } from "./learnerText";
 
-const QUESTION_SYSTEM = `You write one follow-up question to test whether a learner really understands what they just explained.
+export const QUESTION_SYSTEM = `You write one follow-up question to test whether a learner really understands what they just explained.
 
 - Tie it to something this learner actually wrote, so it could not be asked of anyone else. Refer to their own example or claim.
 - Aim it at the weakest area you are given. If nothing is weak, ask them to apply what they said to a small new situation.
@@ -17,10 +18,10 @@ ${LEARNER_TEXT_RULE}`;
 const questionReplySchema = z.object({ question: z.string().trim().min(1) });
 
 /** Writes one question about this learner's own words, aimed at their weakest area. */
-export async function generateFollowUp(node: SkillNode, explanation: string, grade: Grade): Promise<string> {
+export async function generateFollowUp(node: SkillNode, explanation: string, grade: Grade, audience = ""): Promise<string> {
   const reply = await chatJSON({
     label: "teachback-followup-question",
-    system: QUESTION_SYSTEM,
+    system: forAudience(QUESTION_SYSTEM, audience, QUESTION_NOTE),
     prompt: `Skill: ${node.title}\n\nWeakest area, which you must not reveal:\n${describeWeakestArea(grade)}\n\n${wrapLearnerText(explanation)}`,
     schema: questionReplySchema,
     timeoutMs: 20_000,
@@ -35,7 +36,7 @@ function describeWeakestArea(grade: Grade): string {
   return weakAreas.length > 0 ? numberedList(weakAreas) : "Nothing specific. All checkpoints were met.";
 }
 
-const ANSWER_SYSTEM = `You decide whether a learner's answer to a follow-up question shows real understanding of the skill.
+export const ANSWER_SYSTEM = `You decide whether a learner's answer to a follow-up question shows real understanding of the skill.
 
 - passed is true only if the answer actually addresses the question and what it says is correct. Plain or informal wording is fine.
 - passed is false if the answer is evasive: "I don't know", restating the question, repeating their earlier words without answering, changing the subject, general wording with no specific fact, or asking for the answer.
@@ -52,6 +53,7 @@ export async function gradeFollowUp(
   explanation: string,
   question: string,
   answer: string,
+  audience = "",
 ): Promise<FollowUpResult> {
   if (answer.trim() === "") {
     return { passed: false, feedback: "There was no answer to check, so this one did not pass." };
@@ -59,7 +61,7 @@ export async function gradeFollowUp(
 
   return chatJSON({
     label: "teachback-followup-grade",
-    system: ANSWER_SYSTEM,
+    system: forAudience(ANSWER_SYSTEM, audience, ANSWER_NOTE),
     prompt: `Skill: ${node.title}\n\nTheir earlier explanation:\n${wrapLearnerText(explanation)}\n\nFollow-up question:\n${question}\n\nTheir answer:\n${wrapLearnerText(answer)}`,
     schema: answerReplySchema,
     timeoutMs: 20_000,

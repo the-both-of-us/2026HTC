@@ -2,9 +2,10 @@ import { z } from "zod";
 import { chatJSON } from "@/features/ai";
 import { normalizeForMatch, quoteAppearsIn } from "@/shared/quote";
 import type { CheckpointResult, Grade, SkillNode } from "@/shared/types";
+import { CHECKER_NOTE, forAudience, GRADER_NOTE } from "./audience";
 import { countWords, LEARNER_TEXT_RULE, wrapLearnerText } from "./learnerText";
 
-const GRADER_SYSTEM = `You check a learner's explanation of a skill against a fixed list of checkpoints. You do not give a score.
+export const GRADER_SYSTEM = `You check a learner's explanation of a skill against a fixed list of checkpoints. You do not give a score.
 
 For each checkpoint, return the number of the checkpoint and either a quote or null.
 - A quote is words copied exactly from the learner's text, in one unbroken piece, with no edits and no ellipsis. Use the shortest passage of at least three words that states the fact on its own.
@@ -17,7 +18,7 @@ Also list factualErrors: statements in the learner's text that are clearly false
 
 ${LEARNER_TEXT_RULE}`;
 
-const CHECKER_SYSTEM = `Another grader flagged statements in a learner's explanation as false. Check each one again, in the context of the named skill.
+export const CHECKER_SYSTEM = `Another grader flagged statements in a learner's explanation as false. Check each one again, in the context of the named skill.
 
 Return the numbers of the flags that are right: the learner really stated it, and it is false for this skill's subject. A flag is wrong if the learner's statement is correct here (for example, for a heat pump the heat delivered does equal the work put in plus the heat taken from outside), if it is only vague or incomplete, or if the learner never said it.
 
@@ -36,11 +37,14 @@ const MIN_QUOTE_WORDS = 3;
 const MIN_WORDS_TO_CHECK_FOR_COPYING = 7;
 const NOT_AN_ERROR = /^(none|nothing|n\/?a|no (factual )?errors?)\.?$/;
 
-/** Asks the model for quotes and errors. The code below decides what they are worth. */
-export async function gradeExplanation(node: SkillNode, explanation: string): Promise<Grade> {
+/**
+ * Asks the model for quotes and errors. The code below decides what they are worth.
+ * `audience` is the map's: plain childlike wording then counts, but the facts must still be right.
+ */
+export async function gradeExplanation(node: SkillNode, explanation: string, audience = ""): Promise<Grade> {
   const reply = await chatJSON({
     label: "teachback-grade",
-    system: GRADER_SYSTEM,
+    system: forAudience(GRADER_SYSTEM, audience, GRADER_NOTE),
     prompt: `Skill: ${node.title}\n\nCheckpoints:\n${numberedList(node.checkpoints)}\n\n${wrapLearnerText(explanation)}`,
     schema: graderReplySchema,
     timeoutMs: 25_000,
@@ -58,7 +62,7 @@ export async function gradeExplanation(node: SkillNode, explanation: string): Pr
     return { checkpoint, quote, met: true };
   });
 
-  const misconceptions = await confirmErrors(node, explanation, cleanErrors(reply.factualErrors));
+  const misconceptions = await confirmErrors(node, explanation, cleanErrors(reply.factualErrors), audience);
   const met = checkpoints.filter((result) => result.met).length;
 
   return {
@@ -101,12 +105,12 @@ function wordsOf(text: string): string[] {
  * grader called correct heat-pump physics false three times out of three. If the check
  * fails, the flags stand, so a timeout can't wave a false claim through.
  */
-async function confirmErrors(node: SkillNode, explanation: string, errors: string[]): Promise<string[]> {
+async function confirmErrors(node: SkillNode, explanation: string, errors: string[], audience: string): Promise<string[]> {
   if (errors.length === 0) return errors;
   try {
     const reply = await chatJSON({
       label: "teachback-check-errors",
-      system: CHECKER_SYSTEM,
+      system: forAudience(CHECKER_SYSTEM, audience, CHECKER_NOTE),
       prompt: `Skill: ${node.title}\n\nFlagged statements:\n${numberedList(errors)}\n\n${wrapLearnerText(explanation)}`,
       schema: checkerReplySchema,
       timeoutMs: 15_000,

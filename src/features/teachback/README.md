@@ -20,6 +20,8 @@ Grades a learner's explanation of a skill, asks a follow-up about what they wrot
 
 The format is saved on the attempt (`format`, missing on older ones, which were all "explain") and on the progress record.
 
+With `map.audience` set, grading, follow-ups, catch rounds (`catch/<id>/<nodeId>/<audienceKey>`) and the final interview get a THE LEARNER section (`audience.ts`): plain childlike wording counts, facts must still be right, and the pass mark stays 65. For children about 9 and under, "Explain it to a 10-year-old" shows as "Explain it to a friend". With no audience every prompt is unchanged (`audience.test.ts`).
+
 ## The final interview
 
 `final.ts`. Once every topic on a map is proven, `POST /api/maps/[id]/final` writes three questions that mix topics (one AI call) and saves each as an attempt with an open follow-up (`nodeId: "final-interview"`), so the voice interview and the follow-up route work unchanged. Two passes of three earn the course badge, which `publishProof` puts on the evidence page. A fail lets the learner ask for a fresh set. Stored at `final/<mapId>`.

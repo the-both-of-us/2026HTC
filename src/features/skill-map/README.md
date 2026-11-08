@@ -25,6 +25,10 @@ const mine = await listMapsByOwner(ownerId);                             // newe
 4. **Reject junk** (`build.ts`): if the model says it is not a posting (or the PDF teaches no skills, or the topic is not something to study), or there are under 5 nodes, or no quote checked out, the user gets a 422 with a sentence. A topic has nothing to quote, so only the node count applies.
 5. **Save** to `maps/<id>` in the store, with `saveSkillMap`, which also writes the owner index entry `maps-by-owner/<ownerId>/<mapId>`.
 
+## Who a map is for
+
+`map.audience` (such as "Grade 1 students (about 6 years old)") pitches a map at a grade or age. It comes from the program plan's `audience`, or `inferAudience` in `src/shared/audience.ts` for a topic or the start of a PDF that names a grade, age or school level. Program courses inherit it, and `getSkillMap` works it out for older maps from their title and program title. With an audience, the topic, course and PDF prompts get an AUDIENCE section and teacher-level checkpoint rules; with none, they are byte for byte the old prompts (`audience.test.ts` checks the hashes). Postings never get one.
+
 ## Citations
 
 A quote counts as verified only if code finds it in the posting (`@/shared/quote`), ignoring case, whitespace, curly quotes and long dash styles. An unverified citation has `verified: false` and an empty `quote`, so the UI has nothing false to show. Foundations have `citation: null`.

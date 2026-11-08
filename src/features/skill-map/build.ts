@@ -7,14 +7,14 @@ import {
   buildMapPrompt,
   buildPdfPrompt,
   buildTopicPrompt,
-  COURSE_SYSTEM_PROMPT,
+  courseSystemPrompt,
   type CourseContext,
   MAP_SYSTEM_PROMPT,
-  PDF_SYSTEM_PROMPT,
+  pdfSystemPrompt,
   rawMapSchema,
   rawPdfMapSchema,
   rawTopicMapSchema,
-  TOPIC_SYSTEM_PROMPT,
+  topicSystemPrompt,
   type RawSkillMap,
   type RawTopicNode,
 } from "./prompt";
@@ -80,11 +80,11 @@ export async function askModelForMap(posting: string): Promise<RawSkillMap> {
   });
 }
 
-/** The same call for a PDF. Each node names the page its quote is on. */
-export async function askModelForPdfMap(pages: string[]): Promise<RawSkillMap> {
+/** The same call for a PDF. Each node names the page its quote is on. An audience pitches it at that level. */
+export async function askModelForPdfMap(pages: string[], audience = ""): Promise<RawSkillMap> {
   const reply = await chatJSON({
     label: "skill-map-pdf",
-    system: PDF_SYSTEM_PROMPT,
+    system: pdfSystemPrompt(audience),
     prompt: buildPdfPrompt(pages),
     schema: rawPdfMapSchema,
     maxTokens: 12_000,
@@ -94,10 +94,10 @@ export async function askModelForPdfMap(pages: string[]): Promise<RawSkillMap> {
 }
 
 /** The same call for a topic. Nothing can be quoted, so no node counts as from the source. */
-export async function askModelForTopicMap(topic: string): Promise<RawSkillMap> {
+export async function askModelForTopicMap(topic: string, audience = ""): Promise<RawSkillMap> {
   const reply = await chatJSON({
     label: "skill-map-topic",
-    system: TOPIC_SYSTEM_PROMPT,
+    system: topicSystemPrompt(audience),
     prompt: buildTopicPrompt(topic),
     schema: rawTopicMapSchema,
     maxTokens: 12_000,
@@ -110,7 +110,7 @@ export async function askModelForTopicMap(topic: string): Promise<RawSkillMap> {
 export async function askModelForCourseMap(course: CourseContext): Promise<RawSkillMap> {
   const reply = await chatJSON({
     label: "skill-map-course",
-    system: COURSE_SYSTEM_PROMPT,
+    system: courseSystemPrompt(course.audience),
     prompt: buildCoursePrompt(course),
     schema: rawTopicMapSchema,
     maxTokens: 10_000,

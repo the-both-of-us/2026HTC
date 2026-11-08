@@ -281,7 +281,8 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
           )}
           {mode === "topic" && (
             <p id="topic-hint" className="mt-2 text-sm text-ink-soft">
-              With no source to quote, the AI builds the map from what it knows, so its skills have no citations.
+              With no source to quote, the AI builds the map from what it knows, so its skills have no citations. Name a grade or
+              age, such as &ldquo;grade 1 math&rdquo;, and it is pitched at that level.
             </p>
           )}
           {mode !== "pdf" && (

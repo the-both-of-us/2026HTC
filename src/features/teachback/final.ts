@@ -3,6 +3,7 @@ import { z } from "zod";
 import { chatJSON } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { Attempt, SkillMap } from "@/shared/types";
+import { ANSWER_NOTE, FINAL_QUESTIONS_NOTE, forAudience } from "./audience";
 import { LEARNER_TEXT_RULE, wrapLearnerText } from "./learnerText";
 
 /**
@@ -33,14 +34,14 @@ export type FinalView = {
   result: FinalResult | null;
 };
 
-const QUESTIONS_SYSTEM = `You are a friendly interviewer. A learner has just proved every topic in a course. Write ${FINAL_QUESTIONS} questions for a short final interview.
+export const QUESTIONS_SYSTEM = `You are a friendly interviewer. A learner has just proved every topic in a course. Write ${FINAL_QUESTIONS} questions for a short final interview.
 
 - Each question connects two or three of the listed topics, and asks why something happens or what would happen in a small situation.
 - One sentence each, at most 30 words, answerable out loud in two or three sentences. No yes or no questions, no code, no calculations.
 - Never put the answer in the question.
 - For each question, list the numbers of the topics it mixes.`;
 
-const ANSWER_SYSTEM = `You decide whether a learner's answer to an interview question shows real understanding. The topics and their key facts are given to help you judge.
+export const ANSWER_SYSTEM = `You decide whether a learner's answer to an interview question shows real understanding. The topics and their key facts are given to help you judge.
 
 - passed is true only if the answer addresses the question and what it says is correct. Plain, informal or spoken wording is fine.
 - passed is false if it is evasive, "I don't know", restates the question, changes the subject, or is general wording with no specific fact.
@@ -61,7 +62,7 @@ export async function createFinal(map: SkillMap, ownerId: string): Promise<{ rec
   const topicList = map.nodes.map((node, index) => `${index + 1}. ${node.title}: ${node.checkpoints.join("; ")}`).join("\n");
   const reply = await chatJSON({
     label: "teachback-final-questions",
-    system: QUESTIONS_SYSTEM,
+    system: forAudience(QUESTIONS_SYSTEM, map.audience, FINAL_QUESTIONS_NOTE),
     prompt: `Course: ${map.title}\n\nTopics:\n${topicList}`,
     schema: questionsSchema,
     timeoutMs: 20_000,
@@ -96,7 +97,7 @@ export async function gradeFinalAnswer(map: SkillMap, question: string, answer: 
   const facts = map.nodes.map((node) => `- ${node.title}: ${node.checkpoints.join("; ")}`).join("\n");
   return chatJSON({
     label: "teachback-final-grade",
-    system: ANSWER_SYSTEM,
+    system: forAudience(ANSWER_SYSTEM, map.audience, ANSWER_NOTE),
     prompt: `Course: ${map.title}\n\nTopics and key facts:\n${facts}\n\nQuestion:\n${question}\n\nTheir answer:\n${wrapLearnerText(answer)}`,
     schema: answerSchema,
     timeoutMs: 20_000,

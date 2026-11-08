@@ -1,6 +1,6 @@
 import { chatJSON } from "@/features/ai";
 import type { SkillMap, SkillNode } from "@/shared/types";
-import { buildLessonPrompt, LESSON_SYSTEM_PROMPT, rawLessonSchema, type RawLesson } from "./prompt";
+import { buildLessonPrompt, lessonSystemPrompt, rawLessonSchema, type RawLesson } from "./prompt";
 import { lessonProblem } from "./validate";
 
 /** Each request to a provider may take this long. Gemini writes 900 words in about 10 to 20 s. */
@@ -11,15 +11,15 @@ export const REQUEST_TIMEOUT_MS = 30_000;
  * too short or copies a checkpoint gets one retry with the reason, and then the next provider.
  * Gemini goes first because lessons are saved, so speed matters less than the writing.
  */
-export async function askModelForLesson(map: Pick<SkillMap, "title">, node: SkillNode): Promise<RawLesson> {
+export async function askModelForLesson(map: Pick<SkillMap, "title" | "audience">, node: SkillNode): Promise<RawLesson> {
   const schema = rawLessonSchema.superRefine((lesson, context) => {
-    const problem = lessonProblem(lesson, node.checkpoints);
+    const problem = lessonProblem(lesson, node.checkpoints, map.audience);
     if (problem) context.addIssue({ code: "custom", message: problem });
   });
 
   return chatJSON({
     label: "lesson",
-    system: LESSON_SYSTEM_PROMPT,
+    system: lessonSystemPrompt(map.audience),
     prompt: buildLessonPrompt(map, node),
     schema,
     maxTokens: 4000,

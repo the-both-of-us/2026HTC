@@ -18,6 +18,10 @@ The **Read** tab: a 3 to 5 minute lesson on one skill, so a learner can learn it
 
 **Written ahead.** Every route that builds a map (`/api/maps`, `/api/maps/pdf`, `/api/programs` for one course, and opening a program course) calls `writeFirstLessonSoon(mapId)`. With Next's `after()` it writes the lesson for the first topic with no prerequisites once the response is sent: one model call at most, so the Read tab is instant. Opening the tab mid-write joins the same call.
 
+## Lessons for children
+
+With `map.audience` set, the prompt adds an AUDIENCE section and the length follows the age (`targetWords`): 200 to 350 words up to about 9, 350 to 600 up to 13, the usual 600 to 900 after. A children's lesson also has a ceiling and no code. Its key is `lessons/<mapId>/<nodeId>/<audienceKey>`, so a lesson written for adults before the audience was known is never served.
+
 ## Honesty
 
 - **No answer key to paste.** The lesson teaches every checkpoint but may not copy one: `copiedCheckpoint` rejects the whole checkpoint, or any 8 of its words in a row (the prompt asks for fewer than 6). Otherwise reading would become copy-paste into teach-back.

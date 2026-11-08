@@ -101,13 +101,13 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   checkExplanationLength(explanation);
 
   const gradeStarted = performance.now();
-  const grade = await gradeExplanation(node, explanation);
+  const grade = await gradeExplanation(node, explanation, map.audience);
   const gradeMs = Math.round(performance.now() - gradeStarted);
   // A 10-year-old's version must also read simply. Code measures that, not the AI.
   const level = format === "kid" ? readingGrade(explanation) : null;
   const plainLanguage = level === null ? null : { readingGrade: level, passed: level <= MAX_KID_GRADE };
   const status = grade.score < PASS_SCORE || plainLanguage?.passed === false ? "not-yet" : "needs-followup";
-  const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade) : null;
+  const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade, map.audience) : null;
 
   const attempt: Attempt = {
     id: randomUUID(),
@@ -146,7 +146,7 @@ async function startCatch(userId: string, map: SkillMap, node: SkillNode, input:
   const picks = cleanPicks(input.picks ?? [], challenge);
 
   const gradeStarted = performance.now();
-  const record = await checkCatch(node, challenge, picks);
+  const record = await checkCatch(node, challenge, picks, map.audience);
   const gradeMs = Math.round(performance.now() - gradeStarted);
   await markRevealed(map.id, userId, node.id);
 
@@ -300,7 +300,7 @@ export async function answerFollowUp(
     const trimmedAnswer = answer.trim();
     const followUpStarted = performance.now();
     const result = node
-      ? await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer)
+      ? await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer, map.audience)
       : await gradeFinalAnswer(map, attempt.followUp.question, trimmedAnswer);
     const followUpMs = Math.round(performance.now() - followUpStarted);
 

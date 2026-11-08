@@ -6,7 +6,8 @@ import { HowItWorksButton } from "@/features/landing/client";
 import { ProgramCrumb } from "@/features/programs/client";
 import { ShareProofButton } from "@/features/proof/client";
 import { ProofReward, RelightCheck, StreakNudge, useMapHabits, type ProofRewardData } from "@/features/streaks/client";
-import { FinalInterview } from "@/features/teachback/client";
+import { FinalInterview, YoungLearnerProvider } from "@/features/teachback/client";
+import { isYoungAudience } from "@/shared/audience";
 import clsx from "clsx";
 import { BookOpen, Compass, Lock, Network, Sparkles, Upload } from "lucide-react";
 import Link from "next/link";
@@ -293,7 +294,8 @@ function LoadedMap({
     [map.id],
   );
 
-  return (
+  // On a map for young children, "Explain it to a 10-year-old" reads "Explain it to a friend".
+  const screen = (
     <PageShell width="full">
       <div className="flex flex-1 flex-col lg:h-dvh lg:flex-none">
         {/* The circle line stays one slim row, so the map keeps the height. */}
@@ -315,6 +317,11 @@ function LoadedMap({
                   {map.title}
                 </h1>
                 {map.subtitle && <p className="hidden truncate text-sm text-ink-soft xl:block">{map.subtitle}</p>}
+                {map.audience && (
+                  <p className="hidden truncate text-sm text-ink-soft sm:block" title={`Topics, lessons and grading are pitched for ${map.audience}.`}>
+                    Pitched for {map.audience}
+                  </p>
+                )}
                 <Progress proven={provenCount} total={map.nodes.length} />
               </div>
             </div>
@@ -474,6 +481,7 @@ function LoadedMap({
       {map.energyRelated && <LiveGridCard className="mx-4 mb-24 lg:hidden" />}
     </PageShell>
   );
+  return <YoungLearnerProvider young={isYoungAudience(map.audience)}>{screen}</YoungLearnerProvider>;
 }
 
 /** Publishing is occasional, so it sits behind one small button instead of a sentence in the header. */

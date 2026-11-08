@@ -7,10 +7,11 @@ import {
   getSkillMap,
 } from "@/features/skill-map";
 import { getPassedFinal, getProgress } from "@/features/teachback";
+import { inferAudience } from "@/shared/audience";
 import { HttpError } from "@/shared/http";
 import type { ProgramLink } from "@/shared/types";
 import { findSampleProgram, isSamplePosting, sampleCourseOutput } from "./fixtures";
-import { askModelForPlan, cleanPlan } from "./plan";
+import { askModelForPlan, cleanPlan, planAudience } from "./plan";
 import {
   claimCourse,
   getCourseClaim,
@@ -22,6 +23,16 @@ import {
 } from "./storage";
 import type { CourseView, Program, ProgramShape, ProgramView } from "./types";
 import { courseStates } from "./unlock";
+
+/**
+ * The audience every course inherits. A program saved before audiences existed uses the
+ * grade or age its title or topic plainly names, so its courses not yet built still benefit.
+ */
+export function programAudience(program: Pick<Program, "audience" | "title" | "sourceText" | "sourceKind">): string {
+  if (program.audience !== undefined) return program.audience;
+  if (program.sourceKind === "posting") return "";
+  return inferAudience(`${program.title} ${program.sourceText}`);
+}
 
 /** After this long, a claim whose map never appeared counts as a build that died. */
 const STALE_CLAIM_MS = 3 * 60_000;
@@ -38,7 +49,9 @@ export async function createProgramOrMap(input: {
   ownerId: string;
 }): Promise<{ programId: string } | { mapId: string }> {
   const text = input.kind === "topic" ? checkTopicText(input.text) : checkPostingText(input.text);
-  const oneCourse = async () => ({ mapId: (await generateSkillMap({ text, kind: input.kind, ownerId: input.ownerId })).id });
+  const oneCourse = async (audience?: string) => ({
+    mapId: (await generateSkillMap({ text, kind: input.kind, ownerId: input.ownerId, audience })).id,
+  });
   if (input.shape === "course") return oneCourse();
 
   const sample = input.kind === "posting" ? findSampleProgram(text) : null;
@@ -46,7 +59,8 @@ export async function createProgramOrMap(input: {
   if (!sample && input.shape === "auto" && input.kind === "posting" && isSamplePosting(text)) return oneCourse();
 
   const raw = sample?.plan ?? (await askModelForPlan(text, input.kind));
-  if (input.shape === "auto" && !raw.isBroad && raw.isLearnable) return oneCourse();
+  const audience = planAudience(raw, text, input.kind);
+  if (input.shape === "auto" && !raw.isBroad && raw.isLearnable) return oneCourse(audience);
 
   const plan = cleanPlan(raw);
   const program: Program = {
@@ -57,6 +71,8 @@ export async function createProgramOrMap(input: {
     sourceText: text,
     sampleId: sample?.sampleId,
     createdAt: new Date().toISOString(),
+    // Only when there is one, so a program for adults is saved as before.
+    ...(audience && { audience }),
   };
   await saveProgram(program);
   return { programId: program.id };
@@ -168,6 +184,7 @@ export async function openCourse(
         courseTitle: course.title,
         courseSummary: course.summary,
         otherCourses: program.courses.filter((other) => other.slug !== slug).map((other) => other.title),
+        audience: programAudience(program),
       },
     });
   } catch (error) {

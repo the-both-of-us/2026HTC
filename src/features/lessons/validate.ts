@@ -1,9 +1,19 @@
+import { isYoungAudience } from "@/shared/audience";
 import { normalizeForMatch } from "@/shared/quote";
-import type { RawLesson } from "./prompt";
+import { TARGET_WORDS, targetWords, type RawLesson, type WordTarget } from "./prompt";
 import type { Lesson } from "./types";
 
 /** Below this the lesson is too thin to be a 3 minute read (500 words rounds up to 3). The prompt asks for 600 to 900. */
 export const MIN_WORDS = 500;
+
+/**
+ * The word limits a reply must meet for this target. The usual lesson has only a floor, as
+ * before. A lesson for children also has a ceiling, since a long one loses a young reader.
+ */
+export function wordLimits(target: WordTarget): { min: number; max: number | null } {
+  if (target === TARGET_WORDS) return { min: MIN_WORDS, max: null };
+  return { min: Math.round(target.min * 0.75), max: target.max + 150 };
+}
 /** A run of this many checkpoint words, in order, counts as copying it. The prompt asks for fewer than 6. */
 export const COPIED_RUN = 8;
 const WORDS_PER_MINUTE = 200;
@@ -47,8 +57,8 @@ export function lessonText(lesson: RawLesson): string {
 
 const filled = (value: string) => value.trim() !== "";
 
-/** What is wrong with a reply, in words the model can act on, or null if it is fine. */
-export function lessonProblem(lesson: RawLesson, checkpoints: string[]): string | null {
+/** What is wrong with a reply, in words the model can act on, or null if it is fine. `audience` is the map's. */
+export function lessonProblem(lesson: RawLesson, checkpoints: string[], audience?: string): string | null {
   if (lesson.idea.filter(filled).length < 2) return "idea needs 2 to 4 paragraphs.";
   if (lesson.mistakes.filter((item) => filled(item.mistake) && filled(item.fix)).length < 2) {
     return "mistakes needs 3 items, each with a fix.";
@@ -56,8 +66,12 @@ export function lessonProblem(lesson: RawLesson, checkpoints: string[]): string 
   if (lesson.checks.filter((item) => filled(item.question) && filled(item.answer)).length < 2) {
     return "checks needs exactly 2 questions, each with an answer.";
   }
+  const target = targetWords(audience);
+  const limits = wordLimits(target);
   const words = wordsOf(lessonText(lesson)).length;
-  if (words < MIN_WORDS) return `it has ${words} words. Write 600 to 900.`;
+  if (words < limits.min) return `it has ${words} words. Write ${target.min} to ${target.max}.`;
+  if (limits.max !== null && words > limits.max) return `it has ${words} words, too long for these readers. Write ${target.min} to ${target.max}.`;
+  if (isYoungAudience(audience) && filled(lesson.example.code ?? "")) return "code must be null for these readers. Use real objects instead.";
   const copied = copiedCheckpoint(lessonText(lesson), checkpoints);
   if (copied) return `it copies this checkpoint word for word: "${copied}". Teach it in your own words.`;
   return null;

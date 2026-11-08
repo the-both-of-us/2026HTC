@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { chatJSON } from "@/features/ai";
+import { cleanAudience, inferAudience } from "@/shared/audience";
 import { HttpError } from "@/shared/http";
 import type { ProgramCourse } from "./types";
 
@@ -12,6 +13,8 @@ export const rawPlanSchema = z.object({
   isBroad: z.boolean(),
   title: z.string(),
   summary: z.string(),
+  /** Saved sample plans predate this field, and they are for adults. */
+  audience: z.string().default(""),
   courses: z.array(
     z.object({
       slug: z.string(),
@@ -21,7 +24,8 @@ export const rawPlanSchema = z.object({
     }),
   ),
 });
-export type RawPlan = z.infer<typeof rawPlanSchema>;
+/** audience is optional here, so a plan written by hand or saved before it existed still fits. */
+export type RawPlan = Omit<z.infer<typeof rawPlanSchema>, "audience"> & { audience?: string };
 
 export const PLAN_SYSTEM_PROMPT = `You plan learning for students and curious people. You get a job posting or a topic someone wants to learn. You decide whether it is broad enough to need a program of several courses, and you plan that program.
 
@@ -49,7 +53,11 @@ Always plan 4 to 8 courses, even when isBroad is false.
 
 TITLE AND SUMMARY
 - title: the program's name in 2 to 6 words, such as "Junior backend developer" or "Web development".
-- summary: one short, warm sentence on where the program takes the learner.`;
+- summary: one short, warm sentence on where the program takes the learner.
+
+AUDIENCE
+- audience: who the learning is for, as a short plain phrase with an age, only when the input names a school grade, a school level or an age, or says it is for children, such as "Grade 1 students (about 6 years old)" or "High school students (about 14 to 18 years old)". Otherwise an empty string. Never guess an audience from the subject alone. A job posting, or a topic about teaching or raising children, is for an adult, so its audience is empty.
+- When there is an audience, plan only what learners at that level are taught there, as the strands a teacher at that level uses, in their usual order. Grade 1 math becomes courses such as "Counting and numbers to 100", "Adding and taking away", "Shapes" and "Measuring and time", never "Number theory". Course titles and summaries use words a learner at that level or their parent would understand.`;
 
 /** Puts the input inside delimiters, and removes any copy of them from the input itself. */
 export function buildPlanPrompt(text: string, kind: "posting" | "topic"): string {
@@ -67,6 +75,15 @@ export async function askModelForPlan(text: string, kind: "posting" | "topic"): 
     maxTokens: 3_000,
     timeoutMs: 40_000,
   });
+}
+
+/**
+ * Who the plan is for: the model's answer, cleaned, or for a topic the grade or age it plainly
+ * names. A job posting is always for an adult, even one for a grade 1 teacher.
+ */
+export function planAudience(raw: Pick<RawPlan, "audience">, text: string, kind: "posting" | "topic"): string {
+  if (kind === "posting") return "";
+  return cleanAudience(raw.audience) || inferAudience(text);
 }
 
 const oneLine = (text: string, max: number) => text.replace(/\s+/g, " ").trim().slice(0, max);

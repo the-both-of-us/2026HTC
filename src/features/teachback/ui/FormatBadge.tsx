@@ -1,13 +1,16 @@
+"use client";
+
 import clsx from "clsx";
 import { Baby, MessageCircle, ScanSearch, Timer } from "lucide-react";
-import { FORMAT_LABELS, type TopicFormat } from "../formats";
+import { formatLabel, type TopicFormat } from "../formats";
+import { useYoungLearner } from "./YoungLearner";
 
 const ICONS = { explain: MessageCircle, catch: ScanSearch, kid: Baby, timed: Timer };
 
 /** The way this topic is proved, as a small pill. compact is the map card's short label. */
 export function FormatBadge({ format, compact = false, className }: { format: TopicFormat; compact?: boolean; className?: string }) {
   const Icon = ICONS[format];
-  const label = FORMAT_LABELS[format];
+  const label = formatLabel(format, useYoungLearner());
   return (
     <span
       title={label.name}

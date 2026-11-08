@@ -94,8 +94,8 @@ export async function answerRelight(
   if (answer.length > MAX_ANSWER_CHARACTERS) {
     throw new HttpError(`Please keep your answer under ${MAX_ANSWER_CHARACTERS.toLocaleString("en-CA")} characters.`, 400);
   }
-  const { node, explanation, question } = await loadFadingTopic(userId, mapId, nodeId, now);
-  const result = await gradeFollowUp(node, explanation, question, answer.trim());
+  const { node, audience, explanation, question } = await loadFadingTopic(userId, mapId, nodeId, now);
+  const result = await gradeFollowUp(node, explanation, question, answer.trim(), audience);
 
   let record = await loadRecord(userId);
   if (result.passed) {
@@ -135,6 +135,7 @@ async function loadFadingTopic(userId: string, mapId: string, nodeId: string, no
   }
   return {
     node,
+    audience: map.audience,
     explanation: attempt?.explanation ?? "",
     question:
       attempt?.followUp?.question ?? `In two or three sentences, explain ${node.title} to a friend, with one example.`,
