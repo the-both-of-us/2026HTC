@@ -10,13 +10,6 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 - **People: friends-only by default, opt in to the network** (agent; the spec is in TEAM.md "owner's request for People"). Files: `features/network`, `src/app/people/**`, `src/app/api/network/**`, `trust/deleteData.ts` (one line).
 
-- **Feed: likes on Shorts, a Videos / Text / Both switch, public comments, like counts** (agent, owner's request).
-  - Shorts get the same like, save and share as cards.
-  - A switch picks videos only, text only, or both mixed.
-  - Each card and Short gets public comments, checked before they post, with your own deletable and a rate limit.
-  - Like counts show on every item. For the demo, a fixed seeded number from 3 to 20 is added on top of real likes. The seed is one named constant, easy to remove, and ranking uses real likes only.
-  - Files: `features/feed`, `src/app/api/feed/**`, `trust/deleteData.ts` (comments are deleted with your data).
-
 ## Next
 
 
@@ -24,6 +17,7 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- **Feed: likes on Shorts, a Both / Videos / Text switch, like counts, public comments** (`a36848b`). Shorts have the same rail as cards (like, comment, save, share) and the same engagement events; Saved lists saved Shorts. The switch is remembered per browser; Videos interleaves every interest's ranked Shorts. Like counts are real likes plus a stable demo seed of 3 to 20 (`demoLikeSeed` in `features/feed/demo.ts`; set `DEMO_LIKE_SEED` to null to remove it, ranking never sees it). Comments: plain text, newest 50, "Guest XXXX" or your signed-in name, rules plus one quick AI check (rules alone if it fails), 5 a minute, delete your own, and they go with "Delete my data" (through `deleteFeedData`, so `trust/deleteData.ts` needed no change).
 - **Interest-based feed** (`3e4ebfa`): first visit picks 3+ interests (24 suggestions or your own, checked), "Edit interests" any time. Cards and Shorts live in a shared pool per interest, pre-made for all 24 suggestions (no AI call for the demo). Ranked by everyone's engagement (views, time on card, skips, likes, saves, shares, Go deeper) with a boost for new items; seen items drop and liked interests get more room. Popular pools get a new batch (once an hour) written in the vein of the best-liked cards, and the weakest well-viewed items rotate out (40 cards, 8 Shorts per interest). "Go deeper" replaces "Prove it" and opens the landing with the card's subtopic filled in. Mirza: the demo video's feed step is now "pick interests, scroll, Go deeper".
 - **"For you" feed** (`cf4b279`): `/feed` swipe-up cards, one idea each from your maps (samples for a new visitor), with like, save, share and Prove it (opens that topic's teach-back). One AI call per map, saved; sample cards are saved with the code. Every 4th item is an educational YouTube Short (SafeSearch strict, cached 5 days per topic, text only if the quota runs out). "For you" is in the sidebar after Build.
 - **Resources tab on every skill** (`24b64fb`): Watch, Read, Listen and News from real APIs, cached 7 days, opened lazily; children get no news or podcasts.
