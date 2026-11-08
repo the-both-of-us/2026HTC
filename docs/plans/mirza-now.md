@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- **Full-page reading for a skill** (OK'd by Abdu via Mirza): a "Full page" button beside the ✕ in the skill panel. It covers the map area with the lesson, flashcards, quiz and teach-back in a centred reading column, and "Back to map" returns to the side panel. On phones the sheet goes full height. Touches: `src/features/skill-map/ui/SkillPanel.tsx` only. **Please avoid that file until this lands (minutes).**
+- Nothing new yet: waiting on the owner for the next task. `SkillPanel.tsx` is free again.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Full-page reading for a skill: a "Full page" button beside the ✕ in the skill panel. On large screens it covers the map area with a centred reading column; on phones it's a full-screen sheet above the top bar. "Back to map" returns. Touched `skill-map/ui/SkillPanel.tsx` only, with Abdu's OK.
 - Owner indexes: `listMapsByOwner` and `listProgramsByOwner` read only that owner's documents, and likes are counted from keys (`85d20eb`). Touched `skill-map/storage.ts`, `skill-map/index.ts`, `programs/storage.ts`, with Abdu's OK.
 - Review (SM-2), dashboard, network (`/people`), sample flashcard and quiz script, Devpost draft.
 

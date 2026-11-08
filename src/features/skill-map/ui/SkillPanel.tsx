@@ -4,9 +4,9 @@ import { ShareProofButton } from "@/features/proof/client";
 import { QuizTab } from "@/features/quiz/client";
 import { assignFormats, FormatBadge, TeachBackPanel } from "@/features/teachback/client";
 import clsx from "clsx";
-import { BadgeCheck, ChevronRight, X } from "lucide-react";
+import { BadgeCheck, ChevronRight, Maximize2, Minimize2, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Citation, NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
 import {
   Badge,
@@ -65,6 +65,9 @@ export function SkillPanel({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
   const teachRef = useRef<HTMLElement>(null);
+  // Full page covers the map so a lesson reads like a page, not a sidebar. It stays on
+  // while you move between skills, until you go back to the map.
+  const [fullPage, setFullPage] = useState(false);
   const state = states[skill.id] ?? "locked";
   // A proof can land while another skill is open. The notice then belongs to that other skill.
   const ownNotice = notice?.nodeId === skill.id ? notice : null;
@@ -152,12 +155,22 @@ export function SkillPanel({
         ref={panelRef}
         aria-labelledby="skill-panel-title"
         className={clsx(
-          "panel-open fixed inset-x-0 bottom-0 z-30 max-h-[88dvh] overflow-y-auto border-t-2 border-ink bg-sheet",
-          "lg:relative lg:max-h-none lg:w-[28rem] lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l",
+          "panel-open fixed inset-x-0 bottom-0 overflow-y-auto border-t-2 border-ink bg-sheet",
+          fullPage
+            ? // Phones: the whole screen, above the site's top bar (z-40), so its buttons stay
+              // reachable. Large screens: over the map area, since the parent row is relative.
+              "top-0 z-50 border-t-0 lg:absolute lg:inset-0 lg:z-30"
+            : "z-30 max-h-[88dvh] lg:relative lg:max-h-none lg:w-[28rem] lg:shrink-0 lg:rounded-none lg:border-t-0 lg:border-l",
         )}
       >
         {/* The extra bottom padding keeps the end of the sheet clear of the phone's nav pill. */}
-        <div className="flex flex-col gap-5 p-5 pb-24 lg:pb-6">
+        <div
+          className={clsx(
+            "flex flex-col gap-5 p-5 pb-24 lg:pb-6",
+            // A reading column: about 75 characters a line, like a page of a book.
+            fullPage && "mx-auto w-full max-w-3xl lg:gap-6 lg:px-8 lg:pt-10 lg:pb-16",
+          )}
+        >
           <header className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col items-start gap-2">
               <h2
@@ -180,14 +193,30 @@ export function SkillPanel({
               {/* Only in Accessible learning mode. */}
               <ReadAloudButton what="this skill" text={skillReadAloud(skill)} />
             </div>
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={onClose}
-              className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-soft transition-control hover:bg-raised hover:text-ink"
-            >
-              <X aria-hidden="true" size={20} />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                aria-pressed={fullPage}
+                onClick={() => setFullPage((on) => !on)}
+                className="flex min-h-10 cursor-pointer items-center gap-2 rounded-control border border-rule-strong px-3 text-sm font-medium text-ink-soft transition-control hover:border-control-edge hover:bg-raised hover:text-ink"
+              >
+                {fullPage ? (
+                  <Minimize2 aria-hidden="true" size={16} className="shrink-0" />
+                ) : (
+                  <Maximize2 aria-hidden="true" size={16} className="shrink-0" />
+                )}
+                {/* Icon only on phones, where the title needs the room. */}
+                <span className="sr-only sm:not-sr-only">{fullPage ? "Back to map" : "Full page"}</span>
+              </button>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={onClose}
+                className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-soft transition-control hover:bg-raised hover:text-ink"
+              >
+                <X aria-hidden="true" size={20} />
+              </button>
+            </div>
           </header>
 
           {/* Just proven: the verdict moves up, so the payoff is the first thing in view. */}
