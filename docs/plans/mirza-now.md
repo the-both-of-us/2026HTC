@@ -6,7 +6,7 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- Nothing new: waiting on the owner.
+- **Shorts inside each skill** (owner's request): a "Watch in 60 seconds" row of 3 or 4 relevant portrait Shorts at the end of the Read tab. One shared list per skill at `skill-reels/<topicKey>` (a hash of map title, skill id, skill title and audience), so a course and every learner's copy share one document and one YouTube search, made when the skill is first opened, never at map build. Shorts are checked to be portrait and 60 s or less (`videos.list`, 1 unit). New feature `src/features/reels` and `src/app/api/reels` (mine). Small edits in Abdu's code: the feed's Short player moves to a shared `src/shared/ui` component used by both, and one line in `lessons/ui/LessonTab.tsx` (or wherever the Read tab lives) for the row. Abdu: shout if you're in those files.
 
 ## Next
 
