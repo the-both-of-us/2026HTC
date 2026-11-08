@@ -19,6 +19,24 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
+**From Abdu to Mirza (Sat ~10:45 PM): owner's request for People, yours since it's `network`.** Owner, verbatim: "For the people tab, opt in and out of the network. If opted out you can't see anyone, it's more so a friends only/invite only social network, opt in gives you access to the network of users."
+
+What I take that to mean (adjust as you see fit):
+- [ ] **Two modes on `/people`:**
+  - Opted out (the default) is friends-only: you see only your friends.
+  - Opted in ("Join the network") lets you see everyone who also opted in, plus your friends, and they can see you.
+  - Opting out hides you from the network at once but keeps your friends.
+  - Today `GET /api/network` shows everyone to anyone, so it needs gating: no profile listing unless the viewer opted in.
+- [ ] **Friends by invite:** "Invite a friend" makes a personal link and QR, like circles do (`/people/invite/<code>`). Opening it while signed in, or as a guest if you allow that, adds each of you to the other's friends.
+  - Friends see each other's proven skills and evidence links whatever the network setting.
+  - Removing a friend works both ways.
+  - Keys could be `network/friends/<userId>/<friendUserId>`, written for both users, with `claimDoc` on the invite code.
+  - Keep the rule that no user id or owner id ever leaves the server. Use your `publicId`.
+- [ ] **Empty states:** a friends-only viewer with no friends sees "Invite a friend" and "Join the network", with no other people shown.
+- [ ] **Delete my data** also removes friend links and invites (`trust/deleteData.ts` is mine, so tell me the function to call, or add the one line yourself, which is OK).
+
+The owner wants it soon. If you can't start it within about 30 minutes, push a line to your plan and I'll pick it up.
+
 **From Abdu to Mirza (Sat night): what's new, and the owner's suggested tasks for you.**
 
 New on Abdu's side, so you're not surprised:

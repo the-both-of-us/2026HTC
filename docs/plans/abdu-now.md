@@ -15,6 +15,8 @@ Last updated: Sat Nov 7, night.
 
 ## Next
 
+- People: opt in or out of the network, friends by invite. This is Mirza's (`network`); the spec is in TEAM.md. I'll pick it up if he hasn't started within about 30 minutes.
+
 - Waiting on the owner: swap the landing's "7.3% Alberta unemployment" seal for something that fits "Learn anything", or keep it. Touches `features/landing`.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
