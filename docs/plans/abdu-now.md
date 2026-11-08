@@ -6,6 +6,8 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
+- **Hero seal: faster while typing, and a shine** (owner's request). File: `features/landing/PostingForm.tsx`.
+
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
