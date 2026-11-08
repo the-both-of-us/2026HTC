@@ -10,6 +10,7 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
+- **Model benchmarks page** (owner's request): run gpt-oss-120b, Claude Haiku, Sonnet and Opus on public benchmark questions per subject (MMLU / MMLU-Pro: psychology, physics, algebra, law, health and more), graded by code against the answer key, plus speed; results saved in the repo and shown on a small page linked quietly from Settings, so the router's choices rest on data. Spends some Claude credits (owner OK'd). New `features/benchmarks`, `scripts/bench-models.ts`, `app/settings/models`.
 - **Model router and a Settings page** (owner's request): each map is rated for difficulty and stakes when it's built; gpt-oss-120b stays the fast default, harder or higher-stakes courses step up to Claude Haiku, Sonnet, then Opus per task; answer checks stay fast. New `/settings` (appearance, accessibility, AI speed and per-task overrides); the theme and learning-mode controls move there from the sidebar. Touches `features/ai`, `skill-map` (rating), `lessons`, `shared/ui/PageShell.tsx` + sidebar, new `features/settings`, `app/settings`.
 
 
