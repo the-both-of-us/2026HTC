@@ -6,6 +6,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
+- Map header inside a study circle: no "In circle" row and no "Start a study circle"; one "Your circle" button instead, and a shorter AI-made tag. Files: `app/map/[id]/page.tsx`, `circles/ui/CircleBanner.tsx` + `circles/client.ts` (a `CircleLink`), `skill-map/ui/MapScreen.tsx` (the tag only). All Abdu's.
 - Nothing new yet: waiting on the owner. Candidates: "Ask for help" requests and an anonymous-profile option on People (undecided).
 
 ## Next
