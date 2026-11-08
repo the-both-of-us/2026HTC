@@ -32,6 +32,7 @@ Last updated: Sat Nov 7, evening.
 
 ## Done today (latest first)
 
+- Put Mirza's course page redesign (`cf57083`) live on Vercel, since his commits are blocked there. Typecheck and the courses and skill-map tests pass on main.
 - UI audit fixes, part 1: /grid mix bar labels readable (5 to 6.8:1), and the Dark sample band is dark, not a pale slab.
 - Final live check with real AI on production: Explain it, Catch, Age 10, 30 seconds (typed fallback) all pass in 1 to 2 s, and the final interview's first question passes. Fixes in `d1de1c9`. Judge README (`19bc763`).
 - Sign in is now a real button: solid at the top of the sidebar footer, outlined in the phone top bar.
