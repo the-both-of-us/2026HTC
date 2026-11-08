@@ -206,18 +206,17 @@ function Canvas({
     const left = placed.x * zoom + x;
     const top = placed.y * zoom + y;
     const margin = 32;
-    const isHidden =
-      left < margin ||
-      left + NODE_WIDTH * zoom > container.clientWidth - margin ||
-      top < margin ||
-      top + NODE_HEIGHT * zoom > container.clientHeight - margin;
-    if (!isHidden) return;
+    const hiddenAcross = left < margin || left + NODE_WIDTH * zoom > container.clientWidth - margin;
+    const hiddenDown = top < margin || top + NODE_HEIGHT * zoom > container.clientHeight - margin;
+    if (!hiddenAcross && !hiddenDown) return;
 
+    // Move only along the hidden direction, so a skill near the top stays near the top
+    // instead of dropping to the middle and leaving empty space above it.
     viewBeforePan.current ??= { x, y, zoom };
     flow.setViewport(
       {
-        x: container.clientWidth / 2 - (placed.x + NODE_WIDTH / 2) * zoom,
-        y: container.clientHeight / 2 - (placed.y + NODE_HEIGHT / 2) * zoom,
+        x: hiddenAcross ? container.clientWidth / 2 - (placed.x + NODE_WIDTH / 2) * zoom : x,
+        y: hiddenDown ? TOP_GAP - placed.y * zoom : y,
         zoom,
       },
       { duration: motionMs(PAN_MS) },
