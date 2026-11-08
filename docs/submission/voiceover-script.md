@@ -1,104 +1,152 @@
 # OryxLearn demo video: voiceover script
 
-Read the quoted lines over screen footage. Target length is about 3:39. Timings assume a steady 150 words a minute, so check them with a stopwatch.
+Built to read while you click. Each step is one action (**Do**) and one or two short lines to say while it plays (**Say**). Finish the line, then do the next step. Target is about 3:30 at a steady pace.
 
-## 0:00 The problem
+## 1. The problem (0:00, ~20 s)
 
-**Screen:** a slow, plain shot of the landing page. Let the words carry this part.
+**Do:** hold on the landing page. Don't click yet.
 
-> Think about the last time you tried to learn something on your own. A long video. A wall of text. Nobody beside you. And somewhere around minute twenty, you picked up your phone.
+**Say:**
+> Think about the last time you tried to learn something on your own. A long video. A wall of text. Nobody beside you.
 >
-> Learning is boring. It's lonely. And every day, it loses to apps built to keep you scrolling.
+> Learning is boring. It's lonely. And it loses, every day, to apps built to keep you scrolling.
 
-## 0:20 The promise
+## 2. The solution (0:20, ~20 s)
 
-**Screen:** landing page, holding on "Learn anything. Prove you get it."
+**Do:** stay on the landing page, on "Learn anything. Prove you get it."
 
-> OryxLearn is learning built the way those apps are built: short, social, and always one tap from the next thing.
-
-## 0:28 Any curiosity becomes a course
-
-**Screen:** type a topic, choose One course, cut the loading, land on the map. Quick flash of the posting tab and a sample posting.
-
-> Curious about something? Just type it. How planes fly. How the stock market works. Got a specific job in mind? Paste the posting instead.
+**Say:**
+> OryxLearn is learning built the way those apps are built. Two ways in.
 >
-> In seconds, that curiosity is a course: a map of small topics, foundations first, each one opening the next.
-
-## 0:45 Everything for this topic, on this page
-
-**Screen:** open a topic. Read tab, then flashcards and quiz for a second each. Resources tab: scroll YouTube, Wikipedia, books and podcasts, then play a video on the page and hold.
-
-> Every topic has a short lesson, flashcards, and a quiz. And it comes with its own real resources: YouTube videos, a Wikipedia article, books, podcasts, all matched to that one topic.
+> Active learning: a course on anything, where you prove each step before the next one opens.
 >
-> You know what happens when you go looking yourself. You search YouTube for one video, and forty minutes later you're watching something else. Here, the video plays right on the page. No homepage. No sidebar of recommendations. You stay on the topic you came for.
+> Passive learning: a For You feed of ideas and short videos, plus friends and study circles to keep you going.
 
-## 1:15 Prove it
+## 3. Features showcase (0:40)
 
-**Screen:** a Catch the mistake round for a few seconds, then an Explain it topic: answer, follow-up, Proven, next topic opening.
+### Create a course (~20 s)
 
-> Then you prove it. Sometimes the AI hides mistakes in a confident explanation, and you catch them. Sometimes you explain the topic in your own words, typing or just talking, and it asks a follow-up about what you said.
->
-> The AI doesn't hand out the grade. It has to quote your words, and code checks those quotes and calculates the score.
+**Do:** type a topic, choose One course.
+**Say:**
+> Make a course on anything. Just type it.
 
-## 1:40 Learn with people
+**Do:** flash the job posting tab, then the PDF upload.
+**Say:**
+> Or paste a job posting, or upload a PDF.
 
-**Screen:** Network tab: Friends with their courses and progress, a ping, the invite QR. Then a study circle: race and "just proved" toast. Back to Network, "Could mentor you".
+**Do:** cut the loading, land on the map.
+**Say:**
+> In seconds you get a map of small topics, foundations first, each one opening the next.
 
-> And you don't do it alone. This is the Network tab. Invite friends with a link or a QR code, see what they're learning and how far they've got, and ping them to get back at it.
->
+### Read (~10 s)
+
+**Do:** open the first topic, scroll the Read tab.
+**Say:**
+> Every topic starts with a short lesson.
+
+### Flashcards (~8 s)
+
+**Do:** Flashcards tab, flip one or two cards.
+**Say:**
+> Flashcards to lock it in.
+
+### Quiz (~8 s)
+
+**Do:** Quiz tab, answer one question.
+**Say:**
+> A quick quiz to check yourself.
+
+### Resources (~20 s)
+
+**Do:** Resources tab, scroll YouTube, Wikipedia, books, podcasts.
+**Say:**
+> And real resources for that one topic: videos, Wikipedia, books, podcasts.
+
+**Do:** play a video on the page and hold.
+**Say:**
+> The video plays right here. No homepage, no recommendations. You stay on the topic you came for.
+
+### Teach-back (~30 s)
+
+**Do:** a Catch the mistake round.
+**Say:**
+> Then the fun part: prove it. Sometimes the AI hides mistakes in a confident explanation, and you catch them.
+
+**Do:** an Explain it topic: type or speak an answer, show the follow-up.
+**Say:**
+> Sometimes you explain it in your own words, typing or just talking, and it asks a follow-up about what you said.
+
+**Do:** answer, land on Proven, the next topic opens.
+**Say:**
+> The AI doesn't hand out the grade. It has to quote your words, and code checks the quotes and scores it. Prove it, and the next topic opens.
+
+## 4. FYP (1:55, ~30 s)
+
+**Do:** phone-sized FYP, pick interests.
+**Say:**
+> Now the moment every learning app loses: you, on the couch, scrolling. So we built the FYP.
+
+**Do:** swipe a text card, swipe a Short, like one.
+**Say:**
+> One idea at a time, mixed with educational Shorts. It learns what you linger on.
+
+**Do:** tap Go deeper, land on the new course input.
+**Say:**
+> And when something grabs you, Go deeper turns it into a course. Same thumb, same ten minutes. Except you come out knowing something.
+
+## 5. Network (2:25, ~30 s)
+
+**Do:** Network tab: Friends with their courses and progress, ping one.
+**Say:**
+> You don't learn alone. See what your friends are learning, how far they've got, and ping them to get back at it.
+
+**Do:** show the invite QR.
+**Say:**
+> Invite anyone with a link or a QR code.
+
+**Do:** open a study circle: the race and a "just proved" toast.
+**Say:**
 > Start a study circle and race through the same course, with a live feed of who just proved what.
+
+**Do:** back to Network, "Could mentor you".
+**Say:**
+> Opt in to the wider network to find people who actually proved the skills you're learning.
+
+## 6. Review (2:55, ~15 s)
+
+**Do:** open Review, show a card, Show answer, tap Good.
+**Say:**
+> And Review brings your flashcards back right before you'd forget them, from every course you take. A few minutes a day, and it sticks.
+
+## Close (3:10, ~20 s)
+
+**Do:** the published evidence page, click "Check this record now". End on the tagline.
+**Say:**
+> What you prove becomes a public evidence page an employer can read and re-check, with no AI involved.
 >
-> Opt in to the wider network, and you can find people who have actually proved the skills you're learning. Real progress, not a self-reported list.
-
-## 2:12 The FYP
-
-**Screen:** phone-sized FYP. Pick interests, swipe a text card, swipe a Short, like one, tap Go deeper and land on the new course input.
-
-> Then there's the moment every learning app loses: you, on the couch, scrolling. So we built the FYP. Pick your interests and swipe through one idea at a time, mixed with educational Shorts. It learns what you linger on. And when something grabs you, Go Deeper turns it into a course of its own.
->
-> Same thumb, same ten minutes. Except you come out knowing something.
-
-## 2:38 Why not just ask ChatGPT?
-
-**Screen:** fast montage: map, Resources tab, circle race, FYP.
-
-> So why not just ask ChatGPT? It's great at answers. But you have to know what to ask, and when you close it, you've got a conversation. No path, no friends learning beside you, nothing to show anyone. Video courses give everyone the same hours of footage. OryxLearn puts the path, the sources, the people, and the proof in one place.
-
-## 3:02 From curious to employable
-
-**Screen:** the published evidence page and QR, click "Check this record now". End on the landing page's Alberta figure.
-
-> And that proof matters. Prove your skills, and you get a public evidence page an employer can read, showing what you actually wrote. Anyone can re-check it, with no AI involved.
->
-> That's how a curious person becomes an employable one. In Alberta, where unemployment is 7.3 percent, that matters. When people can pick up new skills on their own time, and show it, the whole economy adapts faster.
-
-## 3:30 The close
-
-**Screen:** quick montage of topic, map, friends, FYP. End on the tagline for the last few seconds.
-
 > Learning shouldn't be the thing you put off. Now it can be the thing you scroll to.
 >
 > OryxLearn. Learn anything. Prove you get it.
 
 ## Before you record
 
-- **Topic build:** a typed topic makes a live AI call, so build it ahead or cut the wait. Topic maps show an "AI-made, no citations" tag, so leave it in frame.
-- **Skill order:** on any map, the first topic is Catch the mistake, with no follow-up. The second is Explain it, which has the follow-up. Prove the first one before filming if you want to go straight to the follow-up.
-- **FYP like counts:** the numbers shown include a made-up seed of 3 to 20 per item (`DEMO_LIKE_SEED` in the feed feature). Keep them out of frame or have Abdu set it to `null`, since the rules say no made-up data shown as real.
-- **Network:** keep the demo-profile note in frame, since those people are sample data. Use real friends for the Friends and circle shots.
-- **Resources:** videos play on the page. Wikipedia, books and podcasts open their own sites, so only play a video for the "stays on the page" line. Check that the topic you film has all the sources, since any one can be missing.
-- **Alberta figure:** the landing number is live from Statistics Canada. If it isn't 7.3 on the day, change the line to match.
-- **Prepare ahead:** have a published evidence page and a circle with real activity ready, so nothing in the video waits on AI.
-- **Real content only:** use the follow-up question the app actually generates, and your own answer.
+- **Course build:** a typed topic makes a live AI call, so build it ahead or cut the wait. Topic maps show an "AI-made, no citations" tag: leave it in frame.
+- **Teach-back order:** on any map, the first topic is Catch the mistake (no follow-up) and the second is Explain it (with the follow-up).
+- **FYP like counts** include a made-up seed (`DEMO_LIKE_SEED`). Keep them out of frame, or have it set to `null`.
+- **Network:** keep the demo-profile note in frame, since those people are sample data. Use real friends for Friends and the circle.
+- **Resources:** only play a video for the "stays here" line; the others open their own sites. Check the topic has every source.
+- **Review:** prove or study a course first so Review has cards.
+- **Prepare ahead:** a published evidence page and a circle with real activity, so nothing waits on AI.
+- **Real content only:** use the follow-up the app actually generates, and your own answer.
 
 ## If you need to change the length
 
-- **Too long:** cut "Video courses give everyone..." and the "Sometimes the AI hides mistakes" sentence. That saves about 15 seconds.
+- **Too long:** drop the Catch the mistake step and the "Opt in" Network step. That saves about 15 seconds.
 - **Too short:** let the FYP and Resources footage breathe, with no extra narration.
 
 ## If a judge asks
 
-These were cut from the narration, but they're good answers in Q&A.
-
+- **Why not ChatGPT?** It's great at answers, but you have to know what to ask, and you leave with a conversation: no path, no friends, nothing to show anyone.
 - **Grading:** free-form model scoring gave fluent nonsense up to 85 out of 100. With quotes checked by code, those answers top out at 25. On 71 test answers it passed none of the 48 that should fail, and wrongly failed one of 23. The set is small and AI-labelled, and the trust page says so.
 - **Cheating:** the evidence page shows signals like pasted text and typing time. It won't stop a determined cheater, and we say so.
+- **Alberta:** unemployment is 7.3 percent (live from Statistics Canada on the landing page). People picking up skills on their own time, and showing it, helps the economy adapt.

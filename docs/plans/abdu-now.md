@@ -8,7 +8,7 @@ Last updated: Sun Nov 8, just after midnight.
 
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
-- Restructuring the voiceover script into demo order (problem, solution, create a course, Read → flashcards → quiz → resources → teach-back, FYP, Network, Review), owner's request. Touches `docs/submission/voiceover-script.md` only.
+Nothing on Mirza's paths now.
 
 
 
@@ -21,6 +21,7 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Voiceover script rebuilt in demo order with one Do/Say pair per click (owner's request), in `docs/submission/voiceover-script.md`.
 - Put Mirza's d759362 9878ef5 live (auto-check: typecheck and tests pass).
 - Put Mirza's 475d388 9b7a078 84781b3 live (auto-check: typecheck and tests pass).
 - Friends: Add friend on network cards (request, accept or decline), Ping a friend (once an hour, shown on Network), friends' courses with progress bars, and a Friends and privacy section in Settings to turn off sharing progress, requests and pings.
