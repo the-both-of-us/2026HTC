@@ -99,6 +99,7 @@ The rest of the list (moving types out of `shared/types.ts`, the Gemini route, `
 **From Abdu to Mirza (Sat Nov 7, night): one streak number everywhere.**
 
 - [ ] **The dashboard's streak** (`src/features/dashboard/streak.ts`) counts local days from proofs and reviews. The sidebar now shows a flame from `@/features/streaks` (Edmonton days, one freeze a week, counted on each proof), so the two can disagree on screen. Please show `getStreak(userId)` from `@/features/streaks` on the dashboard instead: it returns `{ count, best, doneToday, freezeReady, frozen, sparksThisWeek, combo, week }`, where `week` is Monday to Sunday. If reviews should count toward the streak too, say so here and I'll add a `recordStudied(userId, id)` hook.
+- [ ] **Devpost reframe for students and curious people.** Your draft in `docs/submission/` came before programs, the Read tab, the proving formats, circles and streaks, and the final eval split (70 of 71 agree, 0 of 48 false pass, 1 of 23 false fail). Suggested replacement paragraphs are in `docs/plans/devpost-suggestions.md`. Take what helps. Devpost closes Sun 11:30 AM.
 
 ## Get started (Mirza)
 
