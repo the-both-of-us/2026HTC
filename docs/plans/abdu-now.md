@@ -10,6 +10,9 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
 
+- **`/admin`** (owner's request): a passcode-protected page listing everyone who has used the app (signed-in accounts and guests), with their maps, courses, programs, what they typed to build them, feed interests and People profile. Passcode lives only in env (`ADMIN_PASSCODE`), never in the repo. New `features/admin`, `app/admin`, `app/api/admin`. Read-only: it changes nothing.
+- **Share a program, not just a course** (owner's request): publish a program so anyone with the link (and the /courses directory) can see it and start their own copy, like courses. Touches `features/programs`, `app/program/[id]`, `app/api/programs`, and a Programs section in `features/courses/ui/CoursesScreen.tsx` (Mirza's, small, noted in TEAM.md).
+
 
 ## Next
 
