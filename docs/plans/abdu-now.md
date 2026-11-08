@@ -14,6 +14,15 @@ Last updated: Sat Nov 7, evening.
   - `features/voice`: dictation keyterms from every topic title on the map, plus common tech terms.
   - `features/teachback`: a full final-interview run, all 3 questions through to the badge.
 - **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
+- **Study circle polish** (agent). Touches `features/circles` (all of it), `src/app/circle/**` and `src/app/api/circles/**`. It may add small exports to `features/skill-map` and `features/teachback`.
+  - The whole map fits, with bigger labels and visible member initials.
+  - The race and the live feed move to the top, built for a projector.
+  - A celebration toast when anyone proves a topic, and one-tap cheers.
+  - A "Share invite" button on phones (the native share sheet).
+  - No all-caps eyebrows or "·" meta strings.
+- **Then the remaining UI audit items** (same agent, after the polish agent's commits land):
+  - Locked map cards too faint on phones; the "In the source" badge overflow (`skill-map/ui/SkillNodeView.tsx`).
+  - The guest progress 403, fixed your way: 200 with `{ isOwner: false, proven: {}, unlocked: {} }` (`src/app/api/maps/[id]/progress`, `skill-map/ui/mapApi.ts`).
 
 ## Next
 
