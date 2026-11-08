@@ -4,7 +4,6 @@
 
 | File | What |
 |---|---|
-| [`devpost.md`](devpost.md) | The Devpost project text, section by section, ready to paste. |
 | [`ai-disclosure.md`](ai-disclosure.md) | Every AI tool and model used, building it and inside the product. Required by the rules. |
 | [`video-script.md`](video-script.md) | The 3-minute presentation and video script, plus Q&A prep. |
 

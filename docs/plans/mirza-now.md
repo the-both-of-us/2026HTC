@@ -6,7 +6,7 @@ Last updated: Sun Nov 8.
 
 ## Working on now
 
-- Removing the dev-only voice preview (`src/app/voice-preview`, `src/app/api/voice/preview-attempt`, the preview component in `features/voice`, Abdu's, owner's request) and the old draft `docs/submission/devpost.md`. No other changes.
+- Nothing new: waiting on the owner.
 
 ## Next
 
@@ -15,6 +15,7 @@ Last updated: Sun Nov 8.
 
 ## Done today (latest first)
 
+- Removed the old draft `docs/submission/devpost.md` (`ef9507a`). The voice preview stays: no code changed.
 - Resources tab long titles (`9878ef5`): two-line limit, Play here under the text. Abdu's `ResourcesTab.tsx`, see TEAM.md. Needs a deploy.
 - Voiceover script rebuilt (`1924d55`) around boring, lonely learning: topic courses, Network, FYP, per-topic resources. FYP like counts include the demo seed, so keep them out of the video or set `DEMO_LIKE_SEED` to null. Docs only.
 - Voiceover script for the Devpost video (`a36f059`): `docs/submission/voiceover-script.md`, narration with a shot for each beat. Docs only.
