@@ -11,3 +11,6 @@ export { toPublicCourse } from "./types";
 export type { CourseDetail, CourseSkill, CourseSort, LikeResult, PublicCourse } from "./types";
 export { deleteUserData } from "./deleteData";
 export type { DeletedCourseData } from "./deleteData";
+// The publishing rules, for programs to share the same ones.
+export { learningOrder, MAX_AUTHOR_NAME_LENGTH, normalizeAuthorName, normalizeQuery } from "./rules";
+export { requireLearner, requirePublisher, requireUnpublisher, viewerAccess } from "./session";

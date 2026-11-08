@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { getProgramView, type ProgramView } from "@/features/programs";
-import { ProgramScreen } from "@/features/programs/client";
-import { HttpError } from "@/shared/http";
+import { getProgramPage, type ProgramPage } from "@/features/programs";
+import { ProgramScreen, PublicProgramScreen } from "@/features/programs/client";
 import { readUserId } from "@/shared/identity";
 import { buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 
@@ -27,41 +26,35 @@ async function ProgramFromRoute({ params }: ProgramPageProps) {
   const { id } = await params;
   const loaded = await loadProgram(id);
 
-  if (loaded === "private") {
-    return (
-      <Notice title="This program is private">
-        Only the person who planned it can open it. If it is yours, open it in the browser you planned it in.
-      </Notice>
-    );
-  }
   if (loaded === "failed") {
     return (
       <PageShell width="reading">
-        <h1 className="text-3xl font-medium">Your program</h1>
-        <ErrorNotice className="mt-6" message="The program could not be loaded. Your progress is saved, so try again." />
+        <h1 className="text-3xl font-medium">Program</h1>
+        <ErrorNotice className="mt-6" message="The program could not be loaded. Any progress is saved, so try again." />
         <Link href={`/program/${id}`} className={`${buttonClasses("secondary")} mt-4`}>
           Try again
         </Link>
       </PageShell>
     );
   }
+  // A private program is the same answer as a missing one, so nobody can tell it exists.
   if (!loaded) {
     return (
       <Notice title="This program is not here">
-        The link may be incomplete, or the program may have been deleted. You can plan a new one from a job
-        posting or a topic.
+        The link may be incomplete, or the program may be private or deleted. If it is yours, open it in the
+        browser you planned it in. You can also plan a new one from a job posting or a topic.
       </Notice>
     );
   }
-  return <ProgramScreen program={loaded} />;
+  if (loaded.mode === "public") return <PublicProgramScreen program={loaded.program} />;
+  return <ProgramScreen program={loaded.program} sharing={loaded.sharing} />;
 }
 
-/** The program for this visitor, null when missing, or why it can't be shown. */
-async function loadProgram(id: string): Promise<ProgramView | null | "private" | "failed"> {
+/** The program for this visitor: their own, a public one, or null when missing or private. */
+async function loadProgram(id: string): Promise<ProgramPage | null | "failed"> {
   try {
-    return await getProgramView(id, await readUserId());
+    return await getProgramPage(id, await readUserId());
   } catch (error) {
-    if (error instanceof HttpError && error.status === 403) return "private";
     console.error("[program page] could not load a program", error);
     return "failed";
   }
@@ -89,7 +82,7 @@ function ProgramLoading() {
     <PageShell width="reading">
       <p role="status" className="flex items-center gap-2.5 text-ink-soft">
         <Spinner size={16} />
-        Loading your program.
+        Loading the program.
       </p>
     </PageShell>
   );

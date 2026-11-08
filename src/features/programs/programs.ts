@@ -34,9 +34,23 @@ export function programAudience(program: Pick<Program, "audience" | "title" | "s
   return inferAudience(`${program.title} ${program.sourceText}`);
 }
 
+/** Where the course at `index` sits in its program, for the map header. */
+export function programLink(program: Pick<Program, "id" | "title" | "courses">, index: number): ProgramLink {
+  const slug = program.courses[index].slug;
+  return {
+    id: program.id,
+    title: program.title,
+    courseNumber: index + 1,
+    courseCount: program.courses.length,
+    unlocks: program.courses.filter((other) => other.requires.includes(slug)).map((other) => other.title),
+  };
+}
+
 /** After this long, a claim whose map never appeared counts as a build that died. */
 const STALE_CLAIM_MS = 3 * 60_000;
-const NOT_FOUND = "We could not find that program. Check the link, or plan a new one.";
+/** For a missing program, and for a private one to anyone but its owner. */
+export const PROGRAM_NOT_FOUND =
+  "We could not find that program. It may have been made private, or the link is incomplete.";
 
 /**
  * Plans a program, or builds one map when the input is narrow. "auto" lets the model
@@ -78,13 +92,13 @@ export async function createProgramOrMap(input: {
   return { programId: program.id };
 }
 
-/** The program and its owner's progress, or null when it is missing. Throws 403 for someone else's. */
+/**
+ * The program and its owner's progress, or null when it is missing or someone else's: the
+ * same answer, so nobody can tell a private program exists. Public ones go through sharing.ts.
+ */
 async function loadOwnProgram(programId: string, userId: string | null) {
   const stored = await getProgram(programId);
-  if (!stored) return null;
-  if (stored.ownerId !== userId) {
-    throw new HttpError("This program is private, so only the person who planned it can open it.", 403);
-  }
+  if (!stored || stored.ownerId !== userId) return null;
   const program = await withClaims(stored);
 
   // For each built course: how many topics it has and how many are proved.
@@ -141,7 +155,7 @@ export async function openCourse(
   userId: string | null,
 ): Promise<{ status: "ready"; mapId: string } | { status: "building" }> {
   const loaded = await loadOwnProgram(programId, userId);
-  if (!loaded) throw new HttpError(NOT_FOUND, 404);
+  if (!loaded) throw new HttpError(PROGRAM_NOT_FOUND, 404);
   const { program, progress, states } = loaded;
 
   const index = program.courses.findIndex((course) => course.slug === slug);
@@ -166,18 +180,11 @@ export async function openCourse(
     return openCourse(programId, slug, userId);
   }
 
-  const link: ProgramLink = {
-    id: program.id,
-    title: program.title,
-    courseNumber: index + 1,
-    courseCount: program.courses.length,
-    unlocks: program.courses.filter((other) => other.requires.includes(slug)).map((other) => other.title),
-  };
   try {
     await generateCourseMap({
       id: mapId,
       ownerId: program.ownerId,
-      program: link,
+      program: programLink(program, index),
       cached: sampleCourseOutput(program.sampleId, slug),
       course: {
         programTitle: program.title,

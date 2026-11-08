@@ -156,9 +156,11 @@ describe("programs", () => {
     const { programId } = (await createProgramOrMap({ text: SAMPLE, kind: "posting", shape: "program", ownerId: owner })) as {
       programId: string;
     };
-    await expect(getProgramView(programId, randomUUID())).rejects.toThrow("private");
-    await expect(getProgramView(programId, null)).rejects.toThrow("private");
-    await expect(openCourse(programId, "anything", randomUUID())).rejects.toThrow("private");
+    // Someone else's private program is the same answer as a missing one.
+    expect(await getProgramView(programId, randomUUID())).toBeNull();
+    expect(await getProgramView(programId, null)).toBeNull();
+    await expect(openCourse(programId, "anything", randomUUID())).rejects.toMatchObject({ status: 404 });
+    await expect(openCourse(randomUUID(), "anything", owner)).rejects.toMatchObject({ status: 404 });
 
     const [row] = await listMyPrograms(owner);
     expect(row).toMatchObject({ id: programId, href: `/program/${programId}` });

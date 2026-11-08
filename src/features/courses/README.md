@@ -98,6 +98,10 @@ The order of checks is unchanged: a missing map is a 404 and someone else's map 
 
 `listMapsByOwner(ownerId)` is now available from skill-map. "My courses" (and `GET /api/courses/mine`) belongs to the dashboard step, not this feature, so it is not built here.
 
+## Used by programs
+
+Programs reuse the publishing rules: `index.ts` also exports `normalizeAuthorName`, `normalizeQuery`, `learningOrder`, `MAX_AUTHOR_NAME_LENGTH`, `requirePublisher` (now with an optional sentence), `requireUnpublisher`, `requireLearner` and `viewerAccess`. `CoursesScreen` shows `PublicPrograms` from `@/features/programs/client` above the courses. See `programs/README.md`.
+
 ## Files
 
 - `courses.ts`: list, view, publish, unpublish, `isPublished`. `likes.ts`: like and unlike. `start.ts`: start a course. `seed.ts`: the sample courses.

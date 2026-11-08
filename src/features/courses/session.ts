@@ -29,10 +29,10 @@ async function requireSignedIn(userId: string, message: string): Promise<void> {
   if (!session.signedIn || session.userId !== userId) throw new CoursesError(message, 401);
 }
 
-/** Who may publish their own maps: signed in, once Auth0 is set up. */
-export async function requirePublisher(userId: string): Promise<void> {
+/** Who may publish their own maps (or programs, with their own sentence): signed in, once Auth0 is set up. */
+export async function requirePublisher(userId: string, message = SIGN_IN_TO_PUBLISH): Promise<void> {
   assertUserId(userId);
-  await requireSignedIn(userId, SIGN_IN_TO_PUBLISH);
+  await requireSignedIn(userId, message);
 }
 
 /** Who may make their own course private: any owner. Taking a course down never needs an account. */

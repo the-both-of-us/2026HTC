@@ -1,5 +1,5 @@
 import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
-import type { Program } from "./types";
+import type { Program, ProgramListing } from "./types";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -7,6 +7,10 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 export type CourseClaim = { mapId: string; claimedAt: string };
 
 const programKey = (id: string) => `programs/${id}`;
+/** Present means the program is public. Ids are checked as UUIDs before a key is built. */
+const listingKey = (programId: string) => `program-listings/${programId}`;
+/** A learner's own copy of a public program, so starting again opens it. */
+const startKey = (programId: string, userId: string) => `program-starts/${programId}/${userId}`;
 const claimKey = (programId: string, slug: string) => `program-courses/${programId}/${slug}`;
 
 /**
@@ -124,17 +128,82 @@ export async function listMyPrograms(userId: string): Promise<ProgramSummary[]> 
   }));
 }
 
+function isListing(value: unknown): value is ProgramListing {
+  const listing = value as Partial<ProgramListing> | null;
+  return (
+    typeof listing?.programId === "string" &&
+    UUID_PATTERN.test(listing.programId) &&
+    typeof listing.title === "string" &&
+    typeof listing.summary === "string" &&
+    typeof listing.authorId === "string" &&
+    typeof listing.authorName === "string" &&
+    typeof listing.courseCount === "number" &&
+    typeof listing.publishedAt === "string"
+  );
+}
+
+/** The program's public listing, or null while it is private. */
+export async function getListing(programId: string): Promise<ProgramListing | null> {
+  if (!UUID_PATTERN.test(programId)) return null;
+  const listing = await getDoc<unknown>(listingKey(programId));
+  return isListing(listing) ? listing : null;
+}
+
+export async function saveListing(listing: ProgramListing): Promise<void> {
+  if (!UUID_PATTERN.test(listing.programId)) throw new Error("A program listing needs a program id");
+  await putDoc(listingKey(listing.programId), listing);
+}
+
+export async function deleteListing(programId: string): Promise<void> {
+  if (!UUID_PATTERN.test(programId)) return;
+  await deleteDoc(listingKey(programId));
+}
+
+/** Every public program. Each holds the owner id, so callers must make them public first. */
+export async function listListings(): Promise<ProgramListing[]> {
+  return (await listDocs<unknown>("program-listings/")).filter(isListing);
+}
+
+/** What `program-starts/<programId>/<userId>` holds. */
+export type ProgramStart = { copyId: string; startedAt: string };
+
+export async function getStart(programId: string, userId: string): Promise<ProgramStart | null> {
+  if (!UUID_PATTERN.test(programId) || !UUID_PATTERN.test(userId)) return null;
+  const doc = await getDoc<ProgramStart>(startKey(programId, userId));
+  return typeof doc?.copyId === "string" && UUID_PATTERN.test(doc.copyId) ? doc : null;
+}
+
+export async function saveStart(programId: string, userId: string, start: ProgramStart): Promise<void> {
+  if (!UUID_PATTERN.test(programId) || !UUID_PATTERN.test(userId)) throw new Error("A program start needs ids");
+  await putDoc(startKey(programId, userId), start);
+}
+
 /**
- * For "Delete my data": removes this user's programs and their course claims.
- * The course maps themselves are maps, so they go with the user's other maps.
+ * For "Delete my data": removes this user's programs, their course claims and listings, the
+ * start records other people left on them, and this user's own start records on others'
+ * programs. The course maps themselves are maps, so they go with the user's other maps.
+ * Only this user's records change, and running it twice is harmless.
  */
 export async function deleteProgramsByOwner(ownerId: string): Promise<number> {
   const programs = await listProgramsByOwner(ownerId);
   for (const program of programs) {
-    const keys = await listKeys(`program-courses/${program.id}/`);
+    const keys = [
+      ...(await listKeys(`program-courses/${program.id}/`)),
+      ...(await listKeys(`program-starts/${program.id}/`)),
+    ];
     await Promise.all(keys.map((key) => deleteDoc(key)));
+    await deleteListing(program.id);
     await deleteDoc(programKey(program.id));
     await deleteDoc(ownerIndexKey(ownerId, program.id));
+  }
+
+  if (UUID_PATTERN.test(ownerId)) {
+    const prefix = "program-starts/";
+    const mine = (await listKeys(prefix)).filter((key) => {
+      const [programId, userId, ...rest] = key.slice(prefix.length).split("/");
+      return Boolean(programId) && userId === ownerId && rest.length === 0;
+    });
+    await Promise.all(mine.map((key) => deleteDoc(key)));
   }
   return programs.length;
 }

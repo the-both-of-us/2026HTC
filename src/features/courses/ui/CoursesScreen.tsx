@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { Heart, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { PublicPrograms } from "@/features/programs/client";
 import { Badge, Button, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import type { CourseSort, PublicCourse } from "../types";
 import { fetchCourses, type Result } from "./api";
@@ -94,13 +95,13 @@ export function CoursesScreen() {
     <PageShell width="wide">
       <h1 className="text-3xl font-medium">Courses</h1>
       <p className="mt-2 max-w-2xl text-lg text-ink-soft">
-        Skill maps that people chose to share. Open one to see its skills in learning order.
+        Skill maps and programs that people chose to share. Open one to see what it covers, in learning order.
       </p>
 
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1.5 sm:max-w-md sm:flex-1">
           <label htmlFor="course-search" className="text-base font-semibold">
-            Search courses
+            Search courses and programs
           </label>
           <input
             id="course-search"
@@ -128,6 +129,7 @@ export function CoursesScreen() {
       </div>
 
       <div className="mt-6 flex flex-col gap-4">
+        <PublicPrograms query={query} />
         {showLoadingLine ? (
           <p
             ref={loadingLine}

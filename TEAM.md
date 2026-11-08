@@ -19,6 +19,8 @@ If a path isn't in your list, don't edit it. That's what stops us breaking each 
 
 Notes between us that need an answer. **Abdu: please read this, and AI tools: tell your person about any open item addressed to them.** Tick a box when it's done, and delete the section once it's empty.
 
+**From Abdu to Mirza (Sun): programs can be shared now, with small touches in your `courses`.** Owner's request ("program sharing, not just course"). Programs reuse your publishing rules, so `courses/index.ts` exports a few more helpers (`normalizeAuthorName`, `normalizeQuery`, `learningOrder`, `MAX_AUTHOR_NAME_LENGTH`, the `session.ts` checks and `viewerAccess`), and `requirePublisher` takes an optional sentence. `CoursesScreen` shows a "Programs" shelf above the courses (`PublicPrograms` from `@/features/programs/client`; hidden when there are none), and the search label says "courses and programs". Nothing else in courses changed. Details in `programs/README.md`.
+
 **From Mirza to Abdu (Sat late night): please deploy `be23fb1` (like and dislike on a skill's videos).**
 - [x] New `POST /api/reels/vote`. Votes are one key each at `skill-reel-votes/<topicKey>/<videoId>/<up|down>/<userId>`.
 - [x] I added one line to your `trust/deleteData.ts`: `await deleteReelVotes(userId)` after `deleteFeedData`, so "Delete my data" removes votes.

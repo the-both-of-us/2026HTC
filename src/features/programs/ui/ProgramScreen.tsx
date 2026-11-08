@@ -6,15 +6,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
-import type { CourseView, ProgramView } from "../types";
+import type { CourseView, ProgramSharing as Sharing, ProgramView } from "../types";
+import { ProgramSharing } from "./ProgramSharing";
 
 /** How often to ask again while someone else's click is building the same course. */
 const POLL_MS = 3000;
 /** Stop asking after this long, and offer a retry instead. */
 const GIVE_UP_MS = 150_000;
 
-/** A program as a path of courses: one card each, with the next one to do lit up. */
-export function ProgramScreen({ program }: { program: ProgramView }) {
+/** A program as a path of courses: one card each, with the next one to do lit up. The owner can share it. */
+export function ProgramScreen({ program, sharing }: { program: ProgramView; sharing?: Sharing }) {
   const proven = program.courses.reduce((sum, course) => sum + course.proven, 0);
   const badges = program.courses.filter((course) => course.badge).length;
   const upNext = program.courses.find((course) => course.state === "open") ?? null;
@@ -36,6 +37,12 @@ export function ProgramScreen({ program }: { program: ProgramView }) {
         <Celebration program={program} />
         <NextGoal courses={program.courses} />
       </header>
+
+      {sharing && (
+        <div className="mt-6">
+          <ProgramSharing programId={program.id} sharing={sharing} />
+        </div>
+      )}
 
       <ol className="mt-8 flex flex-col">
         {program.courses.map((course, index) => (
