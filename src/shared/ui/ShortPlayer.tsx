@@ -7,14 +7,22 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Ref 
 const YOUTUBE = "https://www.youtube-nocookie.com";
 
 /**
+ * Browsers only allow sound after the person has clicked or pressed a key on the page. Without
+ * that, unmuting a playing video pauses it, so wait for the first interaction instead.
+ */
+function mayPlaySound(): boolean {
+  return (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? true;
+}
+
+/**
  * The embed without YouTube's own controls: our buttons drive it through the player API. No
  * loop=1: that needs playlist=<id>, which brings back YouTube's previous and next buttons, so the
  * player restarts the video itself when it ends.
  */
-function embedSrc(videoId: string) {
+function embedSrc(videoId: string, muted: boolean) {
   const params = new URLSearchParams({
     autoplay: "1",
-    mute: "1",
+    mute: muted ? "1" : "0",
     controls: "0",
     playsinline: "1",
     rel: "0",
@@ -46,7 +54,10 @@ export type ShortPlayerProps = {
   playing: boolean;
   /** The thumbnail's play button was pressed. */
   onStart?: () => void;
-  /** Whether sound is on. The player always starts muted (browsers allow that) and unmutes once ready. */
+  /**
+   * Whether sound is on. With sound on, a new Short loads unmuted. If the browser refuses to
+   * autoplay with sound, it falls back to playing muted and unmutes once it can.
+   */
   sound: boolean;
   onSound: (on: boolean) => void;
   boxRef?: Ref<HTMLDivElement>;
@@ -64,6 +75,17 @@ export function ShortPlayer({ videoId, title, playing, onStart, sound, onSound, 
   const player = useRef<HTMLIFrameElement>(null);
   const [paused, setPaused] = useState(false);
   const soundOn = useRef(sound);
+  // The sound setting when this Short started playing decides how its player loads. Toggling
+  // later talks to the running player instead of reloading it.
+  const [startSound, setStartSound] = useState(sound);
+  const [wasPlaying, setWasPlaying] = useState(playing);
+  if (playing !== wasPlaying) {
+    setWasPlaying(playing);
+    if (playing) setStartSound(sound);
+  }
+  /** Unmute nudges for this Short, capped so a strict browser never sees a mute/unmute loop. */
+  const nudges = useRef(0);
+  const started = useRef(false);
 
   const send = useCallback((message: object) => {
     player.current?.contentWindow?.postMessage(JSON.stringify(message), YOUTUBE);
@@ -81,9 +103,18 @@ export function ShortPlayer({ videoId, title, playing, onStart, sound, onSound, 
       } catch {
         return;
       }
-      if (data?.event === "onReady" && soundOn.current) command("unMute");
+      if (data?.event === "onReady" && soundOn.current && mayPlaySound()) command("unMute");
+      const info = typeof data?.info === "object" ? (data.info as { muted?: boolean }) : null;
+      // The player reports its mute state. Keep it in line with the setting, a few tries at most.
+      if (typeof info?.muted === "boolean" && info.muted === soundOn.current && nudges.current < 4 && (!soundOn.current || mayPlaySound())) {
+        nudges.current += 1;
+        command(soundOn.current ? "unMute" : "mute");
+      }
       const state = typeof data?.info === "number" ? data.info : data?.info?.playerState;
-      if (state === 1) setPaused(false);
+      if (state === 1) {
+        started.current = true;
+        setPaused(false);
+      }
       if (state === 2) setPaused(true);
       if (state === 0) {
         command("seekTo", [0, true]);
@@ -94,16 +125,44 @@ export function ShortPlayer({ videoId, title, playing, onStart, sound, onSound, 
     return () => window.removeEventListener("message", onMessage);
   }, [playing, command]);
 
-  // Turning sound on or off applies at once.
+  // Turning sound on or off applies at once, and earns a fresh set of nudges.
   useEffect(() => {
     soundOn.current = sound;
+    nudges.current = 0;
     if (playing) command(sound ? "unMute" : "mute");
   }, [sound, playing, command]);
+
+  // Sound is on but the page has had no click or key press yet (say, after a reload): the Short
+  // plays muted, and the first interaction anywhere turns the sound on.
+  useEffect(() => {
+    if (!playing || !sound || mayPlaySound()) return;
+    const unmute = () => command("unMute");
+    window.addEventListener("pointerdown", unmute, { once: true });
+    window.addEventListener("keydown", unmute, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unmute);
+      window.removeEventListener("keydown", unmute);
+    };
+  }, [playing, sound, command]);
+
+  // A browser that refuses to autoplay with sound leaves the player stopped. Then play muted,
+  // and the nudges above unmute it as soon as the browser allows.
+  useEffect(() => {
+    if (!playing || !startSound) return;
+    started.current = false;
+    const timer = window.setTimeout(() => {
+      if (started.current) return;
+      command("mute");
+      command("playVideo");
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [playing, startSound, videoId, command]);
 
   const onLoad = () => {
     setPaused(false);
     // Ask for the player's events; it answers with onReady, then each state change.
     send({ event: "listening", id: videoId, channel: "widget" });
+    nudges.current = 0;
     if (soundOn.current) command("unMute");
   };
 
@@ -118,7 +177,7 @@ export function ShortPlayer({ videoId, title, playing, onStart, sound, onSound, 
         <>
           <iframe
             ref={player}
-            src={embedSrc(videoId)}
+            src={embedSrc(videoId, !startSound || !mayPlaySound())}
             title={`YouTube video: ${title}`}
             onLoad={onLoad}
             allow="autoplay; encrypted-media; picture-in-picture"

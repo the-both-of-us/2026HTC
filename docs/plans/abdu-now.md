@@ -6,8 +6,6 @@ Last updated: Sat Nov 7, late night.
 
 ## Working on now
 
-- **Feed sound fix** (owner's request): Shorts stay muted even after turning sound on. Pressing M toggles sound, and the choice is kept for the whole scroll session. Files: `src/shared/ui/ShortPlayer.tsx`, `src/features/feed/ui/FeedScreen.tsx`. Mirza: please stay out of these two for the next half hour.
-
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
 Nothing on Mirza's paths now: `network` and `/people` are free again.
@@ -19,6 +17,7 @@ Nothing on Mirza's paths now: `network` and `/people` are free again.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- Feed sound: M (or the button) turns sound on or off, and the choice lasts for the tab's session (sessionStorage). With sound on, the next Shorts load unmuted. If the browser refuses sound before any click (say, after a reload), the Short plays muted and the first click or key press turns sound on, with no pause. The player also corrects itself if YouTube reports the wrong mute state. Checked in Chrome: M, three Shorts in a row, a reload, then a click.
 - Put Mirza's Shorts inside each skill (`fd323a5`) live on Vercel. Typecheck, lint and the reels, lessons and feed tests pass on main.
 - Put Mirza's Shorts redesign (`c6a19c4`) live on Vercel. Typecheck, lint and the feed tests pass on main.
 - **People: friends only by default, opt in to the network** (`dc5b861`). "Network: on/off" on `/people`: off (the default, and for every profile made before tonight) shows only your friends; on adds everyone else who opted in plus the demo profiles, matched by skills as before. "Invite a friend" gives a personal link and QR (`/people/invite/<code>`), reusable until "Make a new link"; accepting makes you friends both ways (a guest with no profile just types a name). Friends see each other's proven skills and evidence whatever the setting; "Remove friend" works both ways; "Delete profile" and "Delete my data" remove friend links and the invite (inside network's own `deleteUserData`, so `trust/deleteData.ts` needed no change). Checked: typecheck, lint, all tests, a production build, and two browsers on a dev server (invite, accept, both see each other, toggle). Mirza: see TEAM.md.

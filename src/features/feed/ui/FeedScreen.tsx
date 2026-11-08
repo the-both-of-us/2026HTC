@@ -31,6 +31,25 @@ function rememberFormat(format: FeedFormat) {
   }
 }
 
+const SOUND_KEY = "oryx-feed-sound";
+
+/** Sound on Shorts lasts for this scroll session (the tab), not forever. */
+function storedSound(): boolean {
+  try {
+    return window.sessionStorage.getItem(SOUND_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+function rememberSound(on: boolean) {
+  try {
+    window.sessionStorage.setItem(SOUND_KEY, on ? "on" : "off");
+  } catch {
+    // Storage refused: sound still follows the button for this page.
+  }
+}
+
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 const countLabel = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 const titleOf = (item: FeedItem) => (item.kind === "card" ? item.title : item.short.title);
@@ -77,8 +96,13 @@ export function FeedScreen() {
   const [error, setError] = useState("");
   const [current, setCurrent] = useState(0);
   const [announcement, setAnnouncement] = useState("");
-  // Sound on Shorts: off until the viewer turns it on, then on for every Short this visit.
-  const [sound, setSound] = useState(false);
+  // Sound on Shorts: off until the viewer turns it on (the button or M), then on for every
+  // Short for the rest of this tab's session.
+  const [sound, setSoundState] = useState(false);
+  const setSound = useCallback((on: boolean) => {
+    setSoundState(on);
+    rememberSound(on);
+  }, []);
   const scroller = useRef<HTMLDivElement>(null);
   const loadingMore = useRef(false);
 
@@ -106,6 +130,7 @@ export function FeedScreen() {
     // localStorage exists only in the browser.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormatState(storedFormat());
+    setSoundState(storedSound());
   }, []);
 
   useEffect(() => {
@@ -184,6 +209,12 @@ export function FeedScreen() {
       const target = event.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable=true]")) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === "m" || event.key === "M") {
+        event.preventDefault();
+        setSound(!sound);
+        setAnnouncement(sound ? "Sound off." : "Sound on.");
+        return;
+      }
       const step = event.key === "ArrowDown" || event.key === "j" ? 1 : event.key === "ArrowUp" || event.key === "k" ? -1 : 0;
       const root = scroller.current;
       if (!step || !root) return;
@@ -194,7 +225,7 @@ export function FeedScreen() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current]);
+  }, [current, sound, setSound]);
 
   const react = useCallback(async (card: FeedItem, reaction: "like" | "save") => {
     const field = reaction === "like" ? "liked" : "saved";
