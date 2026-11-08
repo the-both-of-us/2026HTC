@@ -8,7 +8,6 @@ Last updated: Sat Nov 7, night.
 
 The owner asked for all three on Abdu's side.
 
-- **Resources tab on every topic** (agent). Rebuilt from the old OryxLearn's resources: YouTube videos, Wikipedia, Google Books, podcasts (Taddy) and news (GNews), all real results from APIs, never links written by the AI. Results are cached per topic. Files: new `features/resources`, `src/app/api/resources`, a Resources tab in `skill-map/ui/SkillPanel.tsx`.
 - **"For you" feed with Shorts** (agent). A new `/feed`: full-screen swipe cards, each with one idea from your maps, plus every 4th card an educational YouTube Short (SafeSearch, cached). Each card has like, save, share and "Prove it" (opens the teach-back on that topic). Files: new `features/feed`, `src/app/feed`, `src/app/api/feed`, plus one sidebar link in `src/shared/ui/SideNav.tsx`.
 - New keys: `YOUTUBE_API_KEY`, `GNEWS_API_KEY`, `TADDY_API_KEY`, `TADDY_USER_ID` (in .env.local, Vercel and AWS).
 
@@ -18,6 +17,7 @@ The owner asked for all three on Abdu's side.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- **Resources tab on every skill** (`24b64fb`): Watch, Read, Listen and News from real APIs, cached 7 days, opened lazily; children get no news or podcasts.
 
 - Removed "Read the Grid" at the owner's request: the sidebar link, `/grid`, `/api/grid` and the strip on energy maps. The solve store stays, so old evidence pages and data deletion still work. Mirza: please drop the Grid part of point 7 in `docs/submission/devpost.md`.
 - Age-appropriate material (`63c7fa3`): a topic, PDF or program that names a grade, age or school level ("grade 1 math", "for kids", "high school chemistry") gets an audience on the map, which program courses inherit and older maps work out from their title and program. Topics, checkpoints, lessons (200 to 350 words for young children, no code) and teach-back grading are pitched at it; with no audience every prompt is byte for byte the old one (hash tests). Checked on a production build with real AI: "grade 1 math" planned 5 grade 1 strands, the first course's topics and checkpoints are child-level, the lesson has no jargon, and a childlike explanation passed (75). "SQL window functions" has no audience. Mirza: see TEAM.md for flashcards and quiz.
