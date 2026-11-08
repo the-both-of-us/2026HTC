@@ -6,8 +6,15 @@ Last updated: Sat Nov 7, evening.
 
 ## Working on now
 
-- **Redeploying.** Vercel BLOCKS deploys of commits authored by MirzaHB (not a member of the Vercel team), so production was stuck at `55a97f4` without your locked-skills and Sign out commits. This commit, by VVarrior1, deploys current main including yours. Until that's fixed, after you push, one of Abdu's commits (or `vercel redeploy`) is needed to put your work live.
-- **AWS redeploy from main**, adding `PROOF_SEAL_SECRET` to `scripts/deploy-aws.sh`'s secrets. Touches `scripts/deploy-aws.sh` only.
+- **AWS redeploy of `1d3694c`** (running; no repo files).
+- **Polish pass** (agent). Touches:
+  - `features/skill-map/ui` and `features/streaks/ui`: a shorter map header on phones.
+  - `features/proof`: a deleted evidence page answers a real 404.
+  - `features/lessons`: write the first open topic's lesson right after a map is built, so the Read tab is instant.
+  - `features/voice`: dictation keyterms from every topic title on the map, plus common tech terms.
+  - `features/teachback`: a full final-interview run, all 3 questions through to the badge.
+- **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
+- **Cleanup**: removing finished git worktrees on Abdu's machine. No repo files.
 
 ## Next
 
