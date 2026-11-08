@@ -1,3 +1,4 @@
+import { writeFirstLessonSoon } from "@/features/lessons";
 import { generatePdfSkillMap } from "@/features/skill-map";
 import { getUserId } from "@/shared/identity";
 import { mapErrorResponse } from "../errors";
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
   try {
     const ownerId = await getUserId();
     const map = await generatePdfSkillMap({ file: new Uint8Array(await file.arrayBuffer()), ownerId });
+    writeFirstLessonSoon(map.id);
     return Response.json({ id: map.id }, { status: 201 });
   } catch (error) {
     return mapErrorResponse(error);

@@ -1,3 +1,4 @@
+import { writeFirstLessonSoon } from "@/features/lessons";
 import { openCourse } from "@/features/programs";
 import { errorResponse } from "@/shared/http";
 import { readUserId } from "@/shared/identity";
@@ -14,6 +15,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   try {
     const result = await openCourse(id, slug, await readUserId());
     if (result.status === "building") return Response.json({ building: true }, { status: 202 });
+    writeFirstLessonSoon(result.mapId);
     return Response.json({ mapId: result.mapId });
   } catch (error) {
     return errorResponse(error, "This course could not be built this time. Please try again.");

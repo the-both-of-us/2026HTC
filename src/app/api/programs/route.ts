@@ -1,3 +1,4 @@
+import { writeFirstLessonSoon } from "@/features/lessons";
 import { createProgramOrMap, type ProgramShape } from "@/features/programs";
 import { errorResponse } from "@/shared/http";
 import { getUserId } from "@/shared/identity";
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
   try {
     const ownerId = await getUserId();
     const result = await createProgramOrMap({ text, kind, shape, ownerId });
+    if ("mapId" in result) writeFirstLessonSoon(result.mapId);
     return Response.json(result, { status: 201 });
   } catch (error) {
     return errorResponse(error, "The program could not be planned this time. Please try again.");

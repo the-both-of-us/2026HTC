@@ -16,6 +16,8 @@ The **Read** tab: a 3 to 5 minute lesson on one skill, so a learner can learn it
 4. Otherwise one `chatJSON` call (label `lesson`, Gemini first via `preferredRoute`, then the normal chain) writes it from the map title and the node's title, why and checkpoints. The source text is never sent.
 5. The checks in `validate.ts` run inside the schema, so a reply that fails them gets one retry with the reason. Then it is saved.
 
+**Written ahead.** Every route that builds a map (`/api/maps`, `/api/maps/pdf`, `/api/programs` for one course, and opening a program course) calls `writeFirstLessonSoon(mapId)`. With Next's `after()` it writes the lesson for the first topic with no prerequisites once the response is sent: one model call at most, so the Read tab is instant. Opening the tab mid-write joins the same call.
+
 ## Honesty
 
 - **No answer key to paste.** The lesson teaches every checkpoint but may not copy one: `copiedCheckpoint` rejects the whole checkpoint, or any 8 of its words in a row (the prompt asks for fewer than 6). Otherwise reading would become copy-paste into teach-back.

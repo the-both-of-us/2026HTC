@@ -1,3 +1,4 @@
+import { writeFirstLessonSoon } from "@/features/lessons";
 import { generateSkillMap } from "@/features/skill-map";
 import { getUserId } from "@/shared/identity";
 import { mapErrorResponse } from "./errors";
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
   try {
     const ownerId = await getUserId();
     const map = await generateSkillMap({ text, kind, ownerId });
+    writeFirstLessonSoon(map.id);
     return Response.json({ id: map.id }, { status: 201 });
   } catch (error) {
     return mapErrorResponse(error);
