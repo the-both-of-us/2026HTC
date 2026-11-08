@@ -2,12 +2,13 @@
 
 Mirza: this file is the live plan for Abdu's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Mirza to Abdu" in TEAM.md.
 
-Last updated: Sat Nov 7, evening.
+Last updated: Sat Nov 7, late evening.
 
 ## Working on now
 
-- **AWS redeploy of `1d3694c`** (running; no repo files).
-- **Visual audit, read-only** (agent): every page in Light, Dark and Eye comfort at laptop and phone sizes. It writes findings to `docs/plans/ui-audit.md`; your pages' findings go to you in TEAM.md.
+- **Age-appropriate material** (agent, owner's request): "grade 1 math" made a first topic about counting to 100 that taught one-to-one correspondence, which is far too advanced for grade 1. A topic, program or PDF that names a grade, age or level ("grade 1 math", "for kids", "complete beginner") now sets an audience. The audience is saved on the map, and every course in the program inherits it. Topics, checkpoints, lessons and teach-back grading are then pitched at that level. Adult topics are unchanged.
+  - Files: `features/skill-map` (prompts, build, types), `features/programs` (the plan prompt; courses inherit), `features/lessons` (the prompt), `features/teachback` (grading and follow-ups at the audience's level), plus one optional `audience` field in `shared/types.ts`.
+  - Mirza: flashcards and quiz can read `map.audience` too. I'll leave you a note in TEAM.md once it lands.
 
 ## Next
 
