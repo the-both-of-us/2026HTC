@@ -6,7 +6,14 @@ Last updated: Sat Nov 7, night.
 
 ## Working on now
 
-- **Feed ranking by engagement** (agent, owner's request: "store generated topiclets and pulled youtube links, based on an algorithm like more likes get more action"). Every card and Short is stored for good. Each item also stores counts, built from per-viewer keys: views, time on card, quick skips, likes, saves, shares and "Prove it" taps. The feed ranks items by an engagement score with a fairness boost for new items. It still favours your unproved and fading topics, and drops what you've already seen. One YouTube search now keeps up to 5 Shorts per topic, and the best-performing one plays. Topics people love get a fresh batch of cards. Files: `features/feed`, `src/app/api/feed/**`, and `trust/deleteData.ts` (one line).
+- **The feed becomes interest-based** (agent, owner's request). It replaces the map-based feed and the earlier ranking plan.
+  - The feed is for passive scrolling and the maps are for active learning, so the feed no longer comes from maps.
+  - First visit: pick at least 3 interests from suggestions (game theory, stoicism, black holes…) or type your own, like TikTok's onboarding. You can edit them later.
+  - Cards and Shorts are stored per interest in a shared pool, so everyone's likes rank the same items. Ranking is by engagement (views, time on card, skips, likes, saves, shares, "Go deeper" taps), with a boost for new items, and seen items drop. Interests you like get more weight.
+  - Popular interests get fresh batches. One YouTube search keeps up to 5 Shorts per interest.
+  - "Go deeper" turns a card into a real course (the bridge to active learning).
+  - Pools for the suggested interests are pre-made, so the demo needs no AI call.
+  - Files: `features/feed`, `src/app/feed`, `src/app/api/feed/**`, `trust/deleteData.ts` (one line), and possibly a `?topic=` prefill on the landing input (`features/landing`).
 
 ## Next
 
