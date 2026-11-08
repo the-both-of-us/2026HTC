@@ -2,11 +2,18 @@
 
 Abdu: this file is the live plan for Mirza's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Abdu to Mirza" in TEAM.md.
 
-Last updated: Sat Nov 7, evening.
+Last updated: Sat Nov 7, evening (locked skills).
 
 ## Working on now
 
-- Nothing new yet: waiting on the owner for the next task. `SkillPanel.tsx` is free again.
+- **Locked skills: no study features until unlocked, plus an "Unlock anyway" button** (OK'd by Abdu via Mirza). A locked skill no longer generates its reading, flashcards or quiz (UI and server both refuse). The owner can press "Unlock anyway": it's saved per learner at `unlocks/<mapId>/<ownerId>/<nodeId>`, the skill becomes Available everywhere, including proving, and shows an "Unlocked early" mark. Touches:
+  - `src/features/skill-map/states.ts` (an unlocked skill counts as available), `ui/SkillPanel.tsx`, `ui/MapScreen.tsx`, `ui/SkillNodeView.tsx`, `ui/MapCanvas.tsx`, `ui/SkillList.tsx`, `ui/mapApi.ts`
+  - `src/features/teachback/attempts.ts` and `index.ts` (save an unlock, `getProgress` includes it, Delete my data removes it)
+  - `src/shared/types.ts` (`MapProgress.unlocked`, optional)
+  - new `src/app/api/maps/[id]/unlock/route.ts`
+  - `src/features/lessons` and `src/app/api/lessons` (refuse a locked skill)
+  - Mirza's own: `flashcards` and `quiz` routes (refuse a locked skill)
+  **Please avoid these files until this lands.**
 
 ## Next
 
