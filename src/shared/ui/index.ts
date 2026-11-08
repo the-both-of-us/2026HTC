@@ -24,3 +24,4 @@ export { ThemeSelect, useTheme } from "./ThemeSelect";
 export { TextSizeSelect } from "./TextSizeSelect";
 export { resolvedTheme, setTheme, subscribeTheme, THEMES } from "./theme";
 export type { Theme } from "./theme";
+export { PanelVisibleContext, usePauseWhenHidden } from "./pauseWhenHidden";

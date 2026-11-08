@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { tabId, Tabs } from "@/shared/ui";
+import { PanelVisibleContext, tabId, Tabs } from "@/shared/ui";
 
 export type StudyTab = { id: string; label: string; content: ReactNode;
   /** Mounted only once the tab is first opened, for content that costs a lookup. */
@@ -44,7 +44,7 @@ export function StudyTabs({ tabs }: { tabs: StudyTab[] }) {
             // The Flashcards and Quiz parts draw their own top rule, which a tab does not need.
             className="[&>section]:border-t-0 [&>section]:pt-0"
           >
-            {tab.lazy && !active && !opened.includes(tab.id) ? null : tab.content}
+            <PanelVisibleContext value={active}>{tab.lazy && !active && !opened.includes(tab.id) ? null : tab.content}</PanelVisibleContext>
           </div>
         );
       })}

@@ -2,8 +2,8 @@
 
 import { BookOpen, ExternalLink, Newspaper, Play, Podcast } from "lucide-react";
 /* eslint-disable @next/next/no-img-element -- thumbnails come from several outside hosts */
-import { useEffect, useState } from "react";
-import { Button, ErrorNotice } from "@/shared/ui";
+import { useEffect, useRef, useState } from "react";
+import { Button, ErrorNotice, usePauseWhenHidden } from "@/shared/ui";
 import type { ResourceItem, ResourceKind } from "../types";
 
 type Phase = { kind: "loading" } | { kind: "ready"; items: ResourceItem[] } | { kind: "error"; message: string };
@@ -89,6 +89,8 @@ function ResourcesBody({ mapId, nodeId }: { mapId: string; nodeId: string }) {
 
 function ResourceRow({ item }: { item: ResourceItem }) {
   const [playing, setPlaying] = useState(false);
+  const frame = useRef<HTMLIFrameElement>(null);
+  usePauseWhenHidden(frame, playing);
   const Icon = ICONS[item.kind];
   const shape = item.kind === "read" || item.kind === "listen" ? "h-16 w-12" : "h-14 w-24";
 
@@ -126,8 +128,9 @@ function ResourceRow({ item }: { item: ResourceItem }) {
       </div>
       {item.videoId && playing && (
         <iframe
+          ref={frame}
           title={item.title}
-          src={`https://www.youtube-nocookie.com/embed/${item.videoId}?autoplay=1&rel=0`}
+          src={`https://www.youtube-nocookie.com/embed/${item.videoId}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"

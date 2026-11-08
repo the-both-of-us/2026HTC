@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import { Play, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type Ref } from "react";
+import { usePauseWhenHidden } from "./pauseWhenHidden";
 
 const YOUTUBE = "https://www.youtube-nocookie.com";
 
@@ -160,14 +161,20 @@ export function ShortPlayer({ videoId, title, playing, onStart, sound, onSound, 
 
   const onLoad = () => {
     setPaused(false);
+    userPaused.current = false;
     // Ask for the player's events; it answers with onReady, then each state change.
     send({ event: "listening", id: videoId, channel: "widget" });
     nudges.current = 0;
     if (soundOn.current) command("unMute");
   };
 
+  // Paused by a tap, as opposed to paused because the page or tab went out of view.
+  const userPaused = useRef(false);
+  usePauseWhenHidden(player, playing, userPaused);
+
   const togglePause = () => {
     command(paused ? "playVideo" : "pauseVideo");
+    userPaused.current = !paused;
     setPaused(!paused);
   };
 
