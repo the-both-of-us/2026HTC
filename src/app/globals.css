@@ -187,94 +187,94 @@
  * system prefers it. Each theme overrides the same tokens, so every screen follows.
  *
  * Dark: Seal's ink world inverted. Deep viridian-black paper, bone text, the green inks
- * lifted, seals struck in a light ink. Contrast (WCAG AA, checked): ink on paper 14.1, on
- * sheet 12.5, on raised 10.8, on tint 8.5, on highlight 7.7; ink-soft on paper 8.9, on sheet
- * 7.9, on raised 6.8, on tint 5.4; proven on paper 9.0, on sheet 8.0, on proven-surface 6.7;
- * danger on paper 8.7, on danger-surface 7.8; accent-bright on paper 11.2; on-dark on accent
- * 13.0; control-edge on paper 7.5.
+ * lifted, seals struck in a light ink. Softened on 2026-11-07 because the owner found
+ * 14:1 too harsh. Contrast (WCAG AA, checked): ink on paper 10.9, on sheet 9.9, on raised 8.8,
+ * on tint 7.0, on highlight 6.3; ink-soft on paper about 7, on raised about 5.7, on tint about 4.5;
+ * proven on paper 6.8, on proven-surface 5.3; danger on paper 7.4, on danger-surface 6.8;
+ * accent-bright on paper 8.3; paper on accent 9.4; control-edge on paper 5.3.
  */
 html[data-theme="dark"] {
-  --color-paper-hi: #122a26;
-  --color-ink-2: #a9c0b6;
-  --color-tint: #244640;
+  --color-paper-hi: #172c27;
+  --color-ink-2: #9fb3aa;
+  --color-tint: #284540;
   --color-foil-a: #3fc4b1;
   --color-foil-b: #a68cf2;
   --color-foil-c: #f07fb1;
-  --color-alert: #f4a3ac;
-  --color-on-ink: #0c1f1c;
-  --color-on-ink-soft: #2f4c46;
+  --color-alert: #e79aa3;
+  --color-on-ink: #12241f;
+  --color-on-ink-soft: #2f4a44;
   --color-ink-press: #030a09;
-  --color-paper: #0c1f1c;
-  --color-sheet: #122a26;
-  --color-raised: #1a3530;
-  --color-rule: #244640;
-  --color-rule-strong: #55786f;
-  --color-control-edge: #93b3a8;
-  --color-ink: #e4ebe1;
-  --color-ink-soft: #a9c0b6;
-  --color-on-dark: #0c1f1c;
-  --color-accent: #cfe6da;
-  --color-accent-bright: #a6dccb;
-  --color-amber: #a9c0b6;
-  --color-violet: #cfe6da;
-  --color-violet-dim: #55786f;
-  --color-danger: #f4a3ac;
-  --color-danger-surface: #3b1c21;
-  --color-focus: #e4ebe1;
-  --color-locked: #a9c0b6;
-  --color-locked-surface: #162e2a;
-  --color-available: #e4ebe1;
-  --color-available-surface: #122a26;
-  --color-proven: #5ccfba;
-  --color-proven-surface: #14392f;
-  --color-on-proven: #0c1f1c;
-  --color-forest: #cfe6da;
-  --color-forest-deep: #a6dccb;
-  --color-contour: #a9c0b6;
-  --color-highlight: #2b4d46;
+  --color-paper: #12241f;
+  --color-sheet: #172c27;
+  --color-raised: #1e3530;
+  --color-rule: #284540;
+  --color-rule-strong: #4f6e66;
+  --color-control-edge: #7f9a91;
+  --color-ink: #cdd6cf;
+  --color-ink-soft: #9fb3aa;
+  --color-on-dark: #12241f;
+  --color-accent: #b5cbbf;
+  --color-accent-bright: #98c2b4;
+  --color-amber: #9fb3aa;
+  --color-violet: #b5cbbf;
+  --color-violet-dim: #4f6e66;
+  --color-danger: #e79aa3;
+  --color-danger-surface: #3a1f24;
+  --color-focus: #cdd6cf;
+  --color-locked: #9fb3aa;
+  --color-locked-surface: #1a302b;
+  --color-available: #cdd6cf;
+  --color-available-surface: #172c27;
+  --color-proven: #55b9a6;
+  --color-proven-surface: #183a32;
+  --color-on-proven: #12241f;
+  --color-forest: #b5cbbf;
+  --color-forest-deep: #98c2b4;
+  --color-contour: #9fb3aa;
+  --color-highlight: #2e4c46;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) {
-    --color-paper-hi: #122a26;
-    --color-ink-2: #a9c0b6;
-    --color-tint: #244640;
+    --color-paper-hi: #172c27;
+    --color-ink-2: #9fb3aa;
+    --color-tint: #284540;
     --color-foil-a: #3fc4b1;
     --color-foil-b: #a68cf2;
     --color-foil-c: #f07fb1;
-    --color-alert: #f4a3ac;
-    --color-on-ink: #0c1f1c;
-    --color-on-ink-soft: #2f4c46;
+    --color-alert: #e79aa3;
+    --color-on-ink: #12241f;
+    --color-on-ink-soft: #2f4a44;
     --color-ink-press: #030a09;
-    --color-paper: #0c1f1c;
-    --color-sheet: #122a26;
-    --color-raised: #1a3530;
-    --color-rule: #244640;
-    --color-rule-strong: #55786f;
-    --color-control-edge: #93b3a8;
-    --color-ink: #e4ebe1;
-    --color-ink-soft: #a9c0b6;
-    --color-on-dark: #0c1f1c;
-    --color-accent: #cfe6da;
-    --color-accent-bright: #a6dccb;
-    --color-amber: #a9c0b6;
-    --color-violet: #cfe6da;
-    --color-violet-dim: #55786f;
-    --color-danger: #f4a3ac;
-    --color-danger-surface: #3b1c21;
-    --color-focus: #e4ebe1;
-    --color-locked: #a9c0b6;
-    --color-locked-surface: #162e2a;
-    --color-available: #e4ebe1;
-    --color-available-surface: #122a26;
-    --color-proven: #5ccfba;
-    --color-proven-surface: #14392f;
-    --color-on-proven: #0c1f1c;
-    --color-forest: #cfe6da;
-    --color-forest-deep: #a6dccb;
-    --color-contour: #a9c0b6;
-    --color-highlight: #2b4d46;
+    --color-paper: #12241f;
+    --color-sheet: #172c27;
+    --color-raised: #1e3530;
+    --color-rule: #284540;
+    --color-rule-strong: #4f6e66;
+    --color-control-edge: #7f9a91;
+    --color-ink: #cdd6cf;
+    --color-ink-soft: #9fb3aa;
+    --color-on-dark: #12241f;
+    --color-accent: #b5cbbf;
+    --color-accent-bright: #98c2b4;
+    --color-amber: #9fb3aa;
+    --color-violet: #b5cbbf;
+    --color-violet-dim: #4f6e66;
+    --color-danger: #e79aa3;
+    --color-danger-surface: #3a1f24;
+    --color-focus: #cdd6cf;
+    --color-locked: #9fb3aa;
+    --color-locked-surface: #1a302b;
+    --color-available: #cdd6cf;
+    --color-available-surface: #172c27;
+    --color-proven: #55b9a6;
+    --color-proven-surface: #183a32;
+    --color-on-proven: #12241f;
+    --color-forest: #b5cbbf;
+    --color-forest-deep: #98c2b4;
+    --color-contour: #9fb3aa;
+    --color-highlight: #2e4c46;
     color-scheme: dark;
   }
 }
