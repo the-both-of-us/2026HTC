@@ -10,7 +10,6 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now.
 
-- **Delete a course from the Dashboard** (owner's request): a small delete button on each of your course cards, two-step confirm on the card, uses the existing `DELETE /api/maps/[id]`. Touches `src/features/dashboard/ui/DashboardScreen.tsx`, a new `dashboard/ui/DeleteCourseButton.tsx`, `dashboard/data.ts` (+test) and README. Mirza: please stay off dashboard until it lands.
 
 
 
@@ -24,6 +23,7 @@ Nothing on Mirza's paths now.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- **Delete a course from the Dashboard**: a trash button on each of your course cards opens a confirm panel on the card (Delete for good / Keep it, Esc closes); uses the existing `DELETE /api/maps/[id]`. Program courses have no button. Checked in Chrome at 1280 and 390 on a memory store: 2 cards → 1, still 1 after reload. Dashboard files are free again.
 - **Easier proving** (owner: the prove step was too strict). Pass mark 65 → 50 (half the checkpoints). An explanation scoring 67+ (2 of 3, 3 of 4) is proven at once, with no follow-up; only 50–66 gets the question. Grader and follow-up prompts now say "be generous": the main idea in any words counts, small slips aren't errors, short right answers pass. Evidence pages accept a strong attempt with no follow-up and say "None needed". Landing, Trust and proof wording use the constants. Mirza: `PASS_SCORE` is 50 and `STRONG_SCORE` (67) is new in `shared/types.ts`; the files are free again.
 - Voiceover script rebuilt in demo order with one Do/Say pair per click (owner's request), in `docs/submission/voiceover-script.md`.
 - Put Mirza's d759362 9878ef5 live (auto-check: typecheck and tests pass).

@@ -21,6 +21,8 @@ export type CourseRow = {
   isCopy: boolean;
   /** The map this copy was started from, so "Start with a course" can leave that course out. */
   startedFrom: string | null;
+  /** Its owner can delete it here. A course inside a program goes with the program, so it can't. */
+  canDelete: boolean;
   /** The latest proof on this map, or when it was made. */
   lastActivityAt: string;
 };
@@ -98,6 +100,7 @@ export function assembleDashboard(
       isPublic,
       isCopy: Boolean(map.forkedFrom),
       startedFrom: map.forkedFrom ?? null,
+      canDelete: !map.program,
       lastActivityAt,
     };
     return { key: courseKey(map), row };

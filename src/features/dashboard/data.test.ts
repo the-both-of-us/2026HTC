@@ -62,6 +62,7 @@ describe("assembleDashboard", () => {
         isPublic: true,
         isCopy: false,
         startedFrom: null,
+        canDelete: true,
         lastActivityAt: "2026-11-06T12:00:00.000Z",
       },
       {
@@ -73,6 +74,7 @@ describe("assembleDashboard", () => {
         isPublic: false,
         isCopy: true,
         startedFrom: copy.forkedFrom,
+        canDelete: true,
         lastActivityAt: "2026-11-02T12:00:00.000Z",
       },
     ]);

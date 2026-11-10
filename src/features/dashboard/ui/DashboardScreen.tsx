@@ -9,6 +9,7 @@ import { getSession } from "@/shared/identity";
 import { buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import { loadDashboard, type CourseRow, type DashboardData, type ProvenItem } from "../data";
 import { cardsLabel, timeAgo, timeUntil } from "../format";
+import { DeleteCourseButton } from "./DeleteCourseButton";
 import { StreakCard } from "./StreakCard";
 
 /** At most this many public courses under "Start with a course". */
@@ -96,7 +97,7 @@ async function DashboardContent() {
           </SectionHeading>
           <ul className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {courses.map((course) => (
-              <li key={course.mapId} className="min-w-0">
+              <li key={course.mapId} className="relative min-w-0">
                 <CourseCard
                   href={`/map/${course.mapId}`}
                   fingerprint={course.startedFrom ?? course.mapId}
@@ -107,6 +108,9 @@ async function DashboardContent() {
                   coverLabel={course.isCopy ? "Your copy" : course.isPublic ? "Public" : "Private"}
                   headingLevel="h3"
                 />
+                {course.canDelete && (
+                  <DeleteCourseButton mapId={course.mapId} title={course.title} isPublic={course.isPublic} />
+                )}
               </li>
             ))}
           </ul>
