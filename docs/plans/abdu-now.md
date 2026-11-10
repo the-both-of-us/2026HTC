@@ -10,6 +10,8 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now.
 
+- **Delete a course from the Dashboard** (owner's request): a small delete button on each of your course cards, two-step confirm on the card, uses the existing `DELETE /api/maps/[id]`. Touches `src/features/dashboard/ui/DashboardScreen.tsx`, a new `dashboard/ui/DeleteCourseButton.tsx`, `dashboard/data.ts` (+test) and README. Mirza: please stay off dashboard until it lands.
+
 
 
 
