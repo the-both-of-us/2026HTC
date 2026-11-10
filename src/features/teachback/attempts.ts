@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { tierFor } from "@/features/settings";
+import { ratingOf, tierFor } from "@/features/settings";
 import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
 import { HttpError } from "@/shared/http";
 import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
@@ -22,7 +22,6 @@ import {
   hasRevealed,
   loadCatchChallenge,
   markRevealed,
-  MIN_CORRECTION_WORDS,
   toCatchView,
   type CatchChallenge,
   type CatchPick,
@@ -47,7 +46,6 @@ import { countWords } from "./learnerText";
 export const MIN_EXPLANATION_WORDS = 15;
 export const MAX_EXPLANATION_CHARACTERS = 6_000;
 export const MAX_ANSWER_CHARACTERS = 2_000;
-export const MAX_CORRECTION_CHARACTERS = 400;
 
 /** The browser reports this figure, so a forged one can only claim so much. */
 const MAX_ACTIVE_MS = 60 * 60 * 1000;
@@ -74,7 +72,7 @@ export type NewAttempt = {
   integrity: Omit<IntegritySignals, "wordCount">;
   /** The topic's own format, or "explain" when the learner swapped. Missing means "explain". */
   format?: TopicFormat;
-  /** Only for "catch": the sentences the learner tapped, with their corrections. */
+  /** Only for "catch": the sentences the learner tapped. */
   picks?: CatchPick[];
 };
 
@@ -103,7 +101,7 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   checkExplanationLength(explanation);
 
   // The model router for answer checks: gpt-oss-120b unless the course's stakes are high or the learner chose otherwise.
-  const tier = await tierFor("checks", userId, map.rating);
+  const tier = await tierFor("checks", userId, ratingOf(map));
   const gradeStarted = performance.now();
   const grade = await gradeExplanation(node, explanation, map.audience, tier);
   const gradeMs = Math.round(performance.now() - gradeStarted);
@@ -146,8 +144,8 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
 }
 
 /**
- * A "Catch the mistake" round. Code checks the tapped sentences against the planted ones,
- * and the AI only checks the corrections. There is no follow-up: a pass proves the topic.
+ * A "Catch the mistake" round. Code checks the tapped sentences against the planted ones, with
+ * no AI call, so the result is instant. There is no follow-up: a pass proves the topic.
  * The round is played once. Afterwards the answers are known, so the learner explains instead.
  */
 async function startCatch(userId: string, map: SkillMap, node: SkillNode, input: NewAttempt): Promise<Attempt> {
@@ -157,14 +155,13 @@ async function startCatch(userId: string, map: SkillMap, node: SkillNode, input:
   const challenge = await loadCatchChallenge(map, node);
   const picks = cleanPicks(input.picks ?? [], challenge);
 
-  const tier = await tierFor("checks", userId, map.rating);
   const gradeStarted = performance.now();
-  const record = await checkCatch(node, challenge, picks, map.audience, tier);
+  const record = checkCatch(challenge, picks);
   const gradeMs = Math.round(performance.now() - gradeStarted);
   await markRevealed(map.id, userId, node.id);
 
   const grade = catchGrade(node, challenge, record.picks);
-  const explanation = catchTranscript(picks);
+  const explanation = catchTranscript(challenge, picks);
   const attempt: Attempt = {
     id: randomUUID(),
     mapId: map.id,
@@ -191,14 +188,16 @@ async function startCatch(userId: string, map: SkillMap, node: SkillNode, input:
 
 /**
  * Scored with the same formula as an explanation, so the evidence page can re-check it:
- * each planted mistake is a checkpoint, met when the learner fixed it (their correction is
- * the quote), and each correct sentence they tapped counts as one error, minus 20.
+ * each planted mistake is a checkpoint, met when the learner tapped it (the tapped sentence,
+ * which is in the transcript, is the quote), and each correct sentence they tapped counts as
+ * one error, minus 20.
  */
 export function catchGrade(node: SkillNode, challenge: CatchChallenge, picks: CatchRecord["picks"]): Grade {
   const planted = new Set(challenge.mistakes.map((mistake) => mistake.sentence));
   const checkpoints = challenge.mistakes.map((mistake) => {
     const fix = picks.find((pick) => pick.sentence === mistake.sentence && pick.fixed);
-    return { checkpoint: node.checkpoints[mistake.checkpoint] ?? mistake.why, quote: fix?.correction ?? null, met: !!fix };
+    const quote = fix ? (challenge.sentences[mistake.sentence - 1] ?? null) : null;
+    return { checkpoint: node.checkpoints[mistake.checkpoint] ?? mistake.why, quote, met: !!fix };
   });
   const misconceptions = picks
     .filter((pick) => !planted.has(pick.sentence))
@@ -207,24 +206,17 @@ export function catchGrade(node: SkillNode, challenge: CatchChallenge, picks: Ca
   return { score: computeScore(met, checkpoints.length, misconceptions.length), checkpoints, misconceptions, rejectedQuotes: 0 };
 }
 
-/** One correction per sentence, each with a few words, on sentences that exist. */
+/** Each tapped sentence once, and only sentences that exist. */
 function cleanPicks(picks: CatchPick[], challenge: CatchChallenge): CatchPick[] {
-  const bySentence = new Map<number, CatchPick>();
+  const sentences = new Set<number>();
   for (const pick of picks) {
     if (!Number.isInteger(pick.sentence) || pick.sentence < 1 || pick.sentence > challenge.sentences.length) {
       throw new AttemptError("One of those sentences isn't in this explanation. Reload the map, then try again.", 400);
     }
-    const correction = pick.correction.replace(/\s+/g, " ").trim();
-    if (countWords(correction) < MIN_CORRECTION_WORDS) {
-      throw new AttemptError(`Say what's wrong with sentence ${pick.sentence} in at least ${MIN_CORRECTION_WORDS} words.`, 400);
-    }
-    if (correction.length > MAX_CORRECTION_CHARACTERS) {
-      throw new AttemptError(`Please keep each correction under ${MAX_CORRECTION_CHARACTERS} characters.`, 400);
-    }
-    bySentence.set(pick.sentence, { sentence: pick.sentence, correction });
+    sentences.add(pick.sentence);
   }
-  if (bySentence.size === 0) throw new AttemptError("Tap the sentence you think is wrong, then say what's true.", 400);
-  return [...bySentence.values()].sort((a, b) => a.sentence - b.sentence);
+  if (sentences.size === 0) throw new AttemptError("Tap the sentence you think is wrong.", 400);
+  return [...sentences].sort((a, b) => a - b).map((sentence) => ({ sentence }));
 }
 
 /** The sentences of this topic's catch round, without which ones are wrong. */
@@ -311,7 +303,7 @@ export async function answerFollowUp(
   await claimAnswer(attempt.id);
   try {
     const trimmedAnswer = answer.trim();
-    const tier = await tierFor("checks", userId, map.rating);
+    const tier = await tierFor("checks", userId, ratingOf(map));
     const followUpStarted = performance.now();
     const result = node
       ? await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer, map.audience, tier)

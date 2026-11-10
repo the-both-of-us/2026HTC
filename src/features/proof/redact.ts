@@ -20,7 +20,7 @@ export function catchCounts(record: ProofCatch | CatchRecord): ProofCatch {
 /**
  * Takes the answers out of a "Catch the mistake" skill. Its round is shared by every copy of a
  * course, so a public page must not show the planted sentences, their numbers, the reasons, or
- * the corrections (which say what was true). What is left still scores the same: one
+ * any written corrections (rounds before Nov 9 had them). What is left still scores the same: one
  * checkpoint per planted mistake, met when it was caught, and one factual error per wrong tap.
  * Skills in any other format come back untouched. Safe to apply twice.
  */

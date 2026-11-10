@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CourseRating } from "@/shared/types";
-import { autoTier, baseTier, chooseTier, DEFAULT_RATING, guessRating, toRating, withSubjectFloor } from "./router";
+import { autoTier, baseTier, chooseTier, DEFAULT_RATING, guessRating, ratingOf, SONNET, toRating, withSubjectFloor } from "./router";
 import { DEFAULT_AI_SETTINGS, type AiSettings, type AiTask } from "./types";
 
 const r = (difficulty: 1 | 2 | 3, stakes: 1 | 2 | 3): CourseRating => ({ difficulty, stakes });
@@ -103,5 +103,27 @@ describe("ratings", () => {
   it("reads only the start of a long posting, so one line deep in the duties does not decide", () => {
     const posting = `Junior Backend Developer at Acme. ${"Build APIs and write tests. ".repeat(30)} Some finance reporting.`;
     expect(guessRating(posting)).toEqual(r(2, 2));
+  });
+});
+
+describe("ratingOf", () => {
+  const base = { title: "Introduction to Psychology", subtitle: "", audience: undefined, program: undefined };
+
+  it("guesses for a map built before ratings, so psychology still goes to Sonnet", () => {
+    const rating = ratingOf(base);
+    expect(rating.stakes).toBe(3);
+    expect(autoTier("lesson", rating)).toBe(SONNET);
+  });
+
+  it("reads the program's title for the subject floor", () => {
+    const course = { ...base, title: "Attachment Styles", rating: { difficulty: 2, stakes: 2 } as const };
+    expect(ratingOf(course).stakes).toBe(2);
+    const inProgram = { ...course, program: { id: "p", title: "Relationship Psychology", courseNumber: 1, courseCount: 6, unlocks: [] } };
+    expect(ratingOf(inProgram).stakes).toBe(3);
+  });
+
+  it("keeps a saved rating otherwise", () => {
+    expect(ratingOf({ ...base, title: "SQL joins", rating: { difficulty: 3, stakes: 1 } })).toEqual({ difficulty: 3, stakes: 1 });
+    expect(ratingOf({ ...base, title: "SQL joins" })).toEqual({ difficulty: 2, stakes: 2 });
   });
 });

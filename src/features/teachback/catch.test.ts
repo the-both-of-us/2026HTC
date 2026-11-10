@@ -36,19 +36,11 @@ function modelWrites() {
   });
 }
 
-/** The correction check: which numbered corrections fix their mistake. */
-function modelChecks(fixed: number[]) {
-  mockChatJSON.mockResolvedValueOnce({ fixed });
-}
-
-function play(picks: { sentence: number; correction: string }[]) {
+function play(picks: { sentence: number }[]) {
   return startAttempt(OWNER, { mapId, nodeId: "photo", explanation: "", integrity, format: "catch", picks });
 }
 
-const GOOD = [
-  { sentence: 2, correction: "It happens in daylight using sunlight." },
-  { sentence: 5, correction: "They give off oxygen, not nitrogen." },
-];
+const GOOD = [{ sentence: 2 }, { sentence: 5 }];
 
 beforeEach(async () => {
   vi.stubEnv("S3_BUCKET", "");
@@ -97,9 +89,8 @@ describe("Catch the mistake", () => {
     expect(mockChatJSON).toHaveBeenCalledTimes(1);
   });
 
-  it("proves the topic when both mistakes are found and fixed", async () => {
+  it("proves the topic when both mistakes are tapped, with nothing to write and no AI call", async () => {
     modelWrites();
-    modelChecks([1, 2]);
 
     const attempt = await play(GOOD);
 
@@ -107,55 +98,57 @@ describe("Catch the mistake", () => {
     expect(attempt.grade.score).toBe(100);
     expect(attempt.format).toBe("catch");
     expect(attempt.followUp).toBeNull();
+    // Only the round itself was written by the AI. Checking the taps is code.
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+    // A caught mistake's quote is the tapped sentence, which the transcript holds.
+    expect(attempt.grade.checkpoints.map((result) => result.quote)).toEqual([SENTENCES[1], SENTENCES[4]]);
+    expect(attempt.explanation).toContain(SENTENCES[4]);
     // The reveal comes back only now, after submitting.
     expect(toLearnerView(attempt).catch?.planted.map((item) => item.sentence)).toEqual([2, 5]);
   });
 
   it("takes 20 points for each correct sentence tapped as wrong", async () => {
     modelWrites();
-    modelChecks([1, 2]);
 
-    const attempt = await play([...GOOD, { sentence: 3, correction: "The colour comes from leaves." }]);
+    const attempt = await play([...GOOD, { sentence: 3 }]);
 
     expect(attempt.grade.score).toBe(80);
     expect(attempt.status).toBe("proven");
     expect(attempt.catch?.picks.find((pick) => pick.sentence === 3)?.fixed).toBe(false);
   });
 
-  it("only sends corrections on planted sentences to the AI", async () => {
+  it("half the mistakes caught passes; a missed one is unmet", async () => {
     modelWrites();
-    modelChecks([1]);
-
-    await play([GOOD[0], { sentence: 1, correction: "Plants buy food at shops." }]);
-
-    const checkPrompt = mockChatJSON.mock.calls[1][0].prompt;
-    expect(checkPrompt).toContain("daylight");
-    expect(checkPrompt).not.toContain("shops");
-  });
-
-  it("a correction that does not fix the mistake earns nothing, but half the mistakes fixed still passes", async () => {
-    modelWrites();
-    modelChecks([1]);
-
-    const attempt = await play(GOOD);
-
-    expect(attempt.grade.score).toBe(50);
-    expect(attempt.status).toBe("proven");
-  });
-
-  it("counts a missed mistake as unmet", async () => {
-    modelWrites();
-    modelChecks([1]);
 
     const attempt = await play([GOOD[0]]);
 
     expect(attempt.grade.checkpoints.map((result) => result.met)).toEqual([true, false]);
     expect(attempt.grade.score).toBe(50);
+    expect(attempt.status).toBe("proven");
+  });
+
+  it("fails when only correct sentences are tapped", async () => {
+    modelWrites();
+
+    const attempt = await play([{ sentence: 1 }]);
+
+    expect(attempt.grade.score).toBe(0);
+    expect(attempt.status).toBe("not-yet");
+  });
+
+  it("counts a sentence tapped twice once", async () => {
+    modelWrites();
+
+    const attempt = await play([GOOD[0], GOOD[0], GOOD[1]]);
+
+    expect(attempt.catch?.picks).toEqual([
+      { sentence: 2, fixed: true },
+      { sentence: 5, fixed: true },
+    ]);
   });
 
   it("can be played once: after the reveal, the learner explains instead", async () => {
     modelWrites();
-    modelChecks([1]);
     await play(GOOD);
 
     await expect(play(GOOD)).rejects.toMatchObject({ status: 409 });
@@ -168,9 +161,9 @@ describe("Catch the mistake", () => {
     ).rejects.toMatchObject({ status: 400 });
   });
 
-  it("refuses a sentence number that isn't there, and a correction that is too short", async () => {
+  it("refuses a sentence number that isn't there, and no taps at all", async () => {
     modelWrites();
-    await expect(play([{ sentence: 9, correction: "This one is wrong." }])).rejects.toMatchObject({ status: 400 });
-    await expect(play([{ sentence: 2, correction: "wrong" }])).rejects.toMatchObject({ status: 400 });
+    await expect(play([{ sentence: 9 }])).rejects.toMatchObject({ status: 400 });
+    await expect(play([])).rejects.toMatchObject({ status: 400 });
   });
 });

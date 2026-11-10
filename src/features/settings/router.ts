@@ -3,7 +3,7 @@
  * Pure functions, no I/O, so the whole table is unit tested.
  */
 import { isYoungAudience } from "@/shared/audience";
-import type { CourseRating } from "@/shared/types";
+import type { CourseRating, SkillMap } from "@/shared/types";
 import { AI_TASKS, CHOICE_TIERS, type AiSettings, type AiTask, type Tier } from "./types";
 
 /** Old maps and anything unrated: an everyday course. */
@@ -95,4 +95,15 @@ export function guessRating(text: string, audience = ""): CourseRating {
   const difficulty = HARD.test(head) ? 3 : EASY.test(head) ? 1 : 2;
   const stakes = HIGH_STAKES.test(head) ? 3 : LOW_STAKES.test(head) ? 1 : 2;
   return withSubjectFloor({ difficulty, stakes }, head);
+}
+
+/**
+ * The rating to route a map's lessons, flashcards, quizzes and checks by. Maps built before ratings
+ * existed have none, so they get the same guess a new map gets before its first call, and the
+ * subject floor reads the program's title too: "Introduction to Psychology" (built Nov 8, no
+ * rating) had its lessons written by gpt-oss-120b, when psychology should go to Sonnet.
+ */
+export function ratingOf(map: Pick<SkillMap, "rating" | "title" | "subtitle" | "audience" | "program">): CourseRating {
+  const text = [map.program?.title, map.title, map.subtitle].filter(Boolean).join("\n");
+  return withSubjectFloor(map.rating ?? guessRating(text, map.audience), text);
 }

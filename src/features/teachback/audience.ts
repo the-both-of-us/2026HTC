@@ -25,7 +25,5 @@ export const ANSWER_NOTE =
 export const CATCH_WRITER_NOTE =
   "Use short sentences and words they know. Plant mistakes they can spot at their level, such as a wrong count, a wrong number of sides or a wrong order, never a trick about terms.";
 
-export const CATCH_CHECKER_NOTE = "Short, simple corrections count when they say what is true.";
-
 export const FINAL_QUESTIONS_NOTE =
   "Ask in short, everyday words they know, at most 20 words each, about a small situation they can picture.";

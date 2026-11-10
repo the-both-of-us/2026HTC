@@ -96,7 +96,7 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
           </Section>
         )}
 
-        <Section title={skill.catch ? "How the corrections were written" : "How the explanation was written"}>
+        <Section title={skill.catch ? "How the round was played" : "How the explanation was written"}>
           <Signals skill={skill} />
           <p className="mt-2 text-sm text-ink-soft">{formatDateTime(skill.attemptedAt)}</p>
         </Section>
@@ -245,7 +245,7 @@ function CatchEvidence({ record }: { record: NonNullable<ProofSkill["catch"]> })
         {wrongTaps === 0
           ? "No correct sentence was marked as wrong."
           : `${plural(wrongTaps, "correct sentence")} marked as wrong, which cost 20 each.`}{" "}
-        A pass needs {PASS_SCORE}. The mistakes and the corrections are not shown here, because the same round is given to everyone who takes
+        A pass needs {PASS_SCORE}. The mistakes are not shown here, because the same round is given to everyone who takes
         this course.
       </p>
     </div>

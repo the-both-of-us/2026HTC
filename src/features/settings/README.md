@@ -20,7 +20,7 @@ The map outline has no rating yet, so `guessRating` (keywords, young audience = 
 
 ```ts
 import { tierFor } from "@/features/settings";
-const tier = await tierFor("lesson", viewerId, map.rating); // one store read; Auto on any error
+const tier = await tierFor("lesson", viewerId, ratingOf(map)); // one store read; Auto on any error. ratingOf guesses for maps built before ratings.
 await chatJSON({ ..., tier });
 ```
 

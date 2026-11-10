@@ -1,16 +1,14 @@
 import { z } from "zod";
-import { chatJSON, type Tier } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { CatchRecord, SkillMap, SkillNode } from "@/shared/types";
 import { audienceKey } from "@/shared/audience";
-import { CATCH_CHECKER_NOTE, CATCH_WRITER_NOTE, forAudience } from "./audience";
+import { CATCH_WRITER_NOTE, forAudience } from "./audience";
 import { numberedList } from "./grading";
-import { countWords, LEARNER_TEXT_RULE, wrapLearnerText } from "./learnerText";
 
 /**
  * "Catch the mistake": the AI explains a topic with one or two planted mistakes, and the
- * learner finds and fixes them. Which sentences are wrong stays on the server until the
- * round is submitted.
+ * learner taps them. Which sentences are wrong stays on the server until the round is submitted.
  */
 export type CatchChallenge = {
   sentences: string[];
@@ -22,10 +20,8 @@ export type CatchChallenge = {
 /** What the browser gets before submitting: the sentences and how many are wrong, nothing else. */
 export type CatchView = { sentences: string[]; mistakeCount: number };
 
-export type CatchPick = { sentence: number; correction: string };
-
-/** A correction needs enough words to say what is true. It also becomes a quote on the evidence page. */
-export const MIN_CORRECTION_WORDS = 3;
+/** A tapped sentence. Nothing to write: the owner found typing a correction for every tap too much (Nov 9). */
+export type CatchPick = { sentence: number };
 
 export const WRITER_SYSTEM = `You write a short, confident explanation of a topic for a curious learner, with mistakes planted in it on purpose. The learner's job is to find them.
 
@@ -34,14 +30,6 @@ export const WRITER_SYSTEM = `You write a short, confident explanation of a topi
 - Every other sentence must be fully correct.
 - Never hint at a mistake: no "some say", no hedging, no odd emphasis.
 - For each mistake, give its sentence number, the fact number it breaks, and "why": one sentence saying what is wrong and what is true.`;
-
-export const CHECKER_SYSTEM = `A learner found planted mistakes in an explanation and wrote a correction for each. For each numbered item you get the wrong sentence, what was really wrong with it, and the learner's correction.
-
-Return the numbers of the corrections that fix the mistake. Be generous: a correction counts if it says what is true, says what is false about the sentence, or states a true point that contradicts the false claim, even without naming its exact words. Plain, short or misspelled wording is fine. A correction only fails if it just says "this is wrong", repeats the sentence, is itself false, or is about something the sentence never claimed.
-
-${LEARNER_TEXT_RULE}`;
-
-const checkerReplySchema = z.object({ fixed: z.array(z.number().int()) });
 
 /** Two mistakes when there are enough checkpoints to break, so bigger topics are harder. */
 export function mistakesFor(node: SkillNode): number {
@@ -118,48 +106,17 @@ export async function markRevealed(mapId: string, ownerId: string, nodeId: strin
   await putDoc(revealedKey(mapId, ownerId, nodeId), { revealedAt: new Date().toISOString() });
 }
 
-/**
- * Code decides which taps were right: the tapped sentence numbers must match the planted ones.
- * Then one AI call checks only the corrections on real mistakes. A correction under three words
- * can't fix anything, so it never reaches the AI.
- */
-export async function checkCatch(
-  node: SkillNode,
-  challenge: CatchChallenge,
-  picks: CatchPick[],
-  audience = "",
-  tier?: Tier,
-): Promise<CatchRecord> {
-  const planted = new Map(challenge.mistakes.map((mistake) => [mistake.sentence, mistake]));
-  const toCheck = picks.filter(
-    (pick) => planted.has(pick.sentence) && countWords(pick.correction) >= MIN_CORRECTION_WORDS,
-  );
-
-  let fixedSentences = new Set<number>();
-  if (toCheck.length > 0) {
-    const items = toCheck.map((pick, index) => {
-      const mistake = planted.get(pick.sentence)!;
-      return `${index + 1}. Wrong sentence: ${challenge.sentences[pick.sentence - 1]}\nWhat was wrong: ${mistake.why}\nCorrection: ${wrapLearnerText(pick.correction)}`;
-    });
-    const reply = await chatJSON({
-      label: "teachback-catch-check",
-      system: forAudience(CHECKER_SYSTEM, audience, CATCH_CHECKER_NOTE),
-      prompt: `Topic: ${node.title}\n\n${items.join("\n\n")}`,
-      schema: checkerReplySchema,
-      timeoutMs: 15_000,
-      tier,
-    });
-    fixedSentences = new Set(toCheck.filter((_, index) => reply.fixed.includes(index + 1)).map((pick) => pick.sentence));
-  }
-
+/** Code alone decides which taps were right: a tapped sentence is caught if a mistake was planted there. */
+export function checkCatch(challenge: CatchChallenge, picks: CatchPick[]): CatchRecord {
+  const planted = new Set(challenge.mistakes.map((mistake) => mistake.sentence));
   return {
     sentences: challenge.sentences,
     planted: challenge.mistakes.map(({ sentence, why }) => ({ sentence, why })),
-    picks: picks.map((pick) => ({ ...pick, fixed: fixedSentences.has(pick.sentence) })),
+    picks: picks.map((pick) => ({ sentence: pick.sentence, fixed: planted.has(pick.sentence) })),
   };
 }
 
-/** The learner's own words for a catch round, which is what the evidence page quotes from. */
-export function catchTranscript(picks: CatchPick[]): string {
-  return picks.map((pick) => `Sentence ${pick.sentence}: ${pick.correction}`).join("\n");
+/** What the learner marked, as text: each tapped sentence. A caught mistake's quote comes from here. */
+export function catchTranscript(challenge: CatchChallenge, picks: CatchPick[]): string {
+  return picks.map((pick) => `Sentence ${pick.sentence}: ${challenge.sentences[pick.sentence - 1]}`).join("\n");
 }

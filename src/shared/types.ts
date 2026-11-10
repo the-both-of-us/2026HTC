@@ -126,8 +126,12 @@ export type CatchRecord = {
   sentences: string[];
   /** Where the AI planted its mistakes, and what was wrong with each. */
   planted: { sentence: number; why: string }[];
-  /** The sentences the learner tapped, with their correction. fixed is false for a correct sentence. */
-  picks: { sentence: number; correction: string; fixed: boolean }[];
+  /**
+   * The sentences the learner tapped. fixed is true for a planted mistake they tapped, false for a
+   * correct sentence. Since Nov 9 tapping is enough; rounds played before then also kept a
+   * written correction, and fixed was the AI's verdict on it.
+   */
+  picks: { sentence: number; correction?: string; fixed: boolean }[];
 };
 
 export type Attempt = {

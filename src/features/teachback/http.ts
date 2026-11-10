@@ -4,7 +4,7 @@ import { z } from "zod";
 export const newAttemptBody = z.object({
   mapId: z.string(),
   nodeId: z.string(),
-  /** Empty for "Catch the mistake", where the learner's words are their corrections. */
+  /** Empty for "Catch the mistake", where the learner only taps sentences. */
   explanation: z.string(),
   integrity: z.object({
     pasted: z.boolean(),
@@ -13,7 +13,7 @@ export const newAttemptBody = z.object({
   }),
   format: z.enum(["explain", "catch", "kid", "timed"]).optional(),
   picks: z
-    .array(z.object({ sentence: z.number().int(), correction: z.string().max(2_000) }))
+    .array(z.object({ sentence: z.number().int() }))
     .max(8)
     .optional(),
 });

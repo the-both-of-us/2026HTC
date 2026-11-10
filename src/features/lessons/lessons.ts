@@ -1,7 +1,7 @@
 import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
 import { audienceKey } from "@/shared/audience";
-import { tierFor } from "@/features/settings";
+import { ratingOf, tierFor } from "@/features/settings";
 import { isNodeLockedFor } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
 import { deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
@@ -72,7 +72,7 @@ async function loadOrGenerate(key: string, map: SkillMap, node: SkillNode, viewe
   const sample = findSampleLesson(map, node);
   if (sample) return save(key, toLesson(sample));
 
-  const tier = await tierFor("lesson", viewerId, map.rating);
+  const tier = await tierFor("lesson", viewerId, ratingOf(map));
   const { raw, writtenBy } = await withDeadline(askModelForLesson(map, node, tier));
   return save(key, writtenBy ? { ...toLesson(raw), writtenBy } : toLesson(raw));
 }

@@ -1,5 +1,5 @@
 import { chatJSON, type RouteName } from "@/features/ai";
-import { tierFor } from "@/features/settings";
+import { ratingOf, tierFor } from "@/features/settings";
 import { isPublished } from "@/features/courses";
 import { isNodeLockedFor } from "@/features/teachback";
 import { getSkillMap } from "@/features/skill-map";
@@ -104,7 +104,7 @@ async function loadOrGenerate({ map, node, key }: Found, options: CreateOptions,
   if (saved) return saved.items;
 
   // The model router: the map's rating and this learner's settings. At most Haiku on Auto.
-  const tier = await tierFor("quiz", viewerId, map.rating);
+  const tier = await tierFor("quiz", viewerId, ratingOf(map));
   const raw = await withDeadline(
     chatJSON({
       label: "quiz",

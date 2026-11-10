@@ -49,9 +49,9 @@ export function submitExplanation(input: {
   nodeId: string;
   explanation: string;
   integrity: IntegritySignals;
-  /** Left out for "Explain it". "catch" also sends picks: the tapped sentences and corrections. */
+  /** Left out for "Explain it". "catch" also sends picks: the tapped sentences. */
   format?: TopicFormat;
-  picks?: { sentence: number; correction: string }[];
+  picks?: { sentence: number }[];
 }): Promise<ApiResult> {
   return postJson("/api/attempts", input);
 }

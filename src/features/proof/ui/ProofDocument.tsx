@@ -29,7 +29,7 @@ export function ProofDocument({ snapshot, hash, url }: ProofDocumentProps) {
             <p className="mt-1 text-ink-soft">
               Each skill says how it was proved. For an explanation, {snapshot.displayName} then answered a question
               about it, and highlights mark the exact words that met a checkpoint. For a caught mistake, the AI wrote
-              the explanation and they found and fixed what it got wrong.
+              the explanation and they found what it got wrong.
             </p>
           </div>
           {snapshot.skills.map((skill) => (

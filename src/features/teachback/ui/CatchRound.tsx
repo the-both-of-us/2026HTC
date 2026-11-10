@@ -1,18 +1,13 @@
 import clsx from "clsx";
-import { Check, CircleCheck, CircleDashed, Mic, MicOff, ScanSearch, Sparkles, X } from "lucide-react";
+import { Check, CircleCheck, CircleDashed, ScanSearch, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, Ref } from "react";
 import type { Attempt } from "@/shared/types";
-import { Button, ErrorNotice, Spinner, Textarea } from "@/shared/ui";
-import { countWords } from "../learnerText";
+import { Button, ErrorNotice, Spinner } from "@/shared/ui";
 import { fetchCatchRound, submitExplanation, type CatchViewData } from "./api";
 import { PendingNote } from "./PendingNote";
 import type { Integrity } from "./useIntegrity";
-import { useSpeech, useSpeechSupported } from "./useSpeech";
 import "./challenges.css";
-
-/** Same as the server's MIN_CORRECTION_WORDS. */
-const MIN_CORRECTION_WORDS = 3;
 
 type CatchRoundProps = {
   mapId: string;
@@ -25,16 +20,15 @@ type CatchRoundProps = {
 
 /**
  * "Catch the mistake": the AI's confident explanation, with one or two planted mistakes.
- * Tap a sentence you think is wrong and say what's true. Which ones are wrong stays on the
- * server until you submit.
+ * Tap each sentence you think is wrong, then lock in. Nothing to write. Which ones are wrong
+ * stays on the server until you submit.
  */
 export function CatchRound({ mapId, nodeId, integrity, onResult, onExplainInstead }: CatchRoundProps) {
   const [round, setRound] = useState<CatchViewData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadCount, setLoadCount] = useState(0);
-  // Sentence number -> the learner's correction.
-  const [picks, setPicks] = useState<Record<number, string>>({});
-  const [open, setOpen] = useState<number | null>(null);
+  // The sentence numbers the learner tapped.
+  const [picks, setPicks] = useState<Set<number>>(() => new Set());
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const startedAt = useRef(0);
@@ -52,15 +46,6 @@ export function CatchRound({ mapId, nodeId, integrity, onResult, onExplainInstea
       current = false;
     };
   }, [mapId, nodeId, loadCount]);
-
-  const speechSupported = useSpeechSupported();
-  const speech = useSpeech({
-    onPhrase: (phrase) => {
-      if (open === null) return;
-      setPicks((all) => ({ ...all, [open]: `${(all[open] ?? "").trimEnd()} ${phrase}`.trim() }));
-    },
-    onStopped: integrity.recordSpeaking,
-  });
 
   if (loadError) {
     return (
@@ -97,43 +82,30 @@ export function CatchRound({ mapId, nodeId, integrity, onResult, onExplainInstea
     );
   }
 
-  const tapped = Object.keys(picks).map(Number).sort((a, b) => a - b);
+  const tapped = [...picks].sort((a, b) => a - b);
 
   function toggle(sentence: number) {
     if (pending) return;
-    if (speech.listening) speech.stop();
-    if (open === sentence) {
-      setOpen(null);
-      return;
-    }
-    if (picks[sentence] === undefined) setPicks((all) => ({ ...all, [sentence]: "" }));
-    setOpen(sentence);
-  }
-
-  function unmark(sentence: number) {
-    setPicks((all) => Object.fromEntries(Object.entries(all).filter(([key]) => Number(key) !== sentence)));
-    setOpen(null);
+    setError(null);
+    setPicks((all) => {
+      const next = new Set(all);
+      if (next.has(sentence)) next.delete(sentence);
+      else next.add(sentence);
+      return next;
+    });
   }
 
   async function submit() {
-    const short = tapped.find((sentence) => countWords(picks[sentence]) < MIN_CORRECTION_WORDS);
-    if (tapped.length === 0) return setError("Tap the sentence you think is wrong, then say what's true.");
-    if (short !== undefined) {
-      setOpen(short);
-      return setError(`Say what's true for sentence ${short} in at least ${MIN_CORRECTION_WORDS} words.`);
-    }
-    if (speech.listening) speech.stop();
+    if (tapped.length === 0) return setError("Tap the sentence you think is wrong.");
     setPending(true);
     setError(null);
-    const list = tapped.map((sentence) => ({ sentence, correction: picks[sentence].trim() }));
-    const transcript = list.map((pick) => pick.correction).join(" ");
     const result = await submitExplanation({
       mapId,
       nodeId,
       explanation: "",
-      integrity: { ...integrity.signalsFor(transcript), activeMs: Date.now() - startedAt.current },
+      integrity: { ...integrity.signalsFor(""), activeMs: Date.now() - startedAt.current },
       format: "catch",
-      picks: list,
+      picks: tapped.map((sentence) => ({ sentence })),
     });
     setPending(false);
     if (result.ok) onResult(result.attempt);
@@ -147,13 +119,13 @@ export function CatchRound({ mapId, nodeId, integrity, onResult, onExplainInstea
         <span className="font-semibold text-ink">
           {round.mistakeCount === 1 ? "one mistake" : `${round.mistakeCount} mistakes`}
         </span>{" "}
-        in here. Tap each wrong sentence and say what&apos;s true. Tapping a correct one costs points.
+        in here. Tap each wrong sentence, then lock in. Tapping a correct one costs points.
       </p>
 
       <ol className="flex flex-col gap-2">
         {round.sentences.map((sentence, index) => {
           const number = index + 1;
-          const marked = picks[number] !== undefined;
+          const marked = picks.has(number);
           return (
             <li key={number} className="flex flex-col gap-2">
               <button
@@ -172,37 +144,6 @@ export function CatchRound({ mapId, nodeId, integrity, onResult, onExplainInstea
                 {marked && <ScanSearch aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-amber" />}
               </button>
 
-              {open === number && (
-                <div className="ml-8 flex flex-col gap-2">
-                  <label htmlFor={`fix-${nodeId}-${number}`} className="text-sm font-medium">
-                    What&apos;s true instead?
-                  </label>
-                  <Textarea
-                    id={`fix-${nodeId}-${number}`}
-                    rows={2}
-                    autoFocus
-                    value={picks[number] ?? ""}
-                    readOnly={pending}
-                    onPaste={integrity.recordPaste}
-                    onChange={(event) => {
-                      integrity.recordTyping();
-                      setError(null);
-                      setPicks((all) => ({ ...all, [number]: event.target.value }));
-                    }}
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    {speechSupported && (
-                      <Button variant="subtle" aria-pressed={speech.listening} onClick={speech.listening ? speech.stop : speech.start}>
-                        {speech.listening ? <MicOff aria-hidden="true" size={16} /> : <Mic aria-hidden="true" size={16} />}
-                        {speech.listening ? "Stop" : "Say it"}
-                      </Button>
-                    )}
-                    <Button variant="subtle" onClick={() => unmark(number)}>
-                      This one is fine
-                    </Button>
-                  </div>
-                </div>
-              )}
             </li>
           );
         })}
@@ -214,7 +155,7 @@ export function CatchRound({ mapId, nodeId, integrity, onResult, onExplainInstea
         </Button>
         <p className="text-sm text-ink-soft">One go per round. Then you see where the mistakes were.</p>
       </div>
-      {pending && <PendingNote message="Code checks your taps, then the AI checks your corrections." />}
+      {pending && <PendingNote message="Checking your taps." />}
       {error && !pending && <p className="text-sm font-semibold text-danger">{error}</p>}
     </div>
   );
@@ -280,7 +221,7 @@ export function CatchReveal({ attempt }: { attempt: Attempt }) {
                   <span className="font-semibold">{pick?.fixed ? "You caught it." : pick ? "Right sentence, but the fix missed." : "Missed."}</span> {why}
                 </p>
               )}
-              {pick && <p className="ml-7 text-sm text-ink-soft">You said: “{pick.correction}”</p>}
+              {pick?.correction && <p className="ml-7 text-sm text-ink-soft">You said: “{pick.correction}”</p>}
               {tone === "false" && <p className="ml-7 text-sm">This one was right all along.</p>}
             </li>
           );
