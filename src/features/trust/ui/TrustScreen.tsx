@@ -1,5 +1,6 @@
 import { Bot, Code2 } from "lucide-react";
 import type { ReactNode } from "react";
+import { PASS_SCORE, STRONG_SCORE } from "@/shared/types";
 import { Card, LearningModeToggle, PageShell } from "@/shared/ui";
 import { DeleteMyData } from "./DeleteMyData";
 
@@ -98,7 +99,7 @@ export function TrustScreen() {
                 <li>Picks the skills in a posting, their order, and 3 or 4 checkpoints for each.</li>
                 <li>Says which checkpoints your explanation covers, quoting your words.</li>
                 <li>Points out factual errors.</li>
-                <li>Writes one follow-up question about what you wrote, and judges your answer.</li>
+                <li>For a borderline pass, writes one follow-up question about what you wrote, and judges your answer.</li>
                 <li>Writes flashcards and quiz questions.</li>
               </ul>
             </Card>
@@ -114,7 +115,10 @@ export function TrustScreen() {
                   checkpoint does not count.
                 </li>
                 <li>Gives no credit for pasting a checkpoint&apos;s own wording back.</li>
-                <li>Works out the score: checkpoints met out of 100, minus 20 per factual error. 65 passes.</li>
+                <li>
+                  Works out the score: checkpoints met out of 100, minus 20 per factual error. {PASS_SCORE} passes, and{" "}
+                  {STRONG_SCORE} or more needs no follow-up.
+                </li>
                 <li>Decides what unlocks, and measures how you wrote, in your browser.</li>
                 <li>Fingerprints and seals each evidence page, so a reader can check it was not edited.</li>
               </ul>

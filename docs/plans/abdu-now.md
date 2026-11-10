@@ -10,7 +10,6 @@ The owner asked Abdu's side to build everything for now, Mirza's areas included.
 
 Nothing on Mirza's paths now.
 
-- **Easier proving** (owner: "the prove part is too strict"). Pass mark 65 → 50, a strong explanation (67+) is proven with no follow-up, gentler grader and follow-up prompts. Touches `src/features/teachback/*` (grading, followUp, attempts, ui/format, README, tests), `src/shared/types.ts` (PASS_SCORE + new constant), `src/features/proof/snapshot.ts` and `proof/ui/SkillEvidence.tsx`, `ProofDocument.tsx` (wording). Mirza: please stay off these files until it lands.
 
 
 
@@ -23,6 +22,7 @@ Nothing on Mirza's paths now.
 - Optional: redeploy AWS from main (needs the owner's `aws login`).
 
 ## Done today (latest first)
+- **Easier proving** (owner: the prove step was too strict). Pass mark 65 → 50 (half the checkpoints). An explanation scoring 67+ (2 of 3, 3 of 4) is proven at once, with no follow-up; only 50–66 gets the question. Grader and follow-up prompts now say "be generous": the main idea in any words counts, small slips aren't errors, short right answers pass. Evidence pages accept a strong attempt with no follow-up and say "None needed". Landing, Trust and proof wording use the constants. Mirza: `PASS_SCORE` is 50 and `STRONG_SCORE` (67) is new in `shared/types.ts`; the files are free again.
 - Voiceover script rebuilt in demo order with one Do/Say pair per click (owner's request), in `docs/submission/voiceover-script.md`.
 - Put Mirza's d759362 9878ef5 live (auto-check: typecheck and tests pass).
 - Put Mirza's 475d388 9b7a078 84781b3 live (auto-check: typecheck and tests pass).

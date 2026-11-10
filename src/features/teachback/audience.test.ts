@@ -27,11 +27,11 @@ const NODE: SkillNode = {
 beforeEach(() => vi.mocked(chatJSON).mockReset());
 
 describe("teach-back prompts with no audience", () => {
-  it("are byte for byte the prompts the eval baseline was measured on", () => {
-    expect(hash(GRADER_SYSTEM)).toBe("e374772604c60ff8");
+  it("are byte for byte the prompts the eval baseline was measured on (grader and follow-up made generous on Nov 9)", () => {
+    expect(hash(GRADER_SYSTEM)).toBe("e1187e09ed46fb95");
     expect(hash(CHECKER_SYSTEM)).toBe("9e5c6577847c85b9");
-    expect(hash(QUESTION_SYSTEM)).toBe("4c830805299161f2");
-    expect(hash(ANSWER_SYSTEM)).toBe("575823d33a9a843b");
+    expect(hash(QUESTION_SYSTEM)).toBe("005d95babce65b90");
+    expect(hash(ANSWER_SYSTEM)).toBe("cf41039c6411656c");
     expect(hash(WRITER_SYSTEM)).toBe("957c1f69b76cf6f6");
     expect(hash(CATCH_CHECKER)).toBe("6c2c5625fbcf8d5a");
     expect(hash(QUESTIONS_SYSTEM)).toBe("ee8c6ac18a6275be");

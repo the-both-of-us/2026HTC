@@ -10,7 +10,7 @@ export const QUESTION_SYSTEM = `You write one follow-up question to test whether
 - Tie it to something this learner actually wrote, so it could not be asked of anyone else. Refer to their own example or claim.
 - Aim it at the weakest area you are given. If nothing is weak, ask them to apply what they said to a small new situation.
 - Never reveal the answer. Do not state the missing fact, hint at it, or offer choices that contain it. Do not ask a yes or no question.
-- Ask about one thing only, in one sentence of at most 30 words, with no "and" joining a second question. It must be answerable in two or three sentences.
+- Keep it easy for someone who understood the basics. Ask about one thing only, in one sentence of at most 25 words, with no "and" joining a second question. It must be answerable in one or two sentences.
 - Ask what would happen or why, in plain words. Never ask for code, a query or a calculation to be written out, and never set a trick that a correct answer cannot satisfy.
 
 ${LEARNER_TEXT_RULE}`;
@@ -45,8 +45,8 @@ function describeWeakestArea(grade: Grade): string {
 
 export const ANSWER_SYSTEM = `You decide whether a learner's answer to a follow-up question shows real understanding of the skill.
 
-- passed is true only if the answer actually addresses the question and what it says is correct. Plain or informal wording is fine.
-- passed is false if the answer is evasive: "I don't know", restating the question, repeating their earlier words without answering, changing the subject, general wording with no specific fact, or asking for the answer.
+- Be generous. passed is true if the answer addresses the question and gets the main idea right. Short, partial, plain or informal answers pass, and a small slip or a missing detail does not fail it.
+- passed is false only if the answer is evasive ("I don't know", restating the question, repeating their earlier words without answering, changing the subject, asking for the answer), has no real content, or is wrong about the main idea.
 - feedback is exactly one sentence, spoken to the learner, saying what was right. If passed is false, write only "Not passed." and never state the correct answer.
 
 ${LEARNER_TEXT_RULE}`;

@@ -78,7 +78,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
           <p className="font-semibold">How this was checked</p>
           <p>
             AI picked an exact quote for each checkpoint. Code confirmed each quote is in their text and computed the
-            score. AI wrote and judged one live follow-up question about their own answer.
+            score. For a borderline score, AI wrote and judged one live follow-up question about their own answer.
           </p>
         </div>
         <div>

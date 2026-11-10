@@ -168,7 +168,13 @@ export type MapProgress = {
 export type NodeState = "locked" | "available" | "proven";
 
 /**
- * 65, not 70: a node with 3 checkpoints scores 67 with 2 met, and that must pass.
- * No other reachable score falls between 65 and 70, so nothing else changes.
+ * Half the checkpoints: 2 of 4, 2 of 3 or 1 of 2. The owner found 65 too strict for a simple
+ * topic (Nov 9), so the bar is "you clearly know the core of it", not "you said almost everything".
  */
-export const PASS_SCORE = 65;
+export const PASS_SCORE = 50;
+
+/**
+ * A strong explanation (2 of 3, 3 of 4, or better, after the minus 20 per factual error) is proven right away.
+ * Only a borderline pass, from PASS_SCORE up to this, gets the follow-up question.
+ */
+export const STRONG_SCORE = 67;

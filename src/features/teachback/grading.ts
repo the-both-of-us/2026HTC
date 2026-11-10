@@ -9,12 +9,12 @@ export const GRADER_SYSTEM = `You check a learner's explanation of a skill again
 
 For each checkpoint, return the number of the checkpoint and either a quote or null.
 - A quote is words copied exactly from the learner's text, in one unbroken piece, with no edits and no ellipsis. Use the shortest passage of at least three words that states the fact on its own.
-- Return null unless the learner states the specific fact in the checkpoint. If a reader could not check that fact from the quote alone, return null.
-- Fluent general wording does not count. Polished phrases that only sound related to the topic, such as "a robust approach", "delivers comprehensive coverage" or "focuses on what matters", state no checkable fact, so they get null. Never give credit for what the learner probably meant.
-- Plain, informal or clumsy wording does count, when the specific fact is really there. Different words for the same idea count: "a false positive" states the same fact as "wrongly rejecting the null hypothesis".
-- Look for the main fact only. A side detail in the checkpoint, such as an example after "like" or "such as" or a number after "typically", is not required.
+- Be generous. Give the checkpoint a quote when the learner gets its main idea across, even loosely, partly, or in their own words. Return null only when the idea is missing, or what they say about it is wrong.
+- Fluent general wording does not count. Polished phrases that only sound related to the topic, such as "a robust approach", "delivers comprehensive coverage" or "focuses on what matters", say nothing about the idea, so they get null.
+- Plain, informal, short or clumsy wording counts. Different words for the same idea count: "a false positive" states the same idea as "wrongly rejecting the null hypothesis". A correct everyday example that shows the idea counts too.
+- Look for the main idea only. Side details in the checkpoint, such as an example after "like" or "such as", a number after "typically", or exact technical terms, are not required.
 
-Also list factualErrors: statements in the learner's text that are clearly false, one short sentence each, saying what they claimed and what is true. Judge each statement in the context of this skill: a statement that is true for this skill's subject is not an error, even if it would be false elsewhere. Something missing is not an error. Vague or informal wording is not an error. Return an empty list if nothing is false.
+Also list factualErrors: statements in the learner's text that are clearly false about something that matters for this skill, one short sentence each, saying what they claimed and what is true. A small slip, a simplification or imprecise wording is not an error. Judge each statement in the context of this skill: a statement that is true for this skill's subject is not an error, even if it would be false elsewhere. Something missing is not an error. Vague or informal wording is not an error. Return an empty list if nothing is false.
 
 ${LEARNER_TEXT_RULE}`;
 

@@ -77,7 +77,7 @@ export function AttemptResult({
         <IntegrityNote attempt={attempt} />
         <details className="rounded-control border border-rule-strong">
           <summary className="flex min-h-11 cursor-pointer items-center px-3 font-medium transition-control hover:bg-raised">
-            Show your words and the follow-up
+            {attempt.followUp ? "Show your words and the follow-up" : "Show your words"}
           </summary>
           <div className="flex flex-col gap-5 p-3 pt-2">
             <Checkpoints attempt={attempt} />

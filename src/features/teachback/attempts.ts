@@ -5,6 +5,7 @@ import { HttpError } from "@/shared/http";
 import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
 import {
   PASS_SCORE,
+  STRONG_SCORE,
   type Attempt,
   type CatchRecord,
   type Grade,
@@ -109,7 +110,13 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   // A 10-year-old's version must also read simply. Code measures that, not the AI.
   const level = format === "kid" ? readingGrade(explanation) : null;
   const plainLanguage = level === null ? null : { readingGrade: level, passed: level <= MAX_KID_GRADE };
-  const status = grade.score < PASS_SCORE || plainLanguage?.passed === false ? "not-yet" : "needs-followup";
+  // A strong explanation is proven now. Only a borderline pass gets a follow-up question.
+  const status =
+    grade.score < PASS_SCORE || plainLanguage?.passed === false
+      ? "not-yet"
+      : grade.score >= STRONG_SCORE
+        ? "proven"
+        : "needs-followup";
   const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade, map.audience, tier) : null;
 
   const attempt: Attempt = {
@@ -132,6 +139,8 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
     ...(format !== "explain" && { format }),
     ...(plainLanguage && { plainLanguage }),
   };
+  // Progress first, as in answerFollowUp: if saving the attempt then fails, the proof still holds up.
+  if (status === "proven") await markProven(map.id, userId, node.id, attempt.id, format);
   await saveAttempt(attempt);
   return attempt;
 }

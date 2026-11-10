@@ -46,14 +46,17 @@ function newAttempt(overrides: Partial<NewAttempt> = {}): NewAttempt {
   return { mapId, nodeId: "first", explanation: EXPLANATION, integrity, ...overrides };
 }
 
-/** The model's grading reply: both checkpoints met, or only the first (a 50, which fails). */
-function modelGrades(quality: "full" | "half") {
+/**
+ * The model's grading reply: both checkpoints met (100, proven at once), only the first (50, a
+ * borderline pass that gets a follow-up), or only the first plus a false claim (30, which fails).
+ */
+function modelGrades(quality: "full" | "pass" | "half") {
   mockChatJSON.mockResolvedValueOnce({
     checkpoints: [
       { number: 1, quote: "keeps only rows that match in both tables" },
       { number: 2, quote: quality === "full" ? "keeps every left row" : null },
     ],
-    factualErrors: quality === "full" ? [] : ["They said X, but Y is true."],
+    factualErrors: quality === "half" ? ["They said X, but Y is true."] : [],
   });
   // The second check confirms the flagged error.
   if (quality === "half") mockChatJSON.mockResolvedValueOnce({ confirmed: [1] });
@@ -68,7 +71,7 @@ function modelJudges(passed: boolean) {
 }
 
 async function reachFollowUp(nodeId = "first"): Promise<Attempt> {
-  modelGrades("full");
+  modelGrades("pass");
   modelAsks();
   return startAttempt(OWNER, newAttempt({ nodeId }));
 }
@@ -161,7 +164,20 @@ describe("status transitions", () => {
     expect(old.followUp).not.toHaveProperty("startedAfterMs");
   });
 
-  it("2 of 3 checkpoints reaches the follow-up", async () => {
+  it("a strong explanation is proven at once, with no follow-up question", async () => {
+    modelGrades("full");
+
+    const attempt = await startAttempt(OWNER, newAttempt());
+
+    expect(attempt.grade.score).toBe(100);
+    expect(attempt.status).toBe("proven");
+    expect(attempt.followUp).toBeNull();
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+    expect((await getProgress(mapId, OWNER))?.proven.first).toBe(attempt.id);
+    expect((await getProgressView(OWNER, mapId)).states.second).toBe("available");
+  });
+
+  it("2 of 3 checkpoints is strong enough to skip the follow-up", async () => {
     const node = { ...makeNode("first", []), checkpoints: ["One fact", "Two fact", "Three fact"] };
     await putDoc(`maps/${mapId}`, { ...(await getDoc(`maps/${mapId}`) as SkillMap), nodes: [node] });
     mockChatJSON.mockResolvedValueOnce({
@@ -172,12 +188,11 @@ describe("status transitions", () => {
       ],
       factualErrors: [],
     });
-    modelAsks();
-
-    const attempt = await startAttempt(OWNER, newAttempt());
+     const attempt = await startAttempt(OWNER, newAttempt());
 
     expect(attempt.grade.score).toBe(67);
-    expect(attempt.status).toBe("needs-followup");
+    expect(attempt.status).toBe("proven");
+    expect(attempt.followUp).toBeNull();
   });
 
   it("a failed follow-up gives not-yet and leaves the node unproven", async () => {
@@ -415,10 +430,15 @@ describe("what is stored and sent", () => {
   });
 
   it("holds back missed checkpoints and misconceptions while a follow-up is open, then returns them", async () => {
+    const node = { ...makeNode("first", []), checkpoints: ["One fact", "Two fact", "Three fact", "Four fact"] };
+    await putDoc(`maps/${mapId}`, { ...((await getDoc(`maps/${mapId}`)) as SkillMap), nodes: [node] });
+    // 3 of 4 met, minus 20 for the false claim: 55, a borderline pass.
     mockChatJSON.mockResolvedValueOnce({
       checkpoints: [
         { number: 1, quote: "keeps only rows that match in both tables" },
         { number: 2, quote: "keeps every left row" },
+        { number: 3, quote: "fills the rest with NULL" },
+        { number: 4, quote: null },
       ],
       factualErrors: ["A false claim."],
     });

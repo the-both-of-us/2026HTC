@@ -133,14 +133,14 @@ describe("Catch the mistake", () => {
     expect(checkPrompt).not.toContain("shops");
   });
 
-  it("fails when a correction does not fix the mistake", async () => {
+  it("a correction that does not fix the mistake earns nothing, but half the mistakes fixed still passes", async () => {
     modelWrites();
     modelChecks([1]);
 
     const attempt = await play(GOOD);
 
     expect(attempt.grade.score).toBe(50);
-    expect(attempt.status).toBe("not-yet");
+    expect(attempt.status).toBe("proven");
   });
 
   it("counts a missed mistake as unmet", async () => {
@@ -150,7 +150,7 @@ describe("Catch the mistake", () => {
     const attempt = await play([GOOD[0]]);
 
     expect(attempt.grade.checkpoints.map((result) => result.met)).toEqual([true, false]);
-    expect(attempt.status).toBe("not-yet");
+    expect(attempt.grade.score).toBe(50);
   });
 
   it("can be played once: after the reveal, the learner explains instead", async () => {

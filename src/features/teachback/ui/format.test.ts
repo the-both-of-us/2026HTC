@@ -77,7 +77,7 @@ describe("verdict and next step", () => {
     const missing = attempt({ grade: grade(2, 4, ["wrong"]) });
     expect(verdictTitle(missing)).toBe("Not yet. 2 checkpoints to add.");
     expect(nextStepSentence(missing)).toBe(
-      "To reach 65, add the 2 missed checkpoints and correct 1 factual error. Your text is kept below for editing.",
+      "To reach 50, add the 2 missed checkpoints and correct 1 factual error. Your text is kept below for editing.",
     );
   });
 

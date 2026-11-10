@@ -217,7 +217,7 @@ describe("attemptProvesNode", () => {
 
   it("rejects a score under the pass mark", () => {
     const attempt = makeAttempt(map, "joins");
-    attempt.grade.score = 50;
+    attempt.grade.score = 40;
     expect(attemptProvesNode(attempt, map, node)).toBe(false);
   });
 
@@ -259,8 +259,10 @@ describe("proving formats on the record", () => {
     expect(skill.explanation).toBe("");
   });
 
-  it("still needs a follow-up for every other format", () => {
-    expect(attemptProvesNode({ ...caught, format: "kid", catch: undefined }, map, node)).toBe(false);
+  it("needs a passed follow-up for every other format, unless the score was strong", () => {
+    const borderline = { ...caught, format: "kid" as const, catch: undefined, grade: { ...caught.grade, score: 55 } };
+    expect(attemptProvesNode(borderline, map, node)).toBe(false);
+    expect(attemptProvesNode({ ...caught, format: "kid", catch: undefined }, map, node)).toBe(true);
   });
 
   it("leaves format out for Explain it, so older records keep their fingerprint", () => {
