@@ -5,7 +5,6 @@ import { HttpError } from "@/shared/http";
 import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
 import {
   PASS_SCORE,
-  STRONG_SCORE,
   type Attempt,
   type CatchRecord,
   type Grade,
@@ -38,7 +37,7 @@ import {
   type FinalRecord,
   type FinalView,
 } from "./final";
-import { generateFollowUp, gradeFollowUp } from "./followUp";
+import { gradeFollowUp } from "./followUp";
 import { assignFormats, MAX_KID_GRADE, readingGrade, type TopicFormat } from "./formats";
 import { computeScore, gradeExplanation } from "./grading";
 import { countWords } from "./learnerText";
@@ -109,14 +108,8 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   // a tip, never a gate: one long run-on sentence of plain words measured grade 23 and blocked a 100.
   const level = format === "kid" ? readingGrade(explanation) : null;
   const plainLanguage = level === null ? null : { readingGrade: level, passed: level <= MAX_KID_GRADE };
-  // A strong explanation is proven now. Only a borderline pass gets a follow-up question.
-  const status =
-    grade.score < PASS_SCORE
-      ? "not-yet"
-      : grade.score >= STRONG_SCORE
-        ? "proven"
-        : "needs-followup";
-  const question = status === "needs-followup" ? await generateFollowUp(node, explanation, grade, map.audience, tier) : null;
+  // A pass proves the skill straight away. There is no follow-up question any more (owner, Nov 9).
+  const status = grade.score < PASS_SCORE ? "not-yet" : "proven";
 
   const attempt: Attempt = {
     id: randomUUID(),
@@ -130,7 +123,7 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
       wordCount: countWords(explanation),
     },
     grade,
-    followUp: question ? { question, answer: null, passed: null, feedback: null } : null,
+    followUp: null,
     status,
     createdAt: new Date().toISOString(),
     timing: { gradeMs, followUpMs: null },

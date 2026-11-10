@@ -62,18 +62,39 @@ function modelGrades(quality: "full" | "pass" | "half") {
   if (quality === "half") mockChatJSON.mockResolvedValueOnce({ confirmed: [1] });
 }
 
-function modelAsks() {
-  mockChatJSON.mockResolvedValueOnce({ question: "In your example, what happens to a row with no match?" });
-}
 
 function modelJudges(passed: boolean) {
   mockChatJSON.mockResolvedValueOnce({ passed, feedback: passed ? "Right." : "That did not answer it." });
 }
 
-async function reachFollowUp(nodeId = "first"): Promise<Attempt> {
-  modelGrades("pass");
-  modelAsks();
-  return startAttempt(OWNER, newAttempt({ nodeId }));
+/**
+ * New attempts never get a follow-up since Nov 9, but ones saved before then can still be
+ * answered. This saves one such open attempt: 1 of 2 checkpoints met, with a question waiting.
+ */
+async function reachFollowUp(nodeId = "first", misconceptions: string[] = []): Promise<Attempt> {
+  const attempt: Attempt = {
+    id: randomUUID(),
+    mapId,
+    nodeId,
+    ownerId: OWNER,
+    explanation: EXPLANATION,
+    integrity: { ...integrity, wordCount: EXPLANATION.split(" ").length },
+    grade: {
+      score: 50,
+      checkpoints: [
+        { checkpoint: "Inner join keeps only matches", quote: "keeps only rows that match in both tables", met: true },
+        { checkpoint: "Left join keeps every left row", quote: null, met: false },
+      ],
+      misconceptions,
+      rejectedQuotes: 0,
+    },
+    followUp: { question: "In your example, what happens to a row with no match?", answer: null, passed: null, feedback: null },
+    status: "needs-followup",
+    createdAt: new Date().toISOString(),
+    timing: { gradeMs: 534, followUpMs: null },
+  };
+  await putDoc(`attempts/${attempt.id}`, attempt);
+  return attempt;
 }
 
 beforeEach(async () => {
@@ -120,18 +141,22 @@ describe("status transitions", () => {
     modelGrades("half");
     await startAttempt(OWNER, newAttempt());
 
-    const second = await reachFollowUp();
+    modelGrades("pass");
+    const second = await startAttempt(OWNER, newAttempt());
 
-    expect(second.status).toBe("needs-followup");
+    expect(second.status).toBe("proven");
   });
 
-  it("a score at the pass mark gives needs-followup, and does not prove the node yet", async () => {
-    const attempt = await reachFollowUp();
+  it("a score at the pass mark proves the skill at once: no follow-up question", async () => {
+    modelGrades("pass");
 
-    expect(attempt.status).toBe("needs-followup");
-    expect(attempt.followUp?.question).toContain("your example");
-    expect(attempt.followUp?.answer).toBeNull();
-    expect(await getProgress(mapId, OWNER)).toBeNull();
+    const attempt = await startAttempt(OWNER, newAttempt());
+
+    expect(attempt.grade.score).toBe(50);
+    expect(attempt.status).toBe("proven");
+    expect(attempt.followUp).toBeNull();
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+    expect((await getProgress(mapId, OWNER))?.proven).toEqual({ first: attempt.id });
   });
 
   it("a passed follow-up gives proven, updates progress and unlocks the next node", async () => {
@@ -400,9 +425,12 @@ describe("what the server refuses", () => {
 describe("what is stored and sent", () => {
   it("measures grading and the follow-up on the server, and sends the times to the learner", async () => {
     vi.spyOn(performance, "now").mockReturnValueOnce(1_000).mockReturnValueOnce(1_534.4);
+    modelGrades("half");
+    const graded = await startAttempt(OWNER, newAttempt());
+    expect(graded.timing).toEqual({ gradeMs: 534, followUpMs: null });
+    expect(toLearnerView(graded).timing).toEqual({ gradeMs: 534, followUpMs: null });
+
     const attempt = await reachFollowUp();
-    expect(attempt.timing).toEqual({ gradeMs: 534, followUpMs: null });
-    expect(toLearnerView(attempt).timing).toEqual({ gradeMs: 534, followUpMs: null });
 
     vi.spyOn(performance, "now").mockReturnValueOnce(2_000).mockReturnValueOnce(2_401);
     modelJudges(true);
@@ -444,22 +472,7 @@ describe("what is stored and sent", () => {
   });
 
   it("holds back missed checkpoints and misconceptions while a follow-up is open, then returns them", async () => {
-    const node = { ...makeNode("first", []), checkpoints: ["One fact", "Two fact", "Three fact", "Four fact"] };
-    await putDoc(`maps/${mapId}`, { ...((await getDoc(`maps/${mapId}`)) as SkillMap), nodes: [node] });
-    // 3 of 4 met, minus 20 for the false claim: 55, a borderline pass.
-    mockChatJSON.mockResolvedValueOnce({
-      checkpoints: [
-        { number: 1, quote: "keeps only rows that match in both tables" },
-        { number: 2, quote: "keeps every left row" },
-        { number: 3, quote: "fills the rest with NULL" },
-        { number: 4, quote: null },
-      ],
-      factualErrors: ["A false claim."],
-    });
-    mockChatJSON.mockResolvedValueOnce({ confirmed: [1] });
-    modelAsks();
-    const attempt = await startAttempt(OWNER, newAttempt());
-    expect(attempt.status).toBe("needs-followup");
+    const attempt = await reachFollowUp("first", ["A false claim."]);
     expect(toLearnerView(attempt).grade.misconceptions).toEqual([]);
 
     modelJudges(false);
@@ -478,7 +491,6 @@ describe("unlock anyway", () => {
     expect((await getProgress(mapId, OWNER))?.unlocked?.second).toEqual(expect.any(String));
 
     modelGrades("full");
-    modelAsks();
     await expect(startAttempt(OWNER, newAttempt({ nodeId: "second" }))).resolves.toMatchObject({ nodeId: "second" });
   });
 

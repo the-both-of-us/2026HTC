@@ -1,6 +1,6 @@
 import { Circle, CircleCheck, Clock, ClipboardCheck, ClipboardPaste, Keyboard, Mic, WholeWord } from "lucide-react";
 import type { ReactNode } from "react";
-import { PASS_SCORE, STRONG_SCORE } from "@/shared/types";
+import { PASS_SCORE } from "@/shared/types";
 import { InlineText } from "@/shared/ui";
 import type { ProofSkill } from "../types";
 import { catchCounts } from "../redact";
@@ -48,7 +48,7 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
 
         {!skill.catch && (
           <Section title="Checkpoints">
-            <p className="mb-3 text-sm text-ink-soft">{`${scoreLine(skill)} A pass needs ${PASS_SCORE}. Below ${STRONG_SCORE}, it also needs a passed follow-up.`}</p>
+            <p className="mb-3 text-sm text-ink-soft">{`${scoreLine(skill)} A pass needs ${PASS_SCORE}.`}</p>
             <Checkpoints skill={skill} />
             {skill.factualErrors.length > 0 && (
               <div className="mt-4">
@@ -68,12 +68,6 @@ export function SkillEvidence({ skill }: { skill: ProofSkill }) {
                 {skill.rejectedQuotes === 1 ? "it" : "them"}.
               </p>
             )}
-          </Section>
-        )}
-
-        {!skill.catch && !skill.followUp.question && (
-          <Section title="Live follow-up question">
-            <p className="text-sm text-ink-soft">{`None needed: an explanation scoring ${STRONG_SCORE} or more is proven without one.`}</p>
           </Section>
         )}
 

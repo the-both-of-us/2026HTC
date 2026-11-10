@@ -259,10 +259,11 @@ describe("proving formats on the record", () => {
     expect(skill.explanation).toBe("");
   });
 
-  it("needs a passed follow-up for every other format, unless the score was strong", () => {
-    const borderline = { ...caught, format: "kid" as const, catch: undefined, grade: { ...caught.grade, score: 55 } };
-    expect(attemptProvesNode(borderline, map, node)).toBe(false);
-    expect(attemptProvesNode({ ...caught, format: "kid", catch: undefined }, map, node)).toBe(true);
+  it("needs no follow-up since Nov 9, but an older one that was asked must have passed", () => {
+    const passing = { ...caught, format: "kid" as const, catch: undefined, grade: { ...caught.grade, score: 55 } };
+    expect(attemptProvesNode(passing, map, node)).toBe(true);
+    const failedFollowUp = { ...passing, followUp: { question: "Why?", answer: "No idea.", passed: false, feedback: "Not passed." } };
+    expect(attemptProvesNode(failedFollowUp, map, node)).toBe(false);
   });
 
   it("leaves format out for Explain it, so older records keep their fingerprint", () => {

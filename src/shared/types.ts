@@ -177,8 +177,3 @@ export type NodeState = "locked" | "available" | "proven";
  */
 export const PASS_SCORE = 50;
 
-/**
- * A strong explanation (2 of 3, 3 of 4, or better, after the minus 20 per factual error) is proven right away.
- * Only a borderline pass, from PASS_SCORE up to this, gets the follow-up question.
- */
-export const STRONG_SCORE = 67;

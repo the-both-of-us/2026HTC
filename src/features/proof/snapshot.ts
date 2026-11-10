@@ -1,6 +1,6 @@
 import type { GridSolve } from "@/features/grid";
 import { isUsableQuote } from "@/features/teachback";
-import { PASS_SCORE, STRONG_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode, type SourceKind } from "@/shared/types";
+import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode, type SourceKind } from "@/shared/types";
 import { redactSkill } from "./redact";
 import type { ProofFinalInterview, ProofGridSolve, ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
@@ -73,8 +73,8 @@ function toProofGridSolve(solve: GridSolve): ProofGridSolve {
 
 /**
  * Progress alone is not enough. A skill only counts if the attempt behind it holds up:
- * same owner, same map and node, a passing score, a passed follow-up (or a strong score,
- * which needs none), and quotes that
+ * same owner, same map and node, a passing score, a passed follow-up if one was asked
+ * (none are since Nov 9), and quotes that
  * really are in the person's text. Progress is saved first (see answerFollowUp), so an
  * attempt can be left unfinished if a save fails, and that must not count here.
  */
@@ -84,8 +84,8 @@ export function attemptProvesNode(attempt: Attempt, map: SkillMap, node: SkillNo
   // "Catch the mistake" has no follow-up, nor does a strong explanation. Any follow-up asked must have passed.
   if (attempt.status !== "proven") return false;
   if (attempt.format !== "catch") {
-    const followUpOk = attempt.followUp ? attempt.followUp.passed === true : attempt.grade.score >= STRONG_SCORE;
-    if (!followUpOk) return false;
+    // Since Nov 9 there is no follow-up. Older attempts that were asked one must have passed it.
+    if (attempt.followUp && attempt.followUp.passed !== true) return false;
   }
   if (attempt.format === "catch" && !attempt.catch) return false;
   if (attempt.grade.score < PASS_SCORE) return false;

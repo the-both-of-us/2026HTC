@@ -51,7 +51,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
                   {quote && <span className="line-clamp-1 text-[9pt] text-ink-soft">“{quote}”</span>}
                 </td>
                 <td className="py-1 pr-3 whitespace-nowrap">
-                  {metCount(skill)} of {skill.checkpoints.length}{skill.catch ? ", mistakes caught" : ", follow-up passed"}
+                  {metCount(skill)} of {skill.checkpoints.length}{skill.catch ? ", mistakes caught" : ", checkpoints met"}
                 </td>
                 <td className="py-1 text-right font-medium tabular-nums">{skill.score}</td>
               </tr>
@@ -78,7 +78,7 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
           <p className="font-semibold">How this was checked</p>
           <p>
             AI picked an exact quote for each checkpoint. Code confirmed each quote is in their text and computed the
-            score. For a borderline score, AI wrote and judged one live follow-up question about their own answer.
+            score.
           </p>
         </div>
         <div>

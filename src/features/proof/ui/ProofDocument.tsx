@@ -1,6 +1,6 @@
 import { CircleCheck, CircleMinus, Trophy } from "lucide-react";
 import type { ReactNode } from "react";
-import { PASS_SCORE, STRONG_SCORE } from "@/shared/types";
+import { PASS_SCORE } from "@/shared/types";
 import type { ProofSnapshot } from "../types";
 import { DocumentActions } from "./DocumentActions";
 import { GridEvidence } from "./GridEvidence";
@@ -27,9 +27,9 @@ export function ProofDocument({ snapshot, hash, url }: ProofDocumentProps) {
               The evidence
             </h2>
             <p className="mt-1 text-ink-soft">
-              Each skill says how it was proved. For an explanation, {snapshot.displayName} then answered a question
-              about it, and highlights mark the exact words that met a checkpoint. For a caught mistake, the AI wrote
-              the explanation and they found what it got wrong.
+              Each skill says how it was proved. For an explanation, highlights mark the exact words{" "}
+              {snapshot.displayName} wrote that met a checkpoint. For a caught mistake, the AI wrote the explanation
+              and they found what it got wrong.
             </p>
           </div>
           {snapshot.skills.map((skill) => (
@@ -133,10 +133,6 @@ function ProvesAndDoesNot() {
           <h3 className="font-medium">It shows</h3>
           <ul className="mt-2 flex flex-col gap-2">
             <ClaimLine met>These explanations state the listed facts. Code confirmed each quote is in the text.</ClaimLine>
-            <ClaimLine met>
-              The writer then answered a question built from that explanation, and the AI judged the answer to show
-              understanding.
-            </ClaimLine>
             <ClaimLine met>Whether each skill came from the source they supplied, with the quote when code could confirm it.</ClaimLine>
           </ul>
         </div>
@@ -194,12 +190,7 @@ const CHECK_STEPS: { by: "AI" | "Code"; title: string; detail: string }[] = [
   {
     by: "Code",
     title: "The score is computed",
-    detail: `Checkpoints met as a percentage, minus 20 for each factual error the AI listed. A pass needs ${PASS_SCORE}; from ${STRONG_SCORE} no follow-up is needed.`,
-  },
-  {
-    by: "AI",
-    title: "One live follow-up",
-    detail: "A new question about what they just wrote, answered on the spot. The AI judges this answer, and passing it is required.",
+    detail: `Checkpoints met as a percentage, minus 20 for each factual error the AI listed. A pass needs ${PASS_SCORE}.`,
   },
 ];
 

@@ -125,13 +125,13 @@ function escapeForRegExp(word: string): string {
 
 /**
  * How the skill was proved, said honestly. A record from before formats existed has no
- * format, and was a written or spoken explanation plus a follow-up.
+ * format, and was a written or spoken explanation (plus a follow-up, before Nov 9).
  */
 export function provedByLine(skill: ProofSkill): string {
   const aloud = skill.integrity.inputMethod === "voice";
   if (skill.format === "catch" && skill.catch) {
     const caught = catchCounts(skill.catch).caughtCount;
-    return `Caught ${plural(caught, "planted mistake")} in an AI explanation and corrected ${caught === 1 ? "it" : "them"}`;
+    return `Caught ${plural(caught, "planted mistake")} in an AI explanation`;
   }
   if (skill.format === "kid") {
     const grade = skill.readingGrade === undefined ? "" : `, reading grade ${Math.round(skill.readingGrade)} measured by code`;

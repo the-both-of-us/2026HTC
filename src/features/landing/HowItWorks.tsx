@@ -2,14 +2,13 @@
 
 import { Info, X } from "lucide-react";
 import { useId, useRef } from "react";
-import { PASS_SCORE, STRONG_SCORE } from "@/shared/types";
+import { PASS_SCORE } from "@/shared/types";
 import { Button } from "@/shared/ui";
 
 const STEPS: { by: "AI" | "Code"; text: string }[] = [
   { by: "AI", text: "Reads your explanation and returns your exact words for each checkpoint. It never gives a number." },
   { by: "Code", text: "Checks every quote is really in what you wrote. A quote that isn't there counts as not met." },
-  { by: "Code", text: `Computes the score: checkpoints met out of 100, minus 20 for each factual error the AI flagged. ${PASS_SCORE} passes.` },
-  { by: "AI", text: `Under ${STRONG_SCORE}, asks one follow-up about your own words and judges your answer. At ${STRONG_SCORE} or more you're done.` },
+  { by: "Code", text: `Computes the score: checkpoints met out of 100, minus 20 for each factual error the AI flagged. ${PASS_SCORE} passes, and the skill is proven.` },
 ];
 
 /**

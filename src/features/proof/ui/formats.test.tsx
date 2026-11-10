@@ -31,7 +31,7 @@ const caught: ProofSkill = {
 
 describe("how a skill was proved, on the evidence page", () => {
   it("says honestly which format each skill was proved in", () => {
-    expect(provedByLine(caught)).toBe("Caught 1 planted mistake in an AI explanation and corrected it");
+    expect(provedByLine(caught)).toBe("Caught 1 planted mistake in an AI explanation");
     expect(provedByLine({ ...base, format: "kid", readingGrade: 5.6 })).toBe(
       "Explained it for a 10-year-old, reading grade 6 measured by code",
     );

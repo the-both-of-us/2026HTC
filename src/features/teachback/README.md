@@ -6,10 +6,10 @@ Grades a learner's explanation of a skill, asks a follow-up about what they wrot
 
 1. `POST /api/attempts` calls `startAttempt`. It refuses a locked node, someone else's map, a proven node, or fewer than 15 words, all before spending a model call.
 2. `gradeExplanation` gets quotes and factual errors from the model. Code checks each quote and works out the score.
-3. Below `PASS_SCORE` (50, so half the checkpoints) the status is `not-yet`, and the learner can retry with a new attempt. At `STRONG_SCORE` (67: 2 of 3, 3 of 4, no factual error) or more the node is `proven` at once, with no follow-up. In between it is `needs-followup`, with a question from `generateFollowUp`.
-4. `POST /api/attempts/[id]/followup` calls `answerFollowUp`. A pass gives `proven` and updates `MapProgress`. A fail gives `not-yet`.
+3. Below `PASS_SCORE` (50, so half the checkpoints) the status is `not-yet`, and the learner can retry with a new attempt. Otherwise the skill is `proven` at once and `MapProgress` is updated.
+4. There is no follow-up question any more (owner, Nov 9: it slowed people down). `generateFollowUp` is unused by attempts; `POST /api/attempts/[id]/followup` (`answerFollowUp`) stays only so attempts saved earlier with an open question can still be finished. The final interview still uses the same machinery.
 
-The owner found proving a simple topic too grueling (Nov 9), so the pass mark dropped from 65 to 50, strong explanations skip the follow-up, and the grader and follow-up prompts were told to be generous (main idea in any words counts; small slips are not errors). The eval in `eval/` was measured on the stricter prompts and has not been rerun. A real-model spot check on Nov 9 (SQL joins, 4 checkpoints): a casual 28-word explanation scored 75 and was proven at once; a fluent, empty answer that scored 0-30 before now scores 50 and gets a follow-up, where "not sure honestly" fails and a short right answer passes.
+The owner found proving a simple topic too grueling (Nov 9), so the pass mark dropped from 65 to 50, the follow-up question was removed, and the grader and follow-up prompts were told to be generous (main idea in any words counts; small slips are not errors). The eval in `eval/` was measured on the stricter prompts and has not been rerun. A real-model spot check on Nov 9 (SQL joins, 4 checkpoints): a casual 28-word explanation scored 75 and was proven at once; a fluent, empty answer that scored 0-30 before now scores 50, which passes now that there is no follow-up. That is the accepted trade-off for speed.
 
 ## Four ways to prove a topic
 
