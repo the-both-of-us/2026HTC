@@ -8,7 +8,6 @@ vi.mock("@vercel/oidc", () => ({ getVercelOidcToken: vi.fn() }));
 const CEREBRAS = "https://api.cerebras.ai/v1/chat/completions";
 const GROQ = "https://api.groq.com/openai/v1/chat/completions";
 const GATEWAY = "https://ai-gateway.vercel.sh/v1/chat/completions";
-const GEMINI = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const ANTHROPIC = "https://api.anthropic.com/v1/messages";
 
 const schema = z.object({ answer: z.number() });
@@ -146,43 +145,40 @@ describe("fallback order", () => {
 });
 
 describe("preferredRoute", () => {
-  beforeEach(() => {
-    vi.stubEnv("GEMINI_API_KEY", "gemini-key");
-  });
 
   it("tries the preferred route first", async () => {
     const fetchMock = mockFetch(reply('{"answer":42}'));
 
-    await expect(chatJSON({ ...base, schema, preferredRoute: "gemini" })).resolves.toEqual({ answer: 42 });
-    expect(urls(fetchMock)).toEqual([GEMINI]);
+    await expect(chatJSON({ ...base, schema, preferredRoute: "groq" })).resolves.toEqual({ answer: 42 });
+    expect(urls(fetchMock)).toEqual([GROQ]);
   });
 
   it("works for chatText too", async () => {
     const fetchMock = mockFetch(reply("hello"));
 
-    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
-    expect(urls(fetchMock)).toEqual([GEMINI]);
+    await expect(chatText({ ...base, preferredRoute: "groq" })).resolves.toBe("hello");
+    expect(urls(fetchMock)).toEqual([GROQ]);
   });
 
   it("falls through to the normal order when it is rate limited", async () => {
     const fetchMock = mockFetch(failure(429), reply("hello"));
 
-    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
-    expect(urls(fetchMock)).toEqual([GEMINI, CEREBRAS]);
+    await expect(chatText({ ...base, preferredRoute: "groq" })).resolves.toBe("hello");
+    expect(urls(fetchMock)).toEqual([GROQ, CEREBRAS]);
   });
 
   it("falls through on a 400, so a wrong model name there can't break the feature", async () => {
     const fetchMock = mockFetch(failure(400), reply("hello"));
 
-    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
-    expect(urls(fetchMock)).toEqual([GEMINI, CEREBRAS]);
+    await expect(chatText({ ...base, preferredRoute: "groq" })).resolves.toBe("hello");
+    expect(urls(fetchMock)).toEqual([GROQ, CEREBRAS]);
   });
 
   it("is skipped when it has no key", async () => {
-    vi.stubEnv("GEMINI_API_KEY", "");
+    vi.stubEnv("GROQ_API_KEY", "");
     const fetchMock = mockFetch(reply("hello"));
 
-    await expect(chatText({ ...base, preferredRoute: "gemini" })).resolves.toBe("hello");
+    await expect(chatText({ ...base, preferredRoute: "groq" })).resolves.toBe("hello");
     expect(urls(fetchMock)).toEqual([CEREBRAS]);
   });
 
@@ -406,11 +402,10 @@ describe("tiers", () => {
   });
 
   it("puts Claude before a preferred route", async () => {
-    vi.stubEnv("GEMINI_API_KEY", "gemini-key");
     const fetchMock = mockFetch(failure(500), reply("hello"));
 
-    expect(await chatText({ ...base, tier: 2, preferredRoute: "gemini" })).toBe("hello");
-    expect(urls(fetchMock)).toEqual([ANTHROPIC, GEMINI]);
+    expect(await chatText({ ...base, tier: 2, preferredRoute: "groq" })).toBe("hello");
+    expect(urls(fetchMock)).toEqual([ANTHROPIC, GROQ]);
   });
 
   it("logs the model that served the call", async () => {

@@ -17,12 +17,12 @@ The owner found proving a simple topic too grueling (Nov 9), so the pass mark dr
 
 - **Explain it**: the loop above.
 - **Catch the mistake** (`catch.ts`): the AI writes 5 to 8 sentences with 1 or 2 planted mistakes, each breaking a checkpoint. It is written once per topic and shared by every copy of a course (`catch/<mapId or forkedFrom>/<nodeId>`). The browser gets the sentences and how many are wrong, never which. Since Nov 9 the learner only taps: nothing to write, and no AI call checks the round (the owner found writing a correction for each tap too much). Code checks the tapped sentence numbers against the planted ones, so the result is instant. Each planted mistake is a checkpoint, met when tapped (its quote is the tapped sentence, which `catchTranscript` puts in the attempt's text), and each correct sentence tapped costs 20, through `computeScore`. Rounds played earlier keep their written corrections and the AI's verdict on them. No follow-up: a pass proves the topic. One play per learner (`catch-revealed/<mapId>/<ownerId>/<nodeId>`), because the reveal shows the answers.
-- **Explain it to a 10-year-old**: the same grader, plus `readingGrade` (Flesch-Kincaid, worked out by code) must be 8 or lower.
+- **Explain it to a 10-year-old**: the same grader, plus `readingGrade` (Flesch-Kincaid, worked out by code), shown as a tip and kept for the evidence page. Since Nov 9 it never blocks a pass: a plain-worded run-on sentence measured grade 23 and failed a 100.
 - **Say it in 30 seconds**: the same grader, with a clock in the browser. The evidence page says whether it was spoken or typed.
 
 The format is saved on the attempt (`format`, missing on older ones, which were all "explain") and on the progress record.
 
-With `map.audience` set, grading, follow-ups, catch rounds (`catch/<id>/<nodeId>/<audienceKey>`) and the final interview get a THE LEARNER section (`audience.ts`): plain childlike wording counts, facts must still be right, and the pass mark stays 65. For children about 9 and under, "Explain it to a 10-year-old" shows as "Explain it to a friend". With no audience every prompt is unchanged (`audience.test.ts`).
+With `map.audience` set, grading, follow-ups, catch rounds (`catch/<id>/<nodeId>/<audienceKey>`) and the final interview get a THE LEARNER section (`audience.ts`): plain childlike wording counts, facts must still be right, and the pass mark stays `PASS_SCORE`. For children about 9 and under, "Explain it to a 10-year-old" shows as "Explain it to a friend". With no audience every prompt is unchanged (`audience.test.ts`).
 
 ## The final interview
 

@@ -7,7 +7,7 @@ import { getOrCreateLesson } from "./lessons";
  * Starts writing the lesson for a new map's first open topic once the response has been sent,
  * so the Read tab is ready when the learner opens it (a new lesson takes about 17 s). Call it
  * from a route handler right after a map is built. It costs one model call at most, through
- * the usual chain with Gemini first, and none when the lesson is already saved or is a sample.
+ * the usual chain (gpt-oss-120b, or Sonnet when the router says so), and none when the lesson is already saved or is a sample.
  * If the learner opens the tab while it is still being written, they wait on the same call.
  */
 export function writeFirstLessonSoon(mapId: string): void {

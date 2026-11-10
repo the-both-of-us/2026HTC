@@ -13,7 +13,7 @@ The **Read** tab: a 3 to 5 minute lesson on one skill, so a learner can learn it
 1. `POST /api/lessons { mapId, nodeId }` calls `getOrCreateLesson(mapId, nodeId, viewerId)`. The map's owner may always read; anyone else only once the map is published as a course. A private map gets the same 404 as a missing one, before any store key or model call.
 2. A saved lesson at `lessons/<mapId>/<nodeId>` is returned as it is.
 3. A map built from a sample posting uses the lessons saved in `fixtures/`, matched by node id and title, so the demo needs no model call. `npx tsx --conditions=react-server scripts/cache-lessons.ts` writes them.
-4. Otherwise one `chatJSON` call (label `lesson`, Gemini first via `preferredRoute`, then the normal chain) writes it from the map title and the node's title, why and checkpoints. The source text is never sent.
+4. Otherwise one `chatJSON` call (label `lesson`, the normal chain: gpt-oss-120b, or Claude Sonnet first when the router says so; no Gemini since Nov 9) writes it from the map title and the node's title, why and checkpoints. The source text is never sent.
 5. The checks in `validate.ts` run inside the schema, so a reply that fails them gets one retry with the reason. Then it is saved.
 
 **Model.** The router in `features/settings` picks the tier from the map's rating and the settings of whoever opens the skill first (the lesson is then shared). Sonnet and Opus get 50 s per request, and the whole call 100 s inside the route's 120 s, so a slow Claude model can time out and the normal chain still answers.

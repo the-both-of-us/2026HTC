@@ -4,10 +4,11 @@ import { getVercelOidcToken } from "@vercel/oidc";
  * The providers we can call, in the order we try them. All of them speak the
  * OpenAI chat API, so only these details differ.
  *
- * Gemini sits behind the others because grading needs speed: it was measured at
- * 4.7 to 13.2 s against under 1 s on Cerebras. Bedrock is the last resort.
+ * Every route here serves gpt-oss-120b; the only other model is Claude Sonnet, put in front by
+ * the router (`claudeRoute`). Gemini was removed on Nov 9 (owner: "gpt-oss and sonnet, that's
+ * it"): it went first for lessons and often failed after ~38 s with bad JSON. Bedrock is the last resort.
  */
-export type RouteName = "cerebras" | "groq" | "gateway" | "gemini" | "bedrock" | "anthropic";
+export type RouteName = "cerebras" | "groq" | "gateway" | "bedrock" | "anthropic";
 
 export type Route = {
   name: RouteName;
@@ -44,13 +45,6 @@ export const ROUTES: Route[] = [
     model: "openai/gpt-oss-120b",
     jsonMode: false,
     getToken: getGatewayToken,
-  },
-  {
-    name: "gemini",
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
-    model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
-    jsonMode: false,
-    getToken: async () => process.env.GEMINI_API_KEY || null,
   },
   {
     name: "bedrock",

@@ -1,4 +1,4 @@
-import { chatJSON, type RouteName } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
 import { ratingOf, tierFor } from "@/features/settings";
 import { isPublished } from "@/features/courses";
 import { isNodeLockedFor } from "@/features/teachback";
@@ -23,12 +23,6 @@ export const REQUEST_TIMEOUT_MS = 15_000;
  */
 export const GENERATION_DEADLINE_MS = 45_000;
 
-/**
- * Gemini is asked first (an MLH prize category). It is slower than the other routes, which
- * suits this call: the result is saved, so each skill waits for it once. Without
- * GEMINI_API_KEY the route is skipped and the usual order answers.
- */
-export const PREFERRED_ROUTE: RouteName = "gemini";
 
 /** What is stored at flashcards/<mapId>/<nodeId>. */
 type SavedDeck = { items: Flashcard[]; createdAt: string };
@@ -123,7 +117,6 @@ async function loadOrGenerate(key: string, map: SkillMap, node: SkillNode, viewe
       schema: rawDeckSchema,
       maxTokens: 2000,
       timeoutMs: REQUEST_TIMEOUT_MS,
-      preferredRoute: PREFERRED_ROUTE,
       tier,
     }),
   );

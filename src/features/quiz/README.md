@@ -74,4 +74,4 @@ When a button press removes the focused control (making a quiz, an error, trying
 
 ## Model
 
-Generation asks **Gemini** first (`preferredRoute: "gemini"`), then the usual route order if Gemini has no key or fails. Gemini is slower than the other routes, but each skill waits for it once, since the result is saved.
+Generation uses the usual route order: gpt-oss-120b, or Claude Sonnet when the model router says so. Gemini was removed on Nov 9.

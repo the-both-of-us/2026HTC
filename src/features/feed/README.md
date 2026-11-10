@@ -16,7 +16,7 @@ A viewer with none gets the picker (`ui/InterestPicker.tsx`): 24 suggestions (`s
 
 ## The pools (the database)
 
-- Cards: `feed-pool/<slug>`, shared by everyone with that interest. A batch is about 8 cards from one `chatJSON` call (label `feed-pool`, Gemini first). Each card has a title, a body and a `subtopic`. The prompt forbids invented statistics, quotes, people and links; `validate.ts` drops bad lengths, links and titles already in the pool.
+- Cards: `feed-pool/<slug>`, shared by everyone with that interest. A batch is about 8 cards from one `chatJSON` call (label `feed-pool`, Cerebras first). Each card has a title, a body and a `subtopic`. The prompt forbids invented statistics, quotes, people and links; `validate.ts` drops bad lengths, links and titles already in the pool.
 - Shorts: `feed-shorts/<slug>`. One YouTube search (100 of 10,000 daily units; `safeSearch=strict`, embeddable, short, and a title filter against pranks, memes and the like) keeps up to 5. Topped up only when the pool is 3 days old, or a day old with fewer than 2 that still show.
 - Suggested interests start from `fixtures/pools.json` (written by `npm run cache-feed`, paced for the free tiers), so the demo needs no AI call or search.
 

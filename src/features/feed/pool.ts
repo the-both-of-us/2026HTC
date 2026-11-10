@@ -99,7 +99,7 @@ export function topCards(cards: PoolCard[], events: InterestEvents, count = 5): 
  * One new batch for an interest: the model gets the best-engaged titles as "what people loved"
  * and every title in the pool to avoid. Then the pool is rotated down to CARD_CAP.
  */
-export async function addBatch(interest: Interest, route: RouteName = "gemini"): Promise<PoolCard[]> {
+export async function addBatch(interest: Interest, route: RouteName = "cerebras"): Promise<PoolCard[]> {
   const pending = inFlight.get(interest.slug);
   if (pending) return pending;
   const task = (async () => {

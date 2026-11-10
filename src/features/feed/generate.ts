@@ -10,12 +10,12 @@ export type BatchOptions = {
   loved?: string[];
   /** Every title already in the pool, so nothing repeats. */
   usedTitles?: string[];
-  /** Gemini first, as for lessons: cards are kept, so writing matters more than speed. */
+  /** Which route to try first. gpt-oss-120b on Cerebras by default. */
   route?: RouteName;
 };
 
 /** One model call for one batch of cards about an interest. */
-export async function askModelForCards(name: string, { loved = [], usedTitles = [], route = "gemini" }: BatchOptions = {}): Promise<RawCards> {
+export async function askModelForCards(name: string, { loved = [], usedTitles = [], route = "cerebras" }: BatchOptions = {}): Promise<RawCards> {
   const schema = rawCardsSchema.superRefine((reply, context) => {
     const problem = cardsProblem(reply, usedTitles);
     if (problem) context.addIssue({ code: "custom", message: problem });

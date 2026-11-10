@@ -184,7 +184,7 @@ export function ExplainForm({
       </h3>
       {format === "kid" && (
         <p className="-mt-2 text-sm text-ink-soft">
-          Short sentences, everyday words. Code checks the reading level: grade {MAX_KID_GRADE} or lower passes.
+          Short sentences, everyday words. The reading level below is a tip: it never stops you passing.
         </p>
       )}
       {timed && (
@@ -289,12 +289,12 @@ const HEADINGS = {
   timed: (title: string) => `Say ${title} in 30 seconds. Go!`,
 };
 
-/** The live reading level for "Explain it to a 10-year-old". The server measures it again. */
+/** The live reading level for "Explain it to a 10-year-old". A tip only; the server records it for the evidence page. */
 function ReadingLevel({ grade, young }: { grade: number; young: boolean }) {
   const ok = grade <= MAX_KID_GRADE;
   return (
     <p className={`text-sm font-medium tabular-nums ${ok ? "text-proven" : "text-amber"}`}>
-      Reading level: grade {Math.round(grade)}. {ok ? (young ? "A friend could follow this." : "A 10-year-old could follow this.") : "Try shorter sentences and smaller words."}
+      Reading level: grade {Math.round(grade)}. {ok ? (young ? "A friend could follow this." : "A 10-year-old could follow this.") : "Shorter sentences would make it easier to follow."}
     </p>
   );
 }

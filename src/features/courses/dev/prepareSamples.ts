@@ -123,11 +123,6 @@ async function work(options: Options, deps: Deps): Promise<number> {
   const { log, env } = deps;
   const driver = storeDriverName(env);
   log(`Store: ${driver ?? "memory (dry run only: nothing is kept)"}.`);
-  log(
-    env.GEMINI_API_KEY
-      ? "AI: GEMINI_API_KEY is set, so Gemini is asked first."
-      : "AI: GEMINI_API_KEY is not set, so the usual provider order answers.",
-  );
   if (options.dryRun) log("Dry run: no model is called and nothing is made.");
 
   const summary: Summary = { made: 0, alreadyThere: 0, failed: 0 };

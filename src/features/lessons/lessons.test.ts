@@ -119,10 +119,10 @@ describe("getOrCreateLesson", () => {
     expect(await getDoc(`lessons/${mapId}/${NODE.id}`)).toMatchObject({ lesson: first });
   });
 
-  it("prefers Gemini, sends the checkpoints but never the source text, and its schema refuses a pasted checkpoint", async () => {
+  it("uses the normal chain (no Gemini), sends the checkpoints but never the source text, and its schema refuses a pasted checkpoint", async () => {
     await getOrCreateLesson(mapId, NODE.id, OWNER);
     const options = mockChatJSON.mock.calls[0][0];
-    expect(options.preferredRoute).toBe("gemini");
+    expect(options.preferredRoute).toBeUndefined();
     expect(options.prompt).toContain(NODE.checkpoints[0]);
     expect(options.prompt).not.toContain("SECRET POSTING TEXT");
 

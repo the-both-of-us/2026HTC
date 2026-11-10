@@ -28,20 +28,9 @@ afterEach(() => {
 });
 
 describe("the provider chain", () => {
-  it("tries Cerebras, Groq and the gateway first, then Gemini, with Bedrock last", () => {
-    expect(ROUTES.map((route) => route.name)).toEqual(["cerebras", "groq", "gateway", "gemini", "bedrock"]);
-  });
-
-  it("calls Gemini's OpenAI-compatible endpoint when it has the only key", async () => {
-    vi.stubEnv("GEMINI_API_KEY", "gemini-key");
-    const fetchMock = mockFetch();
-
-    expect(await chatText({ prompt: "Hi", label: "test" })).toBe("hello");
-
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions");
-    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer gemini-key");
-    expect(JSON.parse(init?.body as string).model).toBe("gemini-3.6-flash");
+  it("tries Cerebras, Groq and the gateway, with Bedrock last: gpt-oss-120b everywhere, no Gemini", () => {
+    expect(ROUTES.map((route) => route.name)).toEqual(["cerebras", "groq", "gateway", "bedrock"]);
+    expect(ROUTES.every((route) => route.model.includes("gpt-oss"))).toBe(true);
   });
 
   it("calls Bedrock's OpenAI-compatible endpoint when it has the only key", async () => {
@@ -69,7 +58,6 @@ describe("the provider chain", () => {
 
 describe("env overrides", () => {
   it("reads the models and the Bedrock region from the environment", async () => {
-    vi.stubEnv("GEMINI_MODEL", "gemini-other");
     vi.stubEnv("BEDROCK_MODEL", "other.model");
     vi.stubEnv("BEDROCK_REGION", "us-east-1");
     vi.resetModules();
@@ -77,7 +65,6 @@ describe("env overrides", () => {
     const { ROUTES: fresh } = await import("./routes");
 
     const byName = Object.fromEntries(fresh.map((route) => [route.name, route]));
-    expect(byName.gemini.model).toBe("gemini-other");
     expect(byName.bedrock.model).toBe("other.model");
     expect(byName.bedrock.baseUrl).toBe("https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1");
   });

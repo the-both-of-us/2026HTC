@@ -12,7 +12,7 @@ const grade = await chatJSON({
   schema: z.object({ score: z.number() }), // top level must be an object
   maxTokens: 2000,               // optional, default 4000
   timeoutMs: 15_000,             // optional, default 30000, per request
-  preferredRoute: "gemini",      // optional: try this one first, then the normal order
+  preferredRoute: "groq",        // optional: try this one first, then the normal order
 });
 
 const text = await chatText({ label: "summary", prompt: "..." });
@@ -25,12 +25,11 @@ const text = await chatText({ label: "summary", prompt: "..." });
 | 1 | Cerebras | `CEREBRAS_API_KEY` is set | `gpt-oss-120b` |
 | 2 | Groq | `GROQ_API_KEY` is set | `openai/gpt-oss-120b` |
 | 3 | Vercel AI Gateway | an OIDC token exists (always on Vercel) | `openai/gpt-oss-120b` |
-| 4 | Gemini | `GEMINI_API_KEY` is set | `gemini-3.6-flash`, or `GEMINI_MODEL` |
-| 5 | Bedrock | `BEDROCK_API_KEY` is set | `openai.gpt-oss-120b-1:0` in `us-west-2`, or `BEDROCK_MODEL` and `BEDROCK_REGION` |
+| 4 | Bedrock | `BEDROCK_API_KEY` is set | `openai.gpt-oss-120b-1:0` in `us-west-2`, or `BEDROCK_MODEL` and `BEDROCK_REGION` |
 
 - **Any failure** (a timeout, a network error or any error status, including 401) moves on to the next route. One provider's bad key or missing model should not end the demo.
 - **`preferredRoute`** moves one route to the front. Everything else stays the same.
-- **Gemini is not first** for grading, because it was measured at 4.7 to 13.2 s against under 1 s on Cerebras. Flashcards and quiz can prefer it, since their results are saved.
+- **Two models only:** gpt-oss-120b on every route above, plus Claude Sonnet put in front by the model router. Gemini was removed on Nov 9: it went first for lessons and often failed after about 38 s with bad JSON.
 - **Bad JSON** gets one retry on the same route, with the error appended to the prompt. If that fails too, the next route gets a turn.
 - **If every route fails within 15 seconds**, `chatJSON` goes round them once more, because this model returns an empty reply now and then. It doesn't do this after a slow failure, since a provider that hung won't recover while the learner waits. So one `chatJSON` can make up to 20 requests with all five routes set (two per route, twice round), and `timeoutMs` applies to each one.
 

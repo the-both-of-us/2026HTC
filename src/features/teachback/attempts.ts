@@ -105,12 +105,13 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
   const gradeStarted = performance.now();
   const grade = await gradeExplanation(node, explanation, map.audience, tier);
   const gradeMs = Math.round(performance.now() - gradeStarted);
-  // A 10-year-old's version must also read simply. Code measures that, not the AI.
+  // A 10-year-old's version gets its reading level measured by code, for the evidence page. It is
+  // a tip, never a gate: one long run-on sentence of plain words measured grade 23 and blocked a 100.
   const level = format === "kid" ? readingGrade(explanation) : null;
   const plainLanguage = level === null ? null : { readingGrade: level, passed: level <= MAX_KID_GRADE };
   // A strong explanation is proven now. Only a borderline pass gets a follow-up question.
   const status =
-    grade.score < PASS_SCORE || plainLanguage?.passed === false
+    grade.score < PASS_SCORE
       ? "not-yet"
       : grade.score >= STRONG_SCORE
         ? "proven"

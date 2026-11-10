@@ -269,7 +269,6 @@ describe("run", () => {
     expect(viewerId).toMatch(/^[0-9a-f-]{36}$/);
 
     expect(lines[0]).toBe("Store: Vercel Blob.");
-    expect(lines[1]).toBe("AI: GEMINI_API_KEY is set, so Gemini is asked first.");
     expect(lines).toContain(`[1/${made + 1}] flashcards · ${SAMPLE_POSTINGS[0].label} · Skill 0 … already saved`);
     expect(lines).toContain(`[2/${made + 1}] quiz · ${SAMPLE_POSTINGS[0].label} · Skill 0 … saved 5 questions`);
     expect(lines).toContain(`[3/${made + 1}] flashcards · ${SAMPLE_POSTINGS[1].label} · Skill 0 … saved 7 cards`);

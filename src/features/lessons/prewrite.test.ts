@@ -67,7 +67,7 @@ describe("writing the first lesson ahead", () => {
     await (mockAfter.mock.calls[0][0] as () => Promise<void>)();
 
     expect(mockChatJSON).toHaveBeenCalledOnce();
-    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ label: "lesson", preferredRoute: "gemini" });
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ label: "lesson" });
     expect(await getDoc(`lessons/${mapId}/basics`)).not.toBeNull();
     expect(await getDoc(`lessons/${mapId}/later`)).toBeNull();
     expect(await getDoc(`lessons/${mapId}/other`)).toBeNull();

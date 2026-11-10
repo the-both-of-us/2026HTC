@@ -177,6 +177,20 @@ describe("status transitions", () => {
     expect((await getProgressView(OWNER, mapId)).states.second).toBe("available");
   });
 
+  it("Explain it to a 10-year-old: a hard reading level is a tip, never a fail", async () => {
+    // The third topic with no prerequisites gets "kid" in the format rotation.
+    const nodes = [makeNode("a", []), makeNode("b", []), makeNode("kid", [])];
+    await putDoc(`maps/${mapId}`, { ...((await getDoc(`maps/${mapId}`)) as SkillMap), nodes });
+    modelGrades("full");
+    const runOn =
+      "An inner join keeps only rows that match in both tables while a left join keeps every left row and fills the missing columns with NULL values so that unmatched customers and their information still appear in the combined output that the database engine returns afterwards.";
+
+    const attempt = await startAttempt(OWNER, newAttempt({ nodeId: "kid", format: "kid", explanation: runOn }));
+
+    expect(attempt.plainLanguage?.passed).toBe(false);
+    expect(attempt.status).toBe("proven");
+  });
+
   it("2 of 3 checkpoints is strong enough to skip the follow-up", async () => {
     const node = { ...makeNode("first", []), checkpoints: ["One fact", "Two fact", "Three fact"] };
     await putDoc(`maps/${mapId}`, { ...(await getDoc(`maps/${mapId}`) as SkillMap), nodes: [node] });
