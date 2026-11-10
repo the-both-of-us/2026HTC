@@ -33,7 +33,7 @@ describe("teach-back prompts with no audience", () => {
     expect(hash(QUESTION_SYSTEM)).toBe("005d95babce65b90");
     expect(hash(ANSWER_SYSTEM)).toBe("cf41039c6411656c");
     expect(hash(WRITER_SYSTEM)).toBe("957c1f69b76cf6f6");
-    expect(hash(CATCH_CHECKER)).toBe("6c2c5625fbcf8d5a");
+    expect(hash(CATCH_CHECKER)).toBe("f83158972fefb10c");
     expect(hash(QUESTIONS_SYSTEM)).toBe("ee8c6ac18a6275be");
     expect(hash(FINAL_ANSWER)).toBe("22159fdcef771bdf");
     expect(forAudience(GRADER_SYSTEM, "", GRADER_NOTE)).toBe(GRADER_SYSTEM);

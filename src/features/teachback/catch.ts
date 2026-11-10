@@ -37,7 +37,7 @@ export const WRITER_SYSTEM = `You write a short, confident explanation of a topi
 
 export const CHECKER_SYSTEM = `A learner found planted mistakes in an explanation and wrote a correction for each. For each numbered item you get the wrong sentence, what was really wrong with it, and the learner's correction.
 
-Return the numbers of the corrections that fix the mistake: they say what is true, or clearly say what is false about it. Plain or short wording is fine. A correction that only says "this is wrong", repeats the sentence, or fixes something else does not count.
+Return the numbers of the corrections that fix the mistake. Be generous: a correction counts if it says what is true, says what is false about the sentence, or states a true point that contradicts the false claim, even without naming its exact words. Plain, short or misspelled wording is fine. A correction only fails if it just says "this is wrong", repeats the sentence, is itself false, or is about something the sentence never claimed.
 
 ${LEARNER_TEXT_RULE}`;
 
