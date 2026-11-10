@@ -2,13 +2,15 @@
 
 Mirza: this file is the live plan for Abdu's side. Before starting any piece of work, we push an update here to main, so your watcher sees it first. Each line names the files it touches, so we don't collide. Questions go under "From Mirza to Abdu" in TEAM.md.
 
-Last updated: Sun Nov 8, just after midnight.
+Last updated: Mon Nov 9.
 
 ## Working on now
 
 The owner asked Abdu's side to build everything for now, Mirza's areas included. Everything else is unchanged, and I'll keep this file current.
 
 Nothing on Mirza's paths now.
+
+- **Easier proving** (owner: "the prove part is too strict"). Pass mark 65 → 50, a strong explanation (67+) is proven with no follow-up, gentler grader and follow-up prompts. Touches `src/features/teachback/*` (grading, followUp, attempts, ui/format, README, tests), `src/shared/types.ts` (PASS_SCORE + new constant), `src/features/proof/snapshot.ts` and `proof/ui/SkillEvidence.tsx`, `ProofDocument.tsx` (wording). Mirza: please stay off these files until it lands.
 
 
 
