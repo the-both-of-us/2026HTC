@@ -1,5 +1,6 @@
 /** Calls to the courses API. Every failure becomes a sentence a person can act on. */
 import type { CourseDetail, CourseSort, LikeResult, PublicCourse } from "../types";
+import { isUuid } from "@/shared/ids";
 
 export type Failure = { ok: false; message: string; status: number | null };
 export type Result<T> = ({ ok: true } & T) | Failure;
@@ -70,7 +71,6 @@ function isCourse(value: unknown): value is PublicCourse {
   return typeof field(value, "mapId") === "string" && typeof field(value, "title") === "string";
 }
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function courseUrl(mapId: string): string {
   return `/api/courses/${encodeURIComponent(mapId)}`;
@@ -138,6 +138,6 @@ export function setLike(mapId: string, liked: boolean): Promise<Result<LikeResul
 export function startCourse(mapId: string): Promise<Result<{ mapId: string }>> {
   return request(`${courseUrl(mapId)}/start`, { method: "POST" }, START_MESSAGES, (body) => {
     const startedId = field(body, "mapId");
-    return typeof startedId === "string" && UUID_PATTERN.test(startedId) ? { mapId: startedId } : null;
+    return typeof startedId === "string" && isUuid(startedId) ? { mapId: startedId } : null;
   });
 }

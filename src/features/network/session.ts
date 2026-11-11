@@ -1,6 +1,7 @@
 import { isAuthConfigured } from "@/features/auth";
 import { getSession } from "@/shared/identity";
 import { NetworkError, SIGN_IN_TO_JOIN } from "./errors";
+import { isUuid } from "@/shared/ids";
 
 /**
  * The one place that decides who may join the network.
@@ -10,12 +11,11 @@ import { NetworkError, SIGN_IN_TO_JOIN } from "./errors";
  * Without Auth0 (tests, offline development), guests may join.
  */
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const WHO_ARE_YOU = "We could not tell who you are. Please refresh the page and try again.";
 
 /** True for ids identity hands out. Demo profiles use ids that are not UUIDs, so nobody can act as them. */
 export function isUserId(value: string): boolean {
-  return UUID_PATTERN.test(value);
+  return isUuid(value);
 }
 
 /** The user id becomes part of a store key, so it must look like one of ours. */

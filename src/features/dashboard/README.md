@@ -1,7 +1,5 @@
 # dashboard
 
-**Owner:** Mirza. See `TEAM.md`.
-
 `/dashboard`: your maps, what you have proven, what is due for review, and your day streak.
 
 **Status:** built.

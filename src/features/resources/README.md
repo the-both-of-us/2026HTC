@@ -1,7 +1,5 @@
 # resources
 
-**Owner:** Abdu. See `TEAM.md`.
-
 The **Resources** tab in the skill panel: links to videos, reading, podcasts and news for one skill. Ported from the old KnowledgeBox `lib/resources`.
 
 - `POST /api/resources { mapId, nodeId }` looks the skill up on the server (the client never sends a title), then `getResources` returns the saved list or builds it. Access is the same as lessons: the owner, or anyone once the map is a published course.

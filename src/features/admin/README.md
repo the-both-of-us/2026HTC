@@ -1,10 +1,8 @@
 # admin
 
-**Owner:** Abdu.
-
 `/admin` shows everyone who has used OryxLearn: signed-in accounts and guests, each with their maps (and courses), programs, what they typed to build them, feed interests, People profile and streak, plus one list of everything typed, newest first. Read-only: it changes nothing.
 
-- **Passcode:** `ADMIN_PASSCODE` in the environment (`.env.local`, Vercel, AWS). It is never in the repo. With none set, the page says admin is off and the API answers 404.
+- **Passcode:** `ADMIN_PASSCODE` in the environment (`.env.local`, Vercel). It is never in the repo. With none set, the page says admin is off and the API answers 404.
 - `POST /api/admin/session {passcode}` checks it in constant time and sets `pf_admin`: `<expiresAt>.<HMAC>` (SESSION_SECRET, purpose "admin", also covering a hash of the passcode, so changing it signs every browser out). httpOnly, SameSite=Strict, 8 hours. `DELETE` locks it again.
 - 5 wrong passcodes from one address lock that address out for 10 minutes (per server instance), and each wrong try waits 400 ms.
 - The page sets `noindex` and is not in the sidebar.

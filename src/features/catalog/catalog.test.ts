@@ -30,7 +30,6 @@ const GRADE_1 = "Grade 1 students (about 6 years old)";
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   mockChat.mockReset();
   mockChat.mockRejectedValue(new Error("unexpected AI call"));

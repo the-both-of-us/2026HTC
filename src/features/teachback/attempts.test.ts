@@ -98,7 +98,6 @@ async function reachFollowUp(nodeId = "first", misconceptions: string[] = []): P
 }
 
 beforeEach(async () => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   mockChatJSON.mockReset();
 

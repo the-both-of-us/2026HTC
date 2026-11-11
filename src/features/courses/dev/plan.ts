@@ -61,11 +61,10 @@ export function kindsFor(only: Kind | null): Kind[] {
 type Env = Record<string, string | undefined>;
 
 /**
- * Which store the app would save to, from env names only (the same order as
- * @/shared/store). Null means the in-memory store, which keeps nothing after the script ends.
+ * Which store the app would save to, from env names only (as
+ * @/shared/store does). Null means the in-memory store, which keeps nothing after the script ends.
  */
-export function storeDriverName(env: Env): "S3" | "Vercel Blob" | null {
-  if (env.S3_BUCKET) return "S3";
+export function storeDriverName(env: Env): "Vercel Blob" | null {
   if (env.BLOB_READ_WRITE_TOKEN) return "Vercel Blob";
   return null;
 }
@@ -74,7 +73,7 @@ export function storeDriverName(env: Env): "S3" | "Vercel Blob" | null {
 export function storeRefusal(env: Env, dryRun: boolean): string | null {
   if (dryRun || storeDriverName(env)) return null;
   return (
-    "No store is set up (neither S3_BUCKET nor BLOB_READ_WRITE_TOKEN is in the environment), so the cards " +
+    "No store is set up (BLOB_READ_WRITE_TOKEN is not in the environment), so the cards " +
     "and questions would be made in memory and lost when this script ends. Run it with --env-file=.env.local " +
     "on a machine whose .env.local has the store settings, or add --dry-run to only see the plan."
   );

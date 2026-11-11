@@ -1,7 +1,5 @@
 # auth
 
-**Owner:** Mirza. See `TEAM.md`.
-
 Optional sign-in with Auth0. **Never a login wall:** guests can build maps, prove skills, use flashcards and quizzes, and start courses. Only **publishing** a course and **liking** one need a sign-in, and only when Auth0 is set up. Signing in links the visitor's current guest id to their Auth0 account, so the same id, and every map, proof and course under it, follows them to any device. No data is copied or moved.
 
 Written by hand against OpenID Connect (Authorization Code flow with PKCE), with `fetch` and `node:crypto`. No Auth0 SDK and no JWT library: the SDK hooks in through middleware, and Next 16 changed middleware (now "proxy"), so three small route handlers were simpler and easier to explain.
@@ -78,7 +76,7 @@ On each sign-in, with `current = await getUserId()`:
 
 With none of the four Auth0 values set, sign-in is simply off: `isAuthConfigured()` is false, guests may publish and like, `AccountStatusServer` and `AccountStatusLoader` render nothing, and `/api/auth/login` redirects to `/?signin=unavailable`. Nothing throws. A value that is set but malformed also turns sign-in off, and the server logs which variable is wrong, by name only, never its value.
 
-**Auth0 dashboard:** the application is a Regular Web Application, with Token Endpoint Authentication Method "Post". Allowed Callback URLs must include `<base>/api/auth/callback` and Allowed Logout URLs must include `<base>`, for every host (localhost, Vercel, AWS).
+**Auth0 dashboard:** the application is a Regular Web Application, with Token Endpoint Authentication Method "Post". Allowed Callback URLs must include `<base>/api/auth/callback` and Allowed Logout URLs must include `<base>`, for every host (localhost, Vercel).
 
 ## API
 

@@ -5,7 +5,6 @@ import { node, prove, resetNetwork, saveMap } from "./testing";
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   resetNetwork();
 });
 

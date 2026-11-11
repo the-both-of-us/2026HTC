@@ -1,7 +1,5 @@
 # circles
 
-**Owner:** Abdu. See `TEAM.md`.
-
 Study circles: a group learns the same map together. Students and curious people, not job seekers.
 
 - The map's owner presses **Start a study circle** in the map header (`ui/StartCircleButton`). That makes `circles/<code>` and shows a big QR code for `/circle/<code>`.

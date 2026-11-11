@@ -73,7 +73,6 @@ async function statusOf(promise: Promise<unknown>): Promise<{ status: number; me
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("SESSION_SECRET", "fake-session-secret");
   stubAuth(false);
   jar.clear();

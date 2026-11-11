@@ -283,14 +283,13 @@ describe("ensureUnitNodes (canonical unit nodes)", () => {
 });
 
 describe("learner maps of a catalog course", () => {
-  it("store no syllabus or rating, and get the canonical syllabus attached on read", async () => {
+  it("store no syllabus, and get the canonical syllabus attached on read", async () => {
     const courseId = randomUUID();
     const map = await learnerMap(courseId);
-    await saveSkillMap({ ...map, rating: { difficulty: 2, stakes: 2 } });
+    await saveSkillMap(map);
 
     const stored = await getDoc<SkillMap>(`maps/${map.id}`);
     expect(stored && "syllabus" in stored).toBe(false);
-    expect(stored && "rating" in stored).toBe(false);
     const read = (await getSkillMap(map.id))!;
     expect(read.syllabus?.rootMapId).toBe(courseId);
     expect(read.syllabus?.units.map((unit) => unit.built)).toEqual([false, false, false]);

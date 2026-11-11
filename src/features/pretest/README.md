@@ -1,6 +1,6 @@
 # pretest
 
-**Owner:** Abdu. Server code from `@/features/pretest`; client code (`PretestScreen`, `PretestOffer`, `usePretest`) from `@/features/pretest/client`.
+Server code from `@/features/pretest`; client code (`PretestScreen`, `PretestOffer`, `usePretest`) from `@/features/pretest/client`.
 
 An optional, skippable placement pre-test for a **topic course** (a map with a `courseId` and a syllabus), so a learner does not repeat what they know. Never offered on posting or PDF maps (`offer: "none"`, and every POST is a 400).
 

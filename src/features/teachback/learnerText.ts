@@ -13,6 +13,4 @@ export function wrapLearnerText(text: string): string {
   return `<${TAG_NAME}>\n${safeText}\n</${TAG_NAME}>`;
 }
 
-export function countWords(text: string): number {
-  return text.split(/\s+/).filter(Boolean).length;
-}
+export { countWords } from "@/shared/text";

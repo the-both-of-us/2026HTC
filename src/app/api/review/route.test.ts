@@ -52,7 +52,6 @@ async function body(response: Response): Promise<Record<string, unknown>> {
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   for (const name of ["AUTH0_DOMAIN", "AUTH0_CLIENT_ID", "AUTH0_CLIENT_SECRET", "AUTH0_SECRET", "APP_BASE_URL"]) {
     vi.stubEnv(name, "");
   }

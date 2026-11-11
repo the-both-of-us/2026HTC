@@ -1,7 +1,5 @@
 # grid
 
-**Owner:** Abdu. See `TEAM.md`.
-
 "Read the Grid": a live dashboard and exercises built from AESO's public Current Supply Demand report. Every number is AESO's, or is computed from AESO's figures by code. No language model touches this feature.
 
 - `parse.ts`: pure, tolerant parser for the report's HTML, tested against a real saved report in `fixtures/`. It throws rather than guess if a key figure is missing or the fuel rows don't add up to AESO's totals.
@@ -11,7 +9,7 @@
 - `metrics.ts`: totals and formatting. `live.ts`: how the browser moves from one reading to the next.
 - `ui/`: `GridScreen` renders `/grid`. `LiveGridCard` is the small card for a skill map.
 
-**Using it elsewhere:** `import { LiveGridCard, LiveGridStrip } from "@/features/grid/client"`. Whether a map shows them is decided in `skill-map`, by `isEnergyRelated(postingText)`.
+**Using it elsewhere:** `import { LiveGridCard, LiveGridStrip } from "@/features/grid"`. Whether a map shows them is decided in `skill-map`, by `isEnergyRelated(postingText)`.
 
 **Facts we checked against the report:** positive interchange means exporting (generation minus interchange equals load), and report times are Alberta time, UTC-6.
 

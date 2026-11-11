@@ -45,7 +45,6 @@ function calls() {
 }
 
 beforeEach(() => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   mockChatJSON.mockReset();
   vi.mocked(skillBlock).mockClear();

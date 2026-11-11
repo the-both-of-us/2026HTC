@@ -44,7 +44,6 @@ let mapId: string;
 
 beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   mockChatJSON.mockReset();
   mockGetDoc.mockClear();
   mockChatJSON.mockResolvedValue(REPLY);

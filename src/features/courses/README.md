@@ -1,7 +1,5 @@
 # courses
 
-**Owner:** Mirza. See `TEAM.md`.
-
 Every map is a private course that only its owner can open. Publishing lists it in the public directory at `/courses`, where anyone can search it, open it, like it once and start it. Starting gives the learner their own private copy of the map to prove the skills on. The three sample postings are seeded as courses by "OryxLearn team", so the directory is never empty.
 
 The UI is exported from `@/features/courses/client`: `CoursesScreen` (`/courses`), `CourseScreen` (`/courses/[id]`) and `PublishCourseButton` (the map header). Everything else is server code from `@/features/courses`.
@@ -73,7 +71,7 @@ What can still happen: a like that passed the "is it public?" check just before 
 
 ## Preparing the sample courses
 
-Run once, from the repo root, with the AI keys and the store settings (`S3_BUCKET` or `BLOB_READ_WRITE_TOKEN`) in `.env.local`:
+Run once, from the repo root, with the AI keys and the store settings (`BLOB_READ_WRITE_TOKEN`) in `.env.local`:
 
 ```sh
 npx tsx --env-file=.env.local src/features/courses/dev/prepareSamples.ts            # make and save

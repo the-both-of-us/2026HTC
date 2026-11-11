@@ -1,5 +1,4 @@
 import "server-only";
-import type { SkillMap } from "@/shared/types";
 
 export {
   COURSE_STILL_PLANNING,
@@ -48,11 +47,3 @@ export type {
   SyllabusView,
 } from "./types";
 
-/**
- * @deprecated Wave 1 adopted a source map's syllabus onto a circle copy. A catalog course's
- * syllabus is attached on read now, so this returns the map unchanged. Kept only until
- * `GET /api/maps/[id]` (WP-C) stops calling it.
- */
-export async function adoptCourseSyllabus(map: SkillMap): Promise<SkillMap> {
-  return map;
-}

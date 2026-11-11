@@ -4,10 +4,9 @@ import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SYLLABUS_SHAPE } from "@/shared/types";
-import { Button, ErrorNotice, Spinner } from "@/shared/ui";
+import { Button, ErrorNotice, Spinner, pollLoop } from "@/shared/ui";
 import type { CourseView, OpenCourseResponse, ProgramDepth } from "../types";
 import { plural } from "./format";
-import { pollLoop } from "./poll";
 
 /** How often to ask again while another request holds the same course. */
 const POLL_MS = 1500;

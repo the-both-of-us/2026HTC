@@ -57,7 +57,6 @@ beforeEach(() => {
   for (const [name, value] of Object.entries(ENV)) vi.stubEnv(name, value);
   vi.stubEnv("SESSION_SECRET", "fake-session-secret");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   jar.clear();
   vi.stubGlobal("fetch", fetchMock);

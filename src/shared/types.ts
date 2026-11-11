@@ -83,11 +83,6 @@ export type SkillMap = {
    */
   audience?: string;
   /**
-   * How hard the course is and how much factual accuracy matters, rated when it was built.
-   * The model router uses it to pick a model per task. Absent on older maps, which count as 2 and 2.
-   */
-  rating?: CourseRating;
-  /**
    * The plan this course map is built from, unit by unit. Set when unit 1 is built (or adopted
    * from the source map of a copy). It travels with the map, so circle copies and forks get it
    * free. Absent on older maps: they are one flat graph, exactly as before.
@@ -227,9 +222,6 @@ export const DEGREE_FRAME = { years: 4, termsPerYear: 2, coursesPerTerm: 5, cour
 
 /** Reading speed every computed reading time uses (the lessons feature uses the same 200). */
 export const READING_WORDS_PER_MINUTE = 200;
-
-/** 1 to 3 each. Stakes: counting for kids is 1, general coding 2, medication, electrical safety, law or money 3. */
-export type CourseRating = { difficulty: 1 | 2 | 3; stakes: 1 | 2 | 3 };
 
 /** Where a course map sits in its program. Fixed when the course is built. */
 export type ProgramLink = {

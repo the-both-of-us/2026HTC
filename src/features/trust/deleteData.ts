@@ -8,7 +8,6 @@ import { deletePretestData } from "@/features/pretest";
 import { deleteProgramsByOwner } from "@/features/programs";
 import { deleteProofsByOwner } from "@/features/proof";
 import { deleteReelVotes } from "@/features/reels";
-import { deleteAiSettings } from "@/features/settings";
 import { deleteUserData as deleteReviewData } from "@/features/review";
 import { deleteSkillMap, listMapsByOwner } from "@/features/skill-map";
 import { deleteStreak } from "@/features/streaks";
@@ -71,7 +70,6 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
   await deleteStreak(userId);
   await deleteFeedData(userId);
   await deleteReelVotes(userId);
-  await deleteAiSettings(userId);
   // Before the maps, so no circle points at a map that is gone.
   const { memberships } = await deleteCircleData(userId);
   await deleteProgramsByOwner(userId);

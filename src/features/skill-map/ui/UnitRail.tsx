@@ -3,9 +3,8 @@
 import clsx from "clsx";
 import { Check, Lock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Button, ErrorNotice, Spinner } from "@/shared/ui";
+import { Button, ErrorNotice, pollLoop, Spinner } from "@/shared/ui";
 import type { UnitRailItem } from "../unitView";
-import { pollLoop } from "./poll";
 import { startUnit } from "./unitApi";
 
 /** How often to ask again while a unit is being written, and for how long in all. */

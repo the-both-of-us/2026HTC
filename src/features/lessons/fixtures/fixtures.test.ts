@@ -17,7 +17,6 @@ vi.mock("@/shared/store/once", async () => await import("@/shared/store/onceFake
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   vi.mocked(chatJSON).mockReset();
 });
 

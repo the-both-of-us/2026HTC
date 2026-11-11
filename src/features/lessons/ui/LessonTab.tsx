@@ -13,12 +13,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { PublicSkillNode } from "@/shared/types";
-import { Button, ErrorNotice, Field, ReadAloudButton, Spinner, Textarea } from "@/shared/ui";
+import { Button, ErrorNotice, Field, pollLoop, ReadAloudButton, Spinner, Textarea } from "@/shared/ui";
 import type { Lesson, LessonPart, PracticeCase, PracticeFeedback } from "../types";
 import { checkPractice, fetchLessonStep } from "./api";
 import { draftOfLesson, draftOfParts, type LessonDraft } from "./draft";
 import { HighlightedCode, MdBlocks, MdInline, plainText, unfence } from "./LessonMarkdown";
-import { pollLoop } from "./poll";
 
 /** How often to ask again while the lesson is being written. */
 const LESSON_POLL_MS = 1500;

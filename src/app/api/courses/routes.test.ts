@@ -36,7 +36,6 @@ async function body(response: Response): Promise<unknown> {
 
 beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   mapId = randomUUID();
   const map: SkillMap = {

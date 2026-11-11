@@ -6,7 +6,6 @@ import { accountKind, loadAdminOverview } from "./overview";
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("ADMIN_PASSCODE", "test-pass");
   resetFailures();
 });

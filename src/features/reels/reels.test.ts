@@ -165,7 +165,6 @@ let map: SkillMap;
 
 beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   map = {
     id: randomUUID(),
     ownerId: OWNER,

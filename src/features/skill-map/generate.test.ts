@@ -7,9 +7,7 @@ import { makeTextPdf } from "./fixtures/makePdf";
 import { generatePdfSkillMap, generateSkillMap } from "./generate";
 import { buildMapPrompt, buildPdfPrompt, PDF_SYSTEM_PROMPT, type RawNode, type RawSkillMap } from "./prompt";
 import { getSkillMap, toPublicMap } from "./storage";
-import { rawMapSchema, rawPdfMapSchema } from "./prompt";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
-import { z } from "zod";
 
 vi.mock("@/features/ai", () => ({ chatJSON: vi.fn() }));
 
@@ -208,24 +206,12 @@ describe("topics", () => {
 });
 
 describe("the Haiku plan profile", () => {
-  it("asks for difficulty and stakes through the schema, so the prompts stay byte for byte the same", () => {
-    for (const schema of [rawMapSchema, rawPdfMapSchema]) {
-      const json = z.toJSONSchema(schema, { io: "input", unrepresentable: "any" }) as {
-        properties: Record<string, { description?: string }>;
-        required?: string[];
-      };
-      expect(json.properties.difficulty.description).toMatch(/1 easy.*3 advanced/);
-      expect(json.required ?? []).not.toContain("stakes");
-    }
-  });
-
-  it("builds a posting map on the plan profile with no tier, and saves no rating", async () => {
+  it("builds a posting map on the plan profile with no tier", async () => {
     vi.mocked(chatJSON).mockResolvedValue(GOOD_REPLY);
-    const map = await generateSkillMap({ text: POSTING, kind: "posting", ownerId: "owner-1" });
+    await generateSkillMap({ text: POSTING, kind: "posting", ownerId: "owner-1" });
     const options = vi.mocked(chatJSON).mock.calls[0][0];
     expect(options).toMatchObject({ profile: "plan", maxTokens: 32_000, totalMs: 100_000 });
     expect("tier" in options).toBe(false);
-    expect(map.rating).toBeUndefined();
   });
 
   it("builds a sample posting with no model call", async () => {

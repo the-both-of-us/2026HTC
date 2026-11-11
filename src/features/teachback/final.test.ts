@@ -31,7 +31,6 @@ async function proveEverything() {
 }
 
 beforeEach(async () => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   mockChatJSON.mockReset();
   mapId = randomUUID();

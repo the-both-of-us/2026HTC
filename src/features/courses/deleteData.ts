@@ -1,17 +1,17 @@
 import { deleteDoc, listKeys } from "@/shared/store";
 import { countLikes, likeCountKey, saveLikeCount } from "./listing";
+import { isUuid } from "@/shared/ids";
 
 /** What deleteUserData removed, so the trust page can say it in numbers. */
 export type DeletedCourseData = { likes: number; courseStarts: number };
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * User and map ids are UUIDs. Anything else is refused, so an id can never reach into
  * another prefix or match the `_count` like total.
  */
 function isSafeSegment(value: string): boolean {
-  return UUID_PATTERN.test(value);
+  return isUuid(value);
 }
 
 /** Keys shaped `<prefix><mapId>/<userId>` whose last part is this user. */

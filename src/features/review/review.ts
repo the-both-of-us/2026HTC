@@ -4,8 +4,9 @@ import { getSkillMap, listMapsByOwner } from "@/features/skill-map";
 import { CARD_NOT_FOUND, ReviewError } from "./errors";
 import { buildQueue, toSummary, type CardSource } from "./queue";
 import { reviewCard } from "./sm2";
-import { logReview, readLogs, readState, readStates, saveState, UUID_PATTERN } from "./storage";
+import { logReview, readLogs, readState, readStates, saveState } from "./storage";
 import type { Grade, ReviewQueue, ReviewSummary, ScheduleResult } from "./types";
+import { isUuid } from "@/shared/ids";
 
 /**
  * Every saved flashcard on the maps this user owns, including copies of courses and study
@@ -38,7 +39,7 @@ async function collectCards(userId: string): Promise<CardSource[]> {
 
 /** GET /api/review: due reviews first, then up to 20 new cards. */
 export async function getReviewQueue(userId: string, now = new Date()): Promise<ReviewQueue> {
-  if (!UUID_PATTERN.test(userId)) return buildQueue([], new Map(), now);
+  if (!isUuid(userId)) return buildQueue([], new Map(), now);
   const [sources, states] = await Promise.all([collectCards(userId), readStates(userId)]);
   return buildQueue(sources, states, now);
 }
@@ -56,13 +57,13 @@ export type GradeRequest = { mapId: string; nodeId: string; cardId: string; grad
  */
 export async function gradeCard(userId: string, request: GradeRequest, now = new Date()): Promise<ScheduleResult> {
   const map = await getSkillMap(request.mapId);
-  if (!map || map.ownerId !== userId || !UUID_PATTERN.test(userId)) throw new ReviewError(CARD_NOT_FOUND, 404);
+  if (!map || map.ownerId !== userId || !isUuid(userId)) throw new ReviewError(CARD_NOT_FOUND, 404);
   const node = map.nodes.find((candidate) => candidate.id === request.nodeId);
   if (!node) throw new ReviewError(CARD_NOT_FOUND, 404);
 
   const deck = await getSavedFlashcards(map.id, node.id, userId);
   const card = deck?.find((candidate) => candidate.id === request.cardId);
-  if (!card || !UUID_PATTERN.test(card.id)) throw new ReviewError(CARD_NOT_FOUND, 404);
+  if (!card || !isUuid(card.id)) throw new ReviewError(CARD_NOT_FOUND, 404);
 
   const previous = await readState(userId, card.id);
   const next = reviewCard(previous, { cardId: card.id, mapId: map.id, nodeId: node.id }, request.grade, now);
@@ -77,7 +78,7 @@ export async function gradeCard(userId: string, request: GradeRequest, now = new
  * review. Pass `since` to leave out older ones.
  */
 export async function listReviewActivity(userId: string, since?: Date): Promise<string[]> {
-  if (!UUID_PATTERN.test(userId)) return [];
+  if (!isUuid(userId)) return [];
   const [states, logs] = await Promise.all([readStates(userId), readLogs(userId)]);
   const times = new Set<string>();
   for (const state of states.values()) if (state.lastReviewedAt) times.add(state.lastReviewedAt);

@@ -2,7 +2,6 @@ import "server-only";
 
 export {
   activityTimes,
-  adoptFinalAsUnitTest,
   answerFollowUp,
   AttemptError,
   getCatchView,

@@ -44,7 +44,6 @@ describe("ProgramScreen", () => {
     expect(html).toContain("3 of 8 topics proved");
     expect(html).toContain("8 units of 4 to 6 topics");
     expect(html).not.toContain("<details");
-    expect(html).not.toContain("Deepen to degree");
     expect(html).not.toContain("Not equivalent");
     expect(html).not.toContain("Read the syllabus");
   });
@@ -61,10 +60,6 @@ describe("ProgramScreen", () => {
     expect(html).toContain("none written yet");
     expect(html).not.toContain("6 to 10 topics");
     expect(html).toContain("Not equivalent");
-  });
-
-  it("has no Deepen button any more", () => {
-    expect(renderToStaticMarkup(<ProgramScreen program={degree} />)).not.toContain("Deepen");
   });
 
   it("shows a planning program: the real count, cards by term, Start only on registered courses", () => {

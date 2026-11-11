@@ -54,8 +54,6 @@ export type Program = {
   forkedFrom?: string;
   /** Absent means "quick": today's 4 to 8 courses. "degree" is 4 years of 40 courses. */
   depth?: ProgramDepth;
-  /** @deprecated Wave 1's "Deepen to degree" (removed with the wipe). Never written now. */
-  deepenedAt?: string;
   /**
    * Wave 2: the canonical catalog program (`catalog/programs/<catalogId>`) this learner program
    * follows. Set on every topic program; title, summary, audience, depth and the course list come
@@ -403,32 +401,6 @@ export type OpenCourseResult = { status: "ready"; mapId: string } | { status: "b
 export type StartUnitResponse =
   | { status: "ready"; mapId: string; unitId: string }
   | { status: "building"; building: true };
-
-/**
- * `GET /api/programs/[id]/courses/[slug]/syllabus` gives 200 `SyllabusView`, 404 when the
- * program is not the viewer's. No model call: a course not started yet has status "none".
- */
-export type SyllabusResponse = SyllabusView;
-
-/**
- * `GET /api/programs/[id]/comparison` gives 200 `ComparisonView`, 404 when the program is not
- * the viewer's. `?course=<slug>` picks the course compared on its own (default: the first). No model call.
- */
-export type ComparisonResponse = ComparisonView;
-
-/**
- * The programs functions behind those routes. WP4 implements and exports them from
- * `@/features/programs`; server pages call them directly instead of fetching the routes.
- * `viewerId` is the identity cookie (`readUserId()`), null for a guest.
- */
-export type ProgramsApi = {
-  openCourse(programId: string, slug: string, viewerId: string | null): Promise<OpenCourseResult>;
-  /** Wave 2: restarts planning of a stalled program. See ResumePlanningResponse. */
-  resumePlanning(programId: string, viewerId: string | null): Promise<ResumePlanningResponse>;
-  startUnit(mapId: string, unitId: string, viewerId: string | null): Promise<{ status: "ready"; mapId: string; unitId: string } | { status: "building" }>;
-  getSyllabusView(programId: string, slug: string, viewerId: string | null): Promise<SyllabusView | null>;
-  getComparisonView(programId: string, viewerId: string | null, courseSlug?: string): Promise<ComparisonView | null>;
-};
 
 /** What `program-listings/<programId>` holds. Present means the program is public. */
 export type ProgramListing = {

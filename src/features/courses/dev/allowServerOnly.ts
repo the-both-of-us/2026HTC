@@ -2,7 +2,7 @@
  * Lets the script load server code outside Next.js. Import it before anything else.
  *
  * The ai and skill-map index files `import "server-only"`, which throws outside a React
- * Server Component build. TEAM.md's fix, `--conditions=react-server`, breaks this script:
+ * Server Component build. The usual fix, `--conditions=react-server`, breaks this script:
  * the flashcards and quiz index files also export their screens, which load next/link,
  * and React's server build has no createContext. So only "server-only" is made a no-op,
  * as vitest.config.ts does.

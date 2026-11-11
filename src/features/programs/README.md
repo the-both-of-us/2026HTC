@@ -1,7 +1,5 @@
 # programs
 
-**Owner:** Abdu. See `TEAM.md`.
-
 A broad goal, such as a job, a degree or "learn web development", becomes a **program**: 4 to 8 courses in order (quick), or a four-year degree of 40 courses, each course a skill map built from its own syllabus (see the end of this file).
 
 - The landing has a size toggle: **Decide for me**, **Full program**, **One course**, and a Quick / Degree depth toggle. A topic posts to `POST /api/programs` (`createProgramOrMap`). A **posting or PDF always makes one private map** (skill-map), never a program and never a catalog entry.

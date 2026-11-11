@@ -12,6 +12,8 @@ import { findSampleLesson } from "./fixtures";
 import { LESSON_TOTAL_MS, writeLesson, type LessonCourse } from "./generate";
 import type { Lesson, LessonLine, LessonResponse, PracticeFeedback } from "./types";
 import { copiedCheckpoint, lessonText, practiceAnswersOf, toLesson, toPublicPart, wordsOf } from "./validate";
+import { countWords } from "@/shared/text";
+import { isUuid } from "@/shared/ids";
 
 /**
  * What is stored at `lessons/<contentId>/<nodeId>`, or `.../<audienceKey>` for a course pitched at
@@ -36,7 +38,6 @@ const FAILURE_SHOWN_FOR_MS = 60_000;
 
 const MAP_NOT_FOUND = "We could not find that map. Check the link, or build a new one.";
 const WRITE_FAILED = "Writing this lesson did not work this time. Please try again in a moment.";
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The store key of a topic's lesson. The audience is part of it, so a child never gets the adult lesson. */
 export function lessonKey(contentId: string, nodeId: string, audience?: string): string {
@@ -246,7 +247,7 @@ export async function checkPracticeAnswer(
   if (!saved || !scenario || !modelAnswer) throw new HttpError("We could not find that practice case.", 404);
 
   const text = answer.trim();
-  if (text.split(/\s+/).filter(Boolean).length < MIN_PRACTICE_ANSWER_WORDS) {
+  if (countWords(text) < MIN_PRACTICE_ANSWER_WORDS) {
     throw new HttpError(`Write at least ${MIN_PRACTICE_ANSWER_WORDS} words, so there is something to check.`, 400);
   }
   if (text.length > MAX_PRACTICE_ANSWER_CHARACTERS) {
@@ -289,7 +290,7 @@ function withDeadline<T>(work: Promise<T>, ms: number, message: string): Promise
  * canonical content with no learner data, so they stay.
  */
 export async function deleteLessonsForMaps(mapIds: string[]): Promise<number> {
-  const safe = [...new Set(mapIds)].filter((id) => UUID_PATTERN.test(id));
+  const safe = [...new Set(mapIds)].filter((id) => isUuid(id));
   const keys = (await Promise.all(safe.map((id) => listKeys(`lessons/${id}/`)))).flat();
   await Promise.all(keys.map((key) => deleteDoc(key)));
   return keys.length;
@@ -302,7 +303,7 @@ export async function deleteLessonsForMaps(mapIds: string[]): Promise<number> {
  * answer is never counted, since learners never see it.
  */
 export async function lessonWordCounts(contentId: string): Promise<Record<string, number>> {
-  if (!UUID_PATTERN.test(contentId)) return {};
+  if (!isUuid(contentId)) return {};
   const prefix = `lessons/${contentId}/`;
   const keys = await listKeys(prefix);
   const counts: Record<string, number> = {};

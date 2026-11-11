@@ -33,7 +33,6 @@ import { getOrCreateQuiz } from "@/features/quiz";
 import { run, type Deps } from "./prepareSamples";
 
 beforeEach(() => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   vi.stubEnv("AUTH0_DOMAIN", "");
   vi.stubEnv("AUTH0_CLIENT_ID", "");
@@ -67,17 +66,15 @@ describe("parseArgs", () => {
 });
 
 describe("the store check", () => {
-  it("names the driver from env names, in the store's order", () => {
+  it("names the driver from env names", () => {
     expect(storeDriverName({})).toBeNull();
-    expect(storeDriverName({ S3_BUCKET: "", BLOB_READ_WRITE_TOKEN: "" })).toBeNull();
+    expect(storeDriverName({ BLOB_READ_WRITE_TOKEN: "" })).toBeNull();
     expect(storeDriverName({ BLOB_READ_WRITE_TOKEN: "x" })).toBe("Vercel Blob");
-    expect(storeDriverName({ S3_BUCKET: "b", BLOB_READ_WRITE_TOKEN: "x" })).toBe("S3");
   });
 
   it("refuses the in-memory store with a sentence, unless it is a dry run", () => {
     expect(storeRefusal({}, false)).toMatch(/would be made in memory and lost/);
     expect(storeRefusal({}, true)).toBeNull();
-    expect(storeRefusal({ S3_BUCKET: "b" }, false)).toBeNull();
     expect(storeRefusal({ BLOB_READ_WRITE_TOKEN: "x" }, false)).toBeNull();
   });
 });
@@ -171,7 +168,7 @@ function fakeDeps(overrides: Partial<Deps> = {}) {
   let clock = 0;
   const sleeps: number[] = [];
   const deps: Deps = {
-    env: { S3_BUCKET: "bucket" },
+    env: { BLOB_READ_WRITE_TOKEN: "token" },
     ensureSampleCourses: vi.fn(async () => []),
     readSeedMapId: vi.fn(async (sampleId: string) => `map-${sampleId}`),
     getMap: vi.fn(async (mapId: string) => fakeMap(mapId.slice("map-".length), 1)),
@@ -295,7 +292,7 @@ describe("run", () => {
   it("keeps env values out of what app code logs while seeding, and restores the console", async () => {
     const realError = console.error;
     const { deps, lines } = fakeDeps({
-      env: { S3_BUCKET: "bucket", AWS_ACCESS_KEY_ID: "AKIAFAKEVALUE" },
+      env: { BLOB_READ_WRITE_TOKEN: "token", AWS_ACCESS_KEY_ID: "AKIAFAKEVALUE" },
       ensureSampleCourses: vi.fn(async () => {
         // What seed.ts does when the store refuses the key.
         const sdk = Object.assign(new Error("The AWS Access Key Id you provided does not exist"), {

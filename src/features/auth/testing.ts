@@ -17,7 +17,6 @@ export const FAKE_ENV = {
 export function stubAuthEnv(overrides: Partial<Record<keyof typeof FAKE_ENV, string>> = {}): void {
   for (const [name, value] of Object.entries({ ...FAKE_ENV, ...overrides })) vi.stubEnv(name, value);
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
 }
 
 /** Sign-in turned off: none of the Auth0 values set. */
@@ -27,7 +26,6 @@ export function stubNoAuthEnv(): void {
   }
   vi.stubEnv("SESSION_SECRET", FAKE_ENV.SESSION_SECRET);
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
 }
 
 export function resetMemoryStore(): void {

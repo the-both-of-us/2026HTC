@@ -7,13 +7,13 @@ import { createHash, randomUUID } from "node:crypto";
 import { getUserId } from "@/shared/identity";
 import { claimDoc, deleteDoc, getDoc, putDoc } from "@/shared/store";
 import type { IdClaims } from "./oidc";
+import { isUuid } from "@/shared/ids";
 
 /** What `accounts/<sha256(sub)>` holds. */
 export type AccountDoc = { userId: string; sub: string; createdAt: string };
 /** What `account-of/<userId>` holds: the way back, for delete-my-data. */
 export type AccountOfDoc = { subHash: string };
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_DISPLAY_NAME_LENGTH = 40;
 const FALLBACK_NAME = "Learner";
 
@@ -32,7 +32,7 @@ export function accountOfKey(userId: string): string {
 
 function isAccountDoc(value: unknown): value is AccountDoc {
   const doc = value as Partial<AccountDoc> | null;
-  return typeof doc?.userId === "string" && UUID_PATTERN.test(doc.userId);
+  return typeof doc?.userId === "string" && isUuid(doc.userId);
 }
 
 /**
@@ -101,7 +101,7 @@ async function finish(userId: string, hash: string): Promise<string> {
  * links the account afresh, to whatever id the browser has then.
  */
 export async function forgetAccount(userId: string): Promise<void> {
-  if (!UUID_PATTERN.test(userId)) return;
+  if (!isUuid(userId)) return;
   const reverse = await getDoc<AccountOfDoc>(accountOfKey(userId));
   if (typeof reverse?.subHash === "string" && /^[0-9a-f]{64}$/.test(reverse.subHash)) {
     const account = await getDoc<unknown>(accountKey(reverse.subHash));

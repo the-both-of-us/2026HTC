@@ -1,6 +1,7 @@
 import { deleteDoc, listKeys, putDoc } from "@/shared/store";
 import { EMPTY_STATS, type ItemStats, type ViewerMarks } from "./rank";
 import { slugOfItem } from "./validate";
+import { isUuid } from "@/shared/ids";
 
 /**
  * Engagement, one document per item, event and viewer: feed-ev/<itemId>/<event>/<userId>.
@@ -17,7 +18,6 @@ export const SKIP_MS = 1_500;
 export const LONG_MS = 8_000;
 
 const CACHE_MS = 60_000;
-export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** itemId → event → the viewers who did it. */
 export type InterestEvents = Map<string, Map<StoredEvent, Set<string>>>;
@@ -103,7 +103,7 @@ export function marksOf(events: InterestEvents, itemId: string, userId: string |
 
 /** For "Delete my data": every event this viewer left. Running it twice is harmless. */
 export async function deleteViewerEvents(userId: string): Promise<void> {
-  if (!UUID_PATTERN.test(userId)) return;
+  if (!isUuid(userId)) return;
   const keys = (await listKeys("feed-ev/")).filter((key) => key.endsWith(`/${userId}`));
   await Promise.all(keys.map((key) => deleteDoc(key)));
   for (const { events } of cache.values()) for (const byEvent of events.values()) for (const users of byEvent.values()) users.delete(userId);

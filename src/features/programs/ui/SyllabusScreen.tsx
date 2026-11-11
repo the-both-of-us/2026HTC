@@ -3,10 +3,9 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Badge, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { Badge, buttonClasses, ErrorNotice, PageShell, Spinner, pollLoop } from "@/shared/ui";
 import type { SyllabusTopicView, SyllabusUnitView, SyllabusView } from "../types";
 import { formatHours, plural } from "./format";
-import { pollLoop } from "./poll";
 
 /** How often the page asks again while the syllabus is being written. */
 const SYLLABUS_POLL_MS = 1500;

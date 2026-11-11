@@ -8,7 +8,6 @@ let theirs: string;
 
 beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   mine = randomUUID();
   theirs = randomUUID();
   await putDoc(`quiz/${mine}/a`, { items: [] });

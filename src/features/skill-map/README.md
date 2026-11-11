@@ -40,7 +40,7 @@ const result = await generateUnit(map, "u2", viewerId); // { status: "ready", ma
 ```
 
 - **Content ids.** Unit nodes, lessons, quiz, flashcards, catch rounds and resources are keyed by `contentIdOf(map)`. A posting or PDF map has no `courseId`, so its content stays under its own map id, exactly as before. Deletes keep taking map ids, so "Delete my data" never touches canonical content.
-- **The syllabus is attached on read.** `saveSkillMap` strips `syllabus` and `rating` from a map with a `courseId`. `getSkillMap` attaches the canonical syllabus (`readCatalogSyllabus`), or the partial one with `planning: true` while it is being written, shaped by `syllabusForLearner`: `built` comes from the learner's own nodes, a built unit's topics are cut to those with a node, `rootMapId` is the courseId. One more read per map.
+- **The syllabus is attached on read.** `saveSkillMap` strips `syllabus` from a map with a `courseId`. `getSkillMap` attaches the canonical syllabus (`readCatalogSyllabus`), or the partial one with `planning: true` while it is being written, shaped by `syllabusForLearner`: `built` comes from the learner's own nodes, a built unit's topics are cut to those with a node, `rootMapId` is the courseId. One more read per map.
 - **Units.** `ensureUnitNodes` writes `unit-nodes/<contentId>/<unitId>` once under `startOnce` (`@/shared/store/once`): one `chatJSON` on the plan profile (16k tokens, at most 60 s), plus a repair call for missing topics when the deadline leaves 20 s. It starts nothing when the deadline cannot fit 60 s. Node ids equal topic ids, and the syllabus fields come from code (`validateUnitNodes`). Appending to a learner map (`appendUnit`) holds `unit-claims/<mapId>` for a few store operations (dead after 30 s).
 - **No call in a request.** `generateUnit` appends the canonical unit when it exists, says "building" while someone writes it, and otherwise starts the build after the response (`inBackground`, Next's `after()`). `syncCourseMap` (called by `GET /api/maps/[id]` and the map page) appends unit 1 as soon as it exists.
 - **Pre-generation rule 3.** Whenever unit k is appended for any learner, the canonical build of unit k+1 starts after the response, unless it exists or is running.
@@ -52,7 +52,7 @@ const result = await generateUnit(map, "u2", viewerId); // { status: "ready", ma
 
 ## Model
 
-Every call uses the plan profile of `@/features/ai` (Claude Haiku, adaptive thinking at effort high): a posting or PDF map 32k tokens and 100 s, a unit 16k and 60 s. No map stores a `rating` any more.
+Every call uses the plan profile of `@/features/ai` (Claude Haiku, adaptive thinking at effort high): a posting or PDF map 32k tokens and 100 s, a unit 16k and 60 s.
 
 ## Citations
 

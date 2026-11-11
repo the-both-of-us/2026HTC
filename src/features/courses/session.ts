@@ -1,6 +1,7 @@
 import { isAuthConfigured } from "@/features/auth";
 import { getSession } from "@/shared/identity";
 import { CoursesError } from "./errors";
+import { isUuid } from "@/shared/ids";
 
 /**
  * The one place that decides who may publish, like and start a course.
@@ -11,7 +12,6 @@ import { CoursesError } from "./errors";
  * never a login wall. Without Auth0 (tests, offline development), guests may do all of it.
  */
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const WHO_ARE_YOU = "We could not tell who you are. Please refresh the page and try again.";
 export const SIGN_IN_TO_PUBLISH = "Sign in to publish a course, so your name shows on it.";
@@ -19,7 +19,7 @@ export const SIGN_IN_TO_LIKE = "Sign in to like courses.";
 
 /** The user id becomes part of a store key, so it must look like one of ours. */
 function assertUserId(userId: string): void {
-  if (!UUID_PATTERN.test(userId)) throw new CoursesError(WHO_ARE_YOU, 400);
+  if (!isUuid(userId)) throw new CoursesError(WHO_ARE_YOU, 400);
 }
 
 /** Throws a 401 sentence unless this request is signed in as `userId`. A no-op without Auth0. */

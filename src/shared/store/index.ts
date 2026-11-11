@@ -1,17 +1,14 @@
 import { blobDriver } from "./blob";
 import type { StoreDriver } from "./driver";
 import { memoryDriver } from "./memory";
-import { s3Driver } from "./s3";
 
 /**
  * A small JSON document store. The driver depends on the environment:
- * S3_BUCKET means S3, then BLOB_READ_WRITE_TOKEN means Vercel Blob, otherwise memory.
+ * BLOB_READ_WRITE_TOKEN means Vercel Blob, otherwise memory.
  * Values go through JSON, so callers always get a fresh copy, never a stored object.
  */
 function driver(): StoreDriver {
-  if (process.env.S3_BUCKET) return s3Driver;
-  if (process.env.BLOB_READ_WRITE_TOKEN) return blobDriver;
-  return memoryDriver;
+  return process.env.BLOB_READ_WRITE_TOKEN ? blobDriver : memoryDriver;
 }
 
 /** Returns the document, or null if there is none at this key. */

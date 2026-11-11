@@ -26,3 +26,4 @@ export { TextSizeSelect } from "./TextSizeSelect";
 export { resolvedTheme, setTheme, subscribeTheme, THEMES } from "./theme";
 export type { Theme } from "./theme";
 export { PanelVisibleContext, usePauseWhenHidden } from "./pauseWhenHidden";
+export { pollLoop, usePoll } from "./poll";

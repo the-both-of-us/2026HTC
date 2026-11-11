@@ -43,7 +43,7 @@ A course whose `map.syllabus` is a degree one (8 units) adds a **unit test** aft
 - A unit test opens when every topic of that unit is proved (`GET/POST /api/maps/[id]/final?unit=u2`). It uses the same machinery as the final: one question-writing call, each question an attempt with an open follow-up, `settle` with the pass mark saved on the record (`passMark`, absent on old records, which mean 2).
 - The degree course final opens only when every planned unit is built (a map holds just the units built so far), every topic is proved and every unit test is passed. A course with a syllabus but no unit tests (quick) keeps the old rule: every topic proved.
 - The long final's answer grader sees only the topics its question mixes, and its question-writing prompt leaves out the syllabus lines, to keep both prompts a sane size.
-- `getUnitTests(userId, mapId)` lists each built unit's test state. `getPassedUnitTests(mapId)` lists the passed ones (for "a degree course is done"). `adoptFinalAsUnitTest(mapId, unitId)` moves a course final passed before deepening onto unit 1, so the course final is free again.
+- `getUnitTests(userId, mapId)` lists each built unit's test state. `getPassedUnitTests(mapId)` lists the passed ones (for "a degree course is done").
 - `FinalView` carries `unitId`, `questionCount` and `passMark` so a screen never hard-codes "three questions" or "pass two".
 
 ### Syllabus lines in prompts

@@ -10,7 +10,7 @@ The spoken follow-up question. OryxLearn asks it out loud, the learner answers o
 4. **The answer ends by itself.** That happens at Flux's EndOfTurn. The mic stays open 2.5 s more: if they keep talking, it goes back to listening and keeps both parts. Done or Space ends it early.
 5. **Here's what I heard.** The text shows at once and sends itself after 3 s. Send now, Edit (counts as typed), and Re-record (starts over) are there. Any key, or Edit, stops the countdown. The text shown is the text sent.
 
-**Measured on 2026-11-07** with real Deepgram, a recorded answer played in as the mic, on `/voice-preview?real=1`: from the Answer aloud click to the question playing, 50 ms in the app (0.44 s including the test's automated click). From the last spoken word to the answer on screen, 1.1 to 1.4 s over 3 runs. A 2.2 s thinking pause in the middle was not cut off: Flux ended the turn, the learner kept talking, and both parts were sent. Not yet tried: a real microphone in a loud room, and echo from laptop speakers.
+**Measured on 2026-11-07** with real Deepgram, a recorded answer played in as the mic, on the since-removed `/voice-preview?real=1` page: from the Answer aloud click to the question playing, 50 ms in the app (0.44 s including the test's automated click). From the last spoken word to the answer on screen, 1.1 to 1.4 s over 3 runs. A 2.2 s thinking pause in the middle was not cut off: Flux ended the turn, the learner kept talking, and both parts were sent. Not yet tried: a real microphone in a loud room, and echo from laptop speakers.
 
 ## How the audio flows
 
@@ -126,9 +126,3 @@ Copy the keys in `.env.example` into `.env.local`. Without them, the routes answ
 npm test -- voice      # uses a local fake that follows Flux's documented protocol
 npx tsx --env-file=.env.local src/features/voice/dev/realCheck.ts   # real providers, a few cents
 ```
-
-Then open `/voice-preview?real=1` in `npm run dev`, and go through one interview with a real microphone.
-
-## Removing the preview before the final merge
-
-`/voice-preview` is for review only and is off in production. Before the final merge, delete `src/app/voice-preview/`, `src/app/api/voice/preview-attempt/`, `ui/VoicePreview.tsx`, `adapters/mock.ts`, and the `VoicePreview` export in `client.ts`. Then remove the `meter` option on `initial` in `session.ts` if nothing else uses it.

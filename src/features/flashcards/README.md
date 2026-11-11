@@ -1,10 +1,8 @@
 # flashcards
 
-**Owner:** Mirza. See `TEAM.md`.
-
 Writes 6 to 8 flashcards for one skill on a map, saves them, and shows them one at a time in the skill panel. The UI is in `ui/` and is exported from `@/features/flashcards/client`. Everything else here is server code.
 
-**Status:** built. `FlashcardsTab` is live in the skill panel. `FlashcardsScreen` is still a placeholder: the review feature will own spaced repetition.
+**Status:** built. `FlashcardsTab` is live in the skill panel.
 
 ## How cards are made
 

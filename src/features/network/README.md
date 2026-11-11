@@ -1,7 +1,5 @@
 # network
 
-**Owner:** Mirza. See `TEAM.md`.
-
 Friends by invite, and an opt-in network that matches people by proven skills: "Priya proved what you're learning, ask her."
 
 - **Network off (the default): friends only.** You see your friends and nobody else, and only your friends see you.

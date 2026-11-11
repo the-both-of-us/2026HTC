@@ -18,7 +18,6 @@ const mockChatJSON = vi.mocked(chatJSON);
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("YOUTUBE_API_KEY", "");
   mockChatJSON.mockReset();
   mockChatJSON.mockResolvedValue({ ok: true, problem: "none" });

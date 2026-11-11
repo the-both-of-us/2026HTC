@@ -1,7 +1,5 @@
 # review
 
-**Owner:** Mirza. See `TEAM.md`.
-
 Spaced repetition for the flashcards on your own maps, with SM-2 written new. `/review` shows one card at a time: the question, "Show answer", then Again, Hard, Good or Easy, each with the wait it would set under it.
 
 `ReviewScreen` is exported from `@/features/review/client`. Everything else is server code from `@/features/review`.

@@ -4,13 +4,12 @@ import clsx from "clsx";
 import { Award, Check, ChevronRight, GraduationCap, Lock, PartyPopper, Sparkles, Unlock } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Badge, buttonClasses, PageShell } from "@/shared/ui";
+import { Badge, buttonClasses, PageShell, usePoll } from "@/shared/ui";
 import type { CourseView, ProgramSharing as Sharing, ProgramView } from "../types";
 import { ComparePanel } from "./ComparePanel";
 import { formatHours, groupByTerm, plural, termProgressLine, topicDenominator } from "./format";
 import { needsProgramPoll, PROGRAM_POLL_MS } from "./planning";
 import { PlanningNotice } from "./PlanningNotice";
-import { usePoll } from "./poll";
 import { ProgramSharing } from "./ProgramSharing";
 import { StartCourseButton } from "./StartCourse";
 

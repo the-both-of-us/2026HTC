@@ -160,7 +160,6 @@ describe("assembleDashboard", () => {
 describe("loadDashboard", () => {
   beforeEach(() => {
     vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-    vi.stubEnv("S3_BUCKET", "");
     (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
     vi.mocked(listProvedNodes).mockReset().mockResolvedValue([]);
     vi.mocked(getReviewSummary).mockReset().mockResolvedValue(SUMMARY);

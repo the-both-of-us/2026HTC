@@ -4,7 +4,6 @@ import { chatJSON } from "@/features/ai";
 import { getDoc, listKeys, putDoc } from "@/shared/store";
 import type { CourseSyllabus, SkillMap, SkillNode } from "@/shared/types";
 import {
-  adoptFinalAsUnitTest,
   answerFollowUp,
   deleteLearnerData,
   getFinalInterview,
@@ -98,7 +97,6 @@ async function answerAll(attemptIds: string[], passes: number) {
 const UNIT_NODES = [node("a1", "u1"), node("a2", "u1"), node("b1", "u2")];
 
 beforeEach(() => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   mockChatJSON.mockReset();
   mapId = randomUUID();
@@ -298,30 +296,6 @@ describe("the degree course final", () => {
     expect(await getFinalInterview(OWNER, mapId)).toMatchObject({ state: "ready", questionCount: 3, passMark: 2 });
     modelAsks(3);
     expect((await startFinalInterview(OWNER, mapId)).questions).toHaveLength(3);
-  });
-});
-
-describe("a course final passed before the course was deepened", () => {
-  it("becomes the unit's test, and the course final is free again", async () => {
-    await saveMap("degree", ["u1"], [node("a1", "u1")]);
-    const result = { passed: true, passedCount: 2, spokenCount: 0, finishedAt: "x" };
-    await putDoc(finalKey(mapId), { mapId, ownerId: OWNER, attemptIds: ["x", "y", "z"], topics: [], startedAt: "x", result });
-
-    expect(await getPassedFinal(mapId)).toMatchObject({ passedCount: 2 });
-    expect(await adoptFinalAsUnitTest(mapId, "u1")).toBe(true);
-    expect(await getPassedFinal(mapId)).toBeNull();
-    expect(await getPassedUnitTests(mapId)).toEqual({ u1: result });
-    // Nothing to adopt a second time, and nothing is overwritten.
-    expect(await adoptFinalAsUnitTest(mapId, "u1")).toBe(false);
-    // The 2-of-3 pass mark it was passed under travels with it.
-    expect((await getDoc<{ passMark: number }>(finalKey(mapId, "u1")))?.passMark).toBe(2);
-  });
-
-  it("does nothing when the final was not passed", async () => {
-    await saveMap("degree", ["u1"], [node("a1", "u1")]);
-    await putDoc(finalKey(mapId), { mapId, ownerId: OWNER, attemptIds: [], topics: [], startedAt: "x" });
-    expect(await adoptFinalAsUnitTest(mapId, "u1")).toBe(false);
-    expect(await getDoc(finalKey(mapId))).not.toBeNull();
   });
 });
 

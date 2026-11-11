@@ -1,10 +1,8 @@
 # quiz
 
-**Owner:** Mirza. See `TEAM.md`.
-
 A multiple-choice quiz for each skill on a map, so a learner can check what they know before they teach it back. Every answer is explained. The UI is `QuizTab`, exported from `@/features/quiz/client` and shown in the skill panel. Everything else here is server code.
 
-**Status:** built. `QuizScreen` is still a placeholder.
+**Status:** built.
 
 ## How a quiz is made
 

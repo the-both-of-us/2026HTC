@@ -7,6 +7,7 @@ import { getDoc, putDoc } from "@/shared/store";
 import { COURSE_NOT_FOUND, CoursesError } from "./errors";
 import { getListing } from "./listing";
 import { requireLearner } from "./session";
+import { isUuid } from "@/shared/ids";
 
 export type StartResult = {
   /** The map to open: the learner's copy, or the course itself for its owner. */
@@ -18,7 +19,6 @@ export type StartResult = {
 /** What `course-starts/<mapId>/<userId>` holds. */
 type StartDoc = { copyId: string; startedAt: string };
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Callers check both ids first: the map id through getSkillMap, the user id as a UUID. */
 export function startKey(mapId: string, userId: string): string {
@@ -35,7 +35,7 @@ const inFlight = (globalStarts.oryxCourseStarts ??= new Map());
  * still theirs. `mapId` must already be a checked map id.
  */
 export async function findMyCopy(mapId: string, userId: string): Promise<string | null> {
-  if (!UUID_PATTERN.test(userId)) return null;
+  if (!isUuid(userId)) return null;
   const doc = await getDoc<StartDoc>(startKey(mapId, userId));
   if (typeof doc?.copyId !== "string") return null;
   const copy = await getSkillMap(doc.copyId);

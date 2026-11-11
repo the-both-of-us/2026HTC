@@ -26,7 +26,6 @@ async function as(ownerId: string) {
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   mockChat.mockReset();
   mockChat.mockImplementation(async (options) => fakeChat(options) as never);
 });

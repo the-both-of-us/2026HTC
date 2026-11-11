@@ -22,7 +22,7 @@
  *   and read back, and its keys and values must match, before the first delete.
  * - Only keys that are in the verified backup are deleted, 8 at a time. Re-running is safe: it
  *   lists again.
- * - It uses whatever store the environment selects (S3_BUCKET, then BLOB_READ_WRITE_TOKEN, else
+ * - It uses whatever store the environment selects (BLOB_READ_WRITE_TOKEN, else
  *   memory) and prints which one first. It loads .env.local; pass --no-env to use the shell's.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -139,7 +139,6 @@ export async function planWipe(scope: Scope, options: { deleteCircles?: boolean 
 }
 
 export function storeName(): string {
-  if (process.env.S3_BUCKET) return `Amazon S3 (bucket ${process.env.S3_BUCKET})`;
   if (process.env.BLOB_READ_WRITE_TOKEN) return "Vercel Blob (BLOB_READ_WRITE_TOKEN is set)";
   return "memory (this process only)";
 }

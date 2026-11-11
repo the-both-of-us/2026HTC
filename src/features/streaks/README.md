@@ -1,7 +1,5 @@
 # streaks
 
-**Owner:** Abdu. See `TEAM.md`.
-
 The habit loop around learning: a reason to come back tomorrow, with no dark patterns. Nothing here can take a proof away.
 
 - **Daily streak.** Proving any topic on a day keeps it. Days are Edmonton days (`days.ts`, Alberta is UTC-6 all year from Nov 1, 2026). One freeze a week covers a missed day by itself. The flame and count sit in the sidebar (`SideNav`, listening to the `oryx:streak` event).

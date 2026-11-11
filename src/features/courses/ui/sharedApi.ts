@@ -1,4 +1,6 @@
 /** Calls for the shared catalog shelf on /courses. Every failure becomes a sentence a person can act on. */
+import { isUuid } from "@/shared/ids";
+
 export type SharedCourseItem = {
   courseId: string;
   title: string;
@@ -21,7 +23,6 @@ export type SharedResult<T> = ({ ok: true } & T) | { ok: false; message: string 
 
 const TIMEOUT_MS = 20_000;
 const COULD_NOT_CONNECT = "OryxLearn could not be reached. Check your connection, then try again.";
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function field(body: unknown, name: string): unknown {
   return body && typeof body === "object" ? (body as Record<string, unknown>)[name] : undefined;
@@ -64,7 +65,7 @@ export function startSharedCourse(courseId: string): Promise<SharedResult<{ id: 
     "This course could not be started this time. Please try again.",
     (body) => {
       const id = field(body, "id");
-      return typeof id === "string" && UUID_PATTERN.test(id) ? { id } : null;
+      return typeof id === "string" && isUuid(id) ? { id } : null;
     },
   );
 }
@@ -77,7 +78,7 @@ export function startSharedProgram(programId: string): Promise<SharedResult<{ pr
     "This program could not be started this time. Please try again.",
     (body) => {
       const id = field(body, "programId");
-      return typeof id === "string" && UUID_PATTERN.test(id) ? { programId: id } : null;
+      return typeof id === "string" && isUuid(id) ? { programId: id } : null;
     },
   );
 }

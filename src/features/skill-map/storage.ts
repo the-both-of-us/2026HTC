@@ -7,8 +7,8 @@ import { SkillMapError } from "./build";
 import type { CourseBuildState } from "./types";
 import { isEnergyRelated } from "./energy";
 import { syllabusForLearner } from "./learnerSyllabus";
+import { isUuid } from "@/shared/ids";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * What anyone holding a map's link can read. It leaves out ownerId on purpose:
@@ -99,7 +99,7 @@ async function ensureOwnerIndex(): Promise<void> {
 
 /**
  * Saves a map and its owner index entry. A map of a catalog course (`courseId`) is saved without
- * `syllabus` and `rating`: the syllabus is canonical and attached on read, so a learner's map
+ * `syllabus`: the syllabus is canonical and attached on read, so a learner's map
  * never holds a stale copy of it.
  */
 export async function saveSkillMap(map: SkillMap): Promise<void> {
@@ -109,9 +109,8 @@ export async function saveSkillMap(map: SkillMap): Promise<void> {
 
 function storedForm(map: SkillMap): SkillMap {
   if (!map.courseId) return map;
-  const { syllabus, rating, ...rest } = map;
+  const { syllabus, ...rest } = map;
   void syllabus;
-  void rating;
   return rest;
 }
 
@@ -122,7 +121,7 @@ function storedForm(map: SkillMap): SkillMap {
  * learner by `syllabusForLearner`. While no syllabus exists at all, the map has none.
  */
 export async function getSkillMap(id: string): Promise<SkillMap | null> {
-  if (!UUID_PATTERN.test(id)) return null;
+  if (!isUuid(id)) return null;
   const stored = await getDoc<SkillMap>(`maps/${id}`);
   if (!stored) return null;
   const map = stored.courseId ? await withCatalogSyllabus(stored, stored.courseId) : stored;
@@ -173,7 +172,7 @@ export async function listMapsByOwner(ownerId: string): Promise<SkillMap[]> {
   await ensureOwnerIndex();
 
   const prefix = ownerIndexPrefix(ownerId);
-  const mapIds = (await listKeys(prefix)).map((key) => key.slice(prefix.length)).filter((id) => UUID_PATTERN.test(id));
+  const mapIds = (await listKeys(prefix)).map((key) => key.slice(prefix.length)).filter((id) => isUuid(id));
   const maps = await Promise.all(
     mapIds.map(async (mapId) => {
       const map = await getDoc<SkillMap>(`maps/${mapId}`);
@@ -187,7 +186,7 @@ export async function listMapsByOwner(ownerId: string): Promise<SkillMap[]> {
 }
 
 export async function deleteSkillMap(id: string): Promise<void> {
-  if (!UUID_PATTERN.test(id)) return;
+  if (!isUuid(id)) return;
   const map = await getDoc<SkillMap>(`maps/${id}`);
   await deleteDoc(`maps/${id}`);
   if (map && OWNER_ID_PATTERN.test(map.ownerId)) await deleteDoc(ownerIndexKey(map.ownerId, id));

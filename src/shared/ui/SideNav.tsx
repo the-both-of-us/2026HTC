@@ -7,7 +7,7 @@ import { BookOpen, Flame, CirclePlay, LayoutDashboard, type LucideIcon, Network,
 import { useEffect, useState, type ReactNode } from "react";
 import { TopBarSignIn } from "./Account";
 
-// A word and a small line icon per page. Mirza adds his pages' links here when they are ready.
+// A word and a small line icon per page.
 const NAV_ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/", label: "Build", Icon: SquarePen },
   { href: "/feed", label: "FYP", Icon: CirclePlay },

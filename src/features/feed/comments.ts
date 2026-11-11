@@ -3,11 +3,12 @@ import { chatJSON } from "@/features/ai";
 import { HttpError } from "@/shared/http";
 import { claimDoc, deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
 import { commentProblem, cleanComment } from "./commentRules";
-import { UUID_PATTERN, writeEvent } from "./events";
+import { writeEvent } from "./events";
 import { findItemTitle } from "./pool";
 import { buildCommentCheckPrompt, COMMENT_CHECK_PROMPT, commentCheckSchema } from "./prompt";
 import type { FeedComment } from "./types";
 import { slugOfItem } from "./validate";
+import { isUuid } from "@/shared/ids";
 
 /**
  * Public comments on cards and Shorts. One document per comment, so two people commenting at
@@ -122,7 +123,7 @@ async function takeRateSlot(userId: string, now: number): Promise<boolean> {
  * 429) with a plain sentence when it can't be posted. Records a "comment" engagement event.
  */
 export async function postComment(userId: string, displayName: string | null, itemId: string, raw: string, now = Date.now()): Promise<FeedComment> {
-  if (!UUID_PATTERN.test(userId)) throw new HttpError("Please refresh the page and try again.", 400);
+  if (!isUuid(userId)) throw new HttpError("Please refresh the page and try again.", 400);
   const slug = checkItem(itemId);
   const problem = commentProblem(raw);
   if (problem) throw new HttpError(problem, 400);
@@ -147,7 +148,7 @@ export async function postComment(userId: string, displayName: string | null, it
 export async function deleteComment(userId: string, itemId: string, commentId: string): Promise<void> {
   checkItem(itemId);
   const missing = new HttpError("We could not find that comment. It may already be deleted.", 404);
-  if (!UUID_PATTERN.test(userId) || !COMMENT_ID.test(commentId)) throw missing;
+  if (!isUuid(userId) || !COMMENT_ID.test(commentId)) throw missing;
   const comment = await getDoc<StoredComment>(commentKey(itemId, commentId));
   if (!comment || comment.authorId !== userId) throw missing;
   await Promise.all([deleteDoc(commentKey(itemId, commentId)), deleteDoc(authorKey(userId, itemId, commentId))]);
@@ -156,7 +157,7 @@ export async function deleteComment(userId: string, itemId: string, commentId: s
 
 /** For "Delete my data": every comment this viewer wrote, and their rate-limit slots. Running it twice is harmless. */
 export async function deleteViewerComments(userId: string): Promise<void> {
-  if (!UUID_PATTERN.test(userId)) return;
+  if (!isUuid(userId)) return;
   const [mine, slots] = await Promise.all([listKeys(`feed-comment-by/${userId}/`), listKeys(`feed-comment-rate/${userId}/`)]);
   await Promise.all([
     ...mine.flatMap((key) => {

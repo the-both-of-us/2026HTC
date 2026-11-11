@@ -48,7 +48,6 @@ function play(picks: { sentence: number }[]) {
 const GOOD = [{ sentence: 2 }, { sentence: 5 }];
 
 beforeEach(async () => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   mockChatJSON.mockReset();
 

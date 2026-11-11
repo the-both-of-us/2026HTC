@@ -33,7 +33,6 @@ const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   setOnceTimingForTests({ writeEveryMs: 1 });
   mockStream.mockReset();

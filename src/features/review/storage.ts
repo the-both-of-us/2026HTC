@@ -1,8 +1,8 @@
 /** Store reads and writes for review. Every key starts review/<userId>/. */
 import { deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
 import type { ReviewCard } from "./types";
+import { isUuid } from "@/shared/ids";
 
-export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * One UTC day of reviews. firstAt and lastAt are kept because a UTC day touches at most two
@@ -12,7 +12,7 @@ export type DayLog = { count: number; firstAt: string; lastAt: string };
 
 function assertUuid(value: string, what: string): void {
   // Ids end up inside store keys, so anything else is refused before a key is built.
-  if (!UUID_PATTERN.test(value)) throw new Error(`review: ${what} must be a UUID`);
+  if (!isUuid(value)) throw new Error(`review: ${what} must be a UUID`);
 }
 
 export function userPrefix(userId: string): string {
@@ -32,7 +32,7 @@ export function logKey(userId: string, day: string): string {
 /** Every card state this user has, by card id. Log documents are skipped. */
 export async function readStates(userId: string): Promise<Map<string, ReviewCard>> {
   const prefix = userPrefix(userId);
-  const keys = (await listKeys(prefix)).filter((key) => UUID_PATTERN.test(key.slice(prefix.length)));
+  const keys = (await listKeys(prefix)).filter((key) => isUuid(key.slice(prefix.length)));
   const docs = await Promise.all(keys.map((key) => getDoc<ReviewCard>(key)));
   const states = new Map<string, ReviewCard>();
   for (const doc of docs) if (doc?.cardId) states.set(doc.cardId, doc);

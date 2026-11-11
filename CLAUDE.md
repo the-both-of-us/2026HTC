@@ -1,6 +1,6 @@
 # OryxLearn
 
-**Two people work here. Read `TEAM.md` first and only edit paths your person owns.**
+One owner. Hosting is Vercel only: pushes to `main` deploy to https://oryxlearn.vercel.app. All AI is Claude Haiku through the Anthropic SDK, with no fallback model.
 
 Read `SPEC.md` for the product and `AGENTS.md` for the Next.js warning: this Next version differs from training data, so read `node_modules/next/dist/docs/` before using a framework API.
 
@@ -14,18 +14,25 @@ Read `SPEC.md` for the product and `AGENTS.md` for the Next.js warning: this Nex
 
 | Feature | Owns |
 |---|---|
-| `ai` | Provider chain, JSON and streaming calls, timeouts, validation |
-| `skill-map` | Posting or PDF to validated DAG with checkpoints and verified citations; graph UI |
-| `teachback` | Grading, follow-up, integrity signals, unlocks; teach-back UI |
+| `ai` | Claude Haiku calls: JSON and streaming, thinking profiles, timeouts, validation |
+| `skill-map` | Posting, PDF or topic to validated DAG with checkpoints and verified citations; graph UI |
+| `catalog` | Shared registry: each topic course and program is generated once and reused; browsing |
+| `syllabus` | A catalog course's shared plan (outcomes, units, topics) |
+| `programs` | A broad goal becomes a program of courses |
+| `pretest` | Optional placement pre-test for a topic course |
+| `lessons` | The Read tab lesson for a skill |
+| `teachback` | Grading, integrity signals, unlocks; teach-back UI |
 | `landing` | Input screen |
 | `proof` | Evidence page and QR |
-| `grid` | AESO live data exercises |
-| `labour` | StatCan numbers |
 | `flashcards`, `quiz` | Study tools inside each node |
-| `courses` | Public directory |
-| `network` | Matching by proven skills |
-| `dashboard`, `review` | Progress and spaced repetition |
-| `battle` | QR quiz battle |
+| `reels`, `resources`, `feed` | Videos, links and the For you feed |
+| `courses` | Course listings, likes and starts |
+| `circles`, `network` | Study circles; matching by proven skills |
+| `dashboard`, `review`, `streaks` | Progress, spaced repetition, daily streak |
+| `grid`, `labour` | AESO and StatCan live data |
+| `voice` | Spoken follow-up and final interview (Deepgram) |
+| `auth`, `admin`, `settings`, `trust` | Optional Auth0, passcode admin, settings page, trust page and delete-my-data |
+| `battle` | QR quiz battle (stub) |
 
 ## Commands
 
@@ -35,7 +42,9 @@ Read `SPEC.md` for the product and `AGENTS.md` for the Next.js warning: this Nex
 
 ## Rules
 
-- Credentials live only in `.env.local`, which is never committed: see `.env.example` and `TEAM.md`. Never read keys from other folders on this machine.
-- The AI gateway free tier allows about 5 requests a minute per model. Tests mock the AI; spend real calls sparingly.
+- Credentials live only in `.env.local`, which is never committed: see `.env.example`. Never read keys from other folders on this machine. `PROOF_SEAL_SECRET` and the other names are listed in `README.md`.
+- Tests mock the AI; spend real calls sparingly.
 - Headless browser: `playwright-core` with `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`.
-- Stage your own paths by name, and follow the git rules in `TEAM.md`.
+- **Scripts run with `tsx`:** the `ai` and `skill-map` index files `import "server-only"`, which throws outside Next.js, so run `npx tsx --conditions=react-server scripts/x.ts` (or `npm run cache-samples`). Next.js and vitest need nothing extra. Exception: scripts that load flashcards or quiz must NOT use `--conditions=react-server` (their index files pull in next/link); `src/features/courses/dev/prepareSamples.ts` makes `server-only` a no-op itself.
+- **Git:** work on `main` and commit small. Before every push run `git pull --rebase`, then `npx tsc --noEmit && npm test`. Stage paths by name, never `git add -A`.
+- **New package:** `npm i <package> --legacy-peer-deps`, and commit `package.json` and `package-lock.json` together.

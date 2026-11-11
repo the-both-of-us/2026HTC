@@ -5,7 +5,6 @@ import { getDoc, putDoc } from "./index";
 vi.mock("@vercel/blob", () => ({ del: vi.fn(), get: vi.fn(), list: vi.fn(), put: vi.fn() }));
 
 beforeEach(() => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.mocked(put).mockClear();
 });
 

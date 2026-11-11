@@ -2,8 +2,6 @@ import { Hourglass } from "lucide-react";
 
 type ComingSoonProps = {
   title: string;
-  /** Still accepted so existing screens compile. It is never shown to visitors. */
-  owner?: string;
   plan: string;
 };
 

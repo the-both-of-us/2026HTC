@@ -58,7 +58,6 @@ function lessonOf(words: number, code: string | null = null): RawLesson {
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   vi.mocked(streamLines).mockReset();
 });
 

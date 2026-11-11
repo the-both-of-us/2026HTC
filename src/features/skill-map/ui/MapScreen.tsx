@@ -14,7 +14,7 @@ import { BookOpen, Compass, Globe, ListChecks, Lock, Network, Sparkles, Upload }
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
-import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner, usePoll } from "@/shared/ui";
 import { deriveNodeStates, unlockedEarlyIds } from "../states";
 import type { PublicSkillMap } from "../storage";
 import { computeNextStep, type NextStep } from "../nextStep";
@@ -24,7 +24,6 @@ import { canvasWait, MAP_POLL_MS, needsMapPoll } from "./buildState";
 import { MapActions } from "./MapActions";
 import { MapCanvas } from "./MapCanvas";
 import { fetchMapOnly, fetchMapWithProgress, fetchProven, unlockSkill } from "./mapApi";
-import { usePoll } from "./poll";
 import { SkillList } from "./SkillList";
 import { nextStepButtonLabel, NextStepView, SkillPanel, type ProvenNotice } from "./SkillPanel";
 import { UnitRail, UnitStartPanel } from "./UnitRail";

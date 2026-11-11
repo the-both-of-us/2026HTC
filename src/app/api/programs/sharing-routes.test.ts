@@ -42,7 +42,6 @@ let programId: string;
 
 beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
   programId = randomUUID();
   // A program as the store holds it; the programs feature reads it like any other.

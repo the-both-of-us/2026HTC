@@ -81,8 +81,6 @@ export type VoiceSnapshot = {
 type Initial = {
   state?: VoiceState;
   transcript?: Transcript;
-  /** Feeds the orb from the start. Only the preview's frozen states use this. */
-  meter?: AudioMeter;
   /** The clock, for tests. */
   now?: () => number;
 };
@@ -109,7 +107,6 @@ export class VoiceSession {
   private disposed = false;
   private lastTapAt = Number.NEGATIVE_INFINITY;
   private readonly now: () => number;
-  private readonly pinnedMeter: AudioMeter | null;
 
   constructor(
     private readonly adapters: VoiceAdapters,
@@ -119,9 +116,7 @@ export class VoiceSession {
     this.callbacks = callbacks;
     this.state = initial.state ?? INITIAL_VOICE_STATE;
     this.transcript = initial.transcript ?? EMPTY_TRANSCRIPT;
-    this.pinnedMeter = initial.meter ?? null;
     this.now = initial.now ?? Date.now;
-    this.micLive = this.pinnedMeter !== null;
     this.snapshot = this.buildSnapshot();
     this.listener = new Listener(adapters.listen, {
       onTurn: (update) => this.onTurn(update),
@@ -151,7 +146,6 @@ export class VoiceSession {
 
   /** Feeds the orb: the voice when it is talking, the mic when it is listening. */
   activeMeter(): AudioMeter {
-    if (this.pinnedMeter) return this.pinnedMeter;
     if (this.state.phase === "listening" || this.state.holding) return this.listener.meter;
     if (this.voiceActive) return this.adapters.speech.meter;
     return SILENT_METER;

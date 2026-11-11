@@ -9,8 +9,8 @@
 import { getDoc, listKeys, putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 import type { CourseListing } from "./types";
+import { isUuid } from "@/shared/ids";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function listingKey(mapId: string): string {
   return `courses/${mapId}`;
@@ -39,7 +39,7 @@ export async function getListing(mapId: string): Promise<CourseListing | null> {
 export async function countLikes(mapId: string): Promise<number> {
   const prefix = `likes/${mapId}/`;
   const keys = await listKeys(prefix);
-  return keys.filter((key) => UUID_PATTERN.test(key.slice(prefix.length))).length;
+  return keys.filter((key) => isUuid(key.slice(prefix.length))).length;
 }
 
 /** Saves the running like total. Never touches the listing. */

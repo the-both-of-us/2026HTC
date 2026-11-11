@@ -3,7 +3,6 @@ import { claimDoc, deleteDoc, getDoc, listDocs, putDoc } from "./index";
 
 // With neither of these set, the in-memory driver is used, so these tests run offline.
 beforeEach(() => {
-  vi.stubEnv("S3_BUCKET", "");
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
 });
 

@@ -99,8 +99,6 @@ export async function askModelForPdfMap(pages: string[], audience = ""): Promise
     title: reply.title,
     subtitle: reply.subtitle,
     nodes: reply.nodes,
-    difficulty: reply.difficulty,
-    stakes: reply.stakes,
   };
 }
 

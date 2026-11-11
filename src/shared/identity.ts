@@ -1,6 +1,7 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { HttpError } from "./http";
+import { isUuid } from "@/shared/ids";
 
 /**
  * Who the current user is. Everyone starts as a guest: a random id in a cookie.
@@ -14,7 +15,6 @@ const USER_COOKIE = "pf_uid";
 /** Present once someone has signed in. It holds their display name and user id. */
 const ACCOUNT_COOKIE = "pf_account";
 const ONE_YEAR_IN_SECONDS = 60 * 60 * 24 * 365;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_DISPLAY_NAME_LENGTH = 100;
 /** For development and tests only. In production a missing secret is an error. */
 const DEV_SECRET = "oryxlearn-development-only-secret";
@@ -110,7 +110,7 @@ export async function readUserId(): Promise<string | null> {
 /** The same as readUserId, for code that has the request's cookies but not next/headers: src/proxy.ts. */
 export function userIdFromCookies(read: (name: string) => string | undefined): string | null {
   const value = unseal(USER_COOKIE, read(USER_COOKIE));
-  return value && UUID_PATTERN.test(value) ? value : null;
+  return value && isUuid(value) ? value : null;
 }
 
 /**
@@ -147,7 +147,7 @@ export async function getSession(): Promise<Session> {
  * device, whether that is their guest id or the id saved on their account.
  */
 export async function setSessionUser(userId: string, { displayName }: { displayName: string }): Promise<void> {
-  if (!UUID_PATTERN.test(userId)) throw new Error("setSessionUser needs a UUID");
+  if (!isUuid(userId)) throw new Error("setSessionUser needs a UUID");
 
   const account: Account = { userId, displayName: displayName.slice(0, MAX_DISPLAY_NAME_LENGTH) };
   const encoded = Buffer.from(JSON.stringify(account)).toString("base64url");

@@ -1,3 +1,4 @@
+import { countWords } from "@/shared/text";
 import type { RawCards } from "./prompt";
 import type { PoolCard } from "./types";
 
@@ -6,7 +7,6 @@ export const MIN_GOOD_CARDS = 4;
 const MAX_CARDS = 12;
 const URL_PATTERN = /https?:\/\/|www\.|\.(com|org|net|io)\b/i;
 
-const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 const sentenceCount = (text: string) => text.split(/[.!?]+(?:\s|$)/).filter((part) => part.trim() !== "").length;
 
 /** Titles compared without case, punctuation or spacing. */
@@ -16,12 +16,12 @@ export function titleKey(title: string): string {
 
 /** What is wrong with one card, or null. */
 export function cardProblem(card: RawCards["cards"][number]): string | null {
-  const titleWords = wordCount(card.title);
+  const titleWords = countWords(card.title);
   if (titleWords < 2 || titleWords > 9) return `the title "${card.title}" should be 3 to 7 words.`;
-  const bodyWords = wordCount(card.body);
+  const bodyWords = countWords(card.body);
   if (bodyWords < 12 || bodyWords > 110) return `the body of "${card.title}" should be 2 to 4 short sentences.`;
   if (sentenceCount(card.body) > 6) return `the body of "${card.title}" has too many sentences. Use 2 to 4.`;
-  const subtopicWords = wordCount(card.subtopic);
+  const subtopicWords = countWords(card.subtopic);
   if (subtopicWords < 1 || subtopicWords > 8 || card.subtopic.length > 60) return `the subtopic of "${card.title}" should be 2 to 6 words.`;
   if (URL_PATTERN.test(`${card.title} ${card.body} ${card.subtopic}`)) return `"${card.title}" has a link. Never include links.`;
   return null;

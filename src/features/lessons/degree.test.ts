@@ -96,7 +96,6 @@ function degreeLesson(words = 1200): RawLesson {
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
-  vi.stubEnv("S3_BUCKET", "");
   mockChatJSON.mockReset();
   mockStream.mockReset();
   vi.mocked(skillBlock).mockClear();

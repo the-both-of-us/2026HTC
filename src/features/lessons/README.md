@@ -1,7 +1,5 @@
 # lessons
 
-**Owner:** Abdu. See `TEAM.md`.
-
 The **Read** tab: a 3 to 5 minute lesson on one skill, so a learner can learn it before proving it. It is the first tab in the skill panel, before Flashcards and Quiz. `LessonTab` is exported from `@/features/lessons/client`, the server code from `@/features/lessons`.
 
 ## A lesson

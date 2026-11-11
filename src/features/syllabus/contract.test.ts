@@ -86,7 +86,6 @@ describe("old documents under the new contract", () => {
     }
     expect(map.syllabus).toBeUndefined();
     expect(program.depth).toBeUndefined();
-    expect(program.deepenedAt).toBeUndefined();
     for (const course of program.courses) {
       expect(course.year).toBeUndefined();
       expect(course.term).toBeUndefined();

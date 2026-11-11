@@ -12,10 +12,10 @@ import type {
   ProgramPart,
   SyllabusPart,
 } from "./types";
+import { isUuid } from "@/shared/ids";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Catalog ids are server-made UUIDs; anything else is never turned into a key. */
-export const isCatalogId = (id: unknown): id is string => typeof id === "string" && UUID_PATTERN.test(id);
+export const isCatalogId = (id: unknown): id is string => typeof id === "string" && isUuid(id);
 
 export async function getCatalogCourse(courseId: string): Promise<CatalogCourse | null> {
   if (!isCatalogId(courseId)) return null;

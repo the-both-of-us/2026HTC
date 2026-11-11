@@ -56,7 +56,7 @@ function put(payload: unknown, method = "PUT", url = "http://localhost/api/netwo
 }
 
 beforeEach(async () => {
-  for (const name of ["BLOB_READ_WRITE_TOKEN", "S3_BUCKET", "AUTH0_DOMAIN", "AUTH0_CLIENT_ID", "AUTH0_CLIENT_SECRET", "AUTH0_SECRET"]) {
+  for (const name of ["BLOB_READ_WRITE_TOKEN", "AUTH0_DOMAIN", "AUTH0_CLIENT_ID", "AUTH0_CLIENT_SECRET", "AUTH0_SECRET"]) {
     vi.stubEnv(name, "");
   }
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();

@@ -17,11 +17,11 @@ import { ensureSampleCourses, SEED_OWNER_ID } from "./seed";
 import { requirePublisher, requireUnpublisher, viewerAccess } from "./session";
 import { findMyCopy } from "./start";
 import { toPublicCourse, type CourseDetail, type CourseListing, type CourseSort, type PublicCourse } from "./types";
+import { isUuid } from "@/shared/ids";
 
 const MAP_NOT_FOUND = "We could not find that map. Check the link, or build a new one.";
 const NOT_YOURS = "Only the person who built this map can publish it or make it private.";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Loads the map, or throws a 404 sentence. getSkillMap checks the id before any key is built. */
 async function requireMap(mapId: string, notFound = MAP_NOT_FOUND): Promise<SkillMap> {
@@ -81,7 +81,7 @@ export async function getCourse(mapId: string, viewerId: string): Promise<Course
   const listing = saved ? await withLikeCount(saved) : null;
 
   const [likedByMe, myCopyId, viewer] = await Promise.all([
-    UUID_PATTERN.test(viewerId) ? getDoc(likeKey(map.id, viewerId)).then((like) => like !== null) : false,
+    isUuid(viewerId) ? getDoc(likeKey(map.id, viewerId)).then((like) => like !== null) : false,
     // The owner's map is already theirs, so they never have a copy to continue.
     isOwner ? null : findMyCopy(map.id, viewerId),
     viewerAccess(),
@@ -151,6 +151,6 @@ export async function unpublishCourse(mapId: string, userId: string): Promise<vo
  * unpublished maps from everyone but their owner. Checks the id itself, so it costs one read.
  */
 export async function isPublished(mapId: string): Promise<boolean> {
-  if (!UUID_PATTERN.test(mapId)) return false;
+  if (!isUuid(mapId)) return false;
   return (await getListing(mapId)) !== null;
 }

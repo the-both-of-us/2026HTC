@@ -1,7 +1,5 @@
 # feed
 
-**Owner:** Abdu. See `TEAM.md`.
-
 The **For you** feed at `/feed`: full-screen cards ("topiclets") swiped up like reels, one idea per card in 2 to 4 sentences, with an educational YouTube Short after every third card. It is for passive scrolling, so it comes from **interests**, not maps (maps are the active side). Every card and Short has the same rail: like, comment, save and share, with counts beside the heart and the comment icon, plus **Go deeper**, which opens the landing with the card's subtopic filled in (`/?topic=<subtopic>`), so a card becomes a real course you can prove.
 
 Shorts play edge to edge at 9:16 with no frame and without YouTube's controls, in `ShortPlayer` from `@/shared/ui` (`controls=0`, driven through the player API by `postMessage`; the Shorts on a skill use it too): tap the video to pause or play, and the sound button turns sound on for every Short for the rest of the visit. There is no `loop=1`, because it needs `playlist=<id>`, which brings back YouTube's previous and next buttons; the card restarts a Short when it ends. Below the video are the title, the interest, the channel (a link to the Short on YouTube) and Go deeper.

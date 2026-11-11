@@ -1,7 +1,5 @@
 # proof
 
-**Owner:** Abdu. See `TEAM.md`.
-
 The public evidence page at `/proof/[id]`: what the person wrote, the verified quotes, the live follow-up, the score, integrity signals and sources. Anyone with the link can read it, with no account.
 
 - `snapshot.ts`: builds the frozen document from server data. A skill only counts if its attempt holds up: same owner, same map and node, a passed follow-up, a passing score, and quotes that are in the text.

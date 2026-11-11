@@ -8,9 +8,9 @@ import { LogIn } from "lucide-react";
 import { Button, buttonClasses } from "./Button";
 
 /**
- * The account line in the shell, in Seal's style. Sign-in is the auth feature's (Mirza's):
+ * The account line in the shell, in Seal's style. Sign-in is the auth feature's:
  * shared code can't import a feature, so this asks its public GET /api/auth/session, the same
- * call his AccountStatusLoader makes, and the shape is repeated here.
+ * call AccountStatusLoader makes, and the shape is repeated here.
  */
 type Account = { available: boolean; signedIn: boolean; displayName: string | null };
 

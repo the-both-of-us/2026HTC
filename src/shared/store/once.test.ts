@@ -11,7 +11,6 @@ import {
   type OncePartial,
 } from "./once";
 
-delete process.env.S3_BUCKET;
 delete process.env.BLOB_READ_WRITE_TOKEN;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

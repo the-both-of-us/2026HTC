@@ -29,7 +29,6 @@ import {
 } from "./catch";
 import {
   createFinal,
-  FINAL_PASS_MARK,
   finalKey,
   finalPlan,
   finalView,
@@ -48,6 +47,7 @@ import { gradeFollowUp } from "./followUp";
 import { assignFormats, MAX_KID_GRADE, readingGrade, type TopicFormat } from "./formats";
 import { computeScore, gradeExplanation } from "./grading";
 import { countWords } from "./learnerText";
+import { isUuid } from "@/shared/ids";
 
 export const MIN_EXPLANATION_WORDS = 15;
 export const MAX_EXPLANATION_CHARACTERS = 6_000;
@@ -60,7 +60,6 @@ const ABANDONED_CLAIM_MS = 2 * 60 * 1000;
 /** The model's reason for a fail is never shown: it often states the answer, which could be pasted back. */
 const NOT_PASSED_FEEDBACK = "That answer did not show it.";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A problem we can explain to the user. The message is safe to show them. */
 export class AttemptError extends HttpError {
@@ -299,20 +298,6 @@ export async function getPassedUnitTests(mapId: string): Promise<Record<string, 
   );
 }
 
-/**
- * Deepening a quick course into a degree one: the course final the learner already passed
- * becomes the test for unit `unitId` (the survey unit its topics now form). The course final is
- * then free to be the degree final later. Returns false, changing nothing, when there is no passed
- * course final or that unit already has a test record.
- */
-export async function adoptFinalAsUnitTest(mapId: string, unitId: string): Promise<boolean> {
-  const record = await getFinalRecord(mapId);
-  if (!record?.result?.passed || (await getFinalRecord(mapId, unitId))) return false;
-  await saveFinalRecord({ ...record, unitId, passMark: record.passMark ?? FINAL_PASS_MARK });
-  await deleteDoc(finalKey(mapId));
-  return true;
-}
-
 /** For the evidence page: the final interview's result, only when it was passed. */
 export async function getPassedFinal(mapId: string): Promise<FinalRecord["result"] | null> {
   const record = await getFinalRecord(mapId);
@@ -434,7 +419,7 @@ async function settleFinal(mapId: string, unitId?: string): Promise<void> {
 
 /** Returns the attempt, or null. The id comes from a URL, so it must look like one of ours. */
 export async function getAttempt(id: string): Promise<Attempt | null> {
-  if (!UUID_PATTERN.test(id)) return null;
+  if (!isUuid(id)) return null;
   return getDoc<Attempt>(`attempts/${id}`);
 }
 

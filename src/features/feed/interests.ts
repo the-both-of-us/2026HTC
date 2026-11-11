@@ -12,6 +12,7 @@ import {
   slugify,
   type Interest,
 } from "./suggestions";
+import { isUuid } from "@/shared/ids";
 
 /**
  * The viewer's interests at feed-interests/<userId>. A typed interest is checked once (rules,
@@ -20,7 +21,6 @@ import {
 type SavedInterests = { interests: Interest[]; updatedAt: string };
 type TopicVerdict = { ok: boolean; name: string; checkedAt: string };
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CHECK_TIMEOUT_MS = 8_000;
 const NOT_A_TOPIC = 'That doesn\'t look like a topic to learn about. Try something like "Volcanoes" or "Jazz history".';
 
@@ -28,13 +28,13 @@ const interestsKey = (userId: string) => `feed-interests/${userId}`;
 const verdictKey = (slug: string) => `feed-topic/${slug}`;
 
 export async function getInterests(userId: string | null): Promise<Interest[]> {
-  if (!userId || !UUID_PATTERN.test(userId)) return [];
+  if (!userId || !isUuid(userId)) return [];
   const saved = await getDoc<SavedInterests>(interestsKey(userId));
   return saved?.interests ?? [];
 }
 
 export async function deleteInterests(userId: string): Promise<void> {
-  if (UUID_PATTERN.test(userId)) await deleteDoc(interestsKey(userId));
+  if (isUuid(userId)) await deleteDoc(interestsKey(userId));
 }
 
 /** A known interest by slug: a suggestion, or a typed one that passed its check. */
@@ -83,7 +83,7 @@ export async function checkInterest(raw: string): Promise<Interest> {
 
 /** Saves the viewer's interests. Each must be a suggestion or a typed interest that passed its check. */
 export async function saveInterests(userId: string, slugs: string[]): Promise<Interest[]> {
-  if (!UUID_PATTERN.test(userId)) throw new HttpError("Please refresh the page and try again.", 400);
+  if (!isUuid(userId)) throw new HttpError("Please refresh the page and try again.", 400);
   const unique = [...new Set(slugs)].slice(0, MAX_INTERESTS);
   const interests = (await Promise.all(unique.map(knownInterest))).filter((interest): interest is Interest => interest !== null);
   if (interests.length < MIN_INTERESTS) throw new HttpError(`Pick at least ${MIN_INTERESTS} interests.`, 400);

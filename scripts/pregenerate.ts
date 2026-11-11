@@ -141,7 +141,7 @@ async function catalogProgramId(options: Options): Promise<string> {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const store = process.env.S3_BUCKET ? "S3" : process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "memory";
+  const store = process.env.BLOB_READ_WRITE_TOKEN ? "Vercel Blob" : "memory";
   if (store !== "memory" && !options.live) {
     console.error(`The store is ${store}. Pass --live to write it, or unset its variables to try this on the memory store.`);
     process.exit(1);

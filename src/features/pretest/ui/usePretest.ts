@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PretestAnswersRequest, PretestView } from "../types";
 import { dismissPretest, getPretest, startPretest, stopPretest, submitPretestAnswers, type PretestResult } from "./api";
-import { usePoll } from "./poll";
+import { usePoll } from "@/shared/ui";
 
 /** How often to ask again while a unit's questions are being written. */
 export const PRETEST_POLL_MS = 1_500;

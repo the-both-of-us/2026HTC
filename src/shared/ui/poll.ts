@@ -3,8 +3,7 @@
 import { useEffect, useRef } from "react";
 
 /*
- * One serial polling loop, copied into programs/ui, skill-map/ui and lessons/ui (a feature may
- * not import another feature's internals). Rules:
+ * One serial polling loop, shared by the features that poll. Rules:
  * - one request at a time: the next tick starts only after the last one settled and the interval passed;
  * - nothing runs while the page is hidden; the loop picks up again when it is visible;
  * - it stops when `tick` returns false or the signal aborts.

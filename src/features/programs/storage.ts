@@ -2,8 +2,8 @@ import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/share
 import { readCatalogProgram, type CatalogProgramRead } from "@/features/catalog";
 import type { Program, ProgramCourse, ProgramPlanning, ProgramListing } from "./types";
 import { DEGREE_FRAME } from "@/shared/types";
+import { isUuid } from "@/shared/ids";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Who is building a course's map, and under which id. Claimed once, so two clicks make one map. */
 export type CourseClaim = { mapId: string; claimedAt: string };
@@ -62,7 +62,7 @@ export async function saveProgram(program: Program): Promise<void> {
 
 /** The program as stored, with no catalog merge. Null for a missing one or an id that is not ours. */
 export async function getStoredProgram(id: string): Promise<Program | null> {
-  if (!UUID_PATTERN.test(id)) return null;
+  if (!isUuid(id)) return null;
   return getDoc<Program>(programKey(id));
 }
 
@@ -171,7 +171,7 @@ export async function listProgramsByOwner(ownerId: string): Promise<Program[]> {
   await ensureOwnerIndex();
 
   const prefix = ownerIndexPrefix(ownerId);
-  const ids = (await listKeys(prefix)).map((key) => key.slice(prefix.length)).filter((id) => UUID_PATTERN.test(id));
+  const ids = (await listKeys(prefix)).map((key) => key.slice(prefix.length)).filter((id) => isUuid(id));
   const programs = await Promise.all(
     ids.map(async (id) => {
       const program = await getDoc<Program>(programKey(id));
@@ -206,7 +206,7 @@ function isListing(value: unknown): value is ProgramListing {
   const listing = value as Partial<ProgramListing> | null;
   return (
     typeof listing?.programId === "string" &&
-    UUID_PATTERN.test(listing.programId) &&
+    isUuid(listing.programId) &&
     typeof listing.title === "string" &&
     typeof listing.summary === "string" &&
     typeof listing.authorId === "string" &&
@@ -218,18 +218,18 @@ function isListing(value: unknown): value is ProgramListing {
 
 /** The program's public listing, or null while it is private. */
 export async function getListing(programId: string): Promise<ProgramListing | null> {
-  if (!UUID_PATTERN.test(programId)) return null;
+  if (!isUuid(programId)) return null;
   const listing = await getDoc<unknown>(listingKey(programId));
   return isListing(listing) ? listing : null;
 }
 
 export async function saveListing(listing: ProgramListing): Promise<void> {
-  if (!UUID_PATTERN.test(listing.programId)) throw new Error("A program listing needs a program id");
+  if (!isUuid(listing.programId)) throw new Error("A program listing needs a program id");
   await putDoc(listingKey(listing.programId), listing);
 }
 
 export async function deleteListing(programId: string): Promise<void> {
-  if (!UUID_PATTERN.test(programId)) return;
+  if (!isUuid(programId)) return;
   await deleteDoc(listingKey(programId));
 }
 
@@ -242,13 +242,13 @@ export async function listListings(): Promise<ProgramListing[]> {
 export type ProgramStart = { copyId: string; startedAt: string };
 
 export async function getStart(programId: string, userId: string): Promise<ProgramStart | null> {
-  if (!UUID_PATTERN.test(programId) || !UUID_PATTERN.test(userId)) return null;
+  if (!isUuid(programId) || !isUuid(userId)) return null;
   const doc = await getDoc<ProgramStart>(startKey(programId, userId));
-  return typeof doc?.copyId === "string" && UUID_PATTERN.test(doc.copyId) ? doc : null;
+  return typeof doc?.copyId === "string" && isUuid(doc.copyId) ? doc : null;
 }
 
 export async function saveStart(programId: string, userId: string, start: ProgramStart): Promise<void> {
-  if (!UUID_PATTERN.test(programId) || !UUID_PATTERN.test(userId)) throw new Error("A program start needs ids");
+  if (!isUuid(programId) || !isUuid(userId)) throw new Error("A program start needs ids");
   await putDoc(startKey(programId, userId), start);
 }
 
@@ -272,7 +272,7 @@ export async function deleteProgramsByOwner(ownerId: string): Promise<number> {
     await deleteDoc(ownerIndexKey(ownerId, program.id));
   }
 
-  if (UUID_PATTERN.test(ownerId)) {
+  if (isUuid(ownerId)) {
     const prefix = "program-starts/";
     const mine = (await listKeys(prefix)).filter((key) => {
       const [programId, userId, ...rest] = key.slice(prefix.length).split("/");
