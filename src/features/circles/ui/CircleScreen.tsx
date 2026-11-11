@@ -167,7 +167,7 @@ function LoadedCircle({
         id: `proof-${item.id}`,
         kind: "proof",
         fingerprint: item.nodeId,
-        text: item.isYou ? `You just proved ${item.nodeTitle}` : `${item.name} just proved ${item.nodeTitle}`,
+        text: `${item.isYou ? "You" : item.name} just ${item.pretest ? "passed a pre-test question on" : "proved"} ${item.nodeTitle}`,
       });
     }
     // Off, then on: a second proof of the same skill pulses again.

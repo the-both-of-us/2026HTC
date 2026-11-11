@@ -1,55 +1,77 @@
-import { after } from "next/server";
-import { getSkillMap } from "@/features/skill-map";
-import { isNodeLockedFor } from "@/features/teachback";
-import { getOrCreateLesson } from "./lessons";
+import { contentIdOf, getSkillMap, inBackground, routeDeadline } from "@/features/skill-map";
+import type { SkillMap } from "@/shared/types";
+import { ensureLessonOnMap, lessonStarted } from "./lessons";
+
+/*
+ * Pre-generation of lessons. Lessons are canonical (one per catalog course and topic), so a
+ * lesson written ahead for one learner is ready for every learner of the course. Each step skips
+ * a lesson that is saved or being written, and starts only when the deadline leaves room for it.
+ */
+
+/** Rule 4: when a lesson is served, at most this many unwritten lessons of the same unit are started. */
+export const LESSONS_AHEAD = 2;
 
 /**
  * Starts writing the lesson for a new map's first open topic once the response has been sent,
- * so the Read tab is ready when the learner opens it (a new lesson takes about 17 s). Call it
- * from a route handler right after a map is built. It costs one model call at most, through
- * the usual chain (gpt-oss-120b, or Sonnet when the router says so), and none when the lesson is already saved or is a sample.
- * If the learner opens the tab while it is still being written, they wait on the same call.
+ * so the Read tab is ready when the learner opens it. Call it from a route handler right after a
+ * posting or PDF map is built (a catalog course map starts with no nodes; its unit 1 lessons are
+ * written ahead when its syllabus finishes). One model call at most, none when it is saved or a sample.
  */
 export function writeFirstLessonSoon(mapId: string): void {
-  after(() => writeFirstLesson(mapId));
+  const deadline = routeDeadline();
+  inBackground("first lesson", () => writeFirstLesson(mapId, deadline));
 }
 
 /** The work behind writeFirstLessonSoon. Never throws: this is only a head start. */
-export async function writeFirstLesson(mapId: string): Promise<void> {
+export async function writeFirstLesson(mapId: string, deadline: number = routeDeadline()): Promise<void> {
   try {
     const map = await getSkillMap(mapId);
     // On a new map nothing is proven, so the open topics are the ones with no prerequisites.
-    // The map page suggests the first of them, in the map's order.
     const node = map?.nodes.find((candidate) => candidate.prerequisites.length === 0);
     if (!map || !node) return;
-    await getOrCreateLesson(map.id, node.id, map.ownerId);
+    await ensureLessonOnMap(map, node, deadline);
   } catch (error) {
     console.warn(`[lessons] first lesson not written ahead: ${error instanceof Error ? error.message : "unknown error"}`);
   }
 }
 
 /**
- * When a learner opens one lesson, starts writing the next one they can open (the first skill
- * after it, in the map's order, that is not locked for them), so clicking on is instant. At most
- * one model call, and none when that lesson is already saved. Runs after the response is sent.
+ * Rule 4 (replaces "write the next lesson"): when a learner is served one lesson, starts up to
+ * LESSONS_AHEAD unwritten lessons of the same unit, after it in the map's order, in parallel,
+ * after the response. A map with no units (a posting or PDF map) counts as one unit.
  */
-export function writeNextLessonSoon(mapId: string, nodeId: string, viewerId: string): void {
-  after(() => writeNextLesson(mapId, nodeId, viewerId));
+export function writeUnitLessonsSoon(mapId: string, nodeId: string): void {
+  const deadline = routeDeadline();
+  inBackground("unit lessons ahead", () => writeUnitLessons(mapId, nodeId, deadline));
 }
 
-/** The work behind writeNextLessonSoon. Never throws: this is only a head start. */
-export async function writeNextLesson(mapId: string, nodeId: string, viewerId: string): Promise<void> {
+/** The work behind writeUnitLessonsSoon. Never throws: this is only a head start. */
+export async function writeUnitLessons(mapId: string, nodeId: string, deadline: number = routeDeadline()): Promise<void> {
   try {
     const map = await getSkillMap(mapId);
-    const index = map?.nodes.findIndex((candidate) => candidate.id === nodeId) ?? -1;
-    if (!map || index < 0) return;
-    for (const next of map.nodes.slice(index + 1)) {
-      if (await isNodeLockedFor(map, viewerId, next.id)) continue;
-      // The same access check and in-flight sharing as a real open.
-      await getOrCreateLesson(map.id, next.id, viewerId);
-      return;
-    }
+    if (!map) return;
+    const next = await nextUnwritten(map, nodeId);
+    await Promise.all(
+      next.map((node) =>
+        ensureLessonOnMap(map, node, deadline).catch((error: unknown) => {
+          console.warn(`[lessons] a lesson was not written ahead: ${error instanceof Error ? error.message : "unknown error"}`);
+        }),
+      ),
+    );
   } catch (error) {
-    console.warn(`[lessons] next lesson not written ahead: ${error instanceof Error ? error.message : "unknown error"}`);
+    console.warn(`[lessons] unit lessons not written ahead: ${error instanceof Error ? error.message : "unknown error"}`);
   }
+}
+
+async function nextUnwritten(map: SkillMap, nodeId: string) {
+  const index = map.nodes.findIndex((candidate) => candidate.id === nodeId);
+  if (index < 0) return [];
+  const unitId = map.nodes[index].unitId;
+  const after = map.nodes.slice(index + 1).filter((node) => node.unitId === unitId);
+  const picked = [];
+  for (const node of after) {
+    if (picked.length >= LESSONS_AHEAD) break;
+    if (!(await lessonStarted(contentIdOf(map), node.id, map.audience))) picked.push(node);
+  }
+  return picked;
 }

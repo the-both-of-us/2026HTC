@@ -6,7 +6,8 @@ import { unlockNode } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import type { QuizQuestion } from "./types";
-import { GENERATION_DEADLINE_MS, getOrCreateQuiz, getSavedQuiz, REQUEST_TIMEOUT_MS } from "./quiz";
+import { fakeRunning } from "@/shared/store/onceFake";
+import { GENERATION_DEADLINE_MS, getOrCreateQuiz, getSavedQuiz, QUIZ_TOTAL_MS } from "./quiz";
 import { QuizError, seededRandom } from "./validate";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
@@ -14,6 +15,7 @@ vi.mock("@/features/ai", async (importOriginal) => ({
   chatJSON: vi.fn(),
 }));
 const mockChatJSON = vi.mocked(chatJSON);
+vi.mock("@/shared/store/once", async () => await import("@/shared/store/onceFake"));
 
 // The real store, with reads recorded, to prove a refused request never reads the quiz.
 vi.mock("@/shared/store", async (importOriginal) => {
@@ -155,18 +157,21 @@ describe("getOrCreateQuiz", () => {
 });
 
 describe("getOrCreateQuiz time limits", () => {
-  it("keeps the whole model call inside the route's 60 second limit", async () => {
+  it("keeps the whole model call inside the route's 60 second limit, on the write profile", async () => {
     mockChatJSON.mockResolvedValueOnce(modelReply());
     await getOrCreateQuiz(mapId, "first", OWNER, { random: seededRandom(1) });
-    expect(mockChatJSON.mock.calls[0][0].timeoutMs).toBe(REQUEST_TIMEOUT_MS);
-    expect(REQUEST_TIMEOUT_MS).toBeLessThanOrEqual(15_000);
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ profile: "write", maxTokens: 8_000, totalMs: QUIZ_TOTAL_MS });
+    expect("tier" in mockChatJSON.mock.calls[0][0]).toBe(false);
+    expect(QUIZ_TOTAL_MS).toBeLessThanOrEqual(45_000);
     expect(GENERATION_DEADLINE_MS).toBeLessThan(60_000);
   });
 
   it("gives up with a 503 sentence when the model runs past the deadline, and saves nothing", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    let giveUp: (error: Error) => void = () => {};
     try {
-      mockChatJSON.mockReturnValueOnce(new Promise(() => {}));
+      // The AI layer itself ends the call at its total timeout, which releases the claim.
+      mockChatJSON.mockReturnValueOnce(new Promise((_, reject) => (giveUp = reject)));
 
       const attempt = getOrCreateQuiz(mapId, "first", OWNER);
       const outcome = expect(attempt).rejects.toMatchObject({ status: 503 });
@@ -177,11 +182,59 @@ describe("getOrCreateQuiz time limits", () => {
     } finally {
       vi.useRealTimers();
     }
+    giveUp(new AiUnavailableError());
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     // The in-flight entry is cleared, so the next click tries again.
     mockChatJSON.mockResolvedValueOnce(modelReply());
     await expect(getOrCreateQuiz(mapId, "first", OWNER)).resolves.toHaveLength(5);
     expect(mockChatJSON).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("a quiz shared by a catalog course", () => {
+  async function courseMap(courseId: string, ownerId: string): Promise<string> {
+    const id = randomUUID();
+    await putDoc(`maps/${id}`, {
+      id,
+      ownerId,
+      courseId,
+      title: "Course",
+      subtitle: "",
+      sourceKind: "topic",
+      sourceText: "Course",
+      nodes: [makeNode("first")],
+      createdAt: new Date().toISOString(),
+    } satisfies SkillMap);
+    return id;
+  }
+
+  it("is written once for two maps of one course, keyed by the course id, each learner seeing their own map id", async () => {
+    const courseId = randomUUID();
+    const mine = await courseMap(courseId, OWNER);
+    const theirs = await courseMap(courseId, STRANGER);
+    mockChatJSON.mockResolvedValue(modelReply());
+
+    const [a, b] = await Promise.all([getOrCreateQuiz(mine, "first", OWNER), getOrCreateQuiz(theirs, "first", STRANGER)]);
+    const c = await getOrCreateQuiz(theirs, "first", STRANGER);
+
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+    expect(a.every((item) => item.mapId === mine)).toBe(true);
+    expect(b.every((item) => item.mapId === theirs)).toBe(true);
+    expect(c.map((item) => item.id)).toEqual(a.map((item) => item.id));
+    expect(await getDoc(`quiz/${courseId}/first`)).not.toBeNull();
+    expect(await getDoc(`quiz/${mine}/first`)).toBeNull();
+  });
+
+  it("waits for another writer instead of writing it again", async () => {
+    const courseId = randomUUID();
+    const mine = await courseMap(courseId, OWNER);
+    const stop = fakeRunning(`quiz/${courseId}/first`);
+    const waiting = getOrCreateQuiz(mine, "first", OWNER);
+    const written = { items: [{ id: "q1", mapId: courseId, nodeId: "first", prompt: "P?", options: ["a", "b"], answerIndex: 0, explanation: "E", citation: null }], createdAt: "x" };
+    setTimeout(() => void putDoc(`quiz/${courseId}/first`, written).then(stop), 20);
+    expect((await waiting).map((item) => item.mapId)).toEqual([mine]);
+    expect(mockChatJSON).not.toHaveBeenCalled();
   });
 });
 

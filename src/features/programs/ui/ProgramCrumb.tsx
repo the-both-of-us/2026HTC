@@ -2,16 +2,27 @@
 
 import { ArrowLeft, Unlock } from "lucide-react";
 import Link from "next/link";
-import type { ProgramLink } from "@/shared/types";
-import { proofsToUnlock } from "../unlock";
+import type { ProgramDepth, ProgramLink } from "@/shared/types";
+import { degreeProofsToUnlock, proofsToUnlock } from "../unlock";
 
 /**
  * "Course 2 of 6 · Backend developer", linking back to the program, plus how close
  * the learner is to opening the next course. Shown in a course map's header.
  */
-export function ProgramCrumb({ program, proven, total }: { program: ProgramLink; proven: number; total: number }) {
+export function ProgramCrumb({
+  program,
+  proven,
+  total,
+  depth,
+}: {
+  program: ProgramLink;
+  proven: number;
+  total: number;
+  /** A degree course opens the next at a quarter of its planned topics, not half. */
+  depth?: ProgramDepth;
+}) {
   const next = program.unlocks[0];
-  const needed = proofsToUnlock(total) - proven;
+  const needed = (depth === "degree" ? degreeProofsToUnlock(total) : proofsToUnlock(total)) - proven;
 
   return (
     <p className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">

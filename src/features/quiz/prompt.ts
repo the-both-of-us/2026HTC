@@ -1,4 +1,5 @@
-import type { SkillNode } from "@/shared/types";
+import { skillBlock } from "@/features/skill-map";
+import type { SkillMap, SkillNode, SourceKind } from "@/shared/types";
 import { MAX_EXPLANATION_LENGTH, MAX_OPTION_LENGTH, MAX_PROMPT_LENGTH, QUESTIONS_WANTED } from "./validate";
 
 export const QUIZ_SYSTEM_PROMPT = `You write short multiple-choice quizzes that help a learner check their understanding of one skill before they explain it in their own words.
@@ -24,18 +25,59 @@ EXPLANATION
 - Under ${MAX_EXPLANATION_LENGTH - 100} characters: why the correct answer is right, and why the most tempting wrong option is wrong.
 - Do not refer to options by position, such as "option A" or "the first one", since the order will change.`;
 
+const POSTING_ORIGIN = "They came from a job posting someone pasted.";
+const POSTING_RULE = "Never ask about the employer or the posting itself.";
+
+/**
+ * The system prompt for a map. Only a map built from a job posting is told it came from one:
+ * a course on a topic or a PDF must not be called a job. For a posting (or no kind) it is
+ * QUIZ_SYSTEM_PROMPT, byte for byte.
+ */
+export function quizSystemPrompt(sourceKind?: SourceKind): string {
+  if (sourceKind === undefined || sourceKind === "posting") return QUIZ_SYSTEM_PROMPT;
+  if (!QUIZ_SYSTEM_PROMPT.includes(POSTING_ORIGIN) || !QUIZ_SYSTEM_PROMPT.includes(POSTING_RULE)) {
+    throw new Error("Quiz prompt posting wording moved.");
+  }
+  const origin = sourceKind === "pdf" ? "They came from a document someone uploaded." : "They describe one topic of a course a learner chose to study.";
+  const rule = sourceKind === "pdf" ? "Never ask about the document itself or who wrote it." : "Never ask about the course itself or how it was made.";
+  return QUIZ_SYSTEM_PROMPT.replace(POSTING_ORIGIN, origin).replace(POSTING_RULE, rule);
+}
+
 /** Removes any copy of the delimiters, so the data cannot close them early. */
 function stripTags(text: string): string {
   return text.replace(/<\/?skill>/gi, "").trim();
 }
 
-/** Puts the skill inside delimiters. Everything in it came from a user-supplied posting. */
-export function buildQuizPrompt(mapTitle: string, node: SkillNode): string {
+/** What the quiz prompt needs of the map. A plain title string is a legacy posting map with no syllabus. */
+export type QuizMapInfo = Pick<SkillMap, "title"> & Partial<Pick<SkillMap, "sourceKind" | "syllabus">>;
+
+/**
+ * Syllabus lines for a node, or none. A node built before syllabi has none of the fields, so it
+ * never reaches `skillBlock` and the prompt stays byte for byte what it was.
+ */
+function syllabusLines(map: Pick<SkillMap, "syllabus">, node: SkillNode): string[] {
+  const hasSyllabus =
+    node.unitId !== undefined ||
+    node.objectives !== undefined ||
+    node.keyTerms !== undefined ||
+    node.inScope !== undefined ||
+    node.outOfScope !== undefined;
+  return hasSyllabus ? skillBlock(map, node, stripTags) : [];
+}
+
+/**
+ * Puts the skill inside delimiters. Everything in it came from a user-supplied posting, topic or
+ * document. Pass the map (not just its title) so a topic or PDF course says "Course" instead of
+ * "Role" and the syllabus lines are included.
+ */
+export function buildQuizPrompt(map: string | QuizMapInfo, node: SkillNode): string {
+  const info: QuizMapInfo = typeof map === "string" ? { title: map } : map;
   const checkpoints = node.checkpoints.map((checkpoint, index) => `${index + 1}. ${stripTags(checkpoint)}`);
   const data = [
-    `Role: ${stripTags(mapTitle)}`,
+    `${info.sourceKind === undefined || info.sourceKind === "posting" ? "Role" : "Course"}: ${stripTags(info.title)}`,
     `Skill: ${stripTags(node.title)}`,
     `Why it matters: ${stripTags(node.why)}`,
+    ...syllabusLines(info, node),
     "Checkpoints:",
     ...checkpoints,
   ].join("\n");

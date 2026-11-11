@@ -2,6 +2,6 @@
 export { parseBody, parseQuery, quizErrorResponse, quizRequestBody } from "./http";
 export type { QuizRequest } from "./http";
 export { getOrCreateQuiz, getSavedQuiz } from "./quiz";
-export { QuizError } from "./validate";
+export { QUESTIONS_WANTED, QuizError } from "./validate";
 export { QuizScreen } from "./ui/QuizScreen";
 export { deleteForMaps } from "./deleteData";

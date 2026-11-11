@@ -1,9 +1,14 @@
 import { z } from "zod";
-import { chatJSON, type Tier } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
 import { normalizeForMatch, quoteAppearsIn } from "@/shared/quote";
-import type { CheckpointResult, Grade, SkillNode } from "@/shared/types";
+import type { CheckpointResult, Grade, SkillMap, SkillNode } from "@/shared/types";
 import { CHECKER_NOTE, forAudience, GRADER_NOTE } from "./audience";
 import { countWords, LEARNER_TEXT_RULE, wrapLearnerText } from "./learnerText";
+import { syllabusSuffix } from "./skillLines";
+
+/** Every answer check is a short call a learner waits on: the check profile, 2k tokens and 15 s (design2 section A). */
+export const CHECK_MAX_TOKENS = 2_000;
+export const CHECK_TOTAL_MS = 15_000;
 
 export const GRADER_SYSTEM = `You check a learner's explanation of a skill against a fixed list of checkpoints. You do not give a score.
 
@@ -40,15 +45,23 @@ const NOT_AN_ERROR = /^(none|nothing|n\/?a|no (factual )?errors?)\.?$/;
 /**
  * Asks the model for quotes and errors. The code below decides what they are worth.
  * `audience` is the map's: plain childlike wording then counts, but the facts must still be right.
+ * `map` is the map the node is on: a node built from a syllabus then shows the grader its
+ * objectives, key terms and scope. Left out, or for an older node, the prompt is as it always was.
  */
-export async function gradeExplanation(node: SkillNode, explanation: string, audience = "", tier?: Tier): Promise<Grade> {
+export async function gradeExplanation(
+  node: SkillNode,
+  explanation: string,
+  audience = "",
+  map?: Pick<SkillMap, "syllabus">,
+): Promise<Grade> {
   const reply = await chatJSON({
+    profile: "check",
     label: "teachback-grade",
     system: forAudience(GRADER_SYSTEM, audience, GRADER_NOTE),
-    prompt: `Skill: ${node.title}\n\nCheckpoints:\n${numberedList(node.checkpoints)}\n\n${wrapLearnerText(explanation)}`,
+    prompt: `Skill: ${node.title}${syllabusSuffix(map, node)}\n\nCheckpoints:\n${numberedList(node.checkpoints)}\n\n${wrapLearnerText(explanation)}`,
     schema: graderReplySchema,
-    timeoutMs: 25_000,
-    tier,
+    maxTokens: CHECK_MAX_TOKENS,
+    totalMs: CHECK_TOTAL_MS,
   });
 
   let rejectedQuotes = 0;
@@ -63,7 +76,7 @@ export async function gradeExplanation(node: SkillNode, explanation: string, aud
     return { checkpoint, quote, met: true };
   });
 
-  const misconceptions = await confirmErrors(node, explanation, cleanErrors(reply.factualErrors), audience, tier);
+  const misconceptions = await confirmErrors(node, explanation, cleanErrors(reply.factualErrors), audience);
   const met = checkpoints.filter((result) => result.met).length;
 
   return {
@@ -111,17 +124,17 @@ async function confirmErrors(
   explanation: string,
   errors: string[],
   audience: string,
-  tier?: Tier,
 ): Promise<string[]> {
   if (errors.length === 0) return errors;
   try {
     const reply = await chatJSON({
+      profile: "check",
       label: "teachback-check-errors",
       system: forAudience(CHECKER_SYSTEM, audience, CHECKER_NOTE),
       prompt: `Skill: ${node.title}\n\nFlagged statements:\n${numberedList(errors)}\n\n${wrapLearnerText(explanation)}`,
       schema: checkerReplySchema,
-      timeoutMs: 15_000,
-      tier,
+      maxTokens: CHECK_MAX_TOKENS,
+      totalMs: CHECK_TOTAL_MS,
     });
     return errors.filter((_, index) => reply.confirmed.includes(index + 1));
   } catch {

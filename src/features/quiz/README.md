@@ -56,13 +56,17 @@ When a button press removes the focused control (making a quiz, an error, trying
 
 ## Storage
 
-- `quiz/<mapId>/<nodeId>`: `{items: QuizQuestion[], createdAt}`.
+- `quiz/<contentId>/<nodeId>`: `{items: QuizQuestion[], createdAt}`.
 
 ## Files
 
 - `quiz.ts`: `getSavedQuiz`, `getOrCreateQuiz`.
 - `validate.ts`: the reply schema, checks and shuffle. `prompt.ts`: the prompts. `http.ts`: request parsing and error responses (tested in `http.test.ts`).
 - `ui/quizState.ts`: progress, scoring, key handling and where focus goes, as plain functions. `ui/api.ts`: fetch helpers.
+
+## Source wording and the syllabus
+
+`quizSystemPrompt(sourceKind)` returns `QUIZ_SYSTEM_PROMPT` byte for byte for a job posting. A topic or PDF course must not be called a job, so those say "a course a learner chose to study" or "a document someone uploaded" and drop the employer rule. `buildQuizPrompt(map, node)` takes the map (a bare title string still works and means a posting): a topic or PDF course reads `Course:` where a posting reads `Role:`, and a node built from a syllabus gets its objectives, key terms and scope lines from `skillBlock` (`@/features/skill-map`) inside the `<skill>` block. A node with none of those fields gives the old prompt (`prompt.test.ts` pins the hashes).
 
 ## Tests
 
@@ -74,4 +78,6 @@ When a button press removes the focused control (making a quiz, an error, trying
 
 ## Model
 
-Generation uses the usual route order: gpt-oss-120b, or Claude Sonnet when the model router says so. Gemini was removed on Nov 9.
+Generation uses the write profile of `@/features/ai` (Claude Haiku, 8k tokens, at most 45 s, inside a 50 s deadline).
+
+**Shared per course.** Items are stored under `contentIdOf(map)` (the catalog course id for a catalog map, the map id for a posting or PDF map) and generated once under `startOnce`. A request that loses the claim waits up to 40 s for the other writer (`waitForOnce`) and gets a 503 sentence if nothing arrives. Stored items carry the content id; every reply sets `mapId` to the learner's own map.

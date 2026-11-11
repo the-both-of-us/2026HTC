@@ -5,13 +5,15 @@ import { publishCourse } from "@/features/courses";
 import { unlockNode } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
-import { GENERATION_DEADLINE_MS, getOrCreateFlashcards, getSavedFlashcards, REQUEST_TIMEOUT_MS } from "./flashcards";
+import { AiUnavailableError } from "@/features/ai";
+import { DECK_TOTAL_MS, GENERATION_DEADLINE_MS, getOrCreateFlashcards, getSavedFlashcards } from "./flashcards";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
   chatJSON: vi.fn(),
 }));
 const mockChatJSON = vi.mocked(chatJSON);
+vi.mock("@/shared/store/once", async () => await import("@/shared/store/onceFake"));
 
 // The real store, with reads recorded, to prove a refused request never reads the cards.
 vi.mock("@/shared/store", async (importOriginal) => {
@@ -76,7 +78,7 @@ describe("getOrCreateFlashcards", () => {
 
     expect(cards).toHaveLength(6);
     expect(mockChatJSON).toHaveBeenCalledOnce();
-    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ label: "flashcards", maxTokens: 2000 });
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ label: "flashcards", maxTokens: 8_000 });
     expect(await getDoc(`flashcards/${mapId}/sql-joins`)).toMatchObject({ items: cards, createdAt: expect.any(String) });
   });
 
@@ -120,20 +122,25 @@ describe("getOrCreateFlashcards", () => {
   it("keeps the whole model call inside the route's 60 second limit", async () => {
     expect(mockChatJSON).not.toHaveBeenCalled();
     await getOrCreateFlashcards(mapId, "sql-joins", OWNER);
-    expect(mockChatJSON.mock.calls[0][0].timeoutMs).toBe(REQUEST_TIMEOUT_MS);
-    expect(REQUEST_TIMEOUT_MS).toBeLessThanOrEqual(15_000);
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ profile: "write", maxTokens: 8_000, totalMs: DECK_TOTAL_MS });
+    expect("tier" in mockChatJSON.mock.calls[0][0]).toBe(false);
     expect(GENERATION_DEADLINE_MS).toBeLessThan(60_000);
   });
 
   it("gives up with a 503 sentence when the model runs past the deadline, and saves nothing", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    mockChatJSON.mockReturnValueOnce(new Promise(() => {}));
+    let giveUp: (error: Error) => void = () => {};
+    // The AI layer itself ends the call at its total timeout, which releases the claim.
+    mockChatJSON.mockReturnValueOnce(new Promise((_, reject) => (giveUp = reject)));
 
     const attempt = getOrCreateFlashcards(mapId, "sql-joins", OWNER);
     const outcome = expect(attempt).rejects.toMatchObject({ name: "FlashcardsError", status: 503 });
     await vi.advanceTimersByTimeAsync(GENERATION_DEADLINE_MS);
     await outcome;
+    vi.useRealTimers();
     expect(await getDoc(`flashcards/${mapId}/sql-joins`)).toBeNull();
+    giveUp(new AiUnavailableError());
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     // The in-flight entry is cleared, so the next click tries again.
     await expect(getOrCreateFlashcards(mapId, "sql-joins", OWNER)).resolves.toHaveLength(6);

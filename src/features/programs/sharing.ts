@@ -14,6 +14,7 @@ import {
   requireUnpublisher,
   viewerAccess,
 } from "@/features/courses";
+import { getFinalSyllabus } from "@/features/catalog";
 import { copySkillMap, getSkillMap, saveSkillMap, SkillMapError } from "@/features/skill-map";
 import { HttpError } from "@/shared/http";
 import { getProgramView, PROGRAM_NOT_FOUND, programLink } from "./programs";
@@ -114,6 +115,19 @@ async function builtMaps(program: Program) {
 }
 
 /**
+ * Topic titles per course for the public outline: a catalog course's final syllabus (the same for
+ * everyone), else the author's built map, else null.
+ */
+async function outlineTopics(program: Program): Promise<(string[] | null)[]> {
+  if (program.catalogId) {
+    const syllabi = await Promise.all(program.courses.map((course) => (course.courseId ? getFinalSyllabus(course.courseId) : null)));
+    return syllabi.map((syllabus) => (syllabus ? syllabus.units.flatMap((unit) => unit.topics.map((topic) => topic.title)) : null));
+  }
+  const maps = await builtMaps(program);
+  return maps.map((map) => (map ? learningOrder(map.nodes).map((node) => node.title) : null));
+}
+
+/**
  * What /program/[id] shows this viewer. The owner sees their program as always, with the
  * share panel. Anyone else sees a public program's outline, or null (the same as missing)
  * while it is private.
@@ -143,13 +157,16 @@ export async function getProgramPage(programId: string, viewerId: string | null)
 
   const listing = await getListing(program.id);
   if (!listing) return null;
-  const [maps, myCopyId] = await Promise.all([builtMaps(program), findMyCopy(program.id, viewerId)]);
+  const [topics, myCopyId] = await Promise.all([outlineTopics(program), findMyCopy(program.id, viewerId)]);
   const courses: PublicCourseOutline[] = program.courses.map((course, index) => ({
     slug: course.slug,
     number: index + 1,
     title: course.title,
     summary: course.summary,
-    topics: maps[index] ? learningOrder(maps[index].nodes).map((node) => node.title) : null,
+    topics: topics[index],
+    ...(course.year !== undefined && { year: course.year }),
+    ...(course.term !== undefined && { term: course.term }),
+    ...(course.level !== undefined && { level: course.level }),
   }));
   return {
     mode: "public",
@@ -161,6 +178,7 @@ export async function getProgramPage(programId: string, viewerId: string | null)
       authorName: listing.authorName,
       courses,
       myCopyId,
+      ...(program.depth && { depth: program.depth }),
     },
   };
 }
@@ -180,9 +198,9 @@ const globalStarts = globalThis as typeof globalThis & {
 const inFlight = (globalStarts.oryxProgramStarts ??= new Map());
 
 /**
- * "Start this program": a private copy for the learner with the same plan. Each course the
- * author already built is copied (copySkillMap), so the learner gets the same topics; the
- * rest are built when they press Start course, as for any program. Starting again opens the
+ * "Start this program": a private copy for the learner with the same plan. A catalog program's
+ * copy follows the same catalog program and copies no maps (its content is shared anyway). An
+ * older program's built courses are copied (copySkillMap); the rest are built when started. Starting again opens the
  * same copy while it exists. The owner gets their own program back. A private program is
  * the same 404 as a missing one. Concurrent starts by one learner share one run.
  */
@@ -209,11 +227,42 @@ async function runStart(programId: string, userId: string): Promise<StartProgram
   if (existing) return { programId: existing, created: false };
 
   const copyId = randomUUID();
+  if (program.catalogId) {
+    // A catalog program's content is shared: the copy points at the same catalog program and
+    // copies no maps. Each course is opened (and shares the canonical syllabus) when started.
+    const copy: Program = {
+      id: copyId,
+      ownerId: userId,
+      title: program.title,
+      summary: program.summary,
+      sourceKind: program.sourceKind,
+      sourceText: program.title,
+      courses: [],
+      createdAt: new Date().toISOString(),
+      forkedFrom: program.id,
+      catalogId: program.catalogId,
+      ...(program.audience !== undefined && { audience: program.audience }),
+      ...(program.depth !== undefined && { depth: program.depth }),
+    };
+    await saveProgram(copy);
+    await saveStart(program.id, userId, { copyId, startedAt: copy.createdAt });
+    return { programId: copyId, created: true };
+  }
   const maps = await builtMaps(program);
   const courses: ProgramCourse[] = await Promise.all(
-    program.courses.map(async ({ slug, title, summary, requires }, index) => {
+    program.courses.map(async ({ slug, title, summary, requires, year, term, level, area }, index) => {
       // The author's map id is never carried over: the copy points only at the learner's maps.
-      const course: ProgramCourse = { slug, title, summary, requires: [...requires] };
+      const course: ProgramCourse = {
+        slug,
+        title,
+        summary,
+        requires: [...requires],
+        // Degree placement, only when set, so a quick program's copy looks exactly like it.
+        ...(year !== undefined && { year }),
+        ...(term !== undefined && { term }),
+        ...(level !== undefined && { level }),
+        ...(area !== undefined && { area }),
+      };
       const map = maps[index];
       if (!map) return course;
       try {
@@ -242,6 +291,7 @@ async function runStart(programId: string, userId: string): Promise<StartProgram
     // Only when set, so a copy looks exactly like the program it came from.
     ...(program.sampleId && { sampleId: program.sampleId }),
     ...(program.audience !== undefined && { audience: program.audience }),
+    ...(program.depth !== undefined && { depth: program.depth }),
   };
   await saveProgram(copy);
   await saveStart(program.id, userId, { copyId, startedAt: copy.createdAt });

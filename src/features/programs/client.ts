@@ -3,3 +3,5 @@ export { ProgramCrumb } from "./ui/ProgramCrumb";
 export { ProgramScreen } from "./ui/ProgramScreen";
 export { PublicProgramScreen } from "./ui/PublicProgramScreen";
 export { PublicPrograms } from "./ui/PublicPrograms";
+export { ComparePanel, ComparisonBody, NotEquivalentBox } from "./ui/ComparePanel";
+export { SyllabusDocument, SyllabusScreen } from "./ui/SyllabusScreen";

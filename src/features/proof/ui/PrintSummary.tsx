@@ -60,6 +60,13 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
         </tbody>
       </table>
 
+      {snapshot.knownByPretest && snapshot.knownByPretest.length > 0 && (
+        <p className="mt-2 text-[9pt]">
+          <span className="font-semibold">{snapshot.knownByPretest[0].label} (no explanation):</span>{" "}
+          {snapshot.knownByPretest.map((topic) => topic.title).join("; ")}.
+        </p>
+      )}
+
       {snapshot.grid && (
         <p className="mt-2 text-[9pt]">
           <span className="font-semibold">Worked on AESO&apos;s live grid figures, checked by code:</span>{" "}

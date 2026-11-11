@@ -1,10 +1,14 @@
 import { z } from "zod";
 import { chatJSON } from "@/features/ai";
+import { contentIdOf } from "@/features/skill-map";
+import { HttpError } from "@/shared/http";
 import { getDoc, putDoc } from "@/shared/store";
+import { startOnce, waitForOnce } from "@/shared/store/once";
 import type { CatchRecord, SkillMap, SkillNode } from "@/shared/types";
 import { audienceKey } from "@/shared/audience";
 import { CATCH_WRITER_NOTE, forAudience } from "./audience";
 import { numberedList } from "./grading";
+import { syllabusSuffix } from "./skillLines";
 
 /**
  * "Catch the mistake": the AI explains a topic with one or two planted mistakes, and the
@@ -58,32 +62,46 @@ function writerSchema(wanted: number, checkpoints: number) {
     });
 }
 
+/** A request that finds someone else writing the round waits this long for it. */
+export const CATCH_WAIT_MS = 40_000;
+
+/** The store key of a topic's round: one per catalog course (or posting map) and audience. */
+export function catchKey(map: Pick<SkillMap, "id" | "courseId" | "audience">, nodeId: string): string {
+  // A round for an audience is kept apart, so an adult round written earlier is never shown to a child.
+  return `catch/${contentIdOf(map)}/${nodeId}${map.audience ? `/${audienceKey(map.audience)}` : ""}`;
+}
+
 /**
- * Loads this topic's round, or writes one with the AI and keeps it. It is written once per
- * topic and shared by every copy of a course, so a started sample course never waits on the AI.
+ * Loads this topic's round, or writes one with the AI and keeps it. It is written once per topic
+ * of a course (under `startOnce`) and shared by every learner of it, so a started course never
+ * waits on the AI twice. A request that finds another writer waits for its round (up to 40 s).
  */
 export async function loadCatchChallenge(map: SkillMap, node: SkillNode): Promise<CatchChallenge> {
-  // A round for an audience is kept apart, so an adult round written earlier is never shown to a child.
-  const key = `catch/${map.forkedFrom ?? map.id}/${node.id}${map.audience ? `/${audienceKey(map.audience)}` : ""}`;
+  const key = catchKey(map, node.id);
   const saved = await getDoc<CatchChallenge>(key);
   if (saved) return saved;
 
-  const wanted = mistakesFor(node);
-  const reply = await chatJSON({
-    label: "teachback-catch-write",
-    system: forAudience(WRITER_SYSTEM, map.audience, CATCH_WRITER_NOTE),
-    prompt: `Topic: ${node.title}\n\nFacts:\n${numberedList(node.checkpoints)}\n\nPlant ${wanted} mistake${wanted === 1 ? "" : "s"}.`,
-    schema: writerSchema(wanted, node.checkpoints.length),
-    timeoutMs: 20_000,
+  const started = await startOnce<CatchChallenge>(key, async () => {
+    const wanted = mistakesFor(node);
+    const reply = await chatJSON({
+      profile: "write",
+      label: "teachback-catch-write",
+      system: forAudience(WRITER_SYSTEM, map.audience, CATCH_WRITER_NOTE),
+      prompt: `Topic: ${node.title}${syllabusSuffix(map, node)}\n\nFacts:\n${numberedList(node.checkpoints)}\n\nPlant ${wanted} mistake${wanted === 1 ? "" : "s"}.`,
+      schema: writerSchema(wanted, node.checkpoints.length),
+      maxTokens: 6_000,
+      totalMs: 40_000,
+    });
+    return {
+      sentences: reply.sentences,
+      mistakes: reply.mistakes.map((mistake) => ({ sentence: mistake.sentence, checkpoint: mistake.fact - 1, why: mistake.why })),
+      createdAt: new Date().toISOString(),
+    };
   });
-
-  const challenge: CatchChallenge = {
-    sentences: reply.sentences,
-    mistakes: reply.mistakes.map((mistake) => ({ sentence: mistake.sentence, checkpoint: mistake.fact - 1, why: mistake.why })),
-    createdAt: new Date().toISOString(),
-  };
-  await putDoc(key, challenge);
-  return challenge;
+  if (typeof started === "object") return started.work;
+  const value = (await getDoc<CatchChallenge>(key)) ?? (await waitForOnce<CatchChallenge>(key, { timeoutMs: CATCH_WAIT_MS }));
+  if (!value) throw new HttpError("Writing this round took too long this time. Please try again in a moment.", 503);
+  return value;
 }
 
 export function toCatchView(challenge: CatchChallenge): CatchView {

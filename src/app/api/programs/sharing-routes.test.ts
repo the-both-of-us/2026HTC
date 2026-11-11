@@ -4,9 +4,8 @@
  */
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createProgramOrMap } from "@/features/programs";
 import { getUserId } from "@/shared/identity";
-import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
+import { putDoc } from "@/shared/store";
 import { DELETE as unshareRoute, POST as shareRoute } from "./[id]/share/route";
 import { POST as startRoute } from "./[id]/start/route";
 import { GET as listRoute } from "./public/route";
@@ -17,7 +16,7 @@ vi.mock("@/features/ai", async (importOriginal) => ({
 }));
 vi.mock("@/shared/identity", () => ({ getUserId: vi.fn(), readUserId: vi.fn() }));
 
-const SAMPLE = SAMPLE_POSTINGS.find((sample) => sample.id === "junior-backend")!.text;
+const SOURCE = "I want to learn backend development for my own app";
 const OWNER = randomUUID();
 const LEARNER = randomUUID();
 const asUser = (id: string) => vi.mocked(getUserId).mockResolvedValue(id);
@@ -26,7 +25,7 @@ const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 /** Reads the body and checks it holds nothing private. */
 async function body(response: Response): Promise<unknown> {
   const text = await response.text();
-  for (const secret of [OWNER, LEARNER, "authorId", "ownerId", "sourceText", SAMPLE.slice(0, 40)]) {
+  for (const secret of [OWNER, LEARNER, "authorId", "ownerId", "sourceText", SOURCE]) {
     expect(text).not.toContain(secret);
   }
   return JSON.parse(text);
@@ -45,8 +44,21 @@ beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   vi.stubEnv("S3_BUCKET", "");
   (globalThis as { pfMemoryStore?: Map<string, string> }).pfMemoryStore?.clear();
-  const created = await createProgramOrMap({ text: SAMPLE, kind: "posting", shape: "program", ownerId: OWNER });
-  programId = (created as { programId: string }).programId;
+  programId = randomUUID();
+  // A program as the store holds it; the programs feature reads it like any other.
+  await putDoc(`programs/${programId}`, {
+    id: programId,
+    ownerId: OWNER,
+    title: "Backend development",
+    summary: "From an HTTP API to a deployed service.",
+    sourceKind: "topic",
+    sourceText: SOURCE,
+    courses: [
+      { slug: "http-apis", title: "HTTP APIs", summary: "Build an API.", requires: [] },
+      { slug: "databases", title: "Databases", summary: "Store data.", requires: ["http-apis"] },
+    ],
+    createdAt: new Date().toISOString(),
+  });
 });
 
 describe("program sharing routes", () => {

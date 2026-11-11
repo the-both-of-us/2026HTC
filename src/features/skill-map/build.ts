@@ -1,22 +1,20 @@
 import { randomUUID } from "node:crypto";
-import { chatJSON, type Tier } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
 import { HttpError } from "@/shared/http";
 import type { SkillMap, SourceKind } from "@/shared/types";
 import {
-  buildCoursePrompt,
   buildMapPrompt,
   buildPdfPrompt,
-  buildTopicPrompt,
-  courseSystemPrompt,
-  type CourseContext,
   MAP_SYSTEM_PROMPT,
   pdfSystemPrompt,
   rawMapSchema,
   rawPdfMapSchema,
-  rawTopicMapSchema,
-  topicSystemPrompt,
+  buildUnitPrompt,
+  rawUnitSchema,
+  unitSystemPrompt,
   type RawSkillMap,
-  type RawTopicNode,
+  type RawUnitMap,
+  type UnitPromptInput,
 } from "./prompt";
 import { cleanText, validateNodes } from "./validate";
 
@@ -68,29 +66,33 @@ export function checkTopicText(text: string): string {
   return topic;
 }
 
+/** A posting or PDF map: the plan profile, 32k tokens and 100 s (design2 section A). */
+const MAP_MAX_TOKENS = 32_000;
+const MAP_TOTAL_MS = 100_000;
+
 /** One real model call. It can take a while, since it writes the whole map in one go. */
-export async function askModelForMap(posting: string, tier?: Tier): Promise<RawSkillMap> {
+export async function askModelForMap(posting: string): Promise<RawSkillMap> {
   return chatJSON({
+    profile: "plan",
     label: "skill-map",
     system: MAP_SYSTEM_PROMPT,
     prompt: buildMapPrompt(posting),
     schema: rawMapSchema,
-    maxTokens: 12_000,
-    timeoutMs: 55_000,
-    tier,
+    maxTokens: MAP_MAX_TOKENS,
+    totalMs: MAP_TOTAL_MS,
   });
 }
 
 /** The same call for a PDF. Each node names the page its quote is on. An audience pitches it at that level. */
-export async function askModelForPdfMap(pages: string[], audience = "", tier?: Tier): Promise<RawSkillMap> {
+export async function askModelForPdfMap(pages: string[], audience = ""): Promise<RawSkillMap> {
   const reply = await chatJSON({
+    profile: "plan",
     label: "skill-map-pdf",
     system: pdfSystemPrompt(audience),
     prompt: buildPdfPrompt(pages),
     schema: rawPdfMapSchema,
-    maxTokens: 12_000,
-    timeoutMs: 55_000,
-    tier,
+    maxTokens: MAP_MAX_TOKENS,
+    totalMs: MAP_TOTAL_MS,
   });
   return {
     isJobPosting: reply.hasSkills,
@@ -102,44 +104,26 @@ export async function askModelForPdfMap(pages: string[], audience = "", tier?: T
   };
 }
 
-/** The same call for a topic. Nothing can be quoted, so no node counts as from the source. */
-export async function askModelForTopicMap(topic: string, audience = "", tier?: Tier): Promise<RawSkillMap> {
-  const reply = await chatJSON({
-    label: "skill-map-topic",
-    system: topicSystemPrompt(audience),
-    prompt: buildTopicPrompt(topic),
-    schema: rawTopicMapSchema,
-    maxTokens: 12_000,
-    timeoutMs: 55_000,
-    tier,
-  });
-  return topicReplyToRaw(reply);
-}
+/** A unit call: the plan profile, 16k tokens, and at most 60 s for the whole call (repair separate). */
+const UNIT_MAX_TOKENS = 16_000;
+export const UNIT_TOTAL_MS = 60_000;
 
-/** One course of a program. Like a topic, nothing can be quoted. */
-export async function askModelForCourseMap(course: CourseContext, tier?: Tier): Promise<RawSkillMap> {
-  const reply = await chatJSON({
-    label: "skill-map-course",
-    system: courseSystemPrompt(course.audience),
-    prompt: buildCoursePrompt(course),
-    schema: rawTopicMapSchema,
-    maxTokens: 10_000,
-    timeoutMs: 55_000,
-    tier,
+/**
+ * One unit of a syllabus course. The topics are fixed, so the reply is only each node's why,
+ * links and checkpoints. With `missing` set it is the repair call, asking for those topics only.
+ * `totalMs` is what is left of the caller's deadline, at most UNIT_TOTAL_MS.
+ */
+export async function askModelForUnit(input: UnitPromptInput, totalMs: number = UNIT_TOTAL_MS): Promise<RawUnitMap> {
+  const repair = Boolean(input.missing?.length);
+  return chatJSON({
+    profile: "plan",
+    label: repair ? "skill-map-unit-repair" : "skill-map-unit",
+    system: unitSystemPrompt(input.audience),
+    prompt: buildUnitPrompt(input),
+    schema: rawUnitSchema,
+    maxTokens: UNIT_MAX_TOKENS,
+    totalMs: Math.max(1_000, Math.min(UNIT_TOTAL_MS, totalMs)),
   });
-  return topicReplyToRaw(reply);
-}
-
-/** A topic or course reply has no quotes, so every node is a foundation with no citation. */
-export function topicReplyToRaw(reply: {
-  isTopic: boolean;
-  title: string;
-  nodes: RawTopicNode[];
-  difficulty?: number | null;
-  stakes?: number | null;
-}): RawSkillMap {
-  const nodes = reply.nodes.map((node) => ({ ...node, fromSource: false, quote: null }));
-  return { isJobPosting: reply.isTopic, title: reply.title, subtitle: "", nodes, difficulty: reply.difficulty, stakes: reply.stakes };
 }
 
 /** What to tell the user when the model says the input is not something to learn from. */

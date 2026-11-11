@@ -32,6 +32,17 @@ export async function fetchMapWithProgress(
   return { kind: "found", map, ...progress };
 }
 
+/**
+ * Just the map, for polling while a catalog course is being built. Returns null when the map is
+ * gone, and throws on a network or server failure.
+ */
+export async function fetchMapOnly(mapId: string, signal: AbortSignal): Promise<PublicSkillMap | null> {
+  const response = await fetch(mapUrl(mapId), { signal, cache: "no-store" });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`Map request failed: ${response.status}`);
+  return (await response.json()) as PublicSkillMap;
+}
+
 /** Which nodes are proven: node id to the attempt that proved it. */
 export async function fetchProven(mapId: string): Promise<Record<string, string>> {
   return (await fetchProgress(mapId)).proven;

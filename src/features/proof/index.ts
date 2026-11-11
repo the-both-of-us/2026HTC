@@ -11,5 +11,5 @@ export {
 } from "./publish";
 export { isProofGone, loadProofPage, type ProofPageData } from "./page";
 export { toPublicSnapshot } from "./redact";
-export type { LiveProof, OwnerProofView, ProofCheckResult, ProofRecord, ProofSnapshot } from "./types";
+export type { LiveProof, OwnerProofView, ProofCheckResult, ProofKnownByPretest, ProofRecord, ProofSnapshot } from "./types";
 export { ProofNotFound, ProofScreen } from "./ui/ProofScreen";

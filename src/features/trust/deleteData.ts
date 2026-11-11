@@ -4,6 +4,7 @@ import { deleteFeedData } from "@/features/feed";
 import { deleteGridSolves } from "@/features/grid";
 import { deleteLessonsForMaps } from "@/features/lessons";
 import { deleteUserData as deleteNetworkProfile } from "@/features/network";
+import { deletePretestData } from "@/features/pretest";
 import { deleteProgramsByOwner } from "@/features/programs";
 import { deleteProofsByOwner } from "@/features/proof";
 import { deleteReelVotes } from "@/features/reels";
@@ -27,6 +28,8 @@ export type DeletedCounts = {
   networkProfiles: number;
   /** Spaced-repetition state and the review day log. */
   reviewRecords: number;
+  /** Course pre-test records (the passes themselves are counted in provenSkills). */
+  pretests: number;
 };
 
 export const NOTHING_DELETED: DeletedCounts = {
@@ -39,6 +42,7 @@ export const NOTHING_DELETED: DeletedCounts = {
   circles: 0,
   networkProfiles: 0,
   reviewRecords: 0,
+  pretests: 0,
 };
 
 /**
@@ -60,6 +64,8 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
   await Promise.all(listed.map((map) => unpublishCourse(map.id, userId)));
 
   const learner = await deleteLearnerData(userId);
+  // Pre-test records; the canonical question sets hold no learner data and stay.
+  const { pretests } = await deletePretestData(userId);
   const gridAnswers = await deleteGridSolves(userId);
   const { reviewRecords } = await deleteReviewData(userId);
   await deleteStreak(userId);
@@ -82,5 +88,6 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
     circles: memberships,
     networkProfiles: profiles,
     reviewRecords,
+    pretests,
   };
 }

@@ -60,6 +60,7 @@ describe("GET /api/maps/[id]/progress", () => {
       proven: { "secret-first-node": "attempt-1" },
       unlocked: {},
       states: { "secret-first-node": "proven", "secret-second-node": "available" },
+      knownByPretest: [],
     });
   });
 

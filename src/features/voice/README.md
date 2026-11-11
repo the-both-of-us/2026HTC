@@ -37,7 +37,7 @@ A token is only minted for someone with something to say right now: an existing 
 - **End of turn.** `eot_threshold=0.7` and `eot_timeout_ms=3000` (`flux.ts`). Thresholds up to 0.9 still ended the turn 0.7 to 1.5 s into a 2 to 2.6 s pause after a whole clause, so raising it only made every answer slower. The 2.5 s hold in `session.ts` covers pauses instead.
 - **Deepgram Flux TTS (voice).** The interviewer speaks with `flux-hannah-en` on `POST /v2/speak`, the same account and key as the ears. The owner picked Hannah from eight voices on 2026-11-07; measured first audio was 0.33–0.52 s. Set `DEEPGRAM_VOICE` to change it.
 - **ElevenLabs (optional backup voice).** It's the difference between a person and text-to-speech. `eleven_v4_turbo` is tried first, because it's their real-time model.
-- **Cerebras (brain).** Unchanged. The same follow-up generation writes the words, so the voice can't wander or give away answers.
+- **Claude Haiku (brain).** Unchanged. The same follow-up generation writes the words, so the voice can't wander or give away answers.
 - **Gemini (backup voice).** Optional. Used only if ElevenLabs fails and `GEMINI_API_KEY` is set.
 
 ## What each message means

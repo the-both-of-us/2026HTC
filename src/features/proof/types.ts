@@ -61,6 +61,13 @@ export type ProofSkill = {
   readingGrade?: number;
 };
 
+/**
+ * A topic the person answered correctly in the course's optional pre-test. It is not a teach-back:
+ * there is no explanation, transcript, score or integrity signal behind it, and the page shows it
+ * only with `label` ("Known: passed a pre-test question").
+ */
+export type ProofKnownByPretest = { nodeId: string; title: string; label: string; passedAt: string };
+
 /** A passed final interview: three questions mixing the course's topics, two needed to pass. */
 export type ProofFinalInterview = { passedCount: number; spokenCount: number; finishedAt: string };
 
@@ -92,6 +99,11 @@ export type ProofSnapshot = {
   sourceKind: SourceKind;
   totalSkills: number;
   skills: ProofSkill[];
+  /**
+   * Topics known from a pre-test pass, kept apart from `skills` (which are explanations). Left out
+   * when there are none, so records published before pre-tests existed keep their fingerprint.
+   */
+  knownByPretest?: ProofKnownByPretest[];
   notYetProven: string[];
   /**
    * Only on an energy map whose owner solved a grid question. Left out otherwise, rather than

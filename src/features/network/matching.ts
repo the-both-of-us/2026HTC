@@ -71,7 +71,11 @@ export function dedupeProven(skills: ProvenSkill[]): ProvenSkill[] {
     if (!key) continue;
     const existing = byKey.get(key);
     // Replacing a value keeps its place, so the order is the order titles were first seen in.
-    if (!existing || (!existing.evidenceUrl && skill.evidenceUrl)) byKey.set(key, skill);
+    // A teach-back proof wins over a pre-test pass, then a copy with an evidence page.
+    const better = !existing
+      || (existing.pretest && !skill.pretest)
+      || (Boolean(existing.pretest) === Boolean(skill.pretest) && !existing.evidenceUrl && skill.evidenceUrl);
+    if (better) byKey.set(key, skill);
   }
   return [...byKey.values()];
 }
@@ -100,11 +104,24 @@ function shortList(items: string[]): string {
   return `${items.slice(0, 3).join(", ")} and ${items.length - 3} more`;
 }
 
-/** Why someone matches, as sentences. */
-export function matchReasons(mentorFor: string[], sharedLearning: string[], sharedProven: string[]): string[] {
+/**
+ * Why someone matches, as sentences. `pretestOnly` holds the titles of `mentorFor` they know only
+ * from a pre-test pass: those are said as such, never as "Proved".
+ */
+export function matchReasons(
+  mentorFor: string[],
+  sharedLearning: string[],
+  sharedProven: string[],
+  pretestOnly: string[] = [],
+): string[] {
   const reasons: string[] = [];
-  if (mentorFor.length > 0) {
-    reasons.push(`Proved ${shortList(mentorFor)}, which you're learning.`);
+  const proved = mentorFor.filter((title) => !pretestOnly.includes(title));
+  const known = mentorFor.filter((title) => pretestOnly.includes(title));
+  if (proved.length > 0) {
+    reasons.push(`Proved ${shortList(proved)}, which you're learning.`);
+  }
+  if (known.length > 0) {
+    reasons.push(`Passed a pre-test question on ${shortList(known)}, which you're learning.`);
   }
   if (sharedLearning.length > 0) reasons.push(`Also learning ${shortList(sharedLearning)}.`);
   if (sharedProven.length > 0) reasons.push(`Also proved ${shortList(sharedProven)}, like you.`);
@@ -128,7 +145,12 @@ export function matchProfile(viewer: SkillSet, other: SkillSet, profile: PublicP
     mentorFor,
     sharedLearning,
     sharedProven,
-    reasons: matchReasons(mentorFor, sharedLearning, sharedProven),
+    reasons: matchReasons(
+      mentorFor,
+      sharedLearning,
+      sharedProven,
+      other.proven.filter((skill) => skill.pretest).map((skill) => skill.title),
+    ),
   };
 }
 

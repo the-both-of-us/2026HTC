@@ -12,11 +12,11 @@ A switch beside For you and Saved picks **Both** (the default), **Videos** or **
 
 ## Interests
 
-A viewer with none gets the picker (`ui/InterestPicker.tsx`): 24 suggestions (`suggestions.ts`) plus a box to type your own. Pick at least 3 (at most 12), then "Start scrolling"; "Edit interests" brings it back. A typed interest is checked by rules (2 to 60 characters, letters, no links, a short blocklist), then one quick Cerebras call (`POST /api/feed/interests/check`), whose verdict is kept for everyone at `feed-topic/<slug>`. `PUT /api/feed/interests` saves the slugs at `feed-interests/<userId>`; only suggestions and checked interests are accepted.
+A viewer with none gets the picker (`ui/InterestPicker.tsx`): 24 suggestions (`suggestions.ts`) plus a box to type your own. Pick at least 3 (at most 12), then "Start scrolling"; "Edit interests" brings it back. A typed interest is checked by rules (2 to 60 characters, letters, no links, a short blocklist), then one quick check call (Claude Haiku) (`POST /api/feed/interests/check`), whose verdict is kept for everyone at `feed-topic/<slug>`. `PUT /api/feed/interests` saves the slugs at `feed-interests/<userId>`; only suggestions and checked interests are accepted.
 
 ## The pools (the database)
 
-- Cards: `feed-pool/<slug>`, shared by everyone with that interest. A batch is about 8 cards from one `chatJSON` call (label `feed-pool`, Cerebras first). Each card has a title, a body and a `subtopic`. The prompt forbids invented statistics, quotes, people and links; `validate.ts` drops bad lengths, links and titles already in the pool.
+- Cards: `feed-pool/<slug>`, shared by everyone with that interest. A batch is about 8 cards from one `chatJSON` call (label `feed-pool`, write profile). Each card has a title, a body and a `subtopic`. The prompt forbids invented statistics, quotes, people and links; `validate.ts` drops bad lengths, links and titles already in the pool.
 - Shorts: `feed-shorts/<slug>`. One YouTube search (100 of 10,000 daily units; `safeSearch=strict`, embeddable, short, and a title filter against pranks, memes and the like) keeps up to 5. Topped up only when the pool is 3 days old, or a day old with fewer than 2 that still show.
 - Suggested interests start from `fixtures/pools.json` (written by `npm run cache-feed`, paced for the free tiers), so the demo needs no AI call or search.
 
@@ -43,7 +43,7 @@ A viewer with none gets the picker (`ui/InterestPicker.tsx`): 24 suggestions (`s
 
 Public, plain text, newest first, at most 50 read (`comments.ts`, `GET|POST|DELETE /api/feed/comments`). One key per comment, `feed-comments/<itemId>/<ms>-<hex>`, so posts never race; `feed-comment-by/<userId>/...` indexes the author's own. The name is the signed-in display name, else "Guest" plus 4 hex from a hash of the viewer id; the user id never leaves the server.
 
-Before saving: the rules in `commentRules.ts` (280 characters, no links, emails, phone numbers or "add me on", a blocklist), then 5 a minute per viewer (`claimDoc` slots), then one Cerebras check with a 4 s timeout. If the check fails, the rules alone decide. Each refusal is a specific sentence. Viewers delete their own comments; a comment is an engagement event (weighted like a share). The counts are real only.
+Before saving: the rules in `commentRules.ts` (280 characters, no links, emails, phone numbers or "add me on", a blocklist), then 5 a minute per viewer (`claimDoc` slots), then one Haiku check (check profile) with a 4 s limit. If the check fails, the rules alone decide. Each refusal is a specific sentence. Viewers delete their own comments; a comment is an engagement event (weighted like a share). The counts are real only.
 
 `deleteFeedData(userId)` removes the viewer's interests, likes, saves, comments and events, for "Delete my data".
 

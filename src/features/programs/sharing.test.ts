@@ -1,14 +1,13 @@
 /**
  * Sharing a program: publish, the public view, starting a private copy, and Delete my data.
- * The in-memory store, the sample program's saved plan and first course, and no AI call.
+ * The in-memory store, a program seeded with its first course built, and no AI call.
  */
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { chatJSON } from "@/features/ai";
-import { copySkillMap, getSkillMap } from "@/features/skill-map";
-import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
+import { copySkillMap, getSkillMap, saveSkillMap } from "@/features/skill-map";
 import { getDoc, listKeys } from "@/shared/store";
-import { createProgramOrMap, getProgramView, openCourse } from "./programs";
+import { getProgramView, openCourse, programLink } from "./programs";
 import {
   getProgramPage,
   listPublicPrograms,
@@ -18,7 +17,9 @@ import {
   startProgram,
   unpublishProgram,
 } from "./sharing";
-import { deleteProgramsByOwner, getProgram } from "./storage";
+import { deleteProgramsByOwner, getProgram, saveProgram } from "./storage";
+import { unitNodes } from "./test-fixtures";
+import type { Program } from "./types";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
@@ -36,7 +37,7 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => undefined, set: () => {}, delete: () => {} }),
 }));
 
-const SAMPLE = SAMPLE_POSTINGS.find((sample) => sample.id === "junior-backend")!.text;
+const SOURCE = "I want to learn backend development so I can build the API for my own app";
 const mockCopy = vi.mocked(copySkillMap);
 
 function stubAuth(on: boolean) {
@@ -52,14 +53,37 @@ function stubAuth(on: boolean) {
   for (const [name, value] of Object.entries(values)) vi.stubEnv(name, value);
 }
 
-/** The sample program owned by `owner`, with its first course built from saved output. */
+/** A program owned by `owner`, with its first course built (as an older program's map holds it). */
 async function sampleProgram(owner: string) {
-  const { programId } = (await createProgramOrMap({ text: SAMPLE, kind: "posting", shape: "program", ownerId: owner })) as {
-    programId: string;
+  const createdAt = new Date().toISOString();
+  const firstMapId = randomUUID();
+  const program: Program = {
+    id: randomUUID(),
+    ownerId: owner,
+    title: "Backend development",
+    summary: "From an HTTP API to a deployed service.",
+    sourceKind: "topic",
+    sourceText: SOURCE,
+    courses: [
+      { slug: "http-apis", title: "HTTP APIs", summary: "Build an API.", requires: [], mapId: firstMapId },
+      { slug: "databases", title: "Databases", summary: "Store data.", requires: ["http-apis"] },
+      { slug: "deploying", title: "Deploying", summary: "Ship it.", requires: ["databases"] },
+    ],
+    createdAt,
   };
-  const [first] = (await getProgram(programId))!.courses;
-  const opened = (await openCourse(programId, first.slug, owner)) as { mapId: string };
-  return { programId, firstSlug: first.slug, firstMapId: opened.mapId };
+  await saveProgram(program);
+  await saveSkillMap({
+    id: firstMapId,
+    ownerId: owner,
+    title: "HTTP APIs",
+    subtitle: "",
+    sourceKind: "topic",
+    sourceText: SOURCE,
+    nodes: unitNodes(["routes", "status-codes", "json-bodies"]),
+    createdAt,
+    program: programLink(program, 0),
+  });
+  return { programId: program.id, firstSlug: "http-apis", firstMapId };
 }
 
 beforeEach(() => {
@@ -79,7 +103,7 @@ describe("publishing a program", () => {
     const { programId } = await sampleProgram(owner);
 
     const shared = await publishProgram(programId, owner, "  Ana   K ");
-    expect(shared).toMatchObject({ programId, authorName: "Ana K", isSample: true });
+    expect(shared).toMatchObject({ programId, authorName: "Ana K", isSample: false, courseCount: 3 });
     const [listed] = await listPublicPrograms();
     expect(listed).toEqual(shared);
     expect(JSON.stringify(listed)).not.toContain(owner);
@@ -142,7 +166,7 @@ describe("the public program page", () => {
     const body = JSON.stringify(page);
     expect(body).not.toContain(owner);
     expect(body).not.toContain(firstMapId);
-    expect(body).not.toContain(SAMPLE.slice(0, 40));
+    expect(body).not.toContain(SOURCE);
   });
 
   it("shows the owner their own program with the share panel", async () => {
@@ -173,7 +197,7 @@ describe("startProgram", () => {
 
     const copy = (await getProgram(started.programId))!;
     const original = (await getProgram(programId))!;
-    expect(copy).toMatchObject({ ownerId: learner, title: original.title, forkedFrom: programId, sampleId: original.sampleId });
+    expect(copy).toMatchObject({ ownerId: learner, title: original.title, forkedFrom: programId });
     expect(copy.courses.map((c) => c.slug)).toEqual(original.courses.map((c) => c.slug));
     expect(copy.courses.slice(1).every((c) => c.mapId === undefined)).toBe(true);
 
@@ -236,6 +260,33 @@ describe("startProgram", () => {
     const second = await startProgram(programId, learner);
     expect(second.created).toBe(true);
     expect(second.programId).not.toBe(first.programId);
+  });
+});
+
+describe("a catalog program", () => {
+  it("is copied as a pointer to the same catalog program, with no maps copied and no source text", async () => {
+    const owner = randomUUID();
+    const learner = randomUUID();
+    const catalogId = randomUUID();
+    const program: Program = {
+      id: randomUUID(),
+      ownerId: owner,
+      title: "Psychology",
+      summary: "Understand people.",
+      sourceKind: "topic",
+      sourceText: "my private words about psychology",
+      courses: [],
+      createdAt: new Date().toISOString(),
+      catalogId,
+      depth: "degree",
+    };
+    await saveProgram(program);
+    await publishProgram(program.id, owner);
+    const started = await startProgram(program.id, learner);
+    expect(mockCopy).not.toHaveBeenCalled();
+    const stored = (await getDoc<Program>(`programs/${started.programId}`))!;
+    expect(stored).toMatchObject({ ownerId: learner, catalogId, depth: "degree", forkedFrom: program.id, courses: [] });
+    expect(JSON.stringify(stored)).not.toContain("private words");
   });
 });
 

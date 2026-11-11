@@ -1,68 +1,65 @@
 # ai
 
-Every model call in the app goes through here.
+Every model call in the app goes through here. One provider, one model: **Claude Haiku 5.5** through the official `@anthropic-ai/sdk`. There is no fallback model and no tier, route or per-user model choice.
 
 ```ts
-import { AiUnavailableError, chatJSON, chatText } from "@/features/ai";
+import { chatJSON, chatText, streamLines } from "@/features/ai";
 
 const grade = await chatJSON({
-  label: "grade",                // shows up in the logs
+  profile: "check",              // plan | write | check: how hard the model thinks (below)
+  label: "teachback-grade",      // shows up in the logs
   system: "You are a strict grader.",
   prompt: "...",
   schema: z.object({ score: z.number() }), // top level must be an object
-  maxTokens: 2000,               // optional, default 4000
-  timeoutMs: 15_000,             // optional, default 30000, per request
-  preferredRoute: "groq",        // optional: try this one first, then the normal order
+  maxTokens: 1000,               // optional, can only go DOWN from the profile's
+  totalMs: 10_000,               // optional, can only go DOWN from the profile's
 });
 
-const text = await chatText({ label: "summary", prompt: "..." });
+const text = await chatText({ profile: "write", label: "summary", prompt: "..." });
+
+const { lines, rejected, truncated } = await streamLines({
+  profile: "plan",
+  label: "syllabus",
+  system: "...",                 // the JSON Lines instruction is appended for you
+  prompt: "...",
+  line: z.discriminatedUnion("kind", [headLine, unitLine]),
+  onLine: async (line, index) => { await emit(line); }, // awaited, in order; index = lines[index]
+});
 ```
 
-## Provider chain
+## Profiles (`profiles.ts`)
 
-| Order | Route | Used when | Model |
-|---|---|---|---|
-| 1 | Cerebras | `CEREBRAS_API_KEY` is set | `gpt-oss-120b` |
-| 2 | Groq | `GROQ_API_KEY` is set | `openai/gpt-oss-120b` |
-| 3 | Vercel AI Gateway | an OIDC token exists (always on Vercel) | `openai/gpt-oss-120b` |
-| 4 | Bedrock | `BEDROCK_API_KEY` is set | `openai.gpt-oss-120b-1:0` in `us-west-2`, or `BEDROCK_MODEL` and `BEDROCK_REGION` |
+Callers pick a profile by task, never a model. The model is `ANTHROPIC_MODEL` (default `claude-haiku-5-5`).
 
-- **Any failure** (a timeout, a network error or any error status, including 401) moves on to the next route. One provider's bad key or missing model should not end the demo.
-- **`preferredRoute`** moves one route to the front. Everything else stays the same.
-- **Two models only:** gpt-oss-120b on every route above, plus Claude Sonnet put in front by the model router. Gemini was removed on Nov 9: it went first for lessons and often failed after about 38 s with bad JSON.
-- **Bad JSON** gets one retry on the same route, with the error appended to the prompt. If that fails too, the next route gets a turn.
-- **If every route fails within 15 seconds**, `chatJSON` goes round them once more, because this model returns an empty reply now and then. It doesn't do this after a slow failure, since a provider that hung won't recover while the learner waits. So one `chatJSON` can make up to 20 requests with all five routes set (two per route, twice round), and `timeoutMs` applies to each one.
+| profile | thinking | effort | default `max_tokens` | first text within | whole call |
+|---|---|---|---|---|---|
+| plan | adaptive | high | 32,000 | 70 s | 100 s |
+| write | adaptive | low | 12,000 | 25 s | 60 s |
+| check | disabled | low | 2,000 | 10 s | 15 s |
 
-`chatJSON` adds the schema to the system prompt for you, so a prompt doesn't need to describe the shape. Only Cerebras is asked for `response_format: json_object`.
+Thinking counts against `max_tokens`, so plan needs the room (a syllabus spends about 10k tokens thinking). Callers may lower `maxTokens`, `firstTextMs` and `totalMs` per call, never raise them past the profile. An unset `profile` means `write` while other features migrate (it should become required).
 
-## Tiers and Claude
+Never sent, because Haiku 5.5 rejects them: `temperature`, `top_p`, `top_k`, an assistant prefill, `fallbacks`. Only `text` blocks are read; thinking is never shown or stored.
 
-`tier` (1 to 4, picked by the router in `features/settings`) puts one Claude model in front of the chain above:
+## How a call runs (`call.ts`)
 
-| Tier | Model | Env override | Request |
-|---|---|---|---|
-| 1 or unset | the chain above, unchanged | | |
-| 2 | `claude-haiku-5-5` | `ANTHROPIC_MODEL_HAIKU` | thinking `disabled`, effort `medium` |
-| 3 | `claude-sonnet-5-5` | `ANTHROPIC_MODEL_SONNET` | thinking `between_tools` (off), effort `medium` |
-| 4 | `claude-opus-5-5` | `ANTHROPIC_MODEL_OPUS` | adaptive thinking (can't be off), effort `medium`, max_tokens + 8000 |
+- Every request streams (`client.messages.stream`); the SDK's own retries are off (`maxRetries: 0`).
+- **One fast retry:** a 429, a 5xx/529 or a connection error that came within 10 s, before any text, with at least 2 s of the call left, waits for `retry-after` (at most 5 s) and tries once more. A slow failure, any other status, a timeout or an error after text started is not retried.
+- **Timeouts:** no text within the profile's first-text limit, or the whole call past `totalMs`, fails. Thinking deltas don't count as text.
+- **Refusal** (`stop_reason: "refusal"`) throws `AiRefusedError` ("We can't write this topic here."). Every other failure throws `AiUnavailableError` (safe to show). Provider error text never reaches callers or the logs: the log has the label, profile, time and a reason such as `HTTP 429`.
+- **`chatJSON`:** the schema goes in the system prompt. A reply that is not valid JSON or fails the schema gets one repair request with the error appended, if 5 s or more of the call is left. A reply cut off at `max_tokens` is a failure (it would be cut off again). `chatText` also fails on `max_tokens` or an empty reply.
+- **`streamLines`:** splits text on newlines, skips blank lines and code fences, parses each complete line and checks it against `line`. A bad line goes to `rejected` (never throws); a last line without a newline is handled at the end; `max_tokens` sets `truncated` and keeps the lines so far. A fast retry only happens before the first text, so `onLine` never sees a line twice. An error thrown by `onLine` stops the stream and is rethrown as it is.
+- `onServed({ route: "anthropic", model, ms })` is called once. `modelLabel(model)` gives "Claude Haiku" for people.
 
-- The route calls `https://api.anthropic.com/v1/messages` with `x-api-key: $ANTHROPIC_API_KEY` and `anthropic-version: 2023-06-01`, by `fetch` like the other routes (no SDK, so tests mock `fetch` the same way). No temperature.
-- No key means it is skipped. Any error status, a timeout, `stop_reason: "refusal"` or `"max_tokens"`, or bad JSON twice moves on to the normal chain (then `preferredRoute`, then the usual order), so a Claude problem never loses a call.
-- JSON comes from the same system-prompt instructions and `parseReply` as the other routes.
-- `onServed({ route, model, ms })` is called once with the model that answered and the whole call's time. `modelLabel(model)` gives "Claude Sonnet" or "gpt-oss-120b" for people. Lessons use both for "Written by AI (Claude Sonnet, 14 s)".
+## Tests
 
-## Errors
+`npm test -- ai`. `ai.test.ts` mocks the SDK client (request bodies per profile, refusal, max_tokens, retries, timeouts, `streamLines` edge cases). `sdk.test.ts` runs the **real SDK** over a stubbed `fetch`. `testing.ts` (import `@/features/ai/testing`) has `anthropicStreamResponse(text)`, `anthropicError(status)` and `readAnthropicRequest(init)` for tests, evals and no-cost end-to-end runs that replace `globalThis.fetch` (the client looks fetch up on every request, so a late swap works).
 
-When no route can answer, both functions throw `AiUnavailableError`. Its message is safe to show to a user. Provider error text never reaches callers or the logs: the logs only record the route, the time taken and the reason, such as `HTTP 429`.
-
-```
-[ai] grade: served by cerebras (gpt-oss-120b) in 812ms
-[ai] lesson: anthropic (claude-sonnet-5-5) failed after 50001ms: timeout
-```
+Tests never call the API. Real calls need `ANTHROPIC_API_KEY` in `.env.local`; spend them sparingly.
 
 ## Files
 
-- `routes.ts`: the provider list, plus `claudeRoute(tier)` and `modelLabel`. Add or reorder routes here.
-- `chat.ts`: the fallback loop, the request and JSON validation.
-
-Tests mock `fetch`: `npm test -- ai`. The gateway free tier allows about 5 requests a minute per model, so spend real calls sparingly.
+- `profiles.ts`: `Profile`, `PROFILES`, `modelId()`, `modelLabel()`.
+- `call.ts`: the streaming request, timeouts, the one retry.
+- `chat.ts`: `chatJSON`, `chatText`. `lines.ts`: `streamLines`. `client.ts`: the SDK client. `errors.ts`: the two errors.
+- `testing.ts`: stub responses for tests.

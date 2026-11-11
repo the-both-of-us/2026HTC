@@ -13,12 +13,15 @@ import type { Citation, NodeState, PublicSkillNode, SourceKind } from "@/shared/
 import {
   Badge,
   Button,
+  buttonClasses,
   InlineText,
   NODE_STATE_LABELS,
+  PretestBadge,
   prefersReducedMotion,
   ReadAloudButton,
   StateMark,
 } from "@/shared/ui";
+import type { NextStep } from "../nextStep";
 import { JobAsksTag } from "./SkillNodeView";
 import { StudyTabs } from "./StudyTabs";
 
@@ -32,6 +35,12 @@ type SkillPanelProps = {
   states: Record<string, NodeState>;
   sourceKind: SourceKind;
   notice: ProvenNotice | null;
+  /** The one next step after this skill. Always returns something, so the notice and the Read tab never come up empty. */
+  nextStepFor: (currentNodeId: string, justUnlockedIds: string[]) => NextStep;
+  /** Acts on a step that is not a link: opens the skill, unit, unit test or final. */
+  onNextStep: (step: NextStep) => void;
+  /** Counts each time a skill is selected, even the one already open (a retry for a failed lesson). */
+  selectCount?: number;
   /** Only the map's owner can attempt its skills. */
   isOwner: boolean;
   /** The server checked its voice key works, so voice answers can be offered. */
@@ -42,6 +51,8 @@ type SkillPanelProps = {
   onUnlock: (nodeId: string) => Promise<void>;
   /** Open only because it was unlocked anyway, before what it builds on was proven. */
   unlockedEarly: boolean;
+  /** Topics proved by a pre-test question, not by an explanation. */
+  knownIds?: ReadonlySet<string>;
   onClose: () => void;
   /** The streak and combo just earned, shown with what the proof opened. */
   reward?: ReactNode;
@@ -61,12 +72,16 @@ export function SkillPanel({
   states,
   sourceKind,
   notice,
+  nextStepFor,
+  onNextStep,
+  selectCount = 0,
   isOwner,
   voiceReady,
   onSelect,
   onProven,
   onUnlock,
   unlockedEarly,
+  knownIds,
   onClose,
   reward,
   relight,
@@ -80,6 +95,7 @@ export function SkillPanel({
   // while you move between skills, until you go back to the map.
   const [fullPage, setFullPage] = useState(initialFullPage);
   const state = states[skill.id] ?? "locked";
+  const known = state === "proven" && knownIds?.has(skill.id) === true;
   // A proof can land while another skill is open. The notice then belongs to that other skill.
   const ownNotice = notice?.nodeId === skill.id ? notice : null;
 
@@ -110,7 +126,14 @@ export function SkillPanel({
             <LessonTab
               mapId={mapId}
               skill={skill}
-              onReady={canProve ? goToTeachBack : undefined}
+              reselect={selectCount}
+              onReady={canProve && state !== "proven" ? goToTeachBack : undefined}
+              // A finished lesson on a skill you already proved ends on where to go next.
+              nextStep={
+                state === "proven" ? (
+                  <NextStepView step={nextStepFor(skill.id, [])} onGo={onNextStep} />
+                ) : undefined
+              }
               afterLesson={<SkillShorts mapId={mapId} nodeId={skill.id} />}
             />
           ),
@@ -156,11 +179,7 @@ export function SkillPanel({
           : `${titleOf(ownNotice.nodeId)} is proven.`}
         {allProven && " Every skill on this map is now proven."}
       </p>
-      {ownNotice.unlockedIds.map((id, index) => (
-        <Button key={id} variant={index === 0 ? "primary" : "subtle"} onClick={() => onSelect(id)}>
-          Explain {titleOf(id)}
-        </Button>
-      ))}
+      <NextStepView step={nextStepFor(ownNotice.nodeId, ownNotice.unlockedIds)} onGo={onNextStep} primary />
     </div>
   );
 
@@ -181,7 +200,7 @@ export function SkillPanel({
               <StateMark state={states[id] ?? "locked"} size={15} className="shrink-0" />
               <span className="min-w-0 flex-1">{titleOf(id)}</span>
               <span className="shrink-0 text-sm text-ink-soft">
-                {NODE_STATE_LABELS[states[id] ?? "locked"]}
+                {states[id] === "proven" && knownIds?.has(id) ? "Known (pre-test)" : NODE_STATE_LABELS[states[id] ?? "locked"]}
               </span>
               <ChevronRight aria-hidden="true" size={16} className="shrink-0 text-ink-soft" />
             </button>
@@ -248,7 +267,7 @@ export function SkillPanel({
               </h2>
               {/* Phones in full page keep the reading bar to one line: the badges are for the map view. */}
               <div className={clsx("flex flex-wrap items-center gap-2", fullPage && "max-sm:hidden")}>
-                <Badge tone={state} />
+                {known ? <PretestBadge /> : <Badge tone={state} />}
                 {unlockedEarly && state === "available" && <Badge>Unlocked early</Badge>}
                 <FormatBadge format={format} compact />
                 {skill.fromSource ? (
@@ -365,6 +384,7 @@ export function SkillPanel({
                 mapId={mapId}
                 node={skill}
                 state={state}
+                pretest={known}
                 voiceReady={voiceReady}
                 format={format}
                 onProven={onProven}
@@ -380,6 +400,90 @@ export function SkillPanel({
       </section>
     </>
   );
+}
+
+/** The header button's words for a step. */
+export function nextStepButtonLabel(step: NextStep, nothingProvenYet: boolean): string {
+  switch (step.kind) {
+    case "skill":
+      return nothingProvenYet ? "Start learning" : "Continue";
+    case "unit-test":
+      return "Take the unit test";
+    case "unit":
+      return `Start Unit ${step.unitNumber}`;
+    case "final":
+      return "Final interview";
+    case "program":
+      return step.nextCourseNumber ? "Next course" : "Back to program";
+    case "finished":
+      return "Dashboard";
+    case "waiting":
+      return "Continue";
+  }
+}
+
+/** One sentence and, when there is somewhere to go, one button. Used after a proof and at the end of a lesson. */
+export function NextStepView({ step, onGo, primary = false }: { step: NextStep; onGo: (step: NextStep) => void; primary?: boolean }) {
+  const variant = primary ? "primary" : "subtle";
+  switch (step.kind) {
+    case "skill":
+      return (
+        <Button variant={variant} onClick={() => onGo(step)}>
+          {step.reason === "unlocked" ? "Explain" : "Next skill:"} {step.title}
+        </Button>
+      );
+    case "unit-test":
+      return (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-ink-soft">Every topic in {step.unitTitle} is proven. Its unit test is next.</p>
+          <Button variant={variant} onClick={() => onGo(step)}>
+            Take the unit test
+          </Button>
+        </div>
+      );
+    case "unit":
+      return (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-ink-soft">Unit {step.unitNumber}, {step.unitTitle}, is ready to start.</p>
+          <Button variant={variant} onClick={() => onGo(step)}>
+            Start Unit {step.unitNumber}
+          </Button>
+        </div>
+      );
+    case "final":
+      return (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-ink-soft">Every topic is proven. The final interview is open.</p>
+          <Button variant={variant} onClick={() => onGo(step)}>
+            Start the final interview
+          </Button>
+        </div>
+      );
+    case "program":
+      return (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-ink-soft">
+            {step.nextCourseNumber
+              ? `You finished this course. Course ${step.nextCourseNumber} of ${step.programTitle} is next.`
+              : `You finished the last course of ${step.programTitle}.`}
+          </p>
+          <Link href={step.href} className={buttonClasses(variant)}>
+            {step.nextCourseNumber ? "Go to the next course" : "Back to the program"}
+          </Link>
+        </div>
+      );
+    case "finished":
+      return (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-ink-soft">You finished this course.</p>
+          <Link href={step.href} className={buttonClasses(variant)}>
+            Go to your dashboard
+          </Link>
+        </div>
+      );
+    case "waiting":
+      return <p className="text-ink-soft">{step.message}</p>;
+  }
 }
 
 /** What a locked skill shows instead of its lesson, flashcards and quiz. */

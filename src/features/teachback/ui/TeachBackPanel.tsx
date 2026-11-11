@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { VoiceInterview, type InputMethod, type VoiceVerdict } from "@/features/voice/client";
 import type { Attempt, NodeState, PublicSkillNode } from "@/shared/types";
-import { ErrorNotice, Spinner } from "@/shared/ui";
+import { ErrorNotice, PretestBadge, Spinner } from "@/shared/ui";
 import { fetchAttempt, fetchProvenAttempt, submitExplanation, submitFollowUp } from "./api";
 import { formatLabel, type TopicFormat } from "../formats";
 import { AttemptResult } from "./AttemptResult";
@@ -21,6 +21,11 @@ export type TeachBackPanelProps = {
   mapId: string;
   node: PublicSkillNode;
   state: NodeState;
+  /**
+   * The skill is proved by a pre-test question, not by an explanation. The panel says so and still
+   * offers the teach-back; a pass there replaces the pre-test pass.
+   */
+  pretest?: boolean;
   /** Called once, when this panel's learner proves the skill. */
   onProven: (nodeId: string) => void;
   /** What proving this skill opened. Shown right under the "Proven" verdict. */
@@ -38,7 +43,7 @@ export function TeachBackPanel(props: TeachBackPanelProps) {
   return <Panel key={`${props.mapId}/${props.node.id}`} {...props} />;
 }
 
-function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceReady = false, format = "explain" }: TeachBackPanelProps) {
+function Panel({ mapId, node, state, pretest = false, onProven, nextStep, evidenceAction, voiceReady = false, format = "explain" }: TeachBackPanelProps) {
   // This panel only mounts after a click in the browser, so sessionStorage is safe to read here.
   const [draft] = useState(() => loadDraft(mapId, node.id));
   const young = useYoungLearner();
@@ -54,14 +59,14 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
 
   // Keep what the learner has so far, so clicking another skill or reloading loses nothing.
   useEffect(() => {
-    if (state === "proven") return;
+    if (state === "proven" && !pretest) return;
     saveDraft(mapId, node.id, {
       text,
       openAttempt: attempt?.status === "needs-followup" ? attempt : null,
       integrity: integrity.toSave(),
       swapped,
     });
-  }, [mapId, node.id, state, text, attempt, integrity, swapped]);
+  }, [mapId, node.id, state, pretest, text, attempt, integrity, swapped]);
 
   const resultHeading = useRef<HTMLHeadingElement>(null);
   const followUpArea = useRef<HTMLDivElement>(null);
@@ -210,7 +215,7 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
   }
 
   // A proven skill with no result in memory: this panel was opened after the fact.
-  if (state === "proven" && attempt?.status !== "proven") {
+  if (state === "proven" && attempt?.status !== "proven" && !pretest) {
     return (
       <>
         {liveRegion}
@@ -240,6 +245,7 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
   return (
     <div className="flex flex-col gap-8">
       {liveRegion}
+      {pretest && attempt?.status !== "proven" && <PretestKnownNote title={node.title} />}
       {formatHeader}
 
       {attempt && catchResult && (
@@ -313,6 +319,20 @@ function Panel({ mapId, node, state, onProven, nextStep, evidenceAction, voiceRe
   );
 }
 
+/** A topic proved by a pre-test question: said as that, with no explanation, transcript or score to show. */
+function PretestKnownNote({ title }: { title: string }) {
+  return (
+    <section aria-label="Known from the pre-test" className="flex flex-col items-start gap-2 rounded-sheet border border-dashed border-ink-soft p-4">
+      <PretestBadge />
+      <h3 className="text-lg font-semibold">{title}: known from the pre-test</h3>
+      <p className="text-ink-soft">
+        You passed a pre-test question on this topic, so it counts as done. Nothing more is required, and the lesson, flashcards and
+        quiz stay open. If you explain it below and pass, that replaces the pre-test mark.
+      </p>
+    </section>
+  );
+}
+
 /** Loads and shows the attempt that proved this skill. */
 function ProvenSummary({
   mapId,
@@ -325,6 +345,7 @@ function ProvenSummary({
 }) {
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [failed, setFailed] = useState(false);
+  const [byPretest, setByPretest] = useState(false);
   const [loadCount, setLoadCount] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
 
@@ -333,12 +354,15 @@ function ProvenSummary({
     fetchProvenAttempt(mapId, node.id).then((result) => {
       if (!current) return;
       if (result.ok) setAttempt(result.attempt);
+      else if ("pretest" in result) setByPretest(true);
       else setFailed(true);
     });
     return () => {
       current = false;
     };
   }, [mapId, node.id, loadCount]);
+
+  if (byPretest) return <PretestKnownNote title={node.title} />;
 
   if (attempt?.format === "catch") {
     return <CatchResult attempt={attempt} headingRef={heading} evidenceAction={evidenceAction} />;

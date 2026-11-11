@@ -92,13 +92,13 @@ const AI_REFUSALS: Record<string, string> = {
 async function aiProblem(cardTitle: string, text: string): Promise<string | null> {
   try {
     const reply = await chatJSON({
+      profile: "check",
       label: "feed-comment-check",
       system: COMMENT_CHECK_PROMPT,
       prompt: buildCommentCheckPrompt(cardTitle, text),
       schema: commentCheckSchema,
       maxTokens: 60,
-      timeoutMs: CHECK_TIMEOUT_MS,
-      preferredRoute: "cerebras",
+      totalMs: CHECK_TIMEOUT_MS,
     });
     if (reply.ok) return null;
     return AI_REFUSALS[reply.problem] ?? "That comment can't be posted here. Keep it kind, and about the card.";

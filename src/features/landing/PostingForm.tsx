@@ -5,6 +5,7 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } f
 import type { FormEvent, ReactNode } from "react";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { Badge, Button, ErrorNotice, Seal, SealBlank, sha256Hex, Spinner, tabId, Tabs } from "@/shared/ui";
+import { buildTarget, destinationOf, type Depth, type Shape } from "./request";
 import { SampleFromLink } from "./SampleFromLink";
 
 /** Anything shorter than this cannot be a whole job posting. */
@@ -25,15 +26,23 @@ type Mode = (typeof MODES)[number]["id"];
 const nounOf = (mode: Mode) => MODES.find((item) => item.id === mode)?.noun ?? "posting";
 
 /**
- * How big to make it. A broad goal, such as a whole job or "web development", becomes a
- * program of courses. "Decide for me" asks the AI, using the rubric in the programs feature.
+ * Topics only. A broad goal, such as a whole subject, becomes a program of courses; "Decide for me"
+ * lets the catalog check decide. A posting or a PDF always builds one private map.
  */
-const SHAPES = [
+const SHAPES: readonly { id: Shape; label: string }[] = [
   { id: "auto", label: "Decide for me" },
-  { id: "program", label: "Full program" },
+  { id: "program", label: "Program" },
   { id: "course", label: "One course" },
-] as const;
-type Shape = (typeof SHAPES)[number]["id"];
+];
+
+/**
+ * How far a program goes. A short path is 4 to 8 courses; a full degree is 40 courses over four
+ * years. Every course gets a full syllabus either way. Only shown for a topic that is not one course.
+ */
+const DEPTHS: readonly { id: Depth; label: string }[] = [
+  { id: "quick", label: "Short path" },
+  { id: "degree", label: "Full degree" },
+];
 
 const couldNotBuild = (mode: Mode) =>
   `The map could not be built this time. Your ${nounOf(mode)} is still here, so you can try again.`;
@@ -49,6 +58,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("topic");
   const [shape, setShape] = useState<Shape>("auto");
+  const [depth, setDepth] = useState<Depth>("quick");
   const [text, setText] = useState("");
   const [topic, setTopic] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -130,11 +140,10 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
       setFieldError("That is too short to be a full posting. Paste all of it, including the requirements.");
       return null;
     }
-    const body = buildMode === "topic" ? { text: value, kind: "topic", shape } : { text: value, shape };
+    const target = buildTarget(buildMode, value, shape, depth);
     return {
-      // One course goes straight to the map builder. Anything else may become a program.
-      url: shape === "course" ? "/api/maps" : "/api/programs",
-      init: { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
+      url: target.url,
+      init: { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(target.body) },
     };
   }
 
@@ -155,8 +164,8 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
       const body = await response.json().catch(() => null);
 
       // A program answers with programId, a single map with id (or mapId from the programs route).
-      const mapId = body?.id ?? body?.mapId;
-      if (!response.ok || (typeof mapId !== "string" && typeof body?.programId !== "string")) {
+      const destination = destinationOf(body);
+      if (!response.ok || destination === null) {
         // The API writes its `error` field as a sentence meant for people.
         setRequestError(typeof body?.error === "string" ? body.error : couldNotBuild(buildMode));
         setPending(false);
@@ -164,7 +173,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
       }
 
       // Stay in the loading state until the map page replaces this one.
-      router.push(typeof body.programId === "string" ? `/program/${body.programId}` : `/map/${mapId}`);
+      router.push(destination);
     } catch {
       if (!abort.signal.aborted) setRequestError(couldNotConnect(buildMode));
       setPending(false);
@@ -292,11 +301,12 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
           )}
           {mode === "topic" && (
             <p id="topic-hint" className="mt-2 text-sm text-ink-soft">
-              With no source to quote, the AI builds the map from what it knows, so its skills have no citations. Name a grade or
-              age, such as &ldquo;grade 1 math&rdquo;, and it is pitched at that level.
+              With no source to quote, the AI writes the course from what it knows, so its skills have no citations. A course someone
+              already generated is reused, not written again. Name a grade or age, such as &ldquo;grade 1 math&rdquo;, and it is
+              pitched at that level.
             </p>
           )}
-          {mode !== "pdf" && (
+          {mode === "topic" && (
             <div role="group" aria-label="How big to make it" className="mt-3 flex flex-wrap items-center gap-1.5">
               <span className="mr-1 text-sm text-ink-soft">Size:</span>
               {SHAPES.map((item) => (
@@ -316,6 +326,33 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
                   {item.label}
                 </button>
               ))}
+            </div>
+          )}
+          {mode === "topic" && shape !== "course" && (
+            <div role="group" aria-label="How far to go" className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-sm text-ink-soft">Length:</span>
+              {DEPTHS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={depth === item.id}
+                  disabled={pending}
+                  onClick={() => setDepth(item.id)}
+                  className={
+                    "min-h-9 cursor-pointer px-2.5 text-sm font-semibold transition-control disabled:cursor-default " +
+                    (depth === item.id
+                      ? "bg-ink text-on-ink"
+                      : "text-ink-soft shadow-[inset_0_0_0_1.5px_var(--color-rule-strong)] hover:text-ink hover:shadow-[inset_0_0_0_1.5px_var(--color-ink)]")
+                  }
+                >
+                  {item.label}
+                </button>
+              ))}
+              <p className="basis-full text-sm text-ink-soft">
+                {depth === "degree"
+                  ? "A full degree plans 40 courses across four years, each with its own syllabus. Courses show up as they are planned, and you can start the first one right away."
+                  : "A short path plans 4 to 8 courses, each with its own syllabus. You can start the first one as soon as it appears."}
+              </p>
             </div>
           )}
           {loadedSample && (
@@ -338,7 +375,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
             )}
           </div>
 
-          {pending && <BuildStatus seconds={seconds} mode={mode} planning={mode !== "pdf" && shape !== "course"} />}
+          {pending && <BuildStatus seconds={seconds} mode={mode} planning={mode === "topic" && shape !== "course"} degree={depth === "degree"} />}
           {requestError && <ErrorNotice className="mt-4" message={requestError} onRetry={() => buildMap(mode, text)} />}
         </form>
       </section>
@@ -419,10 +456,10 @@ function locationLine(text: string): string {
 const WORKING_ON: Record<Mode, string> = {
   posting: "Reading the posting, then working out each skill and what it depends on.",
   pdf: "Reading each page of the PDF, then working out each skill and the page it came from.",
-  topic: "Working out the skills in this topic and what each one depends on.",
+  topic: "Checking the course catalog for this course.",
 };
 
-function BuildStatus({ seconds, mode, planning }: { seconds: number; mode: Mode; planning: boolean }) {
+function BuildStatus({ seconds, mode, planning, degree = false }: { seconds: number; mode: Mode; planning: boolean; degree?: boolean }) {
   const isSlow = seconds >= SLOW_AFTER_SECONDS;
 
   return (
@@ -433,8 +470,10 @@ function BuildStatus({ seconds, mode, planning }: { seconds: number; mode: Mode;
         <p role="status" className="font-medium">
           {isSlow
             ? `Still working.${mode === "topic" ? "" : ` A long ${nounOf(mode)} takes longer.`} You can keep waiting or cancel.`
+            : planning && degree
+              ? "Checking the course catalog, then naming the program. Its 40 courses appear on the next page as they are planned."
             : planning
-              ? "Working out whether this needs a full program of courses, then laying it out."
+              ? "Checking the course catalog and working out whether this needs a program or one course."
               : WORKING_ON[mode]}
         </p>
         <p className="text-sm text-ink-soft tabular-nums" aria-hidden="true">

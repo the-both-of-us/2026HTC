@@ -27,7 +27,7 @@ Hack the Change 2026, Prompt 2. For students and curious people: learn a topic, 
 ## Architecture
 
 - Next.js 16 with feature folders: `src/app` has thin routes, `src/features/<name>` holds the code, `src/shared` holds what two or more features use.
-- **AI provider chain:** Cerebras, then Groq, the Vercel AI Gateway, Gemini and AWS Bedrock. Any failure moves to the next route. Model: gpt-oss-120b (Gemini first for flashcards and quiz).
+- **AI:** Claude Haiku only, through the Anthropic SDK, with three thinking profiles (plan, write, check). No fallback model: a failure shows a sentence and a retry.
 - **Voice:** Deepgram Flux for listening and for the spoken questions.
 - **Storage:** Vercel Blob or S3, picked from the environment (memory if neither is set).
 - **Sign-in:** optional Auth0. Without it, everyone is a guest.
@@ -37,7 +37,7 @@ Hack the Change 2026, Prompt 2. For students and curious people: learn a topic, 
 ```mermaid
 flowchart LR
   U[Learner] --> App[Next.js app]
-  App --> AI[AI chain: Cerebras, Groq, Gateway, Gemini, Bedrock]
+  App --> AI[Claude Haiku]
   App --> V[Deepgram Flux voice]
   App --> S[(Blob or S3)]
   App --> D[AESO and StatCan]
@@ -54,7 +54,7 @@ npm run dev -- -p 3000
 
 Also: `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build`, `npm run eval` (real AI calls).
 
-Environment variable names (see `.env.example`): `SESSION_SECRET`, `S3_BUCKET`, `AWS_REGION`, `VERCEL_OIDC_TOKEN`, `BLOB_READ_WRITE_TOKEN`, `CEREBRAS_API_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `BEDROCK_API_KEY`, `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `PROOF_SEAL_SECRET`, `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `APP_BASE_URL`. Most are optional; without AI keys on Vercel the gateway is used, and without voice keys the interview moves to typing.
+Environment variable names (see `.env.example`): `SESSION_SECRET`, `S3_BUCKET`, `AWS_REGION`, `BLOB_READ_WRITE_TOKEN`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `GEMINI_API_KEY` (backup voice only), `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `PROOF_SEAL_SECRET`, `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `APP_BASE_URL`. `ANTHROPIC_API_KEY` is required for AI features; without voice keys the interview moves to typing.
 
 ## Team
 
@@ -66,7 +66,7 @@ Ownership is in [TEAM.md](TEAM.md).
 ## AI disclosure
 
 - **Built with Claude Code** (AI coding agents) directed by both of us. We reviewed, ran and tested the changes. The 71 eval labels were also written by Claude. Full text: [docs/submission/ai-disclosure.md](docs/submission/ai-disclosure.md).
-- **AI models at runtime:** gpt-oss-120b through the provider chain above (maps, grading, follow-ups, lessons), Gemini for flashcards and quiz, and Deepgram Flux for voice. Streaks, grid and labour data, matching and spaced repetition use no AI.
+- **AI models at runtime:** Claude Haiku for everything written or graded (programs, syllabi, maps, lessons, quiz, flashcards, grading, follow-ups), and Deepgram Flux for voice. Streaks, grid and labour data, matching and spaced repetition use no AI.
 
 ## Prior work
 

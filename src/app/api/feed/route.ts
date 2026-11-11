@@ -3,8 +3,10 @@ import { getFeedPage, parseFormat } from "@/features/feed";
 import { errorResponse } from "@/shared/http";
 import { readUserId } from "@/shared/identity";
 
-// A typed interest's first batch may be written during the request (one model call).
-export const maxDuration = 60;
+// A typed interest's first batch may be written during the request (one model call, at most
+// 30 s), and a pool top-up then runs in after(), which shares this budget (Next docs: after "will
+// run for the platform's default or configured max duration of your route"). 60 s could cut it off.
+export const maxDuration = 120;
 
 /**
  * One page of the feed. ?exclude= lists the item ids already on screen (comma-separated), and

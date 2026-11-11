@@ -11,8 +11,8 @@ import { SAMPLE_POSTINGS } from "../src/shared/samplePostings";
 
 process.loadEnvFile(".env.local");
 
-/** Cerebras has no trouble with this. The gateway's free tier allows about 5 calls a minute. */
-const PAUSE_BETWEEN_CALLS_MS = process.env.CEREBRAS_API_KEY ? 1_000 : 30_000;
+/** One Haiku call at a time with a short pause; the Anthropic limits are far above this. */
+const PAUSE_BETWEEN_CALLS_MS = 1_000;
 const FIXTURES_DIR = join("src", "features", "skill-map", "fixtures");
 
 async function main() {

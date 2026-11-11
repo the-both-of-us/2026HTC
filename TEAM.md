@@ -228,7 +228,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-- **AI key:** you need your own for AI features. A Groq key works: create one at https://console.groq.com/keys and set `GROQ_API_KEY` in `.env.local`. Never commit it. `.env*` is ignored by git.
+- **AI key:** you need an Anthropic key for AI features: create one at https://console.anthropic.com/settings/keys and set `ANTHROPIC_API_KEY` in `.env.local`. Never commit it. `.env*` is ignored by git.
 - **Storage:** with no Blob token, data lives in memory and is lost on restart. That's fine for local work.
 - **After pulling, if `package.json` changed:** run `npm install --legacy-peer-deps`. Two new packages came in on Nov 7: `server-only` and `@aws-sdk/client-s3`.
 - **`SESSION_SECRET`:** leave it empty locally, since a development secret is built in. Old unsigned cookies now count as no cookie, so maps you made before Nov 7 under an old cookie won't open for you. Build a new one.

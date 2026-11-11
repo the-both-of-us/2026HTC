@@ -1,8 +1,16 @@
 import type { GridSolve } from "@/features/grid";
 import { isUsableQuote } from "@/features/teachback";
-import { PASS_SCORE, type Attempt, type NodeState, type SkillMap, type SkillNode, type SourceKind } from "@/shared/types";
+import {
+  PASS_SCORE,
+  PRETEST_PROOF_LABEL,
+  type Attempt,
+  type NodeState,
+  type SkillMap,
+  type SkillNode,
+  type SourceKind,
+} from "@/shared/types";
 import { redactSkill } from "./redact";
-import type { ProofFinalInterview, ProofGridSolve, ProofSkill, ProofSnapshot, ProofSource } from "./types";
+import type { ProofFinalInterview, ProofGridSolve, ProofKnownByPretest, ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
 type SnapshotInput = {
   proofId: string;
@@ -16,6 +24,8 @@ type SnapshotInput = {
   gridSolves?: GridSolve[];
   /** The final interview's result, only when it was passed. */
   finalInterview?: ProofFinalInterview | null;
+  /** Node id to when it was passed, for proven nodes whose proof is a pre-test pass (no attempt). */
+  pretestPasses?: Record<string, string>;
 };
 
 /** Turns server data into the frozen document. Nothing in here comes from the browser. */
@@ -24,10 +34,14 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
   const skills: ProofSkill[] = [];
   const notYetProven: string[] = [];
 
+  const knownByPretest: ProofKnownByPretest[] = [];
   for (const node of map.nodes) {
     const attempt = attempts[node.id] ?? null;
+    const pretestAt = input.pretestPasses?.[node.id];
     if (states[node.id] === "proven" && attempt && attemptProvesNode(attempt, map, node)) {
       skills.push(toProofSkill(node, attempt, map.sourceKind));
+    } else if (states[node.id] === "proven" && pretestAt) {
+      knownByPretest.push({ nodeId: node.id, title: node.title, label: PRETEST_PROOF_LABEL, passedAt: pretestAt });
     } else {
       notYetProven.push(node.title);
     }
@@ -44,6 +58,7 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
     sourceKind: map.sourceKind,
     totalSkills: map.nodes.length,
     skills,
+    ...(knownByPretest.length > 0 && { knownByPretest }),
     notYetProven,
     ...(grid.length > 0 && { grid }),
     ...(input.finalInterview && {
@@ -113,7 +128,7 @@ function toProofSkill(node: SkillNode, attempt: Attempt, sourceKind: SourceKind)
     integrity: { ...attempt.integrity },
     source: toProofSource(node, sourceKind),
     attemptedAt: attempt.createdAt,
-    ...(attempt.format && attempt.format !== "explain" && attempt.format !== "final" && { format: attempt.format }),
+    ...((attempt.format === "catch" || attempt.format === "kid" || attempt.format === "timed") && { format: attempt.format }),
     ...(attempt.format === "catch" && attempt.catch && { catch: attempt.catch }),
     ...(attempt.format === "kid" && attempt.plainLanguage && { readingGrade: attempt.plainLanguage.readingGrade }),
   });

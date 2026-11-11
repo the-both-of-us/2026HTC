@@ -1,11 +1,14 @@
 /** Calls to the attempts API. Every failure becomes a sentence a person can act on. */
-import type { Attempt, IntegritySignals } from "@/shared/types";
+import { isPretestProof, type Attempt, type IntegritySignals } from "@/shared/types";
 import type { FinalView } from "../final";
 import type { TopicFormat } from "../formats";
 
 export type ApiResult =
   | { ok: true; attempt: Attempt }
   | { ok: false; message: string; status?: number };
+
+/** What fetchProvenAttempt says: an attempt, nothing, or "proved by a pre-test question" (no attempt exists). */
+export type ProvenAttemptResult = ApiResult | { ok: false; message: ""; pretest: true };
 
 /** A little longer than the server's own 120 second limit, so its error arrives first. */
 const TIMEOUT_MS = 125_000;
@@ -69,13 +72,15 @@ export function fetchAttempt(attemptId: string): Promise<ApiResult> {
 }
 
 /** The attempt that proved this skill, for a panel opened after the fact. */
-export async function fetchProvenAttempt(mapId: string, nodeId: string): Promise<ApiResult> {
+export async function fetchProvenAttempt(mapId: string, nodeId: string): Promise<ProvenAttemptResult> {
   const notLoaded = { ok: false, message: "" } as const;
   try {
     const response = await fetch(`/api/maps/${encodeURIComponent(mapId)}/progress`);
     const progress = await response.json();
     const attemptId = progress?.proven?.[nodeId];
     if (typeof attemptId !== "string") return notLoaded;
+    // A pre-test pass has no attempt behind it: /api/attempts/pretest would be a 404.
+    if (isPretestProof(attemptId)) return { ok: false, message: "", pretest: true };
     return await fetchAttempt(attemptId);
   } catch {
     return notLoaded;
@@ -102,10 +107,15 @@ export function fetchCatchRound(mapId: string, nodeId: string) {
   return requestJson<CatchViewData>(`/api/attempts/catch?${query}`);
 }
 
-export function fetchFinal(mapId: string) {
-  return requestJson<FinalView>(`/api/maps/${encodeURIComponent(mapId)}/final`);
+/** The course final, or a degree unit's test when `unitId` is given. */
+function finalUrl(mapId: string, unitId?: string) {
+  return `/api/maps/${encodeURIComponent(mapId)}/final${unitId ? `?unit=${encodeURIComponent(unitId)}` : ""}`;
 }
 
-export function startFinal(mapId: string) {
-  return requestJson<FinalView>(`/api/maps/${encodeURIComponent(mapId)}/final`, { method: "POST" });
+export function fetchFinal(mapId: string, unitId?: string) {
+  return requestJson<FinalView>(finalUrl(mapId, unitId));
+}
+
+export function startFinal(mapId: string, unitId?: string) {
+  return requestJson<FinalView>(finalUrl(mapId, unitId), { method: "POST" });
 }

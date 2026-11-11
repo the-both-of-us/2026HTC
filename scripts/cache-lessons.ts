@@ -14,8 +14,8 @@ import { SAMPLE_POSTINGS } from "../src/shared/samplePostings";
 
 process.loadEnvFile(".env.local");
 
-// About 5 requests a minute per model is the limit, so 13 s keeps well inside it.
-const PAUSE_BETWEEN_CALLS_MS = 13_000;
+// One Haiku call at a time with a short pause; the Anthropic limits are far above this.
+const PAUSE_BETWEEN_CALLS_MS = 1_000;
 const FIXTURES_DIR = join("src", "features", "lessons", "fixtures");
 
 async function main() {

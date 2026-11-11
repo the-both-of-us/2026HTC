@@ -5,7 +5,7 @@
  *   npm run cache-feed            only interests with no saved cards or Shorts
  *   npm run cache-feed -- --force all of them again
  *
- * Paced for the free tiers: one model call at a time, at least 13 s apart (about 5 a minute).
+ * Paced gently: one model call at a time, at least 1.5 s apart.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -17,7 +17,7 @@ import { toPoolCards } from "../src/features/feed/validate";
 
 process.loadEnvFile(".env.local");
 
-const MIN_GAP_MS = 13_000;
+const MIN_GAP_MS = 1_500;
 const PATH = join("src", "features", "feed", "fixtures", "pools.json");
 
 type Seed = { name: string; cards: PoolCard[]; shorts: PoolShort[]; shortsSearchedAt?: string };

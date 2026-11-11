@@ -6,7 +6,7 @@ import { Suspense, type ReactNode } from "react";
 import { listCourses, type PublicCourse } from "@/features/courses";
 import { CourseCard, CourseCover } from "@/features/courses/client";
 import { getSession } from "@/shared/identity";
-import { buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { buttonClasses, ErrorNotice, PageShell, PretestBadge, Spinner } from "@/shared/ui";
 import { loadDashboard, type CourseRow, type DashboardData, type ProvenItem } from "../data";
 import { cardsLabel, timeAgo, timeUntil } from "../format";
 import { DeleteCourseButton } from "./DeleteCourseButton";
@@ -314,6 +314,7 @@ function ProvenRow({ item, now }: { item: ProvenItem; now: Date }) {
       <span className="min-w-0 flex-1 break-words">
         <span className="font-medium">{item.skillTitle}</span>
         <span className="text-ink-soft"> · {item.mapTitle}</span>
+        {item.pretest && <PretestBadge className="ml-2 align-middle" />}
       </span>
       <time dateTime={item.provenAt} className="shrink-0 text-sm text-ink-soft">
         {timeAgo(item.provenAt, now)}

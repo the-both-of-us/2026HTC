@@ -1,5 +1,7 @@
 import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
-import type { Program, ProgramListing } from "./types";
+import { readCatalogProgram, type CatalogProgramRead } from "@/features/catalog";
+import type { Program, ProgramCourse, ProgramPlanning, ProgramListing } from "./types";
+import { DEGREE_FRAME } from "@/shared/types";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -46,15 +48,79 @@ async function ensureOwnerIndex(): Promise<void> {
   await catchingUp;
 }
 
+/**
+ * Saves a learner program. One that follows a catalog program keeps only `{slug, mapId}` for the
+ * courses it started: everything else about its courses comes from the catalog on read.
+ */
 export async function saveProgram(program: Program): Promise<void> {
-  await putDoc(programKey(program.id), program);
+  const stored: Program = program.catalogId
+    ? { ...program, courses: program.courses.flatMap((course) => (course.mapId ? [{ slug: course.slug, mapId: course.mapId } as ProgramCourse] : [])) }
+    : program;
+  await putDoc(programKey(program.id), stored);
   await indexProgram(program);
 }
 
-/** Returns the program, or null. The id comes from a URL, so it must look like one of ours. */
-export async function getProgram(id: string): Promise<Program | null> {
+/** The program as stored, with no catalog merge. Null for a missing one or an id that is not ours. */
+export async function getStoredProgram(id: string): Promise<Program | null> {
   if (!UUID_PATTERN.test(id)) return null;
   return getDoc<Program>(programKey(id));
+}
+
+/**
+ * The learner's program as the rest of programs sees it: for one that follows a catalog program,
+ * title, summary, audience, depth and the course list (titles, requires, years, courseIds) come
+ * from the catalog, and each course's mapId from the learner's own doc.
+ */
+export function mergeCatalog(stored: Program, read: CatalogProgramRead | null): Program {
+  if (!read) return stored;
+  const catalog = read.program;
+  const mapIds = new Map(stored.courses.map((course) => [course.slug, course.mapId]));
+  const courses: ProgramCourse[] = catalog.courses.map((course) => {
+    const mapId = mapIds.get(course.slug);
+    return {
+      slug: course.slug,
+      title: course.title,
+      summary: course.summary,
+      requires: [...course.requires],
+      ...(course.year !== undefined && { year: course.year }),
+      ...(course.term !== undefined && { term: course.term }),
+      ...(course.level !== undefined && { level: course.level }),
+      ...(course.area !== undefined && { area: course.area }),
+      ...(course.courseId && { courseId: course.courseId }),
+      ...(mapId && { mapId }),
+    };
+  });
+  return {
+    ...stored,
+    title: catalog.title,
+    summary: catalog.summary,
+    audience: catalog.audience,
+    depth: catalog.depth,
+    courses,
+  };
+}
+
+/** Where a catalog program's course list stands, as counts. */
+export function planningOf(read: CatalogProgramRead): ProgramPlanning {
+  return {
+    state: read.state,
+    planned: read.program.courses.length,
+    expected: read.program.depth === "degree" ? DEGREE_FRAME.courses : null,
+  };
+}
+
+/** The program with its planning state (null for a program planned before the catalog). */
+export async function getProgramWithPlanning(id: string): Promise<{ program: Program; planning: ProgramPlanning | null } | null> {
+  const stored = await getStoredProgram(id);
+  if (!stored) return null;
+  if (!stored.catalogId) return { program: stored, planning: null };
+  const read = await readCatalogProgram(stored.catalogId);
+  return { program: mergeCatalog(stored, read), planning: read ? planningOf(read) : null };
+}
+
+/** Returns the program (merged with its catalog program), or null. The id comes from a URL, so it must look like one of ours. */
+export async function getProgram(id: string): Promise<Program | null> {
+  return (await getProgramWithPlanning(id))?.program ?? null;
 }
 
 export async function claimCourse(programId: string, slug: string, claim: CourseClaim): Promise<boolean> {
@@ -74,9 +140,13 @@ export async function releaseCourse(programId: string, slug: string): Promise<vo
  * could overwrite each other here, so readers also check the claims (see withClaims).
  */
 export async function saveCourseMapId(programId: string, slug: string, mapId: string): Promise<void> {
-  const program = await getProgram(programId);
+  const program = await getStoredProgram(programId);
   if (!program) return;
-  const courses = program.courses.map((course) => (course.slug === slug ? { ...course, mapId } : course));
+  const known = program.courses.some((course) => course.slug === slug);
+  // A catalog program's stored list holds only started courses, so a new one is added.
+  const courses = known
+    ? program.courses.map((course) => (course.slug === slug ? { ...course, mapId } : course))
+    : [...program.courses, { slug, mapId } as ProgramCourse];
   await saveProgram({ ...program, courses });
 }
 
@@ -118,7 +188,11 @@ export async function listProgramsByOwner(ownerId: string): Promise<Program[]> {
 export type ProgramSummary = { id: string; title: string; summary: string; courseCount: number; href: string };
 
 export async function listMyPrograms(userId: string): Promise<ProgramSummary[]> {
-  const programs = await listProgramsByOwner(userId);
+  const stored = await listProgramsByOwner(userId);
+  // A catalog program's own doc lists only started courses: count the catalog's.
+  const programs = await Promise.all(
+    stored.map(async (program) => (program.catalogId ? mergeCatalog(program, await readCatalogProgram(program.catalogId)) : program)),
+  );
   return programs.map((program) => ({
     id: program.id,
     title: program.title,
@@ -182,7 +256,8 @@ export async function saveStart(programId: string, userId: string, start: Progra
  * For "Delete my data": removes this user's programs, their course claims and listings, the
  * start records other people left on them, and this user's own start records on others'
  * programs. The course maps themselves are maps, so they go with the user's other maps.
- * Only this user's records change, and running it twice is harmless.
+ * Only this user's records change, and running it twice is harmless. Catalog programs and
+ * courses are canonical and hold nothing of this user's, so they stay.
  */
 export async function deleteProgramsByOwner(ownerId: string): Promise<number> {
   const programs = await listProgramsByOwner(ownerId);

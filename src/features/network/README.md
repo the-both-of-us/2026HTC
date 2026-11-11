@@ -105,3 +105,5 @@ Six made-up people (`demo.ts`) whose skills are titles from the three sample map
 ## Clickable skills
 
 Every skill on someone's card is a button: it filters the page to the people who proved it (`skillsMatch`, so close wordings count), with a bar that says how many, a "Practise <skill>" link and "Show everyone". Cards that could mentor you also list up to 3 "Practise on your map" links for the skills they proved that you're learning. Practise links go through `GET /api/network/practise` (`practise.ts`), which prefers a skill you can start now, then a locked one, then one you proved, newest map first.
+
+**Pre-test passes:** `ProvenSkill.pretest: true` marks a skill known only from a course pre-test (a teach-back copy of the same title wins in `dedupeProven`). Match reasons say "Passed a pre-test question on …", never "Proved".

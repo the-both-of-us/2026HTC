@@ -10,12 +10,14 @@
     "test": "vitest run",
     "cache-samples": "tsx --conditions=react-server scripts/cache-samples.ts",
     "cache-feed": "tsx --conditions=react-server scripts/cache-feed.ts",
-    "eval": "tsx --conditions=react-server scripts/eval-grading.ts"
+    "eval": "tsx --conditions=react-server scripts/eval-grading.ts",
+    "wipe-courses": "tsx scripts/wipe-courses.ts",
+    "pregenerate": "tsx --conditions=react-server scripts/pregenerate.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@aws-sdk/client-s3": "^3.1164.0",
     "@vercel/blob": "^2.8.2",
-    "@vercel/oidc": "^4.0.7",
     "@xyflow/react": "^12.12.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.70.0",

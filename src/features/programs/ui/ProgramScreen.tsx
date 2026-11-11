@@ -3,37 +3,124 @@
 import clsx from "clsx";
 import { Award, Check, ChevronRight, GraduationCap, Lock, PartyPopper, Sparkles, Unlock } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { Badge, Button, buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Badge, buttonClasses, PageShell } from "@/shared/ui";
 import type { CourseView, ProgramSharing as Sharing, ProgramView } from "../types";
+import { ComparePanel } from "./ComparePanel";
+import { formatHours, groupByTerm, plural, termProgressLine, topicDenominator } from "./format";
+import { needsProgramPoll, PROGRAM_POLL_MS } from "./planning";
+import { PlanningNotice } from "./PlanningNotice";
+import { usePoll } from "./poll";
 import { ProgramSharing } from "./ProgramSharing";
+import { StartCourseButton } from "./StartCourse";
 
-/** How often to ask again while someone else's click is building the same course. */
-const POLL_MS = 3000;
-/** Stop asking after this long, and offer a retry instead. */
-const GIVE_UP_MS = 150_000;
+/** After this many failed polls in a row the page stops asking and offers a reconnect. */
+const MAX_POLL_FAILURES = 4;
 
-/** A program as a path of courses: one card each, with the next one to do lit up. The owner can share it. */
-export function ProgramScreen({ program, sharing }: { program: ProgramView; sharing?: Sharing }) {
+/**
+ * A program as a path of courses: one card each, with the next one to do lit up. The owner can share it.
+ * While the course list is being planned (or a course is still being registered) the page asks
+ * `GET /api/programs/[id]` every 1.5 s, one request at a time and never while the tab is hidden.
+ */
+export function ProgramScreen({ program: initial, sharing }: { program: ProgramView; sharing?: Sharing }) {
+  const [program, setProgram] = useState(initial);
+  // A fresh server render (router.refresh) replaces what polling has built up.
+  const [seenInitial, setSeenInitial] = useState(initial);
+  if (seenInitial !== initial) {
+    setSeenInitial(initial);
+    setProgram(initial);
+  }
+  const [lost, setLost] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const failures = useRef(0);
+
+  const poll = useCallback(
+    async (signal: AbortSignal): Promise<boolean> => {
+      try {
+        const response = await fetch(`/api/programs/${encodeURIComponent(program.id)}`, { signal, cache: "no-store" });
+        if (response.status === 404) return false;
+        if (!response.ok) throw new Error(String(response.status));
+        const body = (await response.json()) as { program?: ProgramView };
+        if (!body.program) throw new Error("empty");
+        failures.current = 0;
+        setProgram(body.program);
+        return needsProgramPoll(body.program);
+      } catch {
+        if (signal.aborted) return false;
+        failures.current += 1;
+        if (failures.current >= MAX_POLL_FAILURES) {
+          setLost(true);
+          return false;
+        }
+        return true;
+      }
+    },
+    [program.id],
+  );
+  usePoll(needsProgramPoll(program) && !lost, poll, PROGRAM_POLL_MS);
+
+  async function retryPlanning() {
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      const response = await fetch(`/api/programs/${encodeURIComponent(program.id)}/plan`, { method: "POST" });
+      const body = (await response.json().catch(() => null)) as { status?: string; error?: string } | null;
+      if (!response.ok) {
+        setRetryError(typeof body?.error === "string" ? body.error : "Planning could not be restarted. Please try again.");
+      } else {
+        const state = body?.status === "ready" ? "ready" : "planning";
+        setProgram((current) => ({ ...current, planning: { planned: 0, expected: null, ...current.planning, state } }));
+      }
+    } catch {
+      setRetryError("OryxLearn could not be reached. Check your connection, then try again.");
+    }
+    setRetrying(false);
+  }
+
+  const planning = program.planning;
+  const stillPlanning = planning !== undefined && planning.state !== "ready";
   const proven = program.courses.reduce((sum, course) => sum + course.proven, 0);
   const badges = program.courses.filter((course) => course.badge).length;
   const upNext = program.courses.find((course) => course.state === "open") ?? null;
+  const isDegree = program.depth === "degree";
+  const terms = isDegree && program.courses.some((course) => course.year) ? groupByTerm(program.courses) : null;
+  const showCompare = isDegree;
 
   return (
     <PageShell width="reading">
       <header className="flex flex-col gap-3">
         <p className="inline-flex items-center gap-1.5 self-start rounded-control border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm text-accent-bright">
           <GraduationCap aria-hidden="true" size={15} />
-          Program · {program.courses.length} courses
+          {stillPlanning
+            ? `Program · planning${isDegree ? " · Degree" : ""}`
+            : `Program · ${program.courses.length} courses${isDegree ? " · Degree" : ""}`}
         </p>
-        <h1 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl">{program.title}</h1>
+        <h1 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl">
+          {program.title || (stillPlanning ? "Naming your program" : "Program")}
+        </h1>
         {program.summary && <p className="text-lg text-ink-soft">{program.summary}</p>}
         <div className="flex flex-wrap gap-2">
           {program.isSample && <Badge tone="sample">Planned from sample text, not a real listing</Badge>}
           <Badge tone="sample">AI-planned courses, with no citations</Badge>
         </div>
+        <PlanningNotice
+          planning={planning}
+          lost={lost}
+          retrying={retrying}
+          error={retryError}
+          onRetryPlanning={() => void retryPlanning()}
+          onReconnect={() => {
+            failures.current = 0;
+            setLost(false);
+          }}
+        />
         <ProgramStats proven={proven} badges={badges} courseCount={program.courses.length} />
+        {program.hours && (
+          <p className="text-sm text-ink-soft tabular-nums">
+            Reading time: {formatHours(program.hours.planned)}, {formatHours(program.hours.written)}, {formatHours(program.hours.measured)}.
+          </p>
+        )}
         <Celebration program={program} />
         <NextGoal courses={program.courses} />
       </header>
@@ -44,17 +131,42 @@ export function ProgramScreen({ program, sharing }: { program: ProgramView; shar
         </div>
       )}
 
-      <ol className="mt-8 flex flex-col">
-        {program.courses.map((course, index) => (
-          <CourseStep
-            key={course.slug}
-            programId={program.id}
-            course={course}
-            isUpNext={course.slug === upNext?.slug}
-            isLast={index === program.courses.length - 1}
-          />
-        ))}
-      </ol>
+      {terms ? (
+        <div className="mt-8 flex flex-col gap-4">
+          {terms.map((group, index) => (
+            <TermSection
+              key={group.key}
+              programId={program.id}
+              depth={program.depth}
+              label={group.label}
+              courses={group.courses}
+              upNextSlug={upNext?.slug}
+              // The term holding the next course is open, and so is the first one when nothing is.
+              defaultOpen={group.courses.some((c) => c.slug === upNext?.slug) || (!upNext && index === 0)}
+            />
+          ))}
+        </div>
+      ) : (
+        <ol className="mt-8 flex flex-col">
+          {program.courses.map((course, index) => (
+            <CourseStep
+              key={course.slug}
+              programId={program.id}
+              depth={program.depth}
+              course={course}
+              isUpNext={course.slug === upNext?.slug}
+              isLast={index === program.courses.length - 1}
+            />
+          ))}
+        </ol>
+      )}
+
+      {showCompare && (
+        <ComparePanel
+          programId={program.id}
+          courses={program.courses.filter((c) => c.mapId).map((c) => ({ slug: c.slug, title: c.title }))}
+        />
+      )}
     </PageShell>
   );
 }
@@ -96,6 +208,8 @@ function ProgramStats({ proven, badges, courseCount }: { proven: number; badges:
  * near goal is what keeps a long path moving.
  */
 function NextGoal({ courses }: { courses: CourseView[] }) {
+  // An empty list (a program whose courses are still being planned) is not a finished program.
+  if (courses.length === 0) return null;
   if (courses.every((course) => course.badge)) {
     return (
       <p className="flex items-center gap-2 rounded-sheet border border-proven/60 bg-proven/8 px-4 py-3 font-medium">
@@ -170,13 +284,60 @@ function Celebration({ program }: { program: ProgramView }) {
   );
 }
 
+/** One year-and-term of a degree: a collapsible section with a single progress line. */
+function TermSection({
+  programId,
+  depth,
+  label,
+  courses,
+  upNextSlug,
+  defaultOpen,
+}: {
+  programId: string;
+  depth: ProgramView["depth"];
+  label: string;
+  courses: CourseView[];
+  upNextSlug: string | undefined;
+  defaultOpen: boolean;
+}) {
+  const finished = courses.every((c) => c.badge);
+  return (
+    <details open={defaultOpen} className="group rounded-sheet border border-rule-strong">
+      <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 select-none">
+        <span
+          aria-hidden="true"
+          className={clsx("size-3 shrink-0 rounded-full border", finished ? "border-proven bg-proven" : "border-rule-strong")}
+        />
+        <span className="font-medium">{label}</span>
+        <span className="text-sm text-ink-soft tabular-nums">
+          {plural(courses.length, "course")} · {termProgressLine(courses)}
+        </span>
+      </summary>
+      <ol className="flex flex-col px-4 pt-2">
+        {courses.map((course, index) => (
+          <CourseStep
+            key={course.slug}
+            programId={programId}
+            depth={depth}
+            course={course}
+            isUpNext={course.slug === upNextSlug}
+            isLast={index === courses.length - 1}
+          />
+        ))}
+      </ol>
+    </details>
+  );
+}
+
 function CourseStep({
   programId,
+  depth,
   course,
   isUpNext,
   isLast,
 }: {
   programId: string;
+  depth: ProgramView["depth"];
   course: CourseView;
   isUpNext: boolean;
   isLast: boolean;
@@ -211,9 +372,20 @@ function CourseStep({
         </p>
         <h2 className="mt-1 text-xl font-medium">{course.title}</h2>
         {course.summary && <p className="mt-1 text-ink-soft">{course.summary}</p>}
+        {(course.level || course.area) && (
+          <p className="mt-1 text-sm text-ink-soft">{[course.level ? `Level ${course.level}` : null, course.area].filter(Boolean).join(" · ")}</p>
+        )}
         <div className="mt-4">
-          <CourseAction programId={programId} course={course} />
+          <CourseAction programId={programId} depth={depth} course={course} />
         </div>
+        {course.units && course.units.length > 0 && <UnitProgress units={course.units} final={course.final} />}
+        {(course.hasSyllabus || course.units) && (
+          <p className="mt-3 text-sm">
+            <Link href={`/program/${programId}/courses/${course.slug}`} className="text-accent-bright underline-offset-4 hover:underline">
+              Read the syllabus
+            </Link>
+          </p>
+        )}
       </article>
     </li>
   );
@@ -244,7 +416,7 @@ function StepMarker({ course, isUpNext }: { course: CourseView; isUpNext: boolea
 }
 
 /** The one thing to do on a course: continue it, start it, or see what opens it. */
-function CourseAction({ programId, course }: { programId: string; course: CourseView }) {
+function CourseAction({ programId, depth, course }: { programId: string; depth: ProgramView["depth"]; course: CourseView }) {
   if (course.state === "locked") {
     const blocker = course.blockers[0];
     const almost = blocker?.needed !== null && blocker?.needed !== undefined && blocker.needed <= 2;
@@ -261,8 +433,10 @@ function CourseAction({ programId, course }: { programId: string; course: Course
     );
   }
 
-  if (course.mapId && course.total !== null) {
-    const percent = (course.proven / course.total) * 100;
+  // A degree course builds a unit at a time, so progress counts against the topics the syllabus plans.
+  const total = topicDenominator(course);
+  if (course.mapId && total !== null) {
+    const percent = total > 0 ? (course.proven / total) * 100 : 0;
     return (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -270,7 +444,7 @@ function CourseAction({ programId, course }: { programId: string; course: Course
             <div className="progress-fill h-full rounded-full bg-proven" style={{ width: `${percent}%` }} />
           </div>
           <p className="text-sm text-ink-soft tabular-nums">
-            {course.proven} of {course.total} topics proved
+            {course.proven} of {total} topics proved
           </p>
         </div>
         <Link
@@ -284,79 +458,32 @@ function CourseAction({ programId, course }: { programId: string; course: Course
     );
   }
 
-  return <StartCourseButton programId={programId} slug={course.slug} />;
+  return <StartCourseButton programId={programId} course={course} depth={depth} />;
 }
 
-/**
- * Builds the course the first time it is opened, then goes to its map. If another
- * tab is already building it, the server says so and this asks again shortly.
- */
-function StartCourseButton({ programId, slug }: { programId: string; slug: string }) {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-  const [seconds, setSeconds] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const stopped = useRef(false);
-
-  useEffect(() => {
-    if (!pending) return;
-    const timer = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(timer);
-  }, [pending]);
-
-  // Stop polling if the person leaves the page.
-  useEffect(() => {
-    stopped.current = false;
-    return () => {
-      stopped.current = true;
-    };
-  }, []);
-
-  async function start() {
-    setPending(true);
-    setSeconds(0);
-    setError(null);
-    const startedAt = Date.now();
-    try {
-      while (!stopped.current) {
-        const response = await fetch(`/api/programs/${programId}/courses/${slug}`, { method: "POST" });
-        const body = await response.json().catch(() => null);
-        if (response.ok && typeof body?.mapId === "string") {
-          router.push(`/map/${body.mapId}`);
-          return;
-        }
-        if (response.status !== 202) {
-          setError(typeof body?.error === "string" ? body.error : "This course could not be built this time. Please try again.");
-          break;
-        }
-        if (Date.now() - startedAt > GIVE_UP_MS) {
-          setError("This course is taking too long to build. Please try again.");
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, POLL_MS));
-      }
-    } catch {
-      setError("OryxLearn could not be reached. Check your connection, then try again.");
-    }
-    setPending(false);
-  }
-
+/** Per-unit progress of a degree course, with its unit tests and the course final. */
+function UnitProgress({ units, final }: { units: NonNullable<CourseView["units"]>; final: CourseView["final"] }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-ink-soft">6 to 10 topics, built when you start.</p>
-        <Button onClick={start} pending={pending} className="grow sm:grow-0">
-          {!pending && <Sparkles aria-hidden="true" size={17} />}
-          {pending ? "Building this course" : "Start course"}
-        </Button>
-      </div>
-      {pending && (
-        <p role="status" className="flex items-center gap-2 text-sm text-ink-soft tabular-nums">
-          <Spinner size={15} />
-          Laying out this course&apos;s topics. {seconds} {seconds === 1 ? "second" : "seconds"} so far, usually under 15.
-        </p>
-      )}
-      {error && <ErrorNotice message={error} onRetry={start} />}
-    </div>
+    <details className="mt-3">
+      <summary className="cursor-pointer text-sm text-ink-soft select-none">
+        Units: {units.filter((u) => u.state === "done").length} of {units.length} done
+      </summary>
+      <ul className="mt-2 flex flex-col gap-1 text-sm">
+        {units.map((unit) => (
+          <li key={unit.id} className="flex flex-wrap justify-between gap-x-3 tabular-nums">
+            <span className={unit.state === "locked" ? "text-ink-soft" : undefined}>
+              {unit.number}. {unit.title}
+            </span>
+            <span className="text-ink-soft">
+              {unit.proved} of {unit.plannedTopics}
+              {unit.test ? `, test ${unit.test}` : ""}
+              {!unit.built && unit.state !== "locked" ? ", not built yet" : ""}
+              {unit.state === "locked" ? ", locked" : ""}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {final && <p className="mt-1 text-sm text-ink-soft">Course final: {final}</p>}
+    </details>
   );
 }

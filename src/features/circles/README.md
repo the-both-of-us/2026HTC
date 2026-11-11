@@ -18,3 +18,5 @@ Study circles: a group learns the same map together. Students and curious people
 Codes are 10 base32 characters (50 random bits), checked against a pattern before they reach a store key.
 
 Tests: `npm test -- circles`.
+
+**Pre-test passes:** a feed item and an avatar carry `pretest: true` when the proof is a course pre-test pass, so the page shows "Known: passed a pre-test question".

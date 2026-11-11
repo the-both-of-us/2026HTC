@@ -4,7 +4,8 @@
  */
 import type { ProofFormat } from "@/shared/types";
 
-export type TopicFormat = Exclude<ProofFormat, "final">;
+/** "final" and "pretest" are not ways to prove one topic in its panel. */
+export type TopicFormat = Exclude<ProofFormat, "final" | "pretest">;
 
 /** The order formats rotate in. "catch" comes first: it is the one people remember. */
 export const FORMAT_ROTATION: TopicFormat[] = ["catch", "explain", "kid", "timed"];

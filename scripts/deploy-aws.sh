@@ -17,11 +17,13 @@ export AWS_PAGER=""
 APP=oryxlearn
 CLUSTER=default
 PORT=3000
-# The AI routes can take 120 s. An ALB's default 60 s idle timeout would cut them off.
+# Request handlers can run up to 120 s. An ALB's default 60 s idle timeout would cut them off.
+# Generation runs in the background and browsers poll for it (wave 2), so no single request waits
+# on a model for that long, but the limit stays as a safety margin.
 ALB_IDLE_SECONDS=130
-SECRET_NAMES=(CEREBRAS_API_KEY GROQ_API_KEY GEMINI_API_KEY BEDROCK_API_KEY SESSION_SECRET PROOF_SEAL_SECRET DEEPGRAM_API_KEY ELEVENLABS_API_KEY ELEVENLABS_VOICE_ID YOUTUBE_API_KEY GNEWS_API_KEY TADDY_API_KEY TADDY_USER_ID)
+SECRET_NAMES=(ANTHROPIC_API_KEY GEMINI_API_KEY SESSION_SECRET PROOF_SEAL_SECRET DEEPGRAM_API_KEY ELEVENLABS_API_KEY ELEVENLABS_VOICE_ID YOUTUBE_API_KEY GNEWS_API_KEY TADDY_API_KEY TADDY_USER_ID)
 # Optional settings that aren't secret, passed as plain environment variables.
-PLAIN_NAMES=(GEMINI_MODEL BEDROCK_REGION BEDROCK_MODEL)
+PLAIN_NAMES=(ANTHROPIC_MODEL)
 
 step() { printf '\n==> %s\n' "$1"; }
 

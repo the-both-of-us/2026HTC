@@ -1,3 +1,5 @@
+// eslint-disable-next-line no-restricted-imports -- an eval script, not app code: it reads the raw Anthropic stream helper
+import { anthropicStreamResponse } from "@/features/ai/testing";
 import type { SkillNode } from "@/shared/types";
 import { gradeExplanation } from "../grading";
 
@@ -33,21 +35,21 @@ export type PlantedResult = { name: string; quote: string; rejected: boolean };
 
 export async function runPlantedQuotes(): Promise<PlantedResult[]> {
   const realFetch = globalThis.fetch;
-  const realKey = process.env.CEREBRAS_API_KEY;
-  process.env.CEREBRAS_API_KEY = realKey || "planted-test";
+  const realKey = process.env.ANTHROPIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = realKey || "planted-test";
   const results: PlantedResult[] = [];
 
   try {
     for (const { name, quote } of PLANTED) {
       const reply = JSON.stringify({ checkpoints: [{ number: 1, quote }], factualErrors: [] });
-      globalThis.fetch = async () => Response.json({ choices: [{ message: { content: reply } }] });
+      globalThis.fetch = async () => anthropicStreamResponse(reply);
       const grade = await gradeExplanation(NODE, LEARNER_TEXT);
       results.push({ name, quote, rejected: !grade.checkpoints[0].met && grade.score === 0 });
     }
   } finally {
     globalThis.fetch = realFetch;
-    if (realKey === undefined) delete process.env.CEREBRAS_API_KEY;
-    else process.env.CEREBRAS_API_KEY = realKey;
+    if (realKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = realKey;
   }
   return results;
 }

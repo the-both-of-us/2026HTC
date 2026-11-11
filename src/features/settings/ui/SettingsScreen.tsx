@@ -1,17 +1,15 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { FriendsPrivacySettings } from "@/features/network/client";
 import { Card, LearningModeToggle, PageShell, TextSizeSelect, ThemeSelect } from "@/shared/ui";
-import { AiSettingsForm } from "./AiSettingsForm";
 
-/** /settings: appearance and accessibility (kept in this browser), and AI models (kept with your account). */
+/** /settings: appearance and accessibility (kept in this browser), and friends and privacy (kept with your network profile). */
 export function SettingsScreen() {
   return (
     <PageShell width="reading">
       <div className="flex flex-col gap-10">
         <header className="flex flex-col gap-3">
           <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">Settings</h1>
-          <p className="text-lg text-ink-soft">How OryxLearn looks, reads and which models write your courses.</p>
+          <p className="text-lg text-ink-soft">How OryxLearn looks and reads, and who can see you.</p>
         </header>
 
         <Section title="Display">
@@ -37,15 +35,6 @@ export function SettingsScreen() {
         <Section title="Friends and privacy">
           <FriendsPrivacySettings />
           <Note>Saved with your network profile.</Note>
-        </Section>
-
-        <Section title="AI models">
-          <AiSettingsForm />
-          <p className="text-right text-xs text-ink-soft">
-            <Link href="/settings/models" className="underline underline-offset-4 hover:text-ink">
-              How the models compare
-            </Link>
-          </p>
         </Section>
       </div>
     </PageShell>

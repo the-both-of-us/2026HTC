@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { chatJSON } from "@/features/ai";
-import { putDoc } from "@/shared/store";
+import { getDoc, putDoc } from "@/shared/store";
 import type { IntegritySignals, SkillMap } from "@/shared/types";
 import { getCatchView, startAttempt, toLearnerView } from "./attempts";
 
@@ -10,6 +10,11 @@ vi.mock("@/features/ai", async (importOriginal) => ({
   chatJSON: vi.fn(),
 }));
 const mockChatJSON = vi.mocked(chatJSON);
+// A catalog course map reads its syllabus from the catalog; these maps have none yet.
+vi.mock("@/features/catalog", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/catalog")>()),
+  readCatalogSyllabus: vi.fn(async () => ({ state: "idle" })),
+}));
 
 const OWNER = "owner-user";
 const integrity: Omit<IntegritySignals, "wordCount"> = { pasted: false, activeMs: 20_000, inputMethod: "typed" };
@@ -165,5 +170,26 @@ describe("Catch the mistake", () => {
     modelWrites();
     await expect(play([{ sentence: 9 }])).rejects.toMatchObject({ status: 400 });
     await expect(play([])).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("a round shared by a catalog course", () => {
+  it("is written once for two learners' maps of one course, under the course id, on the write profile", async () => {
+    const courseId = randomUUID();
+    const source = (await getDoc<SkillMap>(`maps/${mapId}`))!;
+    const learner = "second-learner";
+    const theirs = randomUUID();
+    await putDoc(`maps/${mapId}`, { ...source, courseId });
+    await putDoc(`maps/${theirs}`, { ...source, id: theirs, ownerId: learner, courseId });
+    modelWrites();
+
+    const mine = await getCatchView(OWNER, mapId, "photo");
+    const other = await getCatchView(learner, theirs, "photo");
+
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ profile: "write", label: "teachback-catch-write", maxTokens: 6_000 });
+    expect(other.sentences).toEqual(mine.sentences);
+    expect(await getDoc(`catch/${courseId}/photo`)).not.toBeNull();
+    expect(await getDoc(`catch/${mapId}/photo`)).toBeNull();
   });
 });

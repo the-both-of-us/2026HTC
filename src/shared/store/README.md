@@ -25,3 +25,5 @@ await deleteDoc(`maps/${id}`);
 Each driver is one file (`memory.ts`, `blob.ts`, `s3.ts`) implementing `driver.ts`.
 
 Tests: `npm test -- store`. They run offline: the S3 test mocks the AWS SDK.
+
+- `once.ts` (import `@/shared/store/once`): one writer per canonical key, across instances. `startOnce(K, produce)` returns "ready" (K exists), "running" (a live claim) or `{ work }` for the winner of `claims/<K>`. A claim whose heartbeat is older than 130 s is dead and taken over (one taker, via a `~takeover-<attempt>` marker). The producer `emit`s parts; `partial/<K>` is written at most every 1.5 s plus a trailing write, and `flush()` writes now. On success K is written and the partial and claim removed; on failure both are removed so the next caller starts over. `readOnce` gives ready, planning (the parts so far), stalled or idle; `waitForOnce` polls it. Tests: `once.test.ts` (concurrent starts make one produce, a dead claim is taken over, failure cleanup).

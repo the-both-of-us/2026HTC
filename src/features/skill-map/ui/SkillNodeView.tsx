@@ -1,9 +1,9 @@
 import { Handle, Position, useStore, type Node, type NodeProps } from "@xyflow/react";
 import clsx from "clsx";
-import { Briefcase, FileText, Lock, Star } from "lucide-react";
+import { Briefcase, Check, FileText, Lock, Star } from "lucide-react";
 import type { CSSProperties } from "react";
 import { FormatBadge, type TopicFormat } from "@/features/teachback/client";
-import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
+import { PRETEST_PROOF_LABEL, type NodeState, type PublicSkillNode, type SourceKind } from "@/shared/types";
 import { NODE_STATE_LABELS, Seal, StateMark } from "@/shared/ui";
 import { COMPACT_METRICS, NODE_HEIGHT, NODE_WIDTH } from "./layout";
 
@@ -24,6 +24,8 @@ export type SkillNodeData = {
   featured: boolean;
   /** Opened with "Unlock anyway", before what it builds on was proven. */
   unlockedEarly?: boolean;
+  /** Proved by a pre-test question, not an explanation: no seal, and the card says so. */
+  known?: boolean;
   /** How this topic is proved: see assignFormats. */
   format?: TopicFormat;
   /** A read-only, title-only card sized so the whole map fits one screen. */
@@ -31,7 +33,7 @@ export type SkillNodeData = {
 };
 
 /** One study circle member on a card: initials shown, the name in the tooltip. */
-export type MapAvatar = { initials: string; name: string };
+export type MapAvatar = { initials: string; name: string; /** Passed a pre-test question; did not explain it. */ pretest?: true };
 
 export type SkillFlowNode = Node<SkillNodeData, "skill">;
 
@@ -89,7 +91,10 @@ function FullNodeView({ data }: NodeProps<SkillFlowNode>) {
         )}
       >
         <div className="flex items-start gap-2">
-          {state === "proven" ? (
+          {state === "proven" && data.known ? (
+            // A pre-test pass has no explanation behind it, so it gets a plain tick, not the evidence seal.
+            <Check aria-hidden="true" size={18} strokeWidth={3} className="mt-[1px] shrink-0" />
+          ) : state === "proven" ? (
             // A small seal struck from the skill id: the same mark the evidence page uses.
             <Seal fingerprint={skill.id} size={20} className={clsx("-mt-[1px] shrink-0", justProven && "mark-land")} />
           ) : (
@@ -102,7 +107,9 @@ function FullNodeView({ data }: NodeProps<SkillFlowNode>) {
         </div>
         <p className="flex items-center justify-between gap-2 text-[13px] leading-none">
           <span>
-            {fading
+            {data.known
+              ? "Known (pre-test)"
+              : fading
               ? "Fading, relight it"
               : data.unlockedEarly && state === "available"
                 ? "Unlocked early"
@@ -173,11 +180,11 @@ function CompactNodeView({ data }: NodeProps<SkillFlowNode>) {
           className="line-clamp-3 min-w-0 flex-1 leading-[1.12] font-medium font-stretch-[85%] [overflow-wrap:anywhere] hyphens-auto"
         >
           {skill.title}
-          <span className="sr-only">. {NODE_STATE_LABELS[state]}.</span>
+          <span className="sr-only">. {data.known ? PRETEST_PROOF_LABEL : NODE_STATE_LABELS[state]}.</span>
         </p>
       </div>
       {/* The proven seal sits on the card's top edge, so the title keeps the whole width. */}
-      {state === "proven" && (
+      {state === "proven" && !data.known && (
         <span
           aria-hidden="true"
           className="absolute top-0 left-2 -translate-y-1/2 rounded-full bg-paper p-[1.5px]"
@@ -229,7 +236,15 @@ function joinNames(names: string[]): string {
  */
 function Avatars({ people, scale }: { people: MapAvatar[]; scale?: number }) {
   const shown = people.length > 4 ? people.slice(0, 3) : people;
-  const names = `Proved by ${joinNames(people.map((person) => person.name))}`;
+  // Members who only passed a pre-test question are named apart: they did not explain the skill.
+  const explained = people.filter((person) => !person.pretest).map((person) => person.name);
+  const known = people.filter((person) => person.pretest).map((person) => person.name);
+  const names = [
+    explained.length > 0 ? `Proved by ${joinNames(explained)}` : "",
+    known.length > 0 ? `${explained.length > 0 ? "Also " : ""}${PRETEST_PROOF_LABEL.replace("Known:", "known:")} by ${joinNames(known)}` : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
   const size = scale ? Math.min(34, 24 * scale) : 24;
   return (
     <p
@@ -247,7 +262,10 @@ function Avatars({ people, scale }: { people: MapAvatar[]; scale?: number }) {
           key={index}
           aria-hidden="true"
           style={{ width: size, height: size, marginLeft: index === 0 ? 0 : -size * 0.28 }}
-          className="flex items-center justify-center rounded-full border-2 border-paper bg-proven leading-none font-semibold text-on-proven"
+          className={clsx(
+            "flex items-center justify-center rounded-full border-2 leading-none font-semibold",
+            person.pretest ? "border-dashed border-ink-soft bg-sheet text-ink" : "border-paper bg-proven text-on-proven",
+          )}
         >
           {person.initials}
         </span>

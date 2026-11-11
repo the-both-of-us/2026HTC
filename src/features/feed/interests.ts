@@ -61,13 +61,13 @@ export async function checkInterest(raw: string): Promise<Interest> {
   if (earlier && !earlier.ok) throw new HttpError(NOT_A_TOPIC, 400);
 
   const reply = await chatJSON({
+    profile: "check",
     label: "feed-interest-check",
     system: INTEREST_CHECK_PROMPT,
     prompt: buildInterestCheckPrompt(typed),
     schema: interestCheckSchema,
     maxTokens: 200,
-    timeoutMs: CHECK_TIMEOUT_MS,
-    preferredRoute: "cerebras",
+    totalMs: CHECK_TIMEOUT_MS,
   });
   const tidy = cleanInterestName(reply.name);
   const name = reply.ok && tidy && !interestNameProblem(tidy) ? tidy : typed;

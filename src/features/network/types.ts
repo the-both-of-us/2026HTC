@@ -7,6 +7,11 @@ export type ProvenSkill = {
   mapTitle: string;
   /** `/proof/<id>` when the owner's live evidence page for that map shows this skill, else null. */
   evidenceUrl: string | null;
+  /**
+   * Set when the only proof is a pre-test pass, not a teach-back: show it as "Known: passed a
+   * pre-test question", never as an explanation. Absent for a teach-back proof.
+   */
+  pretest?: true;
 };
 
 /** What `network/profiles/<userId>` holds. Server only. */

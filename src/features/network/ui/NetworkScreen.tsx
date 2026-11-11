@@ -27,6 +27,7 @@ import {
   MAX_NAME_LENGTH,
   type ProfileErrors,
 } from "../rules";
+import { PRETEST_PROOF_LABEL } from "@/shared/types";
 import { skillsMatch } from "../matching";
 import type { FriendCourse, Match, MyProfileView, NetworkView, ProvenSkill, PublicProfile } from "../types";
 import {
@@ -999,7 +1000,12 @@ function SkillChips({
   const shown = showAll ? skills : skills.slice(0, SKILLS_SHOWN);
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm text-ink-soft">Proved {countLabel(skills.length, "skill", "skills")}</p>
+      <p className="text-sm text-ink-soft">
+        Proved {countLabel(skills.filter((skill) => !skill.pretest).length, "skill", "skills")}
+        {skills.some((skill) => skill.pretest) && (
+          <>, and known from a pre-test: {skills.filter((skill) => skill.pretest).length}</>
+        )}
+      </p>
       <ul id={listId} className="flex flex-wrap gap-1.5">
         {shown.map((skill) => {
           const active = activeSkill !== null && skillsMatch(skill.title, activeSkill);
@@ -1007,8 +1013,8 @@ function SkillChips({
             <li key={skill.title} className="max-w-full min-w-0">
               <span
                 className={`inline-flex max-w-full items-center rounded-full border text-[13px] leading-5 font-medium ${
-                  active ? "border-proven bg-proven text-paper" : "border-proven/50 bg-proven/10 text-proven"
-                }`}
+                  skill.pretest ? "border-dashed" : ""
+                } ${active ? "border-proven bg-proven text-paper" : "border-proven/50 bg-proven/10 text-proven"}`}
               >
                 {onPickSkill ? (
                   <button
@@ -1025,13 +1031,23 @@ function SkillChips({
                     {skill.title}
                   </span>
                 )}
+                {skill.pretest && (
+                  <span className="-ml-1.5 pr-2.5 text-xs" title={PRETEST_PROOF_LABEL}>
+                    <span aria-hidden="true">· Known (pre-test)</span>
+                    <span className="sr-only">. {PRETEST_PROOF_LABEL}</span>
+                  </span>
+                )}
                 {skill.evidenceUrl && (
                   <a
                     href={skill.evidenceUrl}
                     className="-ml-1 mr-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full hover:bg-proven/20 hover:text-ink"
                   >
                     <FileCheck aria-hidden="true" size={13} />
-                    <span className="sr-only">{`Evidence page for ${skill.title}, proved by ${owner}`}</span>
+                    <span className="sr-only">
+                      {skill.pretest
+                        ? `Evidence page for ${skill.title}, known from a pre-test by ${owner}`
+                        : `Evidence page for ${skill.title}, proved by ${owner}`}
+                    </span>
                   </a>
                 )}
               </span>

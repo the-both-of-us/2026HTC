@@ -34,9 +34,11 @@ export type CircleActivity = {
   isYou: boolean;
   cheers: number;
   youCheered: boolean;
+  /** A pre-test pass, not an explanation: show "Known: passed a pre-test question". */
+  pretest?: true;
 };
 /** Who proved a skill on the shared map: initials on the card, names in its tooltip. */
-export type CircleAvatar = { initials: string; name: string };
+export type CircleAvatar = { initials: string; name: string; pretest?: true };
 /** A cheer on one of the viewer's own proofs. */
 export type CircleCheer = { id: string; name: string; nodeTitle: string; at: string };
 
@@ -252,13 +254,14 @@ export async function getCircleView(code: string, viewerId: string | null): Prom
   const yourItems = new Map<string, string>();
   rows.forEach((row, index) => {
     const isYou = row.userId === viewerId;
-    for (const { nodeId, provenAt } of proved[index]) {
+    for (const { nodeId, provenAt, pretest } of proved[index]) {
       const nodeTitle = titles.get(nodeId);
       if (!nodeTitle) continue;
       const id = proofItemId(circle.code, row.userId, nodeId);
       if (isYou) yourItems.set(id, nodeTitle);
-      (provedBy[nodeId] ??= []).push({ initials: initials(row.member.name), name: row.member.name });
+      (provedBy[nodeId] ??= []).push({ initials: initials(row.member.name), name: row.member.name, ...(pretest && { pretest }) });
       feed.push({
+        ...(pretest && { pretest }),
         id,
         name: row.member.name,
         nodeId,

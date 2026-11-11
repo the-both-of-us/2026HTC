@@ -37,6 +37,9 @@ export function ProofDocument({ snapshot, hash, url }: ProofDocumentProps) {
           ))}
         </section>
 
+        {snapshot.knownByPretest && snapshot.knownByPretest.length > 0 && (
+          <KnownByPretest topics={snapshot.knownByPretest} displayName={snapshot.displayName} />
+        )}
         {snapshot.grid && <GridEvidence solves={snapshot.grid} displayName={snapshot.displayName} />}
         <ProvesAndDoesNot />
         <HowChecked />
@@ -67,6 +70,14 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
             <span className="text-5xl font-medium text-proven tabular-nums">{proven}</span>
             <span className="text-2xl font-semibold">of {plural(snapshot.totalSkills, "skill")} proven</span>
           </p>
+          {snapshot.knownByPretest && snapshot.knownByPretest.length > 0 && (
+            <p className="mt-1.5">
+              <a href="#pretest-heading" className="underline underline-offset-4">
+                Plus {plural(snapshot.knownByPretest.length, "topic")} known from a pre-test
+              </a>
+              <span className="text-ink-soft">, passed with a question and not explained.</span>
+            </p>
+          )}
           <div aria-hidden="true" className="mt-4 flex gap-1">
             {Array.from({ length: snapshot.totalSkills }, (_, index) => (
               <span key={index} className={`h-2 flex-1 rounded-full ${index < proven ? "bg-proven" : "bg-rule"}`} />
@@ -118,6 +129,30 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
         </p>
         <DocumentActions url={url} />
       </div>
+    </section>
+  );
+}
+
+/** Pre-test passes: listed apart from the explanations, with their label, and never shown as one. */
+function KnownByPretest({ topics, displayName }: { topics: NonNullable<ProofSnapshot["knownByPretest"]>; displayName: string }) {
+  return (
+    <section aria-labelledby="pretest-heading" className="flex flex-col gap-3">
+      <h2 id="pretest-heading" className="text-2xl font-medium">
+        Known from a pre-test
+      </h2>
+      <p className="text-ink-soft">
+        {displayName} chose the course&apos;s optional pre-test and answered one short question on each of these topics. There is no
+        explanation, transcript or score behind them, so they are not counted among the skills proven above.
+      </p>
+      <ul className="flex flex-col divide-y divide-rule border-y border-rule">
+        {topics.map((topic) => (
+          <li key={topic.nodeId} id={`pretest-${topic.nodeId}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5">
+            <span className="min-w-0 flex-1 font-medium">{topic.title}</span>
+            <span className="text-sm text-ink-soft">{topic.label}</span>
+            <span className="text-sm text-ink-soft tabular-nums">{formatDateTime(topic.passedAt)}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

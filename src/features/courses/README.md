@@ -76,7 +76,7 @@ npx tsx --env-file=.env.local src/features/courses/dev/prepareSamples.ts        
 npx tsx --env-file=.env.local src/features/courses/dev/prepareSamples.ts --dry-run  # only print the plan
 ```
 
-It seeds the sample courses if needed (no AI call, the same as opening `/courses`), then makes and saves the flashcards and quiz for every skill, so the demo never waits on a model for them. Saved items are skipped, so it is safe to stop and run again. One call starts every 13 seconds for the gateway's rate limit: about 84 calls, roughly 18 minutes. Each line shows progress (`[12/84] flashcards · Data Analyst, grid operations · SQL joins … saved 7 cards`), and the end shows made, already there and failed. A failure is logged and skipped, and the exit code is 1.
+It seeds the sample courses if needed (no AI call, the same as opening `/courses`), then makes and saves the flashcards and quiz for every skill, so the demo never waits on a model for them. Saved items are skipped, so it is safe to stop and run again. Calls are spaced 1 s apart: about 84 calls. Each line shows progress (`[12/84] flashcards · Data Analyst, grid operations · SQL joins … saved 7 cards`), and the end shows made, already there and failed. A failure is logged and skipped, and the exit code is 1.
 
 - Without a store it refuses to run, since everything would be lost when it ends. `--dry-run` works without one.
 - `--only=flashcards` or `--only=quiz` does one kind. `--gap-ms=` changes the pacing.

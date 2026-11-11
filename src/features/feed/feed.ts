@@ -112,7 +112,7 @@ export async function getFeedPage(
   // A typed interest has no pool until its first batch. Write one now if nothing else can show.
   if (format !== "videos" && sources.every((source) => source.cards.length === 0)) {
     const empty = sources.find((source) => source.cards.length === 0)!;
-    await addBatch(empty.interest, "cerebras").catch((error) => console.warn("[feed] first batch failed", error instanceof Error ? error.message : error));
+    await addBatch(empty.interest).catch((error) => console.warn("[feed] first batch failed", error instanceof Error ? error.message : error));
     sources = await Promise.all(interests.map(load));
   }
 

@@ -15,3 +15,5 @@ The `/trust` page and "Delete my data".
 Accessible learning mode itself lives in `src/shared/ui` (`learningMode.ts`, `LearningModeToggle`, `ReadAloudButton`), because several features use it.
 
 Tests: `npm test -- trust`. They check another user's map, attempts, progress, evidence page and course are untouched.
+
+**Pre-tests:** "Delete my data" removes the user's `pretest/<courseId>/<userId>` records (`deletePretestData`, counted as `pretests`); their pre-test passes go with their progress. The canonical `pretest-sets/` hold no learner data and stay. `scripts/wipe-courses.ts` deletes `pretest/` and `pretest-sets/` in the content scope.

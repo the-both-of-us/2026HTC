@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Lock, Star } from "lucide-react";
 import { assignFormats, FormatBadge } from "@/features/teachback/client";
 import type { NodeState, PublicSkillNode, SourceKind } from "@/shared/types";
-import { StateMark } from "@/shared/ui";
+import { PretestBadge, StateMark } from "@/shared/ui";
 import { JobAsksTag } from "./SkillNodeView";
 
 const GROUPS: { state: NodeState; heading: string; empty: string }[] = [
@@ -29,6 +29,8 @@ type SkillListProps = {
   featuredId?: string | null;
   /** Skills opened with "Unlock anyway" before what they build on was proven. */
   unlockedEarly?: Set<string>;
+  /** Skills proved by a pre-test question: listed as "Known (pre-test)", not as an explanation. */
+  knownIds?: ReadonlySet<string>;
 };
 
 /** The same skills as the map, as plain lists. The default on phones, and for screen readers. */
@@ -41,6 +43,7 @@ export function SkillList({
   dim,
   featuredId,
   unlockedEarly,
+  knownIds,
 }: SkillListProps) {
   // In a topic map every skill is AI-generated, so calling each one a foundation would mislead.
   const fromTopic = sourceKind === "topic";
@@ -69,6 +72,7 @@ export function SkillList({
                   const waitingOn = skill.prerequisites.filter((id) => states[id] !== "proven");
                   const fading = state === "proven" && (dim?.[skill.id] ?? 0) > 0;
                   const today = state === "available" && featuredId === skill.id;
+                  const known = state === "proven" && knownIds?.has(skill.id) === true;
                   const format = state === "proven" ? null : formats[skill.id];
                   return (
                     <li key={skill.id}>
@@ -94,8 +98,9 @@ export function SkillList({
                                   ? `Unlocked early. ${skill.why}`
                                   : skill.why}
                           </span>
-                          {(today || format) && (
+                          {(today || format || known) && (
                             <span className="mt-1.5 flex flex-wrap items-center gap-2">
+                              {known && <PretestBadge />}
                               {today && (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-amber">
                                   <Star aria-hidden="true" size={12} />

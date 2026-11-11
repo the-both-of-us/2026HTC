@@ -17,3 +17,5 @@ The public evidence page at `/proof/[id]`: what the person wrote, the verified q
 **Never put in a snapshot:** the owner id, which is their identity cookie; the map id; the source text.
 
 **What the fingerprint can't do:** on its own it only compares a record with itself, so someone with write access to the store could replace both. A printed copy lets a reader catch a later change. The seal (`sealFor`, an HMAC of the fingerprint keyed by `PROOF_SEAL_SECRET`) means an edit to the store breaks the check unless the editor also has that server key. Someone with the key, and the owner re-publishing, can still replace a record: there is no history.
+
+**Pre-test passes:** a node proved only by a course pre-test has no attempt, so it is never a `ProofSkill`. It goes in `snapshot.knownByPretest` (`{nodeId, title, label: "Known: passed a pre-test question", passedAt}`), left out when empty so older fingerprints hold, and out of `notYetProven`. A page may be published with only those.

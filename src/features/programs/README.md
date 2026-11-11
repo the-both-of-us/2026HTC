@@ -2,15 +2,17 @@
 
 **Owner:** Abdu. See `TEAM.md`.
 
-A broad goal, such as a job, a degree or "learn web development", becomes a **program**: 4 to 8 courses in order, each a normal skill map of 6 to 10 topics.
+A broad goal, such as a job, a degree or "learn web development", becomes a **program**: 4 to 8 courses in order (quick), or a four-year degree of 40 courses, each course a skill map built from its own syllabus (see the end of this file).
 
-- The landing has a size toggle: **Decide for me**, **Full program**, **One course**. Anything but "One course" posts to `POST /api/programs`.
-- `plan.ts` makes one model call. Its rubric decides `isBroad` (a role, degree, field or wide goal is broad; one tool, idea or question is not), and it always plans the courses. `cleanPlan` keeps unique slugs, at most 8 courses, and lets a course require only courses before it, so there are no loops.
-- On "Decide for me", a narrow input builds one map, as before. Otherwise the program is saved at `programs/<id>` (`types.ts`), with an owner index entry at `programs-by-owner/<ownerId>/<id>`, so `listProgramsByOwner` reads only that person's programs. It works like skill-map's map index, with its own one-time catch-up (`indexes/programs-by-owner-v1`). `ownerId` and the source text never leave the server: the page gets a `ProgramView`.
-- A course's map is built only when the learner presses **Start course** (`openCourse`). It uses skill-map's `generateCourseMap`, which passes the program title and the other courses so each course stays in its lane. A `claimDoc` on `program-courses/<id>/<slug>` makes sure two clicks make one map; the loser gets 202 and the page asks again. A claim whose map never appeared is retried after 3 minutes.
-- A course opens once **half** of each course it requires is proved (`unlock.ts`), so the path keeps moving. The map header shows "Course 2 of 6 · program" and "Prove N more to open the next course" (`ui/ProgramCrumb`).
-- To keep a long path from getting dull, the program page (`ui/ProgramScreen`) shows topics proved, a badge per finished course, the nearest unlock as one clear goal, and a cheer when a course opened or a badge was earned since this browser last looked.
-- Privacy matches maps: only the owner can open a private program. Anyone else gets the same "not here" as a missing one (404 from the API). `deleteProgramsByOwner` runs from "Delete my data".
+- The landing has a size toggle: **Decide for me**, **Full program**, **One course**, and a Quick / Degree depth toggle. A topic posts to `POST /api/programs` (`createProgramOrMap`). A **posting or PDF always makes one private map** (skill-map), never a program and never a catalog entry.
+- **Shared catalog** (`@/features/catalog`): a topic program or course is resolved first (alias, exact name, then one check call), so the same subject at the same audience and depth is planned once for everyone. A learner's `Program` (`programs/<id>`) is a thin pointer: `catalogId`, plus per course only `{slug, mapId}`; `getProgram` merges the catalog frame in. `ownerId` and the source text never leave the server.
+- **Planning** (`plan.ts`, `build.ts`): `ensureProgramPlanned` streams the frame as JSON Lines under `startOnce(catalog/programs/<id>)`: a head line, then one line per course (quick: 4 to 8 courses; degree: 40 in 4 years x 2 terms, at most 6 a term, levels by year, `requires` only to earlier terms, one repair call for short terms). The `Registrar` registers each course line in the catalog (exact name, then a batch resolve every 10 lines or 3 s), so a course the catalog already has is reused with its syllabus. `GET /api/programs/[id]` shows `planning` while it streams; `POST /api/programs/[id]/plan` restarts a stalled plan.
+- **Opening a course** (`openCourse`, `POST /api/programs/[id]/courses/[slug]`) makes **no model call**: it creates the learner's empty map pointing at the catalog course and replies `{status: "ready", mapId}` (202 while another click is opening it, 409 while locked or not registered yet). A `claimDoc` on `program-courses/<id>/<slug>` makes two clicks one map.
+- **Building a course** (`ensureCourseBuilt`): the syllabus streams under `startOnce(catalog/syllabi/<courseId>)`, each unit saved as it commits, and unit 1's nodes start (skill-map `ensureUnitNodes`) the moment unit 1 commits. Built once per course for everyone.
+- **Pre-generation** (`pregen.ts`, the only file that calls `after()`): rule 1, after a new program: its frame, then course 1's syllabus and unit 1. Rule 2, whenever a course build has unit 1: the canonical lesson of its first topic (`ensureLesson` on the courseId, under the same deadline, no learner map needed); a waiting learner map gets unit 1 appended first. Rule 5, when a course opens: the next course's syllabus and unit 1. Each needs enough of the route's 112 s budget left (70 s for a course, the lesson call's 60 s for a lesson).
+- **Unlock** (`unlock.ts`): a degree course opens at `ceil(plannedTopics/4)` of each required course (32 planned topics while its syllabus is still planning), quick and older programs at half. A built course is never locked again.
+- To keep a long path from getting dull, the program page shows topics proved, a badge per finished course and the nearest unlock as one goal.
+- Privacy matches maps: only the owner can open a private program. Anyone else gets the same 404 as a missing one. "Delete my data" removes the learner's programs and maps (`deleteProgramsByOwner`) and never canonical content (`catalog/`, `unit-nodes/`, `lessons/<courseId>/`).
 
 ## Sharing (`sharing.ts`)
 
@@ -33,6 +35,23 @@ Mirrors courses, and reuses their rules from `@/features/courses` (author name, 
 - `/courses` shows a "Programs" shelf above the courses (`PublicPrograms`, same search box), hidden when empty.
 - **Delete my data:** `deleteProgramsByOwner` also removes the owner's listings, the starts others left on their programs, and their own starts on others' programs.
 
-The sample "Junior Backend Developer" posting has a saved plan and first course in `fixtures/` (real model output from `scripts/cache-sample-program.ts`), so the demo needs no AI wait. Its later courses are built live when opened.
+- **Catalog programs** are copied as a pointer to the same `catalogId`, with no maps copied: the content is shared anyway. The public outline lists each course's topics from its final syllabus.
 
 Tests: `npm test -- programs` (includes `sharing.test.ts` and `src/app/api/programs/sharing-routes.test.ts`).
+
+## Degree UI (`ui/`, owned by the UI package)
+
+- `ProgramScreen` polls `GET /api/programs/[id]` every 1.5 s while `planning` is set or a course is not `startable`, and offers Try again (`POST .../plan`) when planning is `stalled`.
+- `SyllabusScreen` (`/program/[id]/courses/[slug]`) reads `GET .../syllabus`, which has `planning: true` while units are still arriving.
+- `ComparePanel` reads `GET /api/programs/[id]/comparison`: our planned, written and measured hours beside sourced norms, always with `NOT_EQUIVALENT`.
+
+## Backend notes
+
+- **Hours** (`hours.ts`, pure): planned = planned topics x lesson words / 200 wpm, written = real lesson word counts of the shared content, measured = attempt and proof gaps under 10 minutes.
+- **Comparison** (`views.ts`, `norms.ts`): no model call; every norm carries its URL and read date.
+- **Units** (`startUnit`): unit k opens at half of unit k-1 (409 before); restarts a failed syllabus build first.
+- **Offline**: `scripts/pregenerate.ts --program <id|topic>` builds a frame, every syllabus, units and (with `--lessons`) lessons through the same `ensure*` calls, so it resumes where it stopped. It refuses a live store without `--live`.
+
+Tests: `build.test.ts` (unit 1 starts while the syllabus streams; overlapping builds generate once), `catalog-flow.test.ts` (the psychology case in both orders and at once, opening with zero calls, planning and stalled views, a failed build restarted, postings kept out of the catalog, Delete my data), `plan.test.ts`, `hours.test.ts`, `storage.test.ts`, and `src/app/api/programs/degree-routes.test.ts`.
+
+**Pre-test passes count:** the unit rail (`unitRail(..., progress.proven)`) counts topics known from the course pre-test in units not built yet, so a course's `proven` (and the next course's unlock) includes them. Unit tests and the final are still required for `complete`.

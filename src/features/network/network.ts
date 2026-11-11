@@ -59,6 +59,7 @@ export function toPublicProfile(record: ProfileRecord, skills: SkillSet): Public
       title: skill.title,
       mapTitle: skill.mapTitle,
       evidenceUrl: skill.evidenceUrl,
+      ...(skill.pretest && { pretest: true as const }),
     })),
     joinedAt: record.joinedAt,
   };

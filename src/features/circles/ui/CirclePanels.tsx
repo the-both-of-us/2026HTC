@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { Flag, HandHeart, UserPlus } from "lucide-react";
 import { circleRace } from "@/features/streaks/client";
-import { Button } from "@/shared/ui";
+import { Button, PretestBadge } from "@/shared/ui";
 import type { CircleActivity, CircleView } from "../circles";
 
 /** Initials in a round token, the same as on the map's cards. */
@@ -158,9 +158,11 @@ export function CircleFeed({
               <Initials name={item.name} you={item.isYou} size={30} />
               <div className="min-w-0 flex-1">
                 <p className="leading-snug">
-                  <span className="font-medium">{item.isYou ? "You" : item.name}</span> proved{" "}
+                  <span className="font-medium">{item.isYou ? "You" : item.name}</span>{" "}
+                  {item.pretest ? "passed a pre-test question on" : "proved"}{" "}
                   <span className="font-medium">{item.nodeTitle}</span>
                 </p>
+                {item.pretest && <PretestBadge className="mt-1" />}
                 <p className="mt-0.5 flex items-center justify-between gap-2 text-sm text-ink-soft">
                   <time dateTime={item.at}>{timeAgo(item.at, now)}</time>
                   <CheerButton item={item} canCheer={canCheer} onCheer={onCheer} />

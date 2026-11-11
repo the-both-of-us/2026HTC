@@ -16,14 +16,24 @@ type FinalInterviewProps = {
   provenCount: number;
   topicCount: number;
   voiceReady: boolean;
+  /** Set for a degree unit's test instead of the course final. */
+  unitId?: string;
+  unitTitle?: string;
 };
 
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+const numberWord = (n: number) => NUMBER_WORDS[n] ?? String(n);
+const capitalized = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
 /**
- * The course boss. Locked until every topic is proven, then three questions that mix
- * topics, spoken or typed. Two passes earn the course badge.
+ * The course boss. Locked until every topic is proven, then questions that mix topics, spoken or
+ * typed: three with two passes for the course badge, or as many as the server says (a degree
+ * course's final, or a unit's test when `unitId` is given).
  */
-export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: FinalInterviewProps) {
+export function FinalInterview({ mapId, provenCount, topicCount, voiceReady, unitId, unitTitle }: FinalInterviewProps) {
   const allProven = topicCount > 0 && provenCount === topicCount;
+  const isUnit = unitId !== undefined;
+  const name = isUnit ? "Unit test" : "Final interview";
   const [view, setView] = useState<FinalView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -32,7 +42,7 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
 
   useEffect(() => {
     let current = true;
-    fetchFinal(mapId).then((result) => {
+    fetchFinal(mapId, unitId).then((result) => {
       if (!current) return;
       if (result.ok) setView(result.data);
       else setError(result.message);
@@ -40,12 +50,12 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
     return () => {
       current = false;
     };
-  }, [mapId, allProven, loadCount]);
+  }, [mapId, unitId, allProven, loadCount]);
 
   async function start() {
     setPending(true);
     setError(null);
-    const result = await startFinal(mapId);
+    const result = await startFinal(mapId, unitId);
     setPending(false);
     if (result.ok) setView(result.data);
     else setError(result.message);
@@ -53,7 +63,7 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
 
   /** After each answer: load where it stands, and celebrate if that settled it as a pass. */
   async function refresh() {
-    const result = await fetchFinal(mapId);
+    const result = await fetchFinal(mapId, unitId);
     if (!result.ok) return setLoadCount((count) => count + 1);
     if (result.data.state === "passed" && view?.state !== "passed") setJustPassed(true);
     setView(result.data);
@@ -72,17 +82,40 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
   }
 
   if (!view) {
-    return error ? <Strip><ErrorNotice message={error} onRetry={() => { setError(null); setLoadCount((count) => count + 1); }} /></Strip> : null;
+    return error ? <Strip label={name}><ErrorNotice message={error} onRetry={() => { setError(null); setLoadCount((count) => count + 1); }} /></Strip> : null;
   }
+
+  const questionCount = view.questionCount ?? 3;
+  const passMark = view.passMark ?? 2;
 
   if (view.state === "locked") {
     return (
-      <Strip>
+      <Strip label={name}>
         <p className="flex items-center gap-2 text-sm text-ink-soft">
           <Lock aria-hidden="true" size={15} className="shrink-0" />
+          {allProven && !isUnit ? (
+            <span>
+              <span className="font-medium text-ink">Final interview</span> unlocks once every unit test is passed.
+            </span>
+          ) : (
+            <span>
+              <span className="font-medium text-ink">{name}</span> unlocks when every topic{isUnit ? " in this unit" : ""} is proven.{" "}
+              <span className="tabular-nums">{topicCount - provenCount} to go.</span>
+            </span>
+          )}
+        </p>
+      </Strip>
+    );
+  }
+
+  if (view.state === "passed" && isUnit) {
+    return (
+      <Strip label={name}>
+        <p role="status" className="flex items-center gap-2 text-sm text-ink-soft">
+          <Check aria-hidden="true" size={15} className="shrink-0 text-proven" />
           <span>
-            <span className="font-medium text-ink">Final interview</span> unlocks when every topic is proven.{" "}
-            <span className="tabular-nums">{topicCount - provenCount} to go.</span>
+            <span className="font-medium text-ink">Unit test passed{unitTitle ? `: ${unitTitle}` : ""}</span>, {view.result?.passedCount} of{" "}
+            {view.questions.length}.
           </span>
         </p>
       </Strip>
@@ -91,7 +124,7 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
 
   if (view.state === "passed") {
     return (
-      <Strip tone="gold">
+      <Strip tone="gold" label={name}>
         <div className="relative flex items-center gap-3">
           <span className={clsx("relative flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-amber bg-amber/15 text-amber", justPassed && "badge-rise")}>
             <Trophy aria-hidden="true" size={22} />
@@ -109,26 +142,29 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
   }
 
   if (view.state === "ready" || view.state === "failed") {
+    const reward = isUnit ? "to pass the unit" : "for the course badge";
     return (
-      <Strip tone="gold">
+      <Strip tone="gold" label={name}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <Trophy aria-hidden="true" size={22} className="mt-0.5 shrink-0 text-amber" />
             <div>
               <p className="font-semibold">
                 {view.state === "failed"
-                  ? `Final interview: ${view.result?.passedCount} of ${view.questions.length}. Two passes win it.`
-                  : "Boss level: the final interview is open."}
+                  ? `${name}: ${view.result?.passedCount} of ${view.questions.length}. ${capitalized(numberWord(passMark))} passes win it.`
+                  : isUnit
+                    ? `The test for ${unitTitle ? `"${unitTitle}"` : "this unit"} is open.`
+                    : "Boss level: the final interview is open."}
               </p>
               <p className="text-sm text-ink-soft">
                 {view.state === "failed"
                   ? "Try a fresh set of questions. They mix different topics each time."
-                  : "Three questions that mix your topics. Say or type each answer. Pass two for the course badge."}
+                  : `${capitalized(numberWord(questionCount))} questions that mix your topics. Say or type each answer. Pass ${numberWord(passMark)} ${reward}.`}
               </p>
             </div>
           </div>
           <Button pending={pending} onClick={start} className="shrink-0">
-            {view.state === "failed" ? "Try a fresh set" : "Start the final interview"}
+            {view.state === "failed" ? "Try a fresh set" : isUnit ? "Start the unit test" : "Start the final interview"}
           </Button>
         </div>
         {error && <p className="mt-2 text-sm font-semibold text-danger">{error}</p>}
@@ -141,11 +177,11 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
   const current = view.questions[index];
 
   return (
-    <Strip tone="gold">
+    <Strip tone="gold" label={name}>
       <div className="flex flex-col gap-4 lg:max-h-[55dvh] lg:overflow-y-auto">
         <div className="flex flex-wrap items-center gap-3">
           <p className="font-semibold">
-            Final interview, question {index + 1} of {view.questions.length}
+            {name}, question {index + 1} of {view.questions.length}
           </p>
           <ol className="flex gap-1.5" aria-label="Your answers so far">
             {view.questions.map((question, number) => (
@@ -197,10 +233,10 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady }: F
   );
 }
 
-function Strip({ children, tone }: { children: ReactNode; tone?: "gold" }) {
+function Strip({ children, tone, label }: { children: ReactNode; tone?: "gold"; label: string }) {
   return (
     <section
-      aria-label="Final interview"
+      aria-label={label}
       className={clsx(
         "border-b px-4 py-3 sm:px-6",
         tone === "gold" ? "border-amber/40 bg-amber/5" : "border-rule",

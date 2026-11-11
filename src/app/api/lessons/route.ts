@@ -1,23 +1,28 @@
+import { after } from "next/server";
 import { z } from "zod";
-import { getOrCreateLesson, writeNextLessonSoon } from "@/features/lessons";
+import { getOrCreateLesson, writeUnitLessonsSoon, type LessonResponse } from "@/features/lessons";
 import { errorResponse, parseBody } from "@/shared/http";
 import { getUserId } from "@/shared/identity";
 
-// One model call, which the AI module may retry on another provider. A slow Claude model can
-// time out first, so there is room for the normal chain after it.
+// The request itself makes no model call: a new lesson is written after the response (one
+// streamed call of up to 60 s, plus at most one rewrite), inside this route's 120 s.
 export const maxDuration = 120;
 
 const lessonRequest = z.object({ mapId: z.string().min(1).max(100), nodeId: z.string().min(1).max(100) });
 
-/** The saved lesson for a skill, or one written and saved now. A private map is a 404 for strangers. */
+/**
+ * `{ lesson }` once it is saved, else `{ status: "writing", attempt, parts }`: the parts written so
+ * far, with no model answers. The Read tab posts again every 1.5 s while it is writing. A private
+ * map is a 404 for strangers; a failed writer is a 503 sentence once (posting again retries).
+ */
 export async function POST(request: Request) {
   try {
     const { mapId, nodeId } = await parseBody(request, lessonRequest);
     const viewerId = await getUserId();
-    const lesson = await getOrCreateLesson(mapId, nodeId, viewerId);
-    // So the next skill's Read tab is ready when they move on.
-    writeNextLessonSoon(mapId, nodeId, viewerId);
-    return Response.json({ lesson });
+    const reply: LessonResponse = await getOrCreateLesson(mapId, nodeId, viewerId, { background: (task) => after(task) });
+    // Pre-generation rule 4: the next lessons of this unit, once this one is served.
+    if ("lesson" in reply) writeUnitLessonsSoon(mapId, nodeId);
+    return Response.json(reply);
   } catch (error) {
     return errorResponse(error, "Something went wrong on our side, so the lesson could not be loaded. Please try again.");
   }

@@ -143,3 +143,12 @@ describe("summarizeChatbot", () => {
     });
   });
 });
+
+describe("the fetch tap", () => {
+  it("reads tokens and the reply text from a streamed Anthropic reply", async () => {
+    const { anthropicStreamResponse } = await import("@/features/ai/testing");
+    const { readAnthropicStream } = await import("./fetchTap");
+    const body = await anthropicStreamResponse(['{"checkpoints":', "[]}"]).text();
+    expect(readAnthropicStream(body)).toEqual({ promptTokens: 1, completionTokens: 1, reply: '{"checkpoints":[]}' });
+  });
+});

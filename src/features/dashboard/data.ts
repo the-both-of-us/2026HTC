@@ -27,7 +27,15 @@ export type CourseRow = {
   lastActivityAt: string;
 };
 
-export type ProvenItem = { mapId: string; nodeId: string; skillTitle: string; mapTitle: string; provenAt: string };
+export type ProvenItem = {
+  mapId: string;
+  nodeId: string;
+  skillTitle: string;
+  mapTitle: string;
+  provenAt: string;
+  /** A pre-test pass, not an explanation: show it as "Known: passed a pre-test question". */
+  pretest?: true;
+};
 
 export type DashboardData = {
   /** One row per course: your copy stands in for the course it came from. */
@@ -44,7 +52,7 @@ export type DashboardData = {
   activity: string[];
 };
 
-export type MapFacts = { map: SkillMap; proved: { nodeId: string; provenAt: string }[]; isPublic: boolean };
+export type MapFacts = { map: SkillMap; proved: { nodeId: string; provenAt: string; pretest?: true }[]; isPublic: boolean };
 
 /** A copy keeps its title and skills, so this also matches a copy whose original it was not made from. */
 function courseKey(map: SkillMap): string {
@@ -88,7 +96,14 @@ export function assembleDashboard(
       const skillTitle = titles.get(record.nodeId);
       if (skillTitle === undefined || seen.has(record.nodeId)) continue;
       seen.add(record.nodeId);
-      proven.push({ mapId: map.id, nodeId: record.nodeId, skillTitle, mapTitle: map.title, provenAt: record.provenAt });
+      proven.push({
+        mapId: map.id,
+        nodeId: record.nodeId,
+        skillTitle,
+        mapTitle: map.title,
+        provenAt: record.provenAt,
+        ...(record.pretest && { pretest: true as const }),
+      });
       if (record.provenAt > lastActivityAt) lastActivityAt = record.provenAt;
     }
     const row: CourseRow = {

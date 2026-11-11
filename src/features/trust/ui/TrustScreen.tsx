@@ -7,14 +7,17 @@ import { DeleteMyData } from "./DeleteMyData";
 /**
  * From docs/eval-results.md, the grading eval run on Nov 7, 2026. Copied by hand, so if
  * the eval is rerun, update these and the date. Ranges are 95% Wilson intervals.
+ * The eval ran on gpt-oss-120b. Grading now runs on Claude Haiku, so these figures are labelled
+ * with the model they were measured on, and the grading time is left out (it was gpt-oss's).
+ * Rerun `npm run eval` (with the owner's OK, it spends real calls) to replace them.
  */
 const EVAL_RUN = "November 7, 2026";
+const EVAL_MODEL = "gpt-oss-120b";
 const EVAL_NUMBERS: { figure: string; label: string; range?: string }[] = [
   { figure: "70 of 71", label: "test explanations got the verdict their label expected", range: "92 to 100%" },
   { figure: "0 of 48", label: "explanations that should fail were passed", range: "0 to 7%" },
   { figure: "1 of 23", label: "explanations that should pass were failed", range: "1 to 21%" },
   { figure: "8 of 8", label: "made-up quotes planted in a grade were caught by code, with no AI involved" },
-  { figure: "0.53 s", label: "typical time to grade an explanation (0.92 s for the slowest 5%)" },
 ];
 
 /** What we keep, what the AI decides, what a proof means, and the delete button. */
@@ -46,6 +49,12 @@ export function TrustScreen() {
               wrote it: word count, active typing time, whether anything was pasted, typed or spoken.
             </li>
             <li>
+              <strong className="font-medium">Your pre-test results:</strong> if you took a course&apos;s
+              optional pre-test, which topics you answered, whether each was known, missed or skipped, and when.
+              The answers you typed are checked and not kept. The questions themselves are shared by every
+              learner of the course.
+            </li>
+            <li>
               <strong className="font-medium">What you chose to share:</strong> evidence pages (with
               the name you typed) and courses you published. Anyone with an evidence page&apos;s link
               can read it until you withdraw it.
@@ -70,20 +79,16 @@ export function TrustScreen() {
               days.
             </li>
             <li>
-              <strong className="font-medium">Settings:</strong> your AI speed and any model you
-              picked per task on /settings.
-            </li>
-            <li>
               <strong className="font-medium">Only in this browser:</strong> unsent drafts, the
               theme, the text size and the Accessible learning mode setting.
             </li>
           </ul>
           <p>
             It is kept in the app&apos;s cloud storage. Postings, explanations and answers are sent
-            to an AI model (gpt-oss-120b, on Cerebras first, with other providers as backups) to
-            build maps and grade. Hard or high-stakes courses, and psychology, health and law, have
-            their maps and lessons written by Claude Sonnet from Anthropic instead, with gpt-oss-120b
-            as the backup. Why these two models is on the model comparison page in Settings. When you speak instead of typing, the audio goes to a speech-to-text
+            to an AI model (Claude Haiku, from Anthropic) to build maps and lessons and to grade.
+            Courses and lessons made from a topic are saved once and shared, so two learners who ask
+            for the same course get the same one. They hold no names, accounts or source text.
+            When you speak instead of typing, the audio goes to a speech-to-text
             service and we keep only the words.
           </p>
         </Section>
@@ -166,7 +171,7 @@ export function TrustScreen() {
                 The chatbot figures come from saved runs with the older pass mark of 70, read against
                 today&apos;s rules, not rerun.
               </li>
-              <li>Measured on {EVAL_RUN}. The full report is docs/eval-results.md in our repository.</li>
+              <li>Measured with {EVAL_MODEL} on {EVAL_RUN}, before grading moved to Claude Haiku. The full report is docs/eval-results.md in our repository.</li>
             </ul>
           </div>
         </Section>
@@ -188,7 +193,7 @@ export function TrustScreen() {
 
         <Section title="Delete my data" id="delete">
           <p>
-            Deletes your maps, attempts, scores, proven skills and grid answers from our storage, takes down any
+            Deletes your maps, attempts, scores, proven skills, pre-test results and grid answers from our storage, takes down any
             evidence page or course you published, takes you out of every study circle (and closes the ones you started), and starts this browser as a new guest. If someone
             started a copy of a course you published, their copy is theirs and stays.
           </p>

@@ -216,3 +216,128 @@ export function validateNodes(rawNodes: RawNode[], source: string, kind: SourceK
     checkpoints: node.checkpoints.map(cleanText),
   }));
 }
+
+/*
+ * Units. A unit's topics come from the syllabus, so the model only fills in each node's why,
+ * links and checkpoints. Code keeps only the topics it knows, takes the title and the syllabus
+ * fields from the syllabus and makes the node id equal the topic id.
+ */
+
+/**
+ * Node counts per kind of map. Legacy maps (posting, PDF, topic, course) keep 5 to 14 exactly as
+ * before. A degree unit plans 4 to 6 topics and is usable from 3. A quick course's single unit
+ * plans 6 to 10 topics and keeps the old floor of 5.
+ */
+export const NODE_LIMITS = {
+  legacy: { min: 5, max: MAX_NODES },
+  quickUnit: { min: 5, max: MAX_NODES },
+  degreeUnit: { min: 3, max: 6 },
+} as const;
+
+export type NodeLimitKind = keyof typeof NODE_LIMITS;
+
+/** A planned topic as validation needs it: the syllabus topic with its unit. */
+export type UnitTopic = {
+  id: string;
+  title: string;
+  objectives: string[];
+  keyTerms: string[];
+  inScope: string;
+  outOfScope: string;
+  buildsOn: string[];
+};
+
+/** A unit node the model wrote: only the parts it is allowed to write. */
+export type RawUnitNodeInput = { id: string; why: string; prerequisites: string[]; checkpoints: string[] };
+
+/**
+ * Turns a unit reply into nodes, in syllabus order.
+ * - A node whose id (or slug of it) is not a topic of this unit is dropped; the first node for a
+ *   topic wins. Ids already in the map (`takenIds`) are never reused.
+ * - Checkpoints are cleaned as for any map (3 or 4 kept, else the node is dropped).
+ * - Links: the syllabus's own `buildsOn` inside the unit plus the model's links, kept only when
+ *   they point to an earlier topic of the unit (the syllabus order is the learning order), so
+ *   there are no self-links and no loops, and the first topic is a root.
+ * - Title, objectives, key terms and scope come from the syllabus; `why` falls back to the
+ *   topic's scope line when the model left it empty.
+ * - At most `max` nodes, in syllabus order.
+ */
+export function validateUnitNodes(
+  rawNodes: RawUnitNodeInput[],
+  unitId: string,
+  topics: UnitTopic[],
+  takenIds: Iterable<string> = [],
+  max: number = NODE_LIMITS.degreeUnit.max,
+): SkillNode[] {
+  const taken = new Set(takenIds);
+  const topicById = new Map<string, UnitTopic>();
+  const topicIdByKey = new Map<string, string>();
+  for (const topic of topics) {
+    if (taken.has(topic.id) || topicById.has(topic.id)) continue;
+    topicById.set(topic.id, topic);
+    topicIdByKey.set(topic.id, topic.id);
+    const idSlug = toSlug(topic.id);
+    if (idSlug && !topicIdByKey.has(idSlug)) topicIdByKey.set(idSlug, topic.id);
+    const titleSlug = toSlug(topic.title);
+    if (titleSlug && !topicIdByKey.has(titleSlug)) topicIdByKey.set(titleSlug, topic.id);
+  }
+  const resolve = (text: string) => topicIdByKey.get(text) ?? topicIdByKey.get(toSlug(text));
+
+  // The first usable reply for each known topic, so a repair reply appended after the first
+  // fills only what the first left out or got wrong.
+  const byTopic = new Map<string, RawNode>();
+  for (const raw of rawNodes) {
+    const topicId = resolve(raw.id);
+    if (!topicId || byTopic.has(topicId)) continue;
+    const topic = topicById.get(topicId)!;
+    const [usable] = cleanCheckpoints([
+      {
+        id: topicId,
+        title: topic.title,
+        why: raw.why,
+        prerequisites: raw.prerequisites,
+        fromSource: false,
+        quote: null,
+        checkpoints: raw.checkpoints,
+      },
+    ]);
+    if (usable) byTopic.set(topicId, usable);
+  }
+
+  const withCheckpoints = topics
+    .flatMap((topic) => {
+      const node = byTopic.get(topic.id);
+      return node && topicById.get(topic.id) === topic ? [node] : [];
+    })
+    .slice(0, max);
+
+  // The syllabus lists topics in learning order, so a link may only point to an earlier topic.
+  const position = new Map(topics.map((topic, index) => [topic.id, index]));
+  const linkedRaw = withCheckpoints.map((node) => {
+    const topic = topicById.get(node.id)!;
+    const own = position.get(node.id) ?? 0;
+    const fromModel = node.prerequisites.map((text) => resolve(text) ?? "");
+    const earlier = [...topic.buildsOn, ...fromModel].filter((id) => (position.get(id) ?? Infinity) < own);
+    return { ...node, prerequisites: earlier };
+  });
+  const rooted = ensureRoot(breakCycles(dropBadPrerequisites(linkedRaw)));
+
+  return rooted.map((node) => {
+    const topic = topicById.get(node.id)!;
+    return {
+      id: node.id,
+      title: cleanText(topic.title),
+      why: cleanText(node.why) || cleanText(topic.inScope),
+      prerequisites: node.prerequisites,
+      fromSource: false,
+      citation: null,
+      checkpoints: node.checkpoints.map(cleanText),
+      unitId,
+      topicId: topic.id,
+      objectives: topic.objectives.map(cleanText).filter(Boolean),
+      keyTerms: topic.keyTerms.map(cleanText).filter(Boolean),
+      inScope: cleanText(topic.inScope),
+      outOfScope: cleanText(topic.outOfScope),
+    };
+  });
+}

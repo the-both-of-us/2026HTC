@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { chatJSON, type Tier } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
+import { CHECK_MAX_TOKENS, CHECK_TOTAL_MS } from "./grading";
 import type { Grade, SkillNode } from "@/shared/types";
 import { ANSWER_NOTE, forAudience, QUESTION_NOTE } from "./audience";
 import { numberedList } from "./grading";
@@ -23,15 +24,15 @@ export async function generateFollowUp(
   explanation: string,
   grade: Grade,
   audience = "",
-  tier?: Tier,
 ): Promise<string> {
   const reply = await chatJSON({
+    profile: "check",
     label: "teachback-followup-question",
     system: forAudience(QUESTION_SYSTEM, audience, QUESTION_NOTE),
     prompt: `Skill: ${node.title}\n\nWeakest area, which you must not reveal:\n${describeWeakestArea(grade)}\n\n${wrapLearnerText(explanation)}`,
     schema: questionReplySchema,
-    timeoutMs: 20_000,
-    tier,
+    maxTokens: CHECK_MAX_TOKENS,
+    totalMs: CHECK_TOTAL_MS,
   });
   return reply.question;
 }
@@ -61,18 +62,18 @@ export async function gradeFollowUp(
   question: string,
   answer: string,
   audience = "",
-  tier?: Tier,
 ): Promise<FollowUpResult> {
   if (answer.trim() === "") {
     return { passed: false, feedback: "There was no answer to check, so this one did not pass." };
   }
 
   return chatJSON({
+    profile: "check",
     label: "teachback-followup-grade",
     system: forAudience(ANSWER_SYSTEM, audience, ANSWER_NOTE),
     prompt: `Skill: ${node.title}\n\nTheir earlier explanation:\n${wrapLearnerText(explanation)}\n\nFollow-up question:\n${question}\n\nTheir answer:\n${wrapLearnerText(answer)}`,
     schema: answerReplySchema,
-    timeoutMs: 20_000,
-    tier,
+    maxTokens: CHECK_MAX_TOKENS,
+    totalMs: CHECK_TOTAL_MS,
   });
 }

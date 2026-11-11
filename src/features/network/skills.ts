@@ -2,7 +2,7 @@
 import { getOwnProofForMap } from "@/features/proof";
 import { deriveNodeStates, listMapsByOwner } from "@/features/skill-map";
 import { getProgress } from "@/features/teachback";
-import type { SkillMap } from "@/shared/types";
+import { isPretestProof, type SkillMap } from "@/shared/types";
 import { toSkillSet } from "./matching";
 import type { DemoSkills, ProvenSkill, SkillSet } from "./types";
 
@@ -16,7 +16,8 @@ async function evidenceFor(userId: string, map: SkillMap): Promise<{ path: strin
   try {
     const record = await getOwnProofForMap(userId, map.id);
     if (!record || record.state !== "live" || record.ownerId !== userId) return null;
-    return { path: `/proof/${record.id}`, nodeIds: new Set(record.snapshot.skills.map((skill) => skill.nodeId)) };
+    const shown = [...record.snapshot.skills, ...(record.snapshot.knownByPretest ?? [])].map((skill) => skill.nodeId);
+    return { path: `/proof/${record.id}`, nodeIds: new Set(shown) };
   } catch (error) {
     // A missing evidence page only costs a link, so the rest of the profile still shows.
     console.error("[network] could not read an evidence page", error);
@@ -38,6 +39,7 @@ async function skillsOnMap(userId: string, map: SkillMap): Promise<{ proven: Pro
         title: node.title,
         mapTitle: map.title,
         evidenceUrl: evidence?.nodeIds.has(node.id) ? evidence.path : null,
+        ...(isPretestProof(progress?.proven[node.id]) && { pretest: true as const }),
       });
     } else {
       learning.push(node.title);

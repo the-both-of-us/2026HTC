@@ -12,13 +12,12 @@ const STEPS: { by: "AI" | "Code"; text: string }[] = [
 ];
 
 /**
- * From docs/eval-results.md, the grading eval run on Nov 7, 2026. Copied by hand, so if the eval
- * is rerun, update these with it.
+ * From docs/eval-results.md, the grading eval run on Nov 7, 2026 with gpt-oss-120b, before grading
+ * moved to Claude Haiku. Copied by hand, so if the eval is rerun, update these with it. Its speed
+ * and cost figures were gpt-oss's, so they are not shown.
  */
 const MEASURED = [
-  "0.53 s to grade a typical explanation, 0.92 s for the slowest 5%, measured from a laptop.",
-  "About $0.00072 per grade, estimated from token counts and Cerebras's list price.",
-  "0 of 48 answers that should fail passed the written check. The test answers were written by an AI, not real learners.",
+  "0 of 48 answers that should fail passed the written check (measured with gpt-oss-120b on Nov 7, 2026, before grading moved to Claude Haiku). The test answers were written by an AI, not real learners.",
 ];
 
 /** A short "How it works" dialog, for the front page and the map. */

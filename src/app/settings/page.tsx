@@ -3,7 +3,7 @@ import { SettingsScreen } from "@/features/settings";
 
 export const metadata: Metadata = {
   title: "Settings",
-  description: "Appearance, accessibility, and which AI models write and check your courses.",
+  description: "Appearance, accessibility, and friends and privacy.",
 };
 
 export default function SettingsPage() {

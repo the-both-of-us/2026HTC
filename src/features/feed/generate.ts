@@ -1,32 +1,31 @@
-import { chatJSON, type RouteName } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
 import { buildCardsPrompt, CARDS_SYSTEM_PROMPT, rawCardsSchema, type RawCards } from "./prompt";
 import { cardsProblem } from "./validate";
 
-/** Each request to a provider may take this long. About 8 short cards is a small reply. */
-const REQUEST_TIMEOUT_MS = 30_000;
+/** The whole call may take this long. About 8 short cards is a small reply. */
+const TOTAL_MS = 30_000;
 
 export type BatchOptions = {
   /** Titles of the cards people engaged with most, so the batch follows what works. */
   loved?: string[];
   /** Every title already in the pool, so nothing repeats. */
   usedTitles?: string[];
-  /** Which route to try first. gpt-oss-120b on Cerebras by default. */
-  route?: RouteName;
 };
 
 /** One model call for one batch of cards about an interest. */
-export async function askModelForCards(name: string, { loved = [], usedTitles = [], route = "cerebras" }: BatchOptions = {}): Promise<RawCards> {
+export async function askModelForCards(name: string, { loved = [], usedTitles = [] }: BatchOptions = {}): Promise<RawCards> {
   const schema = rawCardsSchema.superRefine((reply, context) => {
     const problem = cardsProblem(reply, usedTitles);
     if (problem) context.addIssue({ code: "custom", message: problem });
   });
   return chatJSON({
+    // Short JSON with no hard thinking, but 6k tokens and 30 s are more than the check profile allows.
+    profile: "write",
     label: "feed-pool",
     system: CARDS_SYSTEM_PROMPT,
     prompt: buildCardsPrompt(name, { loved, usedTitles }),
     schema,
-    maxTokens: 3000,
-    timeoutMs: REQUEST_TIMEOUT_MS,
-    preferredRoute: route,
+    maxTokens: 6000,
+    totalMs: TOTAL_MS,
   });
 }

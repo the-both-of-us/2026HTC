@@ -1,4 +1,3 @@
-import type { RouteName } from "@/features/ai";
 import { claimDoc, getDoc, putDoc } from "@/shared/store";
 import { interestEvents, marksOf, statsOf, type InterestEvents } from "./events";
 import { findSeedPool } from "./fixtures";
@@ -99,14 +98,14 @@ export function topCards(cards: PoolCard[], events: InterestEvents, count = 5): 
  * One new batch for an interest: the model gets the best-engaged titles as "what people loved"
  * and every title in the pool to avoid. Then the pool is rotated down to CARD_CAP.
  */
-export async function addBatch(interest: Interest, route: RouteName = "cerebras"): Promise<PoolCard[]> {
+export async function addBatch(interest: Interest): Promise<PoolCard[]> {
   const pending = inFlight.get(interest.slug);
   if (pending) return pending;
   const task = (async () => {
     const [doc, events] = await Promise.all([cardDoc(interest, Date.now(), true), interestEvents(interest.slug)]);
     const usedTitles = doc.cards.map((card) => card.title);
     const loved = topCards(doc.cards, events).map((card) => card.title);
-    const reply = await askModelForCards(interest.name, { loved, usedTitles, route });
+    const reply = await askModelForCards(interest.name, { loved, usedTitles });
     const fresh = toPoolCards(reply, interest.slug, { usedTitles, startAt: doc.nextN });
     const all = [...doc.cards, ...fresh];
     const { keep } = rotatePool(all, statsMap(all, events), CARD_CAP);

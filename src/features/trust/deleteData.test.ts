@@ -151,6 +151,7 @@ describe("deleteUserData", () => {
       circles: 0,
       networkProfiles: 1,
       reviewRecords: 4,
+      pretests: 0,
     });
     expect(await getSkillMap(me.map.id)).toBeNull();
     expect(await getAttempt(me.attempt.id)).toBeNull();
@@ -207,5 +208,39 @@ describe("deleteUserData", () => {
       networkProfiles: 1,
       reviewRecords: 4,
     });
+  });
+});
+
+describe("deleteUserData and canonical course content", () => {
+  it("keeps a catalog course's syllabus, units and lessons when the learner who generated it deletes their data", async () => {
+    const { saveSkillMap } = await import("@/features/skill-map");
+    const userId = randomUUID();
+    const courseId = randomUUID();
+    const map: SkillMap = {
+      id: randomUUID(),
+      ownerId: userId,
+      courseId,
+      title: "Introduction to Psychology",
+      subtitle: "",
+      sourceKind: "topic",
+      sourceText: "Introduction to Psychology",
+      nodes: [],
+      createdAt: "2026-11-11T10:00:00.000Z",
+    };
+    await saveSkillMap(map);
+    const canonical = [
+      `catalog/courses/${courseId}`,
+      `catalog/syllabi/${courseId}`,
+      `unit-nodes/${courseId}/u1`,
+      `lessons/${courseId}/memory`,
+      `quiz/${courseId}/memory`,
+      `flashcards/${courseId}/memory`,
+    ];
+    for (const key of canonical) await putDoc(key, { id: courseId });
+
+    await deleteUserData(userId);
+
+    expect(await getSkillMap(map.id)).toBeNull();
+    for (const key of canonical) expect(await getDoc(key), key).not.toBeNull();
   });
 });

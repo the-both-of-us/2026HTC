@@ -1,4 +1,5 @@
 export { Badge } from "./Badge";
+export { PretestBadge } from "./PretestBadge";
 export { Button, buttonClasses } from "./Button";
 export { Card } from "./Card";
 export { ComingSoon } from "./ComingSoon";

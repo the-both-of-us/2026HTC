@@ -1,16 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { chatJSON } from "@/features/ai";
+import { chatJSON, streamLines } from "@/features/ai";
 import { generateSkillMap } from "@/features/skill-map";
 import { unlockNode } from "@/features/teachback";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { getOrCreateLesson } from "../lessons";
+import { lessonIn } from "../testing";
 import { lessonProblem } from "../validate";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
   chatJSON: vi.fn(),
+  streamLines: vi.fn(),
 }));
+vi.mock("@/shared/store/once", async () => await import("@/shared/store/onceFake"));
 
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
@@ -27,10 +30,11 @@ describe.each(SAMPLE_POSTINGS)("saved lessons for $id", (sample) => {
     for (const node of map.nodes) {
       // Lessons are only written for open skills, so open each one the learner's way.
       await unlockNode(owner, map.id, node.id);
-      const lesson = await getOrCreateLesson(map.id, node.id, owner);
+      const lesson = lessonIn(await getOrCreateLesson(map.id, node.id, owner));
       expect(lessonProblem(lesson, node.checkpoints), node.id).toBeNull();
       expect(lesson.readingMinutes, node.id).toBeGreaterThanOrEqual(3);
     }
     expect(chatJSON).not.toHaveBeenCalled();
+    expect(streamLines).not.toHaveBeenCalled();
   });
 });

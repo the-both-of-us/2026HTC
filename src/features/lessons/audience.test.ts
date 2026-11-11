@@ -1,24 +1,27 @@
 import { createHash, randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { chatJSON } from "@/features/ai";
+import { streamLines } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { getOrCreateLesson } from "./lessons";
 import {
   buildLessonPrompt,
   LESSON_SYSTEM_PROMPT,
+  lessonLinesSystemPrompt,
   lessonSystemPrompt,
   TARGET_WORDS,
   targetWords,
   YOUNG_TARGET_WORDS,
   type RawLesson,
 } from "./prompt";
+import { lessonIn, replyWith } from "./testing";
 import { lessonProblem, MIN_WORDS, wordLimits } from "./validate";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
-  chatJSON: vi.fn(),
+  streamLines: vi.fn(),
 }));
+vi.mock("@/shared/store/once", async () => await import("@/shared/store/onceFake"));
 
 const hash = (text: string) => createHash("sha256").update(text).digest("hex").slice(0, 16);
 const GRADE_1 = "Grade 1 students (about 6 years old)";
@@ -56,7 +59,7 @@ function lessonOf(words: number, code: string | null = null): RawLesson {
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   vi.stubEnv("S3_BUCKET", "");
-  vi.mocked(chatJSON).mockReset();
+  vi.mocked(streamLines).mockReset();
 });
 
 describe("lesson prompt and audience", () => {
@@ -112,11 +115,14 @@ describe("lesson cache and audience", () => {
     await putDoc(`maps/${mapId}`, map);
     // A lesson written before audiences existed, saved under the plain key.
     await putDoc(`lessons/${mapId}/${NODE.id}`, { lesson: { idea: ["ADULT"] }, createdAt: "2026-11-07T10:00:00.000Z" });
-    vi.mocked(chatJSON).mockResolvedValue(lessonOf(300));
+    vi.mocked(streamLines).mockImplementation(replyWith(lessonOf(300, "for i in range(10): print(i)")));
 
-    const lesson = await getOrCreateLesson(mapId, NODE.id, OWNER);
+    const lesson = lessonIn(await getOrCreateLesson(mapId, NODE.id, OWNER));
     expect(lesson.idea[0]).not.toBe("ADULT");
-    expect(vi.mocked(chatJSON).mock.calls[0][0].system).toBe(lessonSystemPrompt(GRADE_1));
+    // A young reader's example never has code, even when the model wrote some.
+    expect(lesson.example.code).toBeNull();
+    expect(vi.mocked(streamLines).mock.calls[0][0].system).toBe(lessonLinesSystemPrompt(GRADE_1));
+    expect(lessonLinesSystemPrompt(GRADE_1).startsWith(lessonSystemPrompt(GRADE_1))).toBe(true);
     expect(await getDoc(`lessons/${mapId}/${NODE.id}/grade-1-students-about-6-years-old`)).not.toBeNull();
   });
 });

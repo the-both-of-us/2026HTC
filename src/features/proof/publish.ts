@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { listGridSolves } from "@/features/grid";
 import { deriveNodeStates, getSkillMap, isEnergyRelated } from "@/features/skill-map";
-import { getAttempt, getPassedFinal, getProgress } from "@/features/teachback";
+import { getAttempt, getPassedFinal, getProgress, listProvedNodes } from "@/features/teachback";
 import { deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
-import type { Attempt, SkillMap } from "@/shared/types";
+import { isPretestProof, type Attempt, type SkillMap } from "@/shared/types";
 import { hashSnapshot, sealFor } from "./hash";
 import { buildSnapshot } from "./snapshot";
 import type { LiveProof, OwnerProofView, ProofRecord, RevokedProof } from "./types";
@@ -36,13 +36,20 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
   const states = deriveNodeStates(map, progress);
 
   const attempts: Record<string, Attempt | null> = {};
+  const provenNodes = map.nodes.filter((node) => states[node.id] === "proven");
   await Promise.all(
-    map.nodes
-      .filter((node) => states[node.id] === "proven")
+    provenNodes
+      .filter((node) => !isPretestProof(progress?.proven[node.id]))
       .map(async (node) => {
         attempts[node.id] = await getAttempt(progress?.proven[node.id] ?? "");
       }),
   );
+  // A pre-test pass has no attempt: it is shown apart, labelled, with only when it was passed.
+  const pretestPasses = provenNodes.some((node) => isPretestProof(progress?.proven[node.id]))
+    ? Object.fromEntries(
+        (await listProvedNodes(map.id, ownerId)).filter((record) => record.pretest).map((record) => [record.nodeId, record.provenAt]),
+      )
+    : {};
 
   // Grid practice is evidence only for a job in the energy sector.
   const gridSolves = isEnergyRelated(map.sourceText) ? await listGridSolves(ownerId) : [];
@@ -59,8 +66,9 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
     attempts,
     gridSolves,
     finalInterview: await getPassedFinal(map.id),
+    pretestPasses,
   });
-  if (snapshot.skills.length === 0) {
+  if (snapshot.skills.length === 0 && !snapshot.knownByPretest?.length) {
     throw new ProofError("Prove at least one skill first. Then there is something to share.", 400);
   }
 

@@ -33,8 +33,8 @@ const CHATBOT_PATH = join(EVAL_DIR, "chatbot.json");
 const REPORT_PATH = join("docs", "eval-results.md");
 
 const RUNS_PER_CASE = 3;
-/** Cerebras allows 30 requests a minute on its free tier, so stay under that. */
-const PAUSE_BETWEEN_GRADES_MS = 2_500;
+/** One grade at a time with a short pause between them. */
+const PAUSE_BETWEEN_GRADES_MS = 1_000;
 
 const readJson = <T>(path: string): T => JSON.parse(readFileSync(path, "utf8"));
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

@@ -1,19 +1,21 @@
 import { randomUUID } from "node:crypto";
 import { after } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { chatJSON } from "@/features/ai";
+import { streamLines } from "@/features/ai";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { getOrCreateLesson } from "./lessons";
-import { writeFirstLesson, writeFirstLessonSoon, writeNextLesson, writeNextLessonSoon } from "./prewrite";
+import { writeFirstLesson, writeFirstLessonSoon, writeUnitLessons, writeUnitLessonsSoon } from "./prewrite";
 import type { RawLesson } from "./prompt";
+import { lessonIn, replyWith } from "./testing";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
-  chatJSON: vi.fn(),
+  streamLines: vi.fn(),
 }));
+vi.mock("@/shared/store/once", async () => await import("@/shared/store/onceFake"));
 vi.mock("next/server", async (importOriginal) => ({ ...(await importOriginal<object>()), after: vi.fn() }));
-const mockChatJSON = vi.mocked(chatJSON);
+const mockStream = vi.mocked(streamLines);
 const mockAfter = vi.mocked(after);
 
 const OWNER = randomUUID();
@@ -37,7 +39,7 @@ let mapId: string;
 beforeEach(async () => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   vi.stubEnv("S3_BUCKET", "");
-  mockChatJSON.mockReset();
+  mockStream.mockReset();
   mockAfter.mockReset();
   mapId = randomUUID();
   const map: SkillMap = {
@@ -58,38 +60,46 @@ describe("writing the first lesson ahead", () => {
   it("only schedules the work, so the map's response is not held up", () => {
     writeFirstLessonSoon(mapId);
     expect(mockAfter).toHaveBeenCalledOnce();
-    expect(mockChatJSON).not.toHaveBeenCalled();
+    expect(mockStream).not.toHaveBeenCalled();
   });
 
   it("writes one lesson, for the first open topic, and the Read tab then serves it with no model call", async () => {
-    mockChatJSON.mockResolvedValue(LESSON);
+    mockStream.mockImplementation(replyWith(LESSON));
     writeFirstLessonSoon(mapId);
     await (mockAfter.mock.calls[0][0] as () => Promise<void>)();
 
-    expect(mockChatJSON).toHaveBeenCalledOnce();
-    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ label: "lesson" });
+    expect(mockStream).toHaveBeenCalledOnce();
+    expect(mockStream.mock.calls[0][0]).toMatchObject({ label: "lesson", profile: "write" });
     expect(await getDoc(`lessons/${mapId}/basics`)).not.toBeNull();
     expect(await getDoc(`lessons/${mapId}/later`)).toBeNull();
     expect(await getDoc(`lessons/${mapId}/other`)).toBeNull();
 
-    const served = await getOrCreateLesson(mapId, "basics", OWNER);
+    const served = lessonIn(await getOrCreateLesson(mapId, "basics", OWNER));
     expect(served.idea.length).toBeGreaterThan(0);
-    expect(mockChatJSON).toHaveBeenCalledOnce();
+    expect(served.writtenBy?.model).toBeTruthy();
+    expect(mockStream).toHaveBeenCalledOnce();
   });
 
-  it("shares the call when the learner opens the tab while it is still being written", async () => {
-    let finish: (lesson: RawLesson) => void = () => {};
-    mockChatJSON.mockReturnValue(new Promise((resolve) => (finish = resolve)) as never);
+  it("shows the learner the parts written so far when they open the tab mid-write, with no second call", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const lines = replyWith(LESSON);
+    mockStream.mockImplementation(async (options) => {
+      await options.onLine({ part: "idea", text: LESSON.idea[0] } as never, 0);
+      await gate;
+      return lines(options);
+    });
     const ahead = writeFirstLesson(mapId);
-    await vi.waitFor(() => expect(mockChatJSON).toHaveBeenCalledOnce());
-    const opened = getOrCreateLesson(mapId, "basics", OWNER);
-    finish(LESSON);
-    await Promise.all([ahead, opened]);
-    expect(mockChatJSON).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(mockStream).toHaveBeenCalledOnce());
+    const opened = await getOrCreateLesson(mapId, "basics", OWNER);
+    expect(opened).toMatchObject({ status: "writing", parts: [{ part: "idea" }] });
+    release();
+    await ahead;
+    expect(mockStream).toHaveBeenCalledOnce();
   });
 
   it("never throws when the model fails or the map is gone", async () => {
-    mockChatJSON.mockRejectedValue(new Error("all providers failed"));
+    mockStream.mockRejectedValue(new Error("unavailable"));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     await expect(writeFirstLesson(mapId)).resolves.toBeUndefined();
     await expect(writeFirstLesson(randomUUID())).resolves.toBeUndefined();
@@ -98,59 +108,49 @@ describe("writing the first lesson ahead", () => {
   });
 });
 
-describe("writing the next lesson ahead", () => {
+describe("writing the unit's next lessons ahead (rule 4)", () => {
+  async function unitMap(): Promise<string> {
+    const id = randomUUID();
+    const inUnit = (nodeId: string, unitId: string) => ({ ...node(nodeId), unitId, topicId: nodeId });
+    await putDoc(`maps/${id}`, {
+      id,
+      ownerId: OWNER,
+      courseId: randomUUID(),
+      title: "Course",
+      subtitle: "",
+      sourceKind: "topic",
+      sourceText: "Course",
+      nodes: [inUnit("a", "u1"), inUnit("b", "u1"), inUnit("c", "u1"), inUnit("d", "u1"), inUnit("e", "u2")],
+      createdAt: new Date().toISOString(),
+    } satisfies SkillMap);
+    return id;
+  }
+
   it("only schedules the work, so the open lesson is not held up", () => {
-    writeNextLessonSoon(mapId, "basics", OWNER);
+    writeUnitLessonsSoon(mapId, "basics");
     expect(mockAfter).toHaveBeenCalledOnce();
-    expect(mockChatJSON).not.toHaveBeenCalled();
+    expect(mockStream).not.toHaveBeenCalled();
   });
 
-  it("writes the next skill in the map's order that is open, skipping locked ones", async () => {
-    mockChatJSON.mockResolvedValue(LESSON);
-    // "later" comes first but is locked; after "basics" the next open one is "other".
-    await writeNextLesson(mapId, "basics", OWNER);
-    expect(mockChatJSON).toHaveBeenCalledOnce();
-    expect(await getDoc(`lessons/${mapId}/other`)).not.toBeNull();
-    expect(await getDoc(`lessons/${mapId}/later`)).toBeNull();
+  it("writes up to 2 unwritten lessons after this one in the same unit, in parallel", async () => {
+    const id = await unitMap();
+    const map = (await getDoc<SkillMap>(`maps/${id}`))!;
+    mockStream.mockImplementation(replyWith(LESSON));
+    await putDoc(`lessons/${map.courseId}/b`, { lesson: { idea: ["saved"] }, createdAt: "x" });
+
+    await writeUnitLessons(id, "a");
+
+    expect(mockStream).toHaveBeenCalledTimes(2);
+    expect(await getDoc(`lessons/${map.courseId}/c`)).not.toBeNull();
+    expect(await getDoc(`lessons/${map.courseId}/d`)).not.toBeNull();
+    // Never past the unit.
+    expect(await getDoc(`lessons/${map.courseId}/e`)).toBeNull();
   });
 
-  it("does nothing after the last skill, or for a stranger's private map", async () => {
-    await writeNextLesson(mapId, "other", OWNER);
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await writeNextLesson(mapId, "basics", randomUUID());
-    warn.mockRestore();
-    expect(mockChatJSON).not.toHaveBeenCalled();
-  });
-});
-
-describe("the model router on lessons", () => {
-  it("asks for a stronger model on a hard, high-stakes course and saves who wrote it", async () => {
-    const map = await getDoc<SkillMap>(`maps/${mapId}`);
-    await putDoc(`maps/${mapId}`, { ...map, rating: { difficulty: 3, stakes: 3 } });
-    mockChatJSON.mockImplementation(async (options) => {
-      options.onServed?.({ route: "anthropic", model: "claude-sonnet-5-5", ms: 12_400 });
-      return LESSON;
-    });
-
-    const lesson = await getOrCreateLesson(mapId, "basics", OWNER);
-    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 3 });
-    expect(lesson.writtenBy).toEqual({ model: "Claude Sonnet", ms: 12_400 });
-  });
-
-  it("keeps an everyday course on tier 1, and an old lesson without writtenBy still loads", async () => {
-    mockChatJSON.mockResolvedValue(LESSON);
-    const lesson = await getOrCreateLesson(mapId, "basics", OWNER);
-    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 1 });
-    expect(lesson.writtenBy).toBeUndefined();
-  });
-
-  it("follows the learner's settings: Fast keeps even a hard course on tier 1", async () => {
-    const map = await getDoc<SkillMap>(`maps/${mapId}`);
-    await putDoc(`maps/${mapId}`, { ...map, rating: { difficulty: 3, stakes: 3 } });
-    await putDoc(`settings/${OWNER}`, { speed: "fast", overrides: {} });
-    mockChatJSON.mockResolvedValue(LESSON);
-
-    await getOrCreateLesson(mapId, "basics", OWNER);
-    expect(mockChatJSON.mock.calls[0][0]).toMatchObject({ tier: 1 });
+  it("does nothing after the unit's last topic, or when no time is left", async () => {
+    const id = await unitMap();
+    await writeUnitLessons(id, "d");
+    await writeUnitLessons(id, "a", Date.now() + 5_000);
+    expect(mockStream).not.toHaveBeenCalled();
   });
 });
