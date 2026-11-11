@@ -4,6 +4,7 @@ import {
   claimProgram,
   getCatalogCourse,
   getFinalSyllabus,
+  isCatalogId,
   readCatalogProgram,
   readCatalogSyllabus,
   resolveAuto,
@@ -22,6 +23,7 @@ import {
   generateUnit,
   getSkillMap,
   isUnitBuilt,
+  listMapsByOwner,
   saveSkillMap,
   unitRail,
   unitStartRule,
@@ -46,6 +48,7 @@ import {
   getCourseClaim,
   getProgramWithPlanning,
   getStoredProgram,
+  listProgramsByOwner,
   releaseCourse,
   saveCourseMapId,
   saveProgram,
@@ -164,19 +167,26 @@ async function createCatalogProgram(input: {
 }): Promise<{ programId: string }> {
   const resolution = input.resolution ?? (await resolveProgram({ text: input.text, audience: input.audience, depth: input.depth, deadline: input.deadline }));
   const catalogId = await programIdFor(resolution, input.text, input.audience, input.depth);
+  return followCatalogProgram({ catalogId, sourceText: input.text, ownerId: input.ownerId, deadline: input.deadline });
+}
+
+/** The learner's own program following one catalog program; no model call here. */
+async function followCatalogProgram(input: { catalogId: string; sourceText: string; ownerId: string; deadline: number }): Promise<{ programId: string }> {
+  const { catalogId } = input;
   const read = await readCatalogProgram(catalogId);
   if (!read) throw new HttpError("We could not set up that program. Please try again.", 500);
+  const depth = read.program.depth;
   const program: Program = {
     id: randomUUID(),
     ownerId: input.ownerId,
     title: read.program.title,
     summary: read.program.summary,
     sourceKind: "topic",
-    sourceText: input.text,
+    sourceText: input.sourceText,
     courses: [],
     createdAt: new Date().toISOString(),
     catalogId,
-    ...(input.depth === "degree" && { depth: "degree" as const }),
+    ...(depth === "degree" && { depth: "degree" as const }),
     ...(read.program.audience && { audience: read.program.audience }),
   };
   await saveProgram(program);
@@ -184,6 +194,55 @@ async function createCatalogProgram(input: {
   // short of the final frame is scheduled; startOnce makes a second planner a no-op.
   if (read.state !== "ready") scheduleProgramPlanning(catalogId, input.deadline);
   return { programId: program.id };
+}
+
+const NOT_SHARED = "That course is not available. Please pick another.";
+const PROGRAM_NOT_SHARED = "That program is not available. Please pick another.";
+
+// On globalThis, so a double click shares one run even if Next loads this file twice.
+const globalStarts = globalThis as typeof globalThis & { oryxCatalogStarts?: Map<string, Promise<unknown>> };
+const startsInFlight = (globalStarts.oryxCatalogStarts ??= new Map());
+
+function once<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const running = startsInFlight.get(key) as Promise<T> | undefined;
+  if (running) return running;
+  const work = run().finally(() => {
+    startsInFlight.delete(key);
+  });
+  startsInFlight.set(key, work);
+  return work;
+}
+
+/**
+ * "Start" on a shared catalog course: the viewer's own map of exactly that course id, or the one
+ * they already have. Zero model calls here; the syllabus and unit 1 build in `after()` only if
+ * they are missing. A missing or unlisted id is a 404. Concurrent starts share one run.
+ */
+export function startCatalogCourse(courseId: string, ownerId: string): Promise<{ mapId: string; created: boolean }> {
+  return once(`course\n${courseId}\n${ownerId}`, async () => {
+    if (!isCatalogId(courseId)) throw new HttpError(NOT_SHARED, 404);
+    const course = await getCatalogCourse(courseId);
+    if (!course || !(await getFinalSyllabus(courseId))) throw new HttpError(NOT_SHARED, 404);
+    const mine = (await listMapsByOwner(ownerId)).find((map) => map.courseId === courseId);
+    if (mine) return { mapId: mine.id, created: false };
+    const map = newCourseMap({ ownerId, course });
+    await saveSkillMap(map);
+    scheduleCourseBuild(courseId, deadlineFrom(), map.id);
+    return { mapId: map.id, created: true };
+  });
+}
+
+/** "Start" on a shared catalog program: the viewer's own program following it, or the one they already have. */
+export function startCatalogProgram(catalogId: string, ownerId: string): Promise<{ programId: string; created: boolean }> {
+  return once(`program\n${catalogId}\n${ownerId}`, async () => {
+    if (!isCatalogId(catalogId)) throw new HttpError(PROGRAM_NOT_SHARED, 404);
+    const read = await readCatalogProgram(catalogId);
+    if (!read || read.state !== "ready" || read.program.courses.length === 0) throw new HttpError(PROGRAM_NOT_SHARED, 404);
+    const mine = (await listProgramsByOwner(ownerId)).find((program) => program.catalogId === catalogId);
+    if (mine) return { programId: mine.id, created: false };
+    const { programId } = await followCatalogProgram({ catalogId, sourceText: read.program.title, ownerId, deadline: deadlineFrom() });
+    return { programId, created: true };
+  });
 }
 
 /**

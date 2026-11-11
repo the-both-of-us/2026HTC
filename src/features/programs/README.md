@@ -14,6 +14,10 @@ A broad goal, such as a job, a degree or "learn web development", becomes a **pr
 - To keep a long path from getting dull, the program page shows topics proved, a badge per finished course and the nearest unlock as one goal.
 - Privacy matches maps: only the owner can open a private program. Anyone else gets the same 404 as a missing one. "Delete my data" removes the learner's programs and maps (`deleteProgramsByOwner`) and never canonical content (`catalog/`, `unit-nodes/`, `lessons/<courseId>/`).
 
+## Starting a shared catalog entry
+
+`startCatalogCourse(courseId, ownerId)` and `startCatalogProgram(catalogId, ownerId)` (`POST /api/catalog/courses/[courseId]/start`, `.../programs/[programId]/start`) back the "Start" button on /courses. They resolve by exact id (no name resolver, no model call), return the viewer's existing map (a map with that `courseId`) or program (one with that `catalogId`) if there is one, and otherwise create it like `createCourseMap` / `createCatalogProgram` do (the syllabus and unit 1 still build in `after()` if missing). A course needs a final syllabus and a program a final frame, else 404. Concurrent starts by one viewer share one run.
+
 ## Sharing (`sharing.ts`)
 
 Mirrors courses, and reuses their rules from `@/features/courses` (author name, sign-in to share once Auth0 is set up, never to unshare or start).

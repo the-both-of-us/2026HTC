@@ -11,3 +11,7 @@ The shared registry of canonical topic courses and programs (wave 2): every topi
 - Canonical docs hold no owner id, no source text and no learner data. Postings and PDFs never enter the catalog.
 
 Tests: `catalog.test.ts` (no call on an exact hit, the 12-candidate cap, a bad pick counts as new, audiences never mix, concurrent claims give one id, no learner words in any canonical key or doc). The cross-feature psychology case is in `features/programs/catalog-flow.test.ts`.
+
+## Browsing (`browse.ts`)
+
+`listSharedCourses({q})` and `listSharedPrograms({q})` list what a person can start without waiting on a model: only courses with a final syllabus (`catalog/syllabi/<id>`, not `planning`, at least one unit) and programs with a final frame and at least one course line. Newest first, at most 60, `q` matches title or summary (case-insensitive substring). Unit and topic counts are counted from the syllabus. The whole list is read once and reused for 30 s (concurrent loads share one), so typing costs no store reads. `SharedCourse` and `SharedProgram` are built field by field; `GET /api/catalog` rebuilds them again, so no owner id, request text or alias hash can reach a response.

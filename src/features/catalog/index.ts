@@ -18,6 +18,16 @@ export {
   readCatalogProgram,
   readCatalogSyllabus,
 } from "./read";
+export {
+  BROWSE_CACHE_MS,
+  listSharedCourses,
+  listSharedPrograms,
+  MAX_BROWSE_RESULTS,
+  resetBrowseCacheForTests,
+  toSharedCourse,
+  toSharedProgram,
+} from "./browse";
+export type { SharedCourse, SharedProgram } from "./browse";
 export { claimCourse, claimCourseAlias, claimProgram, findCourseByName } from "./claims";
 export { checkedPick, MAX_CANDIDATES, resolveAuto, resolveCourse, resolveCourses, resolveProgram } from "./resolve";
 

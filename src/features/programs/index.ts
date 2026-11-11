@@ -9,6 +9,8 @@ export {
   openCourse,
   PROGRAM_NOT_FOUND,
   resumePlanning,
+  startCatalogCourse,
+  startCatalogProgram,
   startUnit,
 } from "./programs";
 export { ensureCourseBuilt, ensureProgramPlanned, syllabusContextFor, type CourseBuildResult, type EnsureResult } from "./build";

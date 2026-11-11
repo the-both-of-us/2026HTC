@@ -10,6 +10,10 @@ The UI is exported from `@/features/courses/client`: `CoursesScreen` (`/courses`
 
 **Status:** built, except the map header button (below).
 
+## Shared catalog on /courses
+
+`SharedCatalog` (`ui/SharedCatalog.tsx`) sits under the Programs shelf and uses the page's search box. It calls `GET /api/catalog?q=` (`{courses, programs}` from `@/features/catalog`, finished AI-written entries only; see that feature) and shows "Shared programs" and "Shared courses", each labelled AI-written and not published by a person. Both sections hide when empty. **Start** calls `POST /api/catalog/courses/[courseId]/start` (`{id}`, then opens `/map/<id>`) or `POST /api/catalog/programs/[programId]/start` (`{programId}`, then opens `/program/<id>`). These make no model call, reuse the viewer's existing map or program of that entry, and 404 an unknown or unfinished id. `ui/sharedCatalog.test.tsx` renders the section; `src/app/api/catalog/routes.test.ts` covers the routes.
+
 ## Storage
 
 | Key | Holds |

@@ -7,6 +7,7 @@ import { Button, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 import type { CourseSort, PublicCourse } from "../types";
 import { fetchCourses, type Result } from "./api";
 import { CourseCard } from "./CourseCard";
+import { SharedCatalog } from "./SharedCatalog";
 import { courseHref, hasSample, resultsSummary, SAMPLE_NOTE, SEARCH_DEBOUNCE_MS } from "./courseView";
 
 type Loaded = { key: string; query: string; result: Result<{ courses: PublicCourse[] }> };
@@ -86,7 +87,7 @@ export function CoursesScreen() {
     <PageShell width="wide">
       <h1 className="text-3xl font-medium">Courses</h1>
       <p className="mt-2 max-w-2xl text-lg text-ink-soft">
-        Skill maps and programs that people chose to share. Open one to see what it covers, in learning order.
+        Skill maps and programs that people chose to share, and AI-written courses that already exist. Open one to see what it covers, in learning order.
       </p>
 
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -121,6 +122,7 @@ export function CoursesScreen() {
 
       <div className="mt-6 flex flex-col gap-4">
         <PublicPrograms query={query} />
+        <SharedCatalog query={query} />
         {showLoadingLine ? (
           <p
             ref={loadingLine}

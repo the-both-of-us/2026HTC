@@ -22,6 +22,8 @@ const STARTS_BACKGROUND = [
   /openCourse\(/,
   /createProgramOrMap\(/,
   /createCourseMap\(/,
+  /startCatalogCourse\(/,
+  /startCatalogProgram\(/,
   /resumePlanning\(/,
   /startPretest\(/,
   /submitPretestAnswers\(/,
