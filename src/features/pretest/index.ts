@@ -3,7 +3,8 @@ import "server-only";
 /* The course pre-test (server). See README.md. There is no client code here yet. */
 
 export { ensureQuestionSet, readQuestionSet, QUESTIONS_MAX_TOKENS, QUESTIONS_TOTAL_MS } from "./generate";
-export { classifyAnswer, gradeUnit, MAX_PRETEST_ANSWER_CHARACTERS } from "./grade";
+export { gradeUnit } from "./grade";
+export { presentSet } from "./layout";
 export { answersBody } from "./http";
 export { dismissPretest, getPretestView, startPretest, stopPretest, submitPretestAnswers } from "./pretest";
 export type { PretestOptions } from "./pretest";
@@ -16,6 +17,7 @@ export type {
   PretestOutcome,
   PretestQuestionView,
   PretestResultView,
+  PretestReviewView,
   PretestState,
   PretestUnitView,
   PretestView,

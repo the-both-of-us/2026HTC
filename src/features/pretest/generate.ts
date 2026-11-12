@@ -2,7 +2,7 @@ import { chatJSON } from "@/features/ai";
 import { readOnce, startOnce } from "@/shared/store/once";
 import type { SyllabusUnit } from "@/shared/types";
 import { buildQuestionsPrompt, orderQuestions, questionsReplySchema, QUESTIONS_SYSTEM, type CourseContext } from "./prompt";
-import { setKey } from "./storage";
+import { discardOldSet, isMultipleChoiceSet, setKey } from "./storage";
 import type { PretestQuestionSet } from "./types";
 
 /** One unit's questions: the write profile, 6k tokens and 40 s for the whole call, repair included. */
@@ -26,12 +26,13 @@ export type SetState = { state: "ready"; set: PretestQuestionSet } | { state: "r
 /** Reads a unit's question set without writing anything. */
 export async function readQuestionSet(courseId: string, unitId: string): Promise<SetState> {
   const read = await readOnce<PretestQuestionSet>(setKey(courseId, unitId));
-  if (read.state === "ready") return { state: "ready", set: read.value };
+  // A set written before multiple choice reads as missing, so the learner is not stuck on it.
+  if (read.state === "ready") return isMultipleChoiceSet(read.value) ? { state: "ready", set: read.value } : { state: "idle" };
   return { state: read.state };
 }
 
 /**
- * Writes a unit's questions once for every learner of the course, under
+ * Writes a unit's multiple-choice questions once for every learner of the course, under
  * `startOnce("pretest-sets/<courseId>/<unitId>")`: one model call (plus chatJSON's one repair).
  * Zero calls when the set exists or someone else is writing it, and none when the deadline
  * cannot fit the call. Resolves when this call's own work is done; never throws.
@@ -40,6 +41,8 @@ export async function ensureQuestionSet(input: SetInput): Promise<SetState> {
   const key = setKey(input.courseId, input.unit.id);
   if (input.deadline - Date.now() < QUESTIONS_TOTAL_MS) return readQuestionSet(input.courseId, input.unit.id);
   const topicIds = input.unit.topics.map((topic) => topic.id);
+  // A short-answer set from before multiple choice is dropped here (the write is certain to be tried).
+  await discardOldSet(input.courseId, input.unit.id).catch(() => undefined);
   const started = await startOnce<PretestQuestionSet>(key, async () => {
     const reply = await chatJSON({
       profile: "write",

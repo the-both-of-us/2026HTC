@@ -160,6 +160,36 @@ describe("SyllabusDocument", () => {
     const html = renderToStaticMarkup(<SyllabusDocument view={view} />);
     for (const text of ["Explain behaviour", "Memory", "Define encoding", "encoding", "4 questions, pass mark 3", "6 questions, pass mark 4"]) expect(html).toContain(text);
   });
+  it("labels passed tests as multiple choice with their scores", () => {
+    const passed: SyllabusView = {
+      ...view,
+      units: [{ ...view.units[0], test: "passed", testScore: "5 of 6, multiple choice" }],
+      assessment: { ...view.assessment, final: "passed", finalScore: "8 of 10, multiple choice" },
+    };
+    const html = renderToStaticMarkup(<SyllabusDocument view={passed} />);
+    expect(html).toContain("unit test passed (5 of 6, multiple choice)");
+    expect(html).toContain("(passed: 8 of 10, multiple choice)");
+    expect(html).toContain("A multiple-choice final test");
+
+    const program: ProgramView = {
+      ...degree,
+      courses: [
+        {
+          ...degreeCourses[0],
+          badge: true,
+          state: "done",
+          finalScore: "8 of 10, multiple choice",
+          units: [{ ...degreeCourses[0].units![0], state: "done", test: "passed", testScore: "5 of 6, multiple choice" }],
+          final: "passed",
+        },
+      ],
+    };
+    const page = renderToStaticMarkup(<ProgramScreen program={program} />);
+    expect(page).toContain("Final test: 8 of 10, multiple choice");
+    expect(page).toContain("test passed (5 of 6, multiple choice)");
+    expect(page).not.toMatch(/final interview/i);
+  });
+
   it("shows the units so far while the syllabus is being written", () => {
     const planning: LiveSyllabusView = { ...view, planning: true, status: "draft" };
     const html = renderToStaticMarkup(<SyllabusDocument view={planning} />);

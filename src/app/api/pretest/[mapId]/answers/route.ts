@@ -2,13 +2,13 @@ import { answersBody, submitPretestAnswers } from "@/features/pretest";
 import { errorResponse, parseBody } from "@/shared/http";
 import { getUserId } from "@/shared/identity";
 
-// One check call (at most 15 s) in the request; the next unit's questions are written after the
-// response, inside this route's 120 s.
+// Grading is plain code (no model call); the next unit's questions are written after the response,
+// inside this route's 120 s.
 export const maxDuration = 120;
 
 /**
- * Grades one unit's answers (PretestView with the new results). 400 bad body, 409 not the current
- * unit / not started / ended / busy, 503 the check failed (nothing recorded: send again).
+ * Grades one unit's multiple-choice answers (PretestView with the new results and their review).
+ * 400 bad body, 409 not the current unit (also a unit sent twice) / not started / ended / busy.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ mapId: string }> }) {
   try {

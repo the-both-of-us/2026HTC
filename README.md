@@ -12,7 +12,7 @@ Hack the Change 2026, Prompt 2. For students and curious people: learn a topic, 
 2. **Shared catalog and pre-test.** A topic course or program is generated once and reused by everyone who asks for the same subject. A topic course offers an optional, skippable pre-test so you do not repeat what you know.
 3. **Pick a topic.** Topics unlock as you prove the ones before them.
 4. **Read.** A 3 to 5 minute lesson, plus flashcards and a quiz.
-5. **Prove it** in a format that rotates by topic: *Explain it*, *Catch the AI's mistake*, *Explain it to a 10-year-old*, *Say it in 30 seconds*. Finish a course with a typed **final interview** and earn its badge.
+5. **Prove it** in a format that rotates by topic: *Explain it*, *Catch the AI's mistake*, *Explain it to a 10-year-old*, *Say it in 30 seconds*. Pass a multiple-choice **unit test** after each unit and a multiple-choice **final test** to earn the course badge.
 6. **Share an evidence page** with a QR code. Anyone can check what you proved, how (which format, pasted or not, active time), and the quotes behind it, without trusting our AI.
 
 **Together:** start a **study circle**, share its QR code to join, and watch a live feed and a weekly race.
@@ -60,4 +60,4 @@ Environment variable names (see `.env.example`): `SESSION_SECRET`, `BLOB_READ_WR
 
 ## Prior work
 
-OryxLearn is a rebuild, with all-new code, of our earlier OryxLearn project. A judge okayed reusing its features and ideas; no code was copied. New this weekend: the grading method with code-checked quotes and the eval, PDF citations, programs, the Read lessons, the four proving formats and the final interview, study circles, streaks, the evidence page and the /trust page.
+OryxLearn is a rebuild, with all-new code, of our earlier OryxLearn project. A judge okayed reusing its features and ideas; no code was copied. New this weekend: the grading method with code-checked quotes and the eval, PDF citations, programs, the Read lessons, the four proving formats and the multiple-choice unit and final tests, study circles, streaks, the evidence page and the /trust page.

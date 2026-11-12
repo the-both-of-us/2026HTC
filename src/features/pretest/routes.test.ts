@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AiUnavailableError, chatJSON } from "@/features/ai";
-import { fakeChat, KEY_MARK, seedCourse, seedPostingMap, seedSets } from "./test-fixtures";
+import { chatJSON } from "@/features/ai";
+import { answersFor, fakeChat, KEY_MARK, seedCourse, seedPostingMap, seedSets } from "./test-fixtures";
 import { getUserId, readUserId } from "@/shared/identity";
 import { POST as answers } from "@/app/api/pretest/[mapId]/answers/route";
 import { POST as dismiss } from "@/app/api/pretest/[mapId]/dismiss/route";
@@ -41,24 +41,35 @@ describe("/api/pretest/[mapId]", () => {
     replies.push(await start(new Request("http://test", { method: "POST" }), params(map.id)));
     replies.push(await answers(post({ unitId: "u3", answers: [] }), params(map.id)));
     replies.push(await answers(post({ unitId: "u1", answers: "nope" }), params(map.id)));
-    mockChat.mockRejectedValueOnce(new AiUnavailableError());
-    replies.push(await answers(post({ unitId: "u1", answers: [{ topicId: "u1-t1", answer: "RIGHT it does" }] }), params(map.id)));
-    replies.push(await answers(post({ unitId: "u1", answers: [{ topicId: "u1-t1", answer: "RIGHT it does" }] }), params(map.id)));
-    replies.push(await stop(new Request("http://test", { method: "POST" }), params(map.id)));
-    replies.push(await start(new Request("http://test", { method: "POST" }), params(map.id)));
+    replies.push(await answers(post({ unitId: "u1", answers: [{ topicId: "u1-t1", choice: 4 }] }), params(map.id)));
+    const unitOne = await answersFor(map, "u1", { "u1-t1": "right" });
+    // Before the unit is submitted no reply, error or not, holds the key.
+    const bodiesBefore = await Promise.all(replies.map((reply) => reply.text()));
+    for (const body of bodiesBefore) expect(body).not.toMatch(/ANSWERKEY|correctIndex|explanation/);
 
-    expect(replies.map((reply) => reply.status)).toEqual([200, 200, 409, 400, 503, 200, 200, 409]);
-    const bodies = await Promise.all(replies.map((reply) => reply.text()));
-    for (const body of bodies) expect(body).not.toContain(KEY_MARK);
-    const answering = JSON.parse(bodies[1]);
+    const submitted = await answers(post(unitOne), params(map.id));
+    const replay = await answers(post(unitOne), params(map.id));
+    const stopped = await stop(new Request("http://test", { method: "POST" }), params(map.id));
+    const restarted = await start(new Request("http://test", { method: "POST" }), params(map.id));
+
+    expect(replies.map((reply) => reply.status)).toEqual([200, 200, 409, 400, 400]);
+    expect([submitted.status, replay.status, stopped.status, restarted.status]).toEqual([200, 409, 200, 409]);
+    const answering = JSON.parse(bodiesBefore[1]);
     expect(answering.state).toBe("answering");
-    expect(answering.current.questions[0]).toEqual({ topicId: "u1-t1", topicTitle: "Topic 1.1", question: "What does Topic 1.1 do?" });
-    expect(JSON.parse(bodies[5]).results).toEqual([
-      { unitId: "u1", topicId: "u1-t1", topicTitle: "Topic 1.1", outcome: "known" },
-      { unitId: "u1", topicId: "u1-t2", topicTitle: "Topic 1.2", outcome: "skipped" },
-      { unitId: "u1", topicId: "u1-t3", topicTitle: "Topic 1.3", outcome: "skipped" },
-      { unitId: "u1", topicId: "u1-t4", topicTitle: "Topic 1.4", outcome: "skipped" },
+    expect(Object.keys(answering.current.questions[0]).sort()).toEqual(["options", "question", "topicId", "topicTitle"]);
+    expect(answering.current.questions[0].options).toHaveLength(4);
+
+    const review = JSON.parse(await submitted.text());
+    expect(review.results.map((result: { topicId: string; outcome: string }) => [result.topicId, result.outcome])).toEqual([
+      ["u1-t1", "known"],
+      ["u1-t2", "skipped"],
+      ["u1-t3", "skipped"],
+      ["u1-t4", "skipped"],
     ]);
+    // The unit is submitted, so its key is shown; the next unit's is not.
+    expect(JSON.stringify(review.results)).toContain(KEY_MARK);
+    expect(JSON.stringify(review.current)).not.toContain(KEY_MARK);
+    expect(await replay.text()).not.toContain(KEY_MARK);
   });
 
   it("refuses a posting map and answers strangers like a missing map", async () => {

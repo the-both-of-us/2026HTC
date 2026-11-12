@@ -1,11 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
-import { getAttempt, getPassedFinal, getProgress, listProvedNodes } from "@/features/teachback";
+import { getAttempt, getPassedFinal, getPassedUnitTests, getProgress, listProvedNodes } from "@/features/teachback";
 import { deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
 import { isPretestProof, type Attempt, type SkillMap } from "@/shared/types";
 import { hashSnapshot, sealFor } from "./hash";
 import { buildSnapshot } from "./snapshot";
-import type { LiveProof, OwnerProofView, ProofRecord, RevokedProof } from "./types";
+import type { LiveProof, OwnerProofView, ProofRecord, ProofUnitTest, RevokedProof } from "./types";
 
 export const MAX_NAME_LENGTH = 60;
 
@@ -61,6 +61,7 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
     states,
     attempts,
     finalInterview: await getPassedFinal(map.id),
+    unitTests: await passedUnitTests(map),
     pretestPasses,
   });
   if (snapshot.skills.length === 0 && !snapshot.knownByPretest?.length) {
@@ -153,6 +154,16 @@ export function cleanDisplayName(input: string): string {
     throw new ProofError(`Please keep the name under ${MAX_NAME_LENGTH} characters.`, 400);
   }
   return name;
+}
+
+/** A syllabus course's passed unit tests, in unit order, titled "Unit 2: Memory". None for any other map. */
+async function passedUnitTests(map: SkillMap): Promise<ProofUnitTest[]> {
+  if (!map.syllabus?.assessment.unitTests) return [];
+  const passed = await getPassedUnitTests(map.id);
+  return map.syllabus.units.flatMap((unit, index) => {
+    const result = passed[unit.id];
+    return result ? [{ title: `Unit ${index + 1}: ${unit.title}`, ...result }] : [];
+  });
 }
 
 async function loadOwnMap(ownerId: string, mapId: string): Promise<SkillMap> {

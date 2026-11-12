@@ -84,6 +84,8 @@ export type UnitSummary = {
   state: CourseState;
   /** The unit test, or null when the course has none. */
   test: AssessmentState | null;
+  /** Once its test is passed: the score, such as "5 of 6, multiple choice" (older written tests say "written answers"). */
+  testScore?: string;
 };
 
 /**
@@ -131,8 +133,10 @@ export type CourseView = {
   /** Topics in the course, or null before it is built. */
   total: number | null;
   state: CourseState;
-  /** The course badge: its final interview was passed. Proving every topic opens that interview. */
+  /** The course badge: its final test was passed. Proving every topic opens that test. */
   badge: boolean;
+  /** With the badge: the final's score, such as "8 of 10, multiple choice". */
+  finalScore?: string;
   /** What stands between a locked course and opening it. */
   blockers: { title: string; needed: number | null }[];
   /*
@@ -313,6 +317,8 @@ export type SyllabusView = {
     finalQuestions: number;
     finalPassMark: number;
     final: AssessmentState;
+    /** Once the final is passed: its score, such as "8 of 10, multiple choice". */
+    finalScore?: string;
   };
   hours: HoursBreakdown;
   practice: PracticeCounts;

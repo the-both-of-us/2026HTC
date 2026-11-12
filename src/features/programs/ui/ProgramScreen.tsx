@@ -162,7 +162,7 @@ export function ProgramScreen({ program: initial }: { program: ProgramView }) {
   );
 }
 
-/** Topics proved across the program, and a badge for each course whose final interview was passed. */
+/** Topics proved across the program, and a badge for each course whose final test was passed. */
 function ProgramStats({ proven, badges, courseCount }: { proven: number; badges: number; courseCount: number }) {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-sheet border border-rule-strong bg-sheet/90 px-4 py-3">
@@ -238,7 +238,7 @@ function Celebration({ program }: { program: ProgramView }) {
 
   useEffect(() => {
     const key = `program-seen/${program.id}`;
-    // "badge" is one step past "done": every topic proved, then the final interview passed.
+    // "badge" is one step past "done": every topic proved, then the final test passed.
     const now = Object.fromEntries(program.courses.map((course) => [course.slug, course.badge ? "badge" : course.state]));
     try {
       const before = JSON.parse(localStorage.getItem(key) ?? "null") as Record<string, string> | null;
@@ -249,7 +249,7 @@ function Celebration({ program }: { program: ProgramView }) {
         if (was === "locked" && course.state !== "locked") return [`New course open: ${course.title}`];
         if (was && was !== "badge" && course.badge) return [`Badge earned: ${course.title}`];
         if (was && was !== "done" && was !== "badge" && course.state === "done") {
-          return [`Every topic proved in ${course.title}. Its final interview is open.`];
+          return [`Every topic proved in ${course.title}. Its final test is open.`];
         }
         return [];
       });
@@ -354,7 +354,8 @@ function CourseStep({
           Course {course.number}
           {isUpNext && <Badge tone="available">Up next</Badge>}
           {course.badge && <Badge tone="proven">Badge earned</Badge>}
-          {course.state === "done" && !course.badge && <Badge tone="available">Final interview open</Badge>}
+          {course.badge && course.finalScore && <span>Final test: {course.finalScore}</span>}
+          {course.state === "done" && !course.badge && <Badge tone="available">Final test open</Badge>}
         </p>
         <h2 className="mt-1 text-xl font-medium">{course.title}</h2>
         {course.summary && <p className="mt-1 text-ink-soft">{course.summary}</p>}
@@ -364,7 +365,7 @@ function CourseStep({
         <div className="mt-4">
           <CourseAction programId={programId} course={course} />
         </div>
-        {course.units && course.units.length > 0 && <UnitProgress units={course.units} final={course.final} />}
+        {course.units && course.units.length > 0 && <UnitProgress units={course.units} final={course.final} finalScore={course.finalScore} />}
         {(course.hasSyllabus || course.units) && (
           <p className="mt-3 text-sm">
             <Link href={`/program/${programId}/courses/${course.slug}`} className="text-accent-bright underline-offset-4 hover:underline">
@@ -437,7 +438,7 @@ function CourseAction({ programId, course }: { programId: string; course: Course
           href={`/map/${course.mapId}`}
           className={clsx(buttonClasses(course.badge ? "secondary" : "primary"), "grow sm:grow-0")}
         >
-          {course.badge ? "Review course" : course.state === "done" ? "Take the final interview" : course.proven === 0 ? "Start course" : "Continue"}
+          {course.badge ? "Review course" : course.state === "done" ? "Take the final test" : course.proven === 0 ? "Start course" : "Continue"}
           <ChevronRight aria-hidden="true" size={17} />
         </Link>
       </div>
@@ -448,7 +449,7 @@ function CourseAction({ programId, course }: { programId: string; course: Course
 }
 
 /** Per-unit progress of a course, with its unit tests and the course final. */
-function UnitProgress({ units, final }: { units: NonNullable<CourseView["units"]>; final: CourseView["final"] }) {
+function UnitProgress({ units, final, finalScore }: { units: NonNullable<CourseView["units"]>; final: CourseView["final"]; finalScore?: string }) {
   return (
     <details className="mt-3">
       <summary className="cursor-pointer text-sm text-ink-soft select-none">
@@ -462,14 +463,19 @@ function UnitProgress({ units, final }: { units: NonNullable<CourseView["units"]
             </span>
             <span className="text-ink-soft">
               {unit.proved} of {unit.plannedTopics}
-              {unit.test ? `, test ${unit.test}` : ""}
+              {unit.test ? `, test ${unit.test}${unit.testScore ? ` (${unit.testScore})` : ""}` : ""}
               {!unit.built && unit.state !== "locked" ? ", not built yet" : ""}
               {unit.state === "locked" ? ", locked" : ""}
             </span>
           </li>
         ))}
       </ul>
-      {final && <p className="mt-1 text-sm text-ink-soft">Course final: {final}</p>}
+      {final && (
+        <p className="mt-1 text-sm text-ink-soft">
+          Course final test: {final}
+          {finalScore ? ` (${finalScore})` : ""}
+        </p>
+      )}
     </details>
   );
 }

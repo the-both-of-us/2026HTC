@@ -1,5 +1,6 @@
 import { CircleCheck, CircleMinus, Trophy } from "lucide-react";
 import type { ReactNode } from "react";
+import { testScoreLabel } from "@/features/teachback/client";
 import { PASS_SCORE } from "@/shared/types";
 import type { ProofSnapshot } from "../types";
 import { DocumentActions } from "./DocumentActions";
@@ -97,14 +98,35 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
             ))}
           </ul>
 
+          {snapshot.unitTests && snapshot.unitTests.length > 0 && (
+            <ul className="mt-5 flex flex-col gap-1.5 text-sm" aria-label="Unit tests passed">
+              {snapshot.unitTests.map((test) => (
+                <li key={test.title} className="flex items-start gap-2">
+                  <CircleCheck size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-proven" />
+                  <span>
+                    {test.title}. Unit test: {testScoreLabel(test)}.
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
           {snapshot.finalInterview && (
             <p className="mt-5 flex items-start gap-3 rounded-control border border-amber/50 bg-amber/10 p-3">
               <Trophy size={22} aria-hidden="true" className="mt-0.5 shrink-0 text-amber" />
-              <span>
-                <span className="font-semibold">Course badge.</span> Passed the final interview: three questions mixing
-                these skills, written by the AI after every skill was proven. {snapshot.finalInterview.passedCount} of 3
-                passed{(snapshot.finalInterview.spokenCount ?? 0) > 0 ? `, ${snapshot.finalInterview.spokenCount} answered aloud` : ""}.
-              </span>
+              {snapshot.finalInterview.format === "multiple-choice" ? (
+                <span>
+                  <span className="font-semibold">Course badge.</span> Final test: {testScoreLabel(snapshot.finalInterview)}.
+                  The AI wrote the questions after every skill was proven, and code marked the answers.
+                </span>
+              ) : (
+                <span>
+                  <span className="font-semibold">Course badge.</span> Passed the final interview: questions mixing these
+                  skills, written by the AI after every skill was proven, answered in writing.{" "}
+                  {snapshot.finalInterview.passedCount} of {snapshot.finalInterview.questionCount ?? 3} passed
+                  {(snapshot.finalInterview.spokenCount ?? 0) > 0 ? `, ${snapshot.finalInterview.spokenCount} answered aloud` : ""}.
+                </span>
+              )}
             </p>
           )}
 

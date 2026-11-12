@@ -4,7 +4,7 @@ import { chatJSON } from "@/features/ai";
 import { skillBlock } from "@/features/skill-map";
 import type { SkillMap, SkillNode } from "@/shared/types";
 import { loadCatchChallenge, WRITER_SYSTEM } from "./catch";
-import { ANSWER_SYSTEM, createFinal, gradeFinalAnswer, QUESTIONS_SYSTEM } from "./final";
+import { createFinal, testSystem } from "./final";
 import { CHECKER_SYSTEM, GRADER_SYSTEM, gradeExplanation } from "./grading";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
@@ -55,11 +55,9 @@ describe("legacy teach-back prompts are untouched", () => {
     expect(hash(WRITER_SYSTEM)).toBe("957c1f69b76cf6f6");
     expect(hash(GRADER_SYSTEM)).toBe("e1187e09ed46fb95");
     expect(hash(CHECKER_SYSTEM)).toBe("9e5c6577847c85b9");
-    expect(hash(QUESTIONS_SYSTEM)).toBe("ee8c6ac18a6275be");
-    expect(hash(ANSWER_SYSTEM)).toBe("22159fdcef771bdf");
   });
 
-  it("the catch, grading and final prompts for a legacy node are byte for byte the old text", async () => {
+  it("the catch and grading prompts for a legacy node are byte for byte the old text", async () => {
     mockChatJSON.mockResolvedValueOnce({
       sentences: ["a", "b", "c", "d", "e"],
       mistakes: [
@@ -73,20 +71,46 @@ describe("legacy teach-back prompts are untouched", () => {
     // With the map passed, a legacy node reads the same.
     mockChatJSON.mockResolvedValueOnce({ checkpoints: [], factualErrors: [] });
     await gradeExplanation(NODE, "my explanation here", "", MAP);
-    mockChatJSON.mockResolvedValueOnce({ questions: [1, 2, 3].map(() => ({ question: "q?", topics: [1, 2] })) });
-    await createFinal(MAP, "o");
-    mockChatJSON.mockResolvedValueOnce({ passed: true, feedback: "ok" });
-    await gradeFinalAnswer(MAP, "Q?", "an answer");
 
-    const [catchCall, grade, gradeWithMap, finalQuestions, finalAnswer] = calls();
+    const [catchCall, grade, gradeWithMap] = calls();
     expect(hash(String(catchCall.prompt))).toBe("1fa4c75d5594aa9a");
     expect(hash(String(catchCall.system))).toBe("957c1f69b76cf6f6");
     expect(hash(String(grade.prompt))).toBe("c9d8d2578699e0e6");
     expect(gradeWithMap.prompt).toBe(grade.prompt);
-    expect(hash(String(finalQuestions.prompt))).toBe("ada72168ed59016a");
-    expect(hash(String(finalQuestions.system))).toBe("ee8c6ac18a6275be");
-    expect(hash(String(finalAnswer.prompt))).toBe("57745cca772f6096");
     expect(skillBlock).not.toHaveBeenCalled();
+  });
+});
+
+describe("the multiple-choice test prompts", () => {
+  /** Questions that pass every check, the correct option first. */
+  const usable = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      question: `Which join keeps every row of the left table, case ${i + 1}?`,
+      options: ["A left join", "An inner join", "A cross join", "A self join"],
+      explanation: "A left join keeps every left row and fills gaps with NULL; an inner join keeps only matches.",
+      topics: [1],
+    }));
+
+  // Pinned Nov 12, when tests became multiple choice (owner: "no written responses"); re-pinned the same day for the
+  // "question holds every fact it needs" rule (a real Haiku question said "given the row values shown" with none shown). The old
+  // written-final prompts (QUESTIONS_SYSTEM ee8c6ac18a6275be, ANSWER_SYSTEM 22159fdcef771bdf) were removed with them.
+  it("are pinned, and a map with no syllabus gets 5 questions in one write-profile call", async () => {
+    expect(hash(testSystem({ kind: "course", questions: 5 }))).toBe("a5c88ba493918e7d");
+    expect(hash(testSystem({ kind: "course", questions: 10 }, true))).toBe("f3915dabc28f8300");
+    expect(hash(testSystem({ kind: "unit", questions: 6 }))).toBe("5d66d22ec0c0700f");
+    mockChatJSON.mockResolvedValueOnce({ questions: usable(5) });
+    await createFinal(MAP, "o");
+    const [call] = calls();
+    expect(call.profile).toBe("write");
+    expect(call.system).toBe(testSystem({ kind: "course", questions: 5 }));
+    expect(hash(String(call.prompt))).toBe("ada72168ed59016a");
+    expect(skillBlock).not.toHaveBeenCalled();
+  });
+
+  it("ask for 4 options with the correct one first, and shuffle them in code", () => {
+    const system = testSystem({ kind: "unit", questions: 6 });
+    expect(system).toContain("The FIRST option is the one correct answer");
+    expect(system).toContain("exactly 6 questions on that unit only");
   });
 });
 
@@ -113,7 +137,14 @@ describe("a node built from a syllabus", () => {
   });
 
   it("the final's topic list shows them under each topic", async () => {
-    mockChatJSON.mockResolvedValueOnce({ questions: [1, 2, 3].map(() => ({ question: "q?", topics: [1] })) });
+    mockChatJSON.mockResolvedValueOnce({
+      questions: Array.from({ length: 5 }, (_, i) => ({
+        question: `Question ${i + 1} about joins?`,
+        options: ["Right", "Wrong one", "Wrong two", "Wrong three"],
+        explanation: "Because.",
+        topics: [1],
+      })),
+    });
     await createFinal(syllabusMap, "o");
     expect(calls()[0].prompt).toContain("1. Joins: Inner join keeps only matching rows; Left join");
     expect(calls()[0].prompt).toContain("\n   Objectives: explain X\n   Key terms: alpha, beta");

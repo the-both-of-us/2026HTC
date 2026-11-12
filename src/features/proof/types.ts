@@ -68,11 +68,28 @@ export type ProofSkill = {
  */
 export type ProofKnownByPretest = { nodeId: string; title: string; label: string; passedAt: string };
 
-/** A passed final interview: three questions mixing the course's topics, two needed to pass. */
+/**
+ * A passed course final. Since Nov 12 it is a multiple-choice test graded by code (`format`
+ * "multiple-choice", `passedCount` correct of `questionCount`). Pages published before then hold a
+ * written final (no `format`), shown as written answers. Keys are left out when unknown, so older
+ * records keep their fingerprint.
+ */
 export type ProofFinalInterview = {
   passedCount: number;
   /** Only on pages published while answers could be spoken. New pages leave it out. */
   spokenCount?: number;
+  finishedAt: string;
+  format?: "multiple-choice";
+  questionCount?: number;
+};
+
+/** A passed unit test of a syllabus course, in unit order. Same honesty rules as the final. */
+export type ProofUnitTest = {
+  /** "Unit 2: Memory". */
+  title: string;
+  passedCount: number;
+  questionCount?: number;
+  format?: "multiple-choice";
   finishedAt: string;
 };
 
@@ -95,8 +112,10 @@ export type ProofSnapshot = {
    */
   knownByPretest?: ProofKnownByPretest[];
   notYetProven: string[];
-  /** Only once the final interview was passed. Left out otherwise. */
+  /** Only once the course final was passed. Left out otherwise. */
   finalInterview?: ProofFinalInterview;
+  /** Passed unit tests. Left out when there are none, so older records keep their fingerprint. */
+  unitTests?: ProofUnitTest[];
   publishedAt: string;
 };
 

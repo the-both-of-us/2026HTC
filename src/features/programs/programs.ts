@@ -29,7 +29,7 @@ import {
   unitStartRule,
   type UnitRailItem,
 } from "@/features/skill-map";
-import { activityTimes, FINAL_QUESTIONS, getPassedFinal, getPassedUnitTests, getProgress } from "@/features/teachback";
+import { activityTimes, FINAL_QUESTIONS, getPassedFinal, getPassedUnitTests, getProgress, testScoreLabel, type FinalResult } from "@/features/teachback";
 import { cleanAudience, inferAudience } from "@/shared/audience";
 import { HttpError } from "@/shared/http";
 import {
@@ -317,14 +317,27 @@ export type LoadedCourse = {
   rail: UnitRailItem[] | null;
   units: UnitSummary[] | null;
   final: AssessmentState | null;
+  /** The passed course final's score, such as "8 of 10, multiple choice". */
+  finalScore?: string;
 };
 
-function unitSummaries(rail: UnitRailItem[], unitTests: boolean, passed: Record<string, unknown>): UnitSummary[] {
+function unitSummaries(rail: UnitRailItem[], unitTests: boolean, passed: Record<string, FinalResult>): UnitSummary[] {
   return rail.map((unit) => {
     const proved = unit.built && unit.plannedTopics > 0 && unit.proved >= unit.plannedTopics;
     const test: AssessmentState | null = unitTests ? (passed[unit.id] ? "passed" : proved ? "open" : "locked") : null;
     const state = unit.status === "locked" ? "locked" : proved && (test === null || test === "passed") ? "done" : "open";
-    return { id: unit.id, number: unit.number, title: unit.title, plannedTopics: unit.plannedTopics, built: unit.built, proved: unit.proved, state, test };
+    const result = unitTests ? passed[unit.id] : undefined;
+    return {
+      id: unit.id,
+      number: unit.number,
+      title: unit.title,
+      plannedTopics: unit.plannedTopics,
+      built: unit.built,
+      proved: unit.proved,
+      state,
+      test,
+      ...(result && { testScore: testScoreLabel(result) }),
+    };
   });
 }
 
@@ -346,7 +359,8 @@ async function loadCourse(course: ProgramCourse, index: number, catalogSyllabus:
   const total = map.nodes.length;
   if (!map.syllabus) {
     // A course map with no syllabus yet (still planning), or a map built before syllabi.
-    const passedFinal = total > 0 && proven === total && (await getPassedFinal(map.id)) !== null;
+    const finalResult = total > 0 && proven === total ? await getPassedFinal(map.id) : null;
+    const passedFinal = finalResult !== null;
     const final: AssessmentState = passedFinal ? "passed" : proven === total && total > 0 ? "open" : "locked";
     return {
       ...empty,
@@ -357,6 +371,7 @@ async function loadCourse(course: ProgramCourse, index: number, catalogSyllabus:
       rail: null,
       units: null,
       final,
+      ...(finalResult && { finalScore: testScoreLabel(finalResult) }),
     };
   }
 
@@ -369,7 +384,7 @@ async function loadCourse(course: ProgramCourse, index: number, catalogSyllabus:
   const allProved = allBuilt && planned > 0 && provedTopics >= planned;
   const unitTests = syllabus.assessment.unitTests;
   const [passedTests, passedFinal] = await Promise.all([
-    unitTests ? getPassedUnitTests(map.id) : Promise.resolve({} as Record<string, unknown>),
+    unitTests ? getPassedUnitTests(map.id) : Promise.resolve({} as Record<string, FinalResult>),
     allProved ? getPassedFinal(map.id) : Promise.resolve(null),
   ]);
   const testsDone = !unitTests || rail.every((unit) => passedTests[unit.id] !== undefined);
@@ -392,6 +407,7 @@ async function loadCourse(course: ProgramCourse, index: number, catalogSyllabus:
     rail,
     units: unitSummaries(rail, unitTests, passedTests),
     final,
+    ...(badge && passedFinal && { finalScore: testScoreLabel(passedFinal) }),
   };
 }
 
@@ -461,7 +477,8 @@ export function courseFacts(program: Program, loaded: LoadedCourse, writtenWords
         topics: loaded.built?.planned ?? loaded.syllabus.units.reduce((sum, unit) => sum + unit.topics.length, 0),
         units: loaded.syllabus.units.length,
         unitTests: loaded.syllabus.assessment.unitTests,
-        finalQuestions: loaded.syllabus.assessment.finalQuestions,
+        // The stored figure is what the syllabus said when written (6 before Nov 12); the test asks this many.
+        finalQuestions: SYLLABUS_SHAPE.finalQuestions,
       }
     : loaded.built && !loaded.map?.courseId
       ? { topics: loaded.built.total, units: 1, unitTests: false, finalQuestions: FINAL_QUESTIONS }
@@ -499,6 +516,7 @@ function courseView(program: Program, loaded: LoadedCourse, state: { state: Cour
     proven: built?.proven ?? 0,
     total: built?.total ?? null,
     badge: built?.badge ?? false,
+    ...(loaded.finalScore && { finalScore: loaded.finalScore }),
     ...state,
     ...(course.year !== undefined && { year: course.year }),
     ...(course.term !== undefined && { term: course.term }),

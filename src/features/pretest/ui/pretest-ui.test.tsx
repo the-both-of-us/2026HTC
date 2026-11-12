@@ -11,8 +11,8 @@ const unit = {
   number: 1,
   title: "Foundations",
   questions: [
-    { topicId: "t1", topicTitle: "Latency", question: "What does latency measure?" },
-    { topicId: "t2", topicTitle: "Throughput", question: "What does throughput measure?" },
+    { topicId: "t1", topicTitle: "Latency", question: "What does latency measure?", options: ["Delay of one request", "Requests per second", "Disk size", "Server count"] },
+    { topicId: "t2", topicTitle: "Throughput", question: "What does throughput measure?", options: ["Work done per second", "Delay of one request", "Memory used", "Cable length"] },
   ],
 };
 
@@ -28,7 +28,6 @@ const baseView: PretestView = {
   ended: null,
   knownTopicIds: [],
   dismissed: false,
-  maxAnswerCharacters: 1000,
 };
 
 function session(view: PretestView | null, extra: Partial<PretestSession> = {}): PretestSession {
@@ -78,20 +77,32 @@ describe("a unit of questions", () => {
         onStop={noop}
         pending={pending}
         error={null}
-        maxCharacters={1000}
       />,
     );
 
-  it("gives every question a labelled text box and an I don't know control", () => {
+  it("gives every question a labelled radio group of four options and a separate I don't know choice", () => {
     const html = render();
-    expect(html.match(/<textarea/g)).toHaveLength(2);
-    expect(html.match(/type="checkbox"/g)).toHaveLength(2);
+    expect(html).not.toContain("<textarea");
+    expect(html.match(/<fieldset/g)).toHaveLength(2);
+    expect(html.match(/<legend/g)).toHaveLength(2);
+    expect(html.match(/type="radio"/g)).toHaveLength(10);
     expect(html.match(/I don(’|&#x27;|&rsquo;|')t know this/g)).toHaveLength(2);
-    expect(html).toContain('maxLength="1000"');
-    // Each text box is named by its question.
-    expect(html).toMatch(/<label for="[^"]+-q0"[^>]*>What does latency measure\?<\/label>/);
+    expect(html).toContain("Delay of one request");
+    expect(html).toContain("What does latency measure?");
+    // A radio group shares one name, and each option is a labelled real input.
+    const names = [...html.matchAll(/type="radio"[^>]*name="([^"]+)"/g)].map((match) => match[1]);
+    expect(new Set(names).size).toBe(2);
+    expect(html).toMatch(/<label for="[^"]+-q0-o0"/);
     expect(html).toContain("Unit 1");
     expect(html).toContain("Foundations");
+    expect(html).not.toMatch(/gradient|backdrop|glow/);
+  });
+
+  it("marks the chosen option, and I don't know when that is chosen", () => {
+    const html = render({ t1: 2, t2: "dont-know" });
+    expect(html.match(/checked=""/g)).toHaveLength(2);
+    expect(html).toMatch(/checked="" value="2"/);
+    expect(html).toMatch(/checked="" value="dont-know"/);
   });
 
   it("keeps Stop here visible, also while a unit is being checked", () => {
@@ -100,11 +111,6 @@ describe("a unit of questions", () => {
     expect(checking).toContain("Stop here");
     expect(checking).toContain("Checking");
     expect(checking).toContain("disabled");
-  });
-
-  it("disables the text box of a question marked I don't know", () => {
-    const html = render({ t1: { text: "", dontKnow: true } });
-    expect(html).toMatch(/<textarea[^>]*disabled/);
   });
 });
 
@@ -124,6 +130,8 @@ describe("results", () => {
     expect(html).toContain("Not yet. The lesson will teach it.");
     expect(html).toContain("Skipped");
     expect(html).toContain("Next unit");
+    // Results from before multiple choice have no review and show the outcome only.
+    expect(html).not.toContain("Correct answer");
     expect(html).toContain('tabindex="-1"');
   });
 
@@ -132,6 +140,36 @@ describe("results", () => {
       <UnitResults unitNumber={3} unitTitle="Scale" results={results} last onContinue={noop} />,
     );
     expect(html).toContain("See the summary");
+  });
+});
+
+describe("the review of a submitted unit", () => {
+  const review = (chosen: number | null) => ({
+    unitId: "u1",
+    topicId: "t1",
+    topicTitle: "Latency",
+    outcome: chosen === 0 ? ("known" as const) : chosen === null ? ("skipped" as const) : ("missed" as const),
+    review: {
+      question: "What does latency measure?",
+      options: ["Delay of one request", "Requests per second", "Disk size", "Server count"],
+      chosen,
+      correctIndex: 0,
+      explanation: "Latency is the delay of one request.",
+    },
+  });
+  const render = (chosen: number | null) =>
+    renderToStaticMarkup(<UnitResults unitNumber={1} unitTitle="Foundations" results={[review(chosen)]} last={false} onContinue={noop} />);
+
+  it("shows the choice, the correct option and the explanation", () => {
+    const html = render(1);
+    expect(html).toContain("Your answer: </span>Requests per second");
+    expect(html).toContain("Correct answer: </span>Delay of one request");
+    expect(html).toContain("Latency is the delay of one request.");
+  });
+
+  it("does not repeat the correct option when the choice was right, and says I don't know when skipped", () => {
+    expect(render(0)).not.toContain("Correct answer");
+    expect(render(null)).toMatch(/Your answer: <\/span>I don(’|&#x27;|&rsquo;|')t know this/);
   });
 });
 
@@ -158,7 +196,7 @@ describe("the end screen", () => {
     expect(html).toContain("1 of 2 topics asked is now known");
     expect(html).toContain("Known from the pre-test");
     expect(html).toContain("Latency");
-    expect(html).toContain("unit tests and the final interview are still ahead");
+    expect(html).toContain("unit tests and the final test are still ahead");
     expect(html).toContain("Next skill: Throughput");
     expect(html).toContain("Back to the map");
   });
@@ -221,7 +259,8 @@ describe("the screen", () => {
       screen(session({ ...baseView, state: "writing", current: null })),
       screen(session({ ...baseView, offer: "taken", state: "ended", current: null, ended: { reason: "completed", at: "x" } })),
     ].join("");
-    expect(html).not.toMatch(/keyPoints|answer key|ANSWERKEY/i);
+    expect(html).not.toMatch(/keyPoints|answer key|ANSWERKEY|correctIndex/i);
+    expect(html).not.toMatch(/interview|textarea|type your|write your/i);
   });
 });
 

@@ -113,9 +113,11 @@ export async function getSyllabusView(programId: string, slug: string, viewerId:
       unitTests: syllabus?.assessment.unitTests ?? SYLLABUS_SHAPE.unitTests,
       unitTestQuestions: UNIT_TEST.questions,
       unitTestPassMark: UNIT_TEST.passMark,
-      finalQuestions: syllabus?.assessment.finalQuestions ?? SYLLABUS_SHAPE.finalQuestions,
+      // Not the syllabus's stored figure: syllabi written before Nov 12 say 6, and the test asks this many.
+      finalQuestions: SYLLABUS_SHAPE.finalQuestions,
       finalPassMark: SYLLABUS_SHAPE.finalPassMark,
       final: course.final ?? "locked",
+      ...(course.finalScore && { finalScore: course.finalScore }),
     },
     hours: hoursBreakdown([facts]),
     practice: practiceCounts([facts], QUESTIONS_WANTED),

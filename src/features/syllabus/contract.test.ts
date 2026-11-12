@@ -144,8 +144,9 @@ describe("syllabus shape", () => {
     const shape = SYLLABUS_SHAPE;
     expect(shape.units * shape.topicsPerUnit.min).toBe(32);
     expect(shape.units * shape.topicsPerUnit.max).toBe(48);
-    expect([shape.finalQuestions, shape.finalPassMark]).toEqual([6, 4]);
-    expect([UNIT_TEST.questions, UNIT_TEST.passMark]).toEqual([4, 3]);
+    // Multiple choice since Nov 12 (a guess is right one time in four): final 10 with pass mark 8, unit test 6 with pass mark 5.
+    expect([shape.finalQuestions, shape.finalPassMark]).toEqual([10, 8]);
+    expect([UNIT_TEST.questions, UNIT_TEST.passMark]).toEqual([6, 5]);
     expect(DEGREE_FRAME.years * DEGREE_FRAME.termsPerYear * DEGREE_FRAME.coursesPerTerm).toBe(DEGREE_FRAME.courses);
     expect(READING_WORDS_PER_MINUTE).toBe(200);
     expect(unitTestNodeId("u2")).toBe("final:u2");

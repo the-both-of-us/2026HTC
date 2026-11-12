@@ -4,7 +4,6 @@ import { chatJSON } from "@/features/ai";
 import type { SkillNode } from "@/shared/types";
 import { forAudience, GRADER_NOTE } from "./audience";
 import { WRITER_SYSTEM } from "./catch";
-import { ANSWER_SYSTEM as FINAL_ANSWER, QUESTIONS_SYSTEM } from "./final";
 import { ANSWER_SYSTEM, generateFollowUp, gradeFollowUp, QUESTION_SYSTEM } from "./followUp";
 import { formatLabel, FORMAT_LABELS } from "./formats";
 import { CHECKER_SYSTEM, GRADER_SYSTEM, gradeExplanation } from "./grading";
@@ -33,8 +32,6 @@ describe("teach-back prompts with no audience", () => {
     expect(hash(QUESTION_SYSTEM)).toBe("005d95babce65b90");
     expect(hash(ANSWER_SYSTEM)).toBe("cf41039c6411656c");
     expect(hash(WRITER_SYSTEM)).toBe("957c1f69b76cf6f6");
-    expect(hash(QUESTIONS_SYSTEM)).toBe("ee8c6ac18a6275be");
-    expect(hash(FINAL_ANSWER)).toBe("22159fdcef771bdf");
     expect(forAudience(GRADER_SYSTEM, "", GRADER_NOTE)).toBe(GRADER_SYSTEM);
     expect(forAudience(GRADER_SYSTEM, undefined, GRADER_NOTE)).toBe(GRADER_SYSTEM);
   });

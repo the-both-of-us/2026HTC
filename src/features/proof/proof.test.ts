@@ -341,6 +341,29 @@ describe("publishProof", () => {
     ({ map, attempt } = await seedProvenMap());
   });
 
+  it("puts a passed multiple-choice final on the page with its format and score, and nothing else about it", async () => {
+    await putDoc(`final/${map.id}`, {
+      mapId: map.id,
+      ownerId: OWNER,
+      format: "multiple-choice",
+      testId: randomUUID(),
+      passMark: 4,
+      questions: [{ question: "Secret question?", options: ["a", "b", "c", "d"], correctIndex: 2, explanation: "Secret why.", topics: [] }],
+      answers: [2],
+      startedAt: "2026-11-12T10:00:00.000Z",
+      result: { passed: true, passedCount: 4, questionCount: 5, format: "multiple-choice", finishedAt: "2026-11-12T10:05:00.000Z" },
+    });
+    const proof = await publishProof(OWNER, map.id, "Maya");
+    expect(proof.snapshot.finalInterview).toEqual({
+      passedCount: 4,
+      questionCount: 5,
+      format: "multiple-choice",
+      finishedAt: "2026-11-12T10:05:00.000Z",
+    });
+    expect(canonicalJson(proof.snapshot)).not.toMatch(/Secret|correctIndex|"passed"/);
+    expect(proof.snapshot.unitTests).toBeUndefined();
+  });
+
   it("publishes from server data with a short unguessable id", async () => {
     const proof = await publishProof(OWNER, map.id, "  Maya   Chen ");
     expect(proof.id).toMatch(/^[A-Za-z0-9_-]{16}$/);

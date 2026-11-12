@@ -52,7 +52,8 @@ describe("hours", () => {
       teachBacks: 32,
       quizQuestions: 160,
       practiceCases: 64,
-      unitTestQuestions: 32,
+      // 8 units x 6 questions: unit tests are 6 multiple-choice questions since Nov 12.
+      unitTestQuestions: 48,
       finalQuestions: 6,
     });
   });

@@ -33,11 +33,12 @@ import {
   finalPlan,
   finalView,
   getFinalRecord,
-  gradeFinalAnswer,
+  gradeFinal,
   isFinalNodeId,
+  isMcRecord,
+  questionsToAvoid,
   saveFinalRecord,
-  settle,
-  unitIdOfFinal,
+  submitClaimKey,
   type FinalPlan,
   type FinalRecord,
   type FinalResult,
@@ -240,40 +241,100 @@ export async function getCatchView(
 }
 
 /**
- * Where the course's final interview stands for its owner, or a unit's test when `unitId` is given.
- * Throws a 404 for a unit test on a course that has none.
+ * Where the course's final test stands for its owner, or a unit's test when `unitId` is given.
+ * Before submitting, the questions come without the key or explanations; after, with the review.
+ * Someone else's map is a 404, like a missing one, and so is a unit test on a course that has none.
  */
 export async function getFinalInterview(userId: string, mapId: string, unitId?: string): Promise<FinalView> {
-  const map = await loadOwnMap(mapId, userId);
-  return loadFinalView(map, userId, finalPlan(map, unitId));
+  const map = await loadTestMap(mapId, userId);
+  return loadFinalView(map, finalPlan(map, unitId));
 }
 
+/** Sets being written, by test key, so two quick clicks cost one model call. */
+const writing = new Map<string, Promise<FinalView>>();
+
 /**
- * Starts the final interview once every topic is proven (for a unit test: every topic of that
- * unit; for a degree course's final: every unit built, every topic proven and every unit test
- * passed). Asking again while it is under way returns the same questions, and after a fail it
- * writes new ones.
+ * Starts the test once every topic is proven (for a unit test: every topic of that unit; for a
+ * degree course's final: every unit built, every topic proven and every unit test passed).
+ * Asking again while it is under way, or after passing, returns the same set at no cost. After a
+ * fail it always writes a new set (one model call), so answers cannot be learned by elimination.
  */
 export async function startFinalInterview(userId: string, mapId: string, unitId?: string): Promise<FinalView> {
-  const map = await loadOwnMap(mapId, userId);
+  const map = await loadTestMap(mapId, userId);
   const plan = finalPlan(map, unitId);
-  const current = await loadFinalView(map, userId, plan);
-  if (current.state === "locked") {
-    throw new AttemptError(
-      plan.kind === "unit"
-        ? "Prove every topic in this unit first. Then its test opens."
-        : map.syllabus?.assessment.unitTests
-          ? "Prove every topic, in every unit, and pass each unit test first. Then the final interview opens."
-          : "Prove every topic on this map first. Then the final interview opens.",
-      403,
-    );
-  }
-  if (current.state === "in-progress" || current.state === "passed") return current;
+  const key = finalKey(map.id, plan.unitId);
+  const pending = writing.get(key);
+  if (pending) return pending;
 
-  const { record, attempts } = await createFinal(map, userId, plan);
-  await Promise.all(attempts.map(saveAttempt));
-  await saveFinalRecord(record);
-  return finalView(record, attempts, true, plan);
+  const work = (async () => {
+    const current = await loadFinalView(map, plan);
+    if (current.state === "locked") {
+      throw new AttemptError(
+        plan.kind === "unit"
+          ? "Prove every topic in this unit first. Then its test opens."
+          : map.syllabus?.assessment.unitTests
+            ? "Prove every topic, in every unit, and pass each unit test first. Then the final test opens."
+            : "Prove every topic on this map first. Then the final test opens.",
+        403,
+      );
+    }
+    if (current.state === "in-progress" || current.state === "passed") return current;
+
+    // A retake is told the failed set's questions (and earlier ones), so it never repeats them.
+    const avoid = current.state === "failed" ? questionsToAvoid(await getFinalRecord(map.id, plan.unitId)) : [];
+    const record = await createFinal(map, userId, plan, Math.random, avoid);
+    await saveFinalRecord(record);
+    return finalView(record, true, plan);
+  })().finally(() => {
+    if (writing.get(key) === work) writing.delete(key);
+  });
+  writing.set(key, work);
+  return work;
+}
+
+export type FinalSubmission = {
+  /** The set being answered, from the view. */
+  testId: string;
+  /** The chosen option's index for each question, in order. */
+  answers: number[];
+};
+
+/**
+ * Grades a whole test in code, with no model call, and records the result where unlocks, course
+ * completion and the evidence page read it. A set is submitted once: a second submission, or one
+ * for a set that was replaced by a retake, is refused with a 409. The reply carries the review.
+ */
+export async function submitFinalTest(userId: string, mapId: string, unitId: string | undefined, submission: FinalSubmission): Promise<FinalView> {
+  const map = await loadTestMap(mapId, userId);
+  const plan = finalPlan(map, unitId);
+  const record = await getFinalRecord(map.id, plan.unitId);
+  if (!record || !isMcRecord(record) || record.ownerId !== userId) {
+    throw new AttemptError("There is no test to submit yet. Start the test first.", 409);
+  }
+  if (record.testId !== submission.testId) {
+    throw new AttemptError("This test was replaced by a newer set of questions. Reload the page to see it.", 409);
+  }
+  if (record.result) throw new AttemptError("This test was already submitted. Each test is submitted once.", 409);
+  const { answers } = submission;
+  const complete =
+    answers.length === record.questions.length &&
+    answers.every((answer, index) => Number.isInteger(answer) && answer >= 0 && answer < record.questions[index].options.length);
+  if (!complete) throw new AttemptError("Pick one answer for every question, then submit.", 400);
+
+  // One submission per set, even if several arrive at the same moment.
+  const claim = submitClaimKey(map.id, userId, record.testId);
+  if (!(await claimDoc(claim, { claimedAt: new Date().toISOString() }))) {
+    throw new AttemptError("This test was already submitted. Each test is submitted once.", 409);
+  }
+  try {
+    const graded = gradeFinal(record, answers);
+    await saveFinalRecord(graded);
+    return finalView(graded, true, plan);
+  } catch (error) {
+    // Nothing was recorded, so the learner may submit again.
+    await deleteDoc(claim).catch(() => undefined);
+    throw error;
+  }
 }
 
 /** One unit's test as the learner's map screen needs it. */
@@ -288,7 +349,7 @@ export async function getUnitTests(userId: string, mapId: string): Promise<UnitT
   if (!map.syllabus?.assessment.unitTests) return [];
   const built = map.syllabus.units.filter((unit) => unit.built);
   return Promise.all(
-    built.map(async (unit) => ({ unitId: unit.id, title: unit.title, test: await loadFinalView(map, userId, finalPlan(map, unit.id)) })),
+    built.map(async (unit) => ({ unitId: unit.id, title: unit.title, test: await loadFinalView(map, finalPlan(map, unit.id)) })),
   );
 }
 
@@ -296,25 +357,35 @@ export async function getUnitTests(userId: string, mapId: string): Promise<UnitT
 export async function getPassedUnitTests(mapId: string): Promise<Record<string, FinalResult>> {
   const records = await listDocs<FinalRecord>(`final/${mapId}/`);
   return Object.fromEntries(
-    records.flatMap((record) => (record.unitId !== undefined && record.result?.passed ? [[record.unitId, record.result] as const] : [])),
+    records.flatMap((record) => (record.unitId !== undefined && record.result?.passed ? [[record.unitId, withQuestionCount(record)] as const] : [])),
   );
 }
 
-/** For the evidence page: the final interview's result, only when it was passed. */
-export async function getPassedFinal(mapId: string): Promise<FinalRecord["result"] | null> {
+/**
+ * For the evidence page and course completion: the course final's result, only when it was
+ * passed. `format` and `questionCount` say how it was taken (absent on a written result).
+ */
+export async function getPassedFinal(mapId: string): Promise<FinalResult | null> {
   const record = await getFinalRecord(mapId);
-  return record?.result?.passed ? record.result : null;
+  return record?.result?.passed ? withQuestionCount(record) : null;
 }
 
-async function loadFinalView(map: SkillMap, userId: string, plan: FinalPlan): Promise<FinalView> {
-  const progress = await getProgress(map.id, userId);
+/** A result with its question count, which a written record keeps only as its attempt list. */
+function withQuestionCount(record: FinalRecord): FinalResult {
+  const result = record.result!;
+  if (result.questionCount !== undefined || isMcRecord(record)) return result;
+  return { ...result, questionCount: record.attemptIds.length };
+}
+
+async function loadFinalView(map: SkillMap, plan: FinalPlan): Promise<FinalView> {
+  const record = await getFinalRecord(map.id, plan.unitId);
+  // Only the opening depends on this: a test already started is shown whatever the state of the rest.
+  if (record && (isMcRecord(record) || record.result)) return finalView(record, true, plan);
+  const progress = await getProgress(map.id, map.ownerId);
   const states = deriveNodeStates(map, progress);
   const topicsProven = plan.nodes.length > 0 && plan.nodes.every((node) => states[node.id] === "proven");
-  const record = await getFinalRecord(map.id, plan.unitId);
-  const attempts = record ? await Promise.all(record.attemptIds.map(getAttempt)) : [];
-  // Only the opening depends on this: a final already started is shown whatever the state of the rest.
-  const open = record ? true : topicsProven && (plan.kind === "unit" || (await courseFinalOpen(map)));
-  return finalView(record, attempts, open, plan);
+  const open = topicsProven && (plan.kind === "unit" || (await courseFinalOpen(map)));
+  return finalView(record, open, plan);
 }
 
 /**
@@ -352,19 +423,20 @@ export async function answerFollowUp(
     throw new AttemptError(`Please keep your answer under ${MAX_ANSWER_CHARACTERS.toLocaleString("en-CA")} characters.`, 400);
   }
 
+  // A question of a written final from before Nov 12. Tests are multiple choice now, so it is
+  // never graded: the map offers a multiple-choice test in its place.
+  if (isFinalNodeId(attempt.nodeId)) {
+    throw new AttemptError("Tests are multiple choice now. Open the map to take this test as multiple choice.", 409);
+  }
   const map = await loadOwnMap(attempt.mapId, userId);
-  const isFinal = isFinalNodeId(attempt.nodeId);
-  const finalUnitId = unitIdOfFinal(attempt.nodeId) ?? undefined;
-  const node = isFinal ? null : findNode(map, attempt.nodeId);
+  const node = findNode(map, attempt.nodeId);
 
   // One answer per attempt, even if several arrive at the same moment.
   await claimAnswer(attempt.id);
   try {
     const trimmedAnswer = answer.trim();
     const followUpStarted = performance.now();
-    const result = node
-      ? await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer, map.audience)
-      : await gradeFinalAnswer(map, attempt.followUp.question, trimmedAnswer, await finalFactsFor(map, attempt, finalUnitId));
+    const result = await gradeFollowUp(node, attempt.explanation, attempt.followUp.question, trimmedAnswer, map.audience);
     const followUpMs = Math.round(performance.now() - followUpStarted);
 
     const finished: Attempt = {
@@ -386,37 +458,14 @@ export async function answerFollowUp(
 
     // Progress goes first. If saving the attempt then fails, the learner can simply
     // answer again, which would not be possible the other way round.
-    if (result.passed && node) await markProven(attempt.mapId, userId, node.id, attempt.id, attempt.format ?? "explain");
+    if (result.passed) await markProven(attempt.mapId, userId, node.id, attempt.id, attempt.format ?? "explain");
     await saveAttempt(finished);
-    if (isFinal) await settleFinal(map.id, finalUnitId);
     return finished;
   } catch (error) {
     // Nothing was decided, so give the learner their retry back.
     await deleteDoc(answerClaimKey(attempt.id)).catch(() => undefined);
     throw error;
   }
-}
-
-/**
- * The topics whose key facts the final's grader sees. The whole map for the final of a map with
- * no syllabus (a posting or PDF map), a unit's topics for a unit test, and for a degree course's long final just the
- * topics the question mixes.
- */
-async function finalFactsFor(map: SkillMap, attempt: Attempt, unitId: string | undefined): Promise<SkillNode[]> {
-  const plan = finalPlan(map, unitId);
-  if (plan.kind === "unit" || !map.syllabus) return plan.nodes;
-  const record = await getFinalRecord(map.id);
-  const titles = record?.topics[record.attemptIds.indexOf(attempt.id)] ?? [];
-  const mixed = plan.nodes.filter((node) => titles.includes(node.title));
-  return mixed.length > 0 ? mixed : plan.nodes;
-}
-
-/** After each final interview answer: once all are in, the result is saved. */
-async function settleFinal(mapId: string, unitId?: string): Promise<void> {
-  const record = await getFinalRecord(mapId, unitId);
-  if (!record || record.result) return;
-  const settled = settle(record, await Promise.all(record.attemptIds.map(getAttempt)));
-  if (settled !== record) await saveFinalRecord(settled);
 }
 
 /** Returns the attempt, or null. The id comes from a URL, so it must look like one of ours. */
@@ -484,22 +533,25 @@ export async function isNodeLockedFor(map: SkillMap, viewerId: string, nodeId: s
 
 /**
  * When this learner did something on the map, as ISO timestamps: each proving attempt's start and
- * the moment it proved its topic, plus the start of each final or unit-test question they were
- * given. For computing measured study time; nothing here is estimated.
+ * the moment it proved its topic, plus when each test was started and submitted (for an older
+ * written test, the start of each question). For computing measured study time; nothing here is
+ * estimated.
  */
 export async function activityTimes(mapId: string, ownerId: string): Promise<string[]> {
-  const [proved, finals] = await Promise.all([
+  const [proved, allFinals] = await Promise.all([
     listDocs<ProvenRecord>(`${progressKey(mapId, ownerId)}/`),
     listDocs<FinalRecord>(`final/${mapId}`),
   ]);
+  const finals = allFinals.filter((record) => record.mapId === mapId && record.ownerId === ownerId);
   const attemptIds = [
     ...proved.map((record) => record.attemptId),
-    ...finals.filter((record) => record.mapId === mapId && record.ownerId === ownerId).flatMap((record) => record.attemptIds),
+    ...finals.flatMap((record) => (isMcRecord(record) ? [] : record.attemptIds)),
   ];
   const attempts = await Promise.all([...new Set(attemptIds)].map((id) => getAttempt(id)));
   return [
     ...proved.map((record) => record.provenAt),
     ...attempts.flatMap((attempt) => (attempt && attempt.ownerId === ownerId && attempt.mapId === mapId ? [attempt.createdAt] : [])),
+    ...finals.flatMap((record) => (isMcRecord(record) ? [record.startedAt, ...(record.result ? [record.result.finishedAt] : [])] : [])),
   ].filter((time) => typeof time === "string" && !Number.isNaN(Date.parse(time)));
 }
 
@@ -570,9 +622,12 @@ export async function deleteLearnerData(userId: string): Promise<{ attempts: num
   const revealedKeys = (await listKeys("catch-revealed/")).filter((key) => key.split("/")[2] === userId);
   // Unlock keys are unlocks/<mapId>/<ownerId>/<nodeId>, like progress keys.
   const unlockKeys = (await listKeys("unlocks/")).filter((key) => key.split("/")[2] === userId);
+  // Test submission claims are final-submits/<mapId>/<ownerId>/<testId>.
+  const submitKeys = (await listKeys("final-submits/")).filter((key) => key.split("/")[2] === userId);
 
   await Promise.all([
     ...finals.map((record) => deleteDoc(finalKey(record.mapId, record.unitId))),
+    ...submitKeys.map((key) => deleteDoc(key)),
     ...attempts.flatMap((attempt) => [deleteDoc(`attempts/${attempt.id}`), deleteDoc(answerClaimKey(attempt.id))]),
     ...progressKeys.map((key) => deleteDoc(key)),
     ...revealedKeys.map((key) => deleteDoc(key)),
@@ -623,6 +678,15 @@ async function loadOwnMap(mapId: string, userId: string): Promise<SkillMap> {
   const map = await getSkillMap(mapId);
   if (!map) throw new AttemptError("We could not find that map. Check the link, or build a new one.", 404);
   if (map.ownerId !== userId) throw new AttemptError("This map belongs to someone else. Build your own to prove these skills.", 403);
+  return map;
+}
+
+/** A test belongs to its map's owner. Anyone else gets the same 404 as for a missing map. */
+async function loadTestMap(mapId: string, userId: string): Promise<SkillMap> {
+  const map = await getSkillMap(mapId);
+  if (!map || userId === "" || map.ownerId !== userId) {
+    throw new AttemptError("We could not find that map. Check the link, or build a new one.", 404);
+  }
   return map;
 }
 

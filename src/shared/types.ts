@@ -155,9 +155,9 @@ export type CourseSyllabus = {
   /** 8 units of 4 to 6 topics. See SYLLABUS_SHAPE. */
   units: SyllabusUnit[];
   assessment: {
-    /** A 4-question unit test after each unit. */
+    /** A multiple-choice unit test after each unit (UNIT_TEST). */
     unitTests: boolean;
-    /** Questions in the course final: 6. */
+    /** Questions in the course final when the syllabus was written. Code uses SYLLABUS_SHAPE.finalQuestions (10 since Nov 12); older syllabi say 6. */
     finalQuestions: number;
   };
 };
@@ -170,8 +170,9 @@ export const SYLLABUS_SHAPE = {
   units: 8,
   topicsPerUnit: { min: 4, max: 6 },
   unitTests: true,
-  finalQuestions: 6,
-  finalPassMark: 4,
+  /** Multiple choice since Nov 12: a guess is right one time in four, so 10 questions, pass mark 8. */
+  finalQuestions: 10,
+  finalPassMark: 8,
   lessonWords: { min: 1000, max: 1400 },
   practiceCases: 2,
 } as const;
@@ -183,8 +184,8 @@ export const SYLLABUS_LIMITS = {
   keyTermsPerTopic: { min: 3, max: 6 },
 } as const;
 
-/** The unit test after each syllabus unit. Stored as a final attempt with node id `unitTestNodeId(unitId)`. */
-export const UNIT_TEST = { questions: 4, passMark: 3 } as const;
+/** The multiple-choice unit test after each syllabus unit, stored at `final/<mapId>/<unitId>` (node id `unitTestNodeId(unitId)`). */
+export const UNIT_TEST = { questions: 6, passMark: 5 } as const;
 
 /** Node id of a unit's test, such as "final:u2". The course final keeps its own id ("final-interview"). */
 export function unitTestNodeId(unitId: string): string {
@@ -249,7 +250,7 @@ export type AttemptStatus = "needs-followup" | "proven" | "not-yet";
 /**
  * How a skill was proved. "explain" is the original teach-back, "catch" is finding the AI's
  * planted mistakes, "kid" is explaining to a 10-year-old, "timed" is saying it in 30 seconds.
- * "final" marks a question in a course's final interview, which is not tied to one skill.
+ * "final" marks a question of a written course final or unit test from before Nov 12, which is not tied to one skill.
  */
 export type ProofFormat = "explain" | "catch" | "kid" | "timed" | "final" | "pretest";
 

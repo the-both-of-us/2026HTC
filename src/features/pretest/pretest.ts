@@ -5,13 +5,15 @@ import { cleanAudience } from "@/shared/audience";
 import { HttpError } from "@/shared/http";
 import { isPretestProof, type CourseSyllabus, type SkillMap, type SyllabusTopic, type SyllabusUnit } from "@/shared/types";
 import { ensureQuestionSet, readQuestionSet } from "./generate";
-import { gradeUnit, MAX_PRETEST_ANSWER_CHARACTERS, type GivenAnswer } from "./grade";
+import { gradeUnit, type GivenChoice } from "./grade";
+import { newSeed, presentSet, seedOf } from "./layout";
 import type { CourseContext } from "./prompt";
 import { getQuestionSet, getRecord, saveRecord, withLock } from "./storage";
+import type { McReviewItem } from "@/shared/multipleChoice";
 import type { PretestAnswersRequest, PretestEndReason, PretestRecord, PretestView } from "./types";
 
 /*
- * The course pre-test: optional, once per course per learner, one short-answer question per
+ * The course pre-test: optional, once per course per learner, one multiple-choice question per
  * syllabus topic, asked unit by unit. A topic answered correctly is recorded as proved on the
  * learner's own map with format "pretest" (teachback's `markPretestProven`), even in a unit not
  * built yet. Unit tests and the course final are still required.
@@ -121,12 +123,18 @@ async function toView(loaded: Loaded, scheduled: ReadonlySet<string> = new Set()
     unitsTotal: syllabus?.units.length ?? 0,
     unitsDone: record?.graded.length ?? 0,
     results: (record?.graded ?? []).flatMap((unit) =>
-      unit.results.map((result) => ({ unitId: unit.unitId, topicId: result.topicId, topicTitle: titles.get(result.topicId) ?? result.topicId, outcome: result.outcome })),
+      unit.results.map((result) => ({
+        unitId: unit.unitId,
+        topicId: result.topicId,
+        topicTitle: titles.get(result.topicId) ?? result.topicId,
+        outcome: result.outcome,
+        // Only for units already submitted: the key is revealed then and not before.
+        ...(result.review && { review: reviewOf(result.review) }),
+      })),
     ),
     ended: record?.ended ?? null,
     knownTopicIds: Object.keys(loaded.proven).filter((id) => isPretestProof(loaded.proven[id])),
     dismissed: record?.state === "dismissed",
-    maxAnswerCharacters: MAX_PRETEST_ANSWER_CHARACTERS,
   };
 
   if (record && (record.state === "ended" || loaded.takenElsewhere)) return { ...base, offer: "taken", state: "ended" };
@@ -145,6 +153,7 @@ async function toView(loaded: Loaded, scheduled: ReadonlySet<string> = new Set()
       return { ...base, offer: "in-progress", state: writing ? "writing" : "stalled", pendingUnitId: cursor.unit.id };
     }
     const wanted = new Set(cursor.topics.map((topic) => topic.id));
+    const presented = presentSet(set.set, seedOf(record));
     return {
       ...base,
       offer: "in-progress",
@@ -153,10 +162,16 @@ async function toView(loaded: Loaded, scheduled: ReadonlySet<string> = new Set()
         unitId: cursor.unit.id,
         number: cursor.index + 1,
         title: cursor.unit.title,
-        // Only the question text: the answer key (keyPoints) never leaves the server.
-        questions: set.set.questions
+        // The question and its options in this learner's order, built field by field: the correct
+        // option and the explanation never leave the server before the unit is submitted.
+        questions: presented
           .filter((question) => wanted.has(question.topicId))
-          .map((question) => ({ topicId: question.topicId, topicTitle: titles.get(question.topicId) ?? question.topicId, question: question.question })),
+          .map((question) => ({
+            topicId: question.topicId,
+            topicTitle: titles.get(question.topicId) ?? question.topicId,
+            question: question.question,
+            options: [...question.options],
+          })),
       },
     };
   }
@@ -221,7 +236,6 @@ export async function getPretestView(mapId: string, viewerId: string | null): Pr
       ended: null,
       knownTopicIds: [],
       dismissed: false,
-      maxAnswerCharacters: MAX_PRETEST_ANSWER_CHARACTERS,
     };
   }
   return toView(await load(map, viewerId as string));
@@ -244,7 +258,7 @@ export async function startPretest(mapId: string, viewerId: string | null, optio
     let record = loaded.record;
     if (!record || record.state === "dismissed") {
       if (cursorFrom(0, syllabus, map.syllabus, loaded.proven).kind === "done") throw new HttpError(NOTHING_LEFT, 409);
-      record = { version: 1, courseId, ownerId: userId, mapId: map.id, state: "in-progress", startedAt: new Date().toISOString(), unitIndex: 0, graded: [] };
+      record = { version: 1, courseId, ownerId: userId, mapId: map.id, seed: newSeed(), state: "in-progress", startedAt: new Date().toISOString(), unitIndex: 0, graded: [] };
       await saveRecord(record);
     }
     return writeAhead({ ...loaded, record }, record, options);
@@ -284,23 +298,25 @@ function endRecord(record: PretestRecord, reason: PretestEndReason, unitId?: str
   return { ...record, state: "ended", ended: { reason, at: new Date().toISOString(), ...(unitId && { unitId }) } };
 }
 
-function answersOf(request: PretestAnswersRequest): Map<string, GivenAnswer> {
-  const answers = new Map<string, GivenAnswer>();
+function answersOf(request: PretestAnswersRequest): Map<string, GivenChoice> {
+  const answers = new Map<string, GivenChoice>();
   for (const entry of request.answers) {
     if (answers.has(entry.topicId)) throw new HttpError("Each question can be answered once. Reload the pre-test.", 400);
-    if ((entry.answer ?? "").length > MAX_PRETEST_ANSWER_CHARACTERS) {
-      throw new HttpError(`Please keep each answer under ${MAX_PRETEST_ANSWER_CHARACTERS.toLocaleString("en-CA")} characters.`, 400);
-    }
-    answers.set(entry.topicId, { answer: entry.answer ?? null, dontKnow: entry.dontKnow === true });
+    answers.set(entry.topicId, entry.choice ?? null);
   }
   return answers;
 }
 
+/** The review of a graded question, built field by field. */
+function reviewOf(review: McReviewItem): McReviewItem {
+  return { question: review.question, options: [...review.options], chosen: review.chosen, correctIndex: review.correctIndex, explanation: review.explanation };
+}
+
 /**
- * Grades the current unit's answers with at most one check call, records each "known" topic as
+ * Grades the current unit's choices in code (no model call), records each "known" topic as
  * proved ("pretest") on this map, then moves on, or ends the pre-test: "unit-missed" when no
  * answer in the unit was right, "stopped" when asked to, "completed" after the last unit.
- * A failed check (503) records nothing, so the same answers can be sent again.
+ * A unit is graded once: sending it again is refused (409), since the test has moved on.
  */
 export async function submitPretestAnswers(
   mapId: string,
@@ -327,9 +343,9 @@ export async function submitPretestAnswers(
     const set = await getQuestionSet(courseId, cursor.unit.id);
     if (!set) throw new HttpError(STILL_WRITING, 409);
     const asked = new Set(cursor.topics.map((topic) => topic.id));
-    const questions = set.questions.filter((question) => asked.has(question.topicId));
+    const questions = presentSet(set, seedOf(record)).filter((question) => asked.has(question.topicId));
 
-    const results = await gradeUnit(questions, answers, cleanAudience(map.audience));
+    const results = gradeUnit(questions, answers);
     const known = results.filter((result) => result.outcome === "known").map((result) => result.topicId);
     // Proofs first: if saving the record then fails, sending again re-asks only what was missed.
     await markPretestProven(map.id, userId, known);

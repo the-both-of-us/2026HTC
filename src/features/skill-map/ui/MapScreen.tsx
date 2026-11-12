@@ -5,7 +5,7 @@ import { PretestOffer, PretestScreen, usePretest } from "@/features/pretest/clie
 import { ProgramCrumb } from "@/features/programs/client";
 import { ShareProofButton } from "@/features/proof/client";
 import { ProofReward, RelightCheck, StreakNudge, useMapHabits, type ProofRewardData } from "@/features/streaks/client";
-import { FinalInterview, YoungLearnerProvider } from "@/features/teachback/client";
+import { FinalTest, YoungLearnerProvider } from "@/features/teachback/client";
 import { isYoungAudience } from "@/shared/audience";
 import { isPretestProof } from "@/shared/types";
 import clsx from "clsx";
@@ -445,7 +445,7 @@ function LoadedMap({
         {banner && <div className="[&>p]:py-1 max-sm:[&>p]:text-xs">{banner}</div>}
         {/*
           Short rows: the title with its progress and the actions, then the streak, today's
-          topic and the final interview beside the view tabs. On a phone the actions fold into
+          topic and the final test beside the view tabs. On a phone the actions fold into
           "More", so the map starts high on the screen. Everything else is one click away.
         */}
         <header className="flex flex-col gap-1.5 border-b border-rule px-4 pt-2 sm:gap-2 sm:px-6 sm:pt-2.5">
@@ -513,11 +513,11 @@ function LoadedMap({
               {!reading && !allProven && (
                 <p
                   className="inline-flex min-h-8 items-center gap-1.5 text-ink-soft max-sm:hidden"
-                  title="The final interview unlocks when every topic is proven."
+                  title="The final test unlocks when every topic is proven."
                 >
                   <Lock aria-hidden="true" size={14} className="shrink-0" />
                   <span>
-                    <span className="text-ink">Final interview</span>{" "}
+                    <span className="text-ink">Final test</span>{" "}
                     <span className="tabular-nums">in {Math.max(topicTotal - provenCount, 0)}</span>
                     <span className="sr-only"> topics: it unlocks when every topic is proven</span>
                   </span>
@@ -547,10 +547,10 @@ function LoadedMap({
           />
         )}
 
-        {/* Once every topic is proven the final interview needs room, so it gets its own strip. */}
+        {/* Once every topic is proven the final test needs room, so it gets its own strip. */}
         {allProven && (
           <div id="next-final" tabIndex={-1} className="outline-none">
-            <FinalInterview mapId={map.id} provenCount={provenCount} topicCount={topicTotal} />
+            <FinalTest mapId={map.id} provenCount={provenCount} topicCount={topicTotal} />
           </div>
         )}
 
@@ -567,7 +567,7 @@ function LoadedMap({
         {/* A degree unit's test, once every topic of the unit shown is proven. */}
         {showUnits && activeUnit?.built && map.syllabus?.assessment.unitTests && activeUnit.nodeIds.length > 0 && activeUnit.proved >= activeUnit.nodeIds.length && (
           <div id="next-unit-test" tabIndex={-1} className="outline-none">
-            <FinalInterview
+            <FinalTest
               key={activeUnit.id}
               mapId={map.id}
               unitId={activeUnit.id}

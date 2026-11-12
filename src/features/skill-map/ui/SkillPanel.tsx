@@ -396,7 +396,7 @@ export function nextStepButtonLabel(step: NextStep, nothingProvenYet: boolean): 
     case "unit":
       return `Start Unit ${step.unitNumber}`;
     case "final":
-      return "Final interview";
+      return "Final test";
     case "program":
       return step.nextCourseNumber ? "Next course" : "Back to program";
     case "finished":
@@ -437,9 +437,9 @@ export function NextStepView({ step, onGo, primary = false }: { step: NextStep; 
     case "final":
       return (
         <div className="flex flex-col items-start gap-2">
-          <p className="text-ink-soft">Every topic is proven. The final interview is open.</p>
+          <p className="text-ink-soft">Every topic is proven. The final test is open.</p>
           <Button variant={variant} onClick={() => onGo(step)}>
-            Start the final interview
+            Start the final test
           </Button>
         </div>
       );

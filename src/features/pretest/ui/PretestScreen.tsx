@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Button, ErrorNotice, Spinner } from "@/shared/ui";
 import type { PretestResultView } from "../types";
 import {
+  choiceOf,
   hasAnyAnswer,
   PretestEnd,
   PretestIntro,
@@ -77,15 +78,11 @@ export function PretestScreen({
     const next = await session.submit(
       {
         unitId: current.unitId,
-        answers: current.questions.map((question) => {
-          const draft = unitDrafts[question.topicId];
-          return draft?.dontKnow
-            ? { topicId: question.topicId, dontKnow: true }
-            : {
-                topicId: question.topicId,
-                answer: draft?.text.trim() ? draft.text : null,
-              };
-        }),
+        // An option index, or null for "I don't know this" and for a question left alone.
+        answers: current.questions.map((question) => ({
+          topicId: question.topicId,
+          choice: choiceOf(unitDrafts[question.topicId]),
+        })),
         ...(stop && { stop: true }),
       },
       (graded) => {
@@ -105,7 +102,7 @@ export function PretestScreen({
   }
 
   async function stopNow() {
-    // With something typed on this unit, grade it first so it counts; otherwise just end.
+    // With something chosen on this unit, grade it first so it counts; otherwise just end.
     const current = view?.current;
     if (current && hasAnyAnswer(drafts[current.unitId] ?? {}))
       return answer(true);
@@ -168,7 +165,6 @@ export function PretestScreen({
           onStop={() => void stopNow()}
           pending={pending === "answers" || pending === "stop" ? pending : null}
           error={error}
-          maxCharacters={view.maxAnswerCharacters}
         />
       </Frame>
     );

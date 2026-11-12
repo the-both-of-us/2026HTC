@@ -1,15 +1,17 @@
 /*
  * The course pre-test. Plain data: stored as JSON, and the `Pretest*View` types are what the API
- * sends to a browser. No view type holds an answer key (`keyPoints`), in any reply.
+ * sends to a browser. Every question is multiple choice. No view type holds the answer key (the
+ * correct option or the explanation) before the unit is submitted, in any reply.
  */
+import type { McReviewItem } from "@/shared/multipleChoice";
 
-/** What the learner gave for one question, after code classified it. */
+/** What the learner's choice for one question came to, decided in code. */
 export type PretestOutcome =
-  /** Answered, and the check found it right: the topic is recorded as proved ("pretest"). */
+  /** The right option was chosen: the topic is recorded as proved ("pretest"). */
   | "known"
-  /** Answered, and the check found it wrong or too vague. */
+  /** Another option was chosen. */
   | "missed"
-  /** Empty or "I don't know". Never sent to the model, never passes. */
+  /** "I don't know this", or no choice. Never passes. */
   | "skipped";
 
 /** Why the pre-test ended. */
@@ -46,8 +48,11 @@ export type PretestNoneReason = "not-a-course" | "not-ready" | "nothing-left";
  */
 export type PretestState = "not-started" | "writing" | "stalled" | "answering" | "ended";
 
-/** One question as a browser sees it. No answer key. */
-export type PretestQuestionView = { topicId: string; topicTitle: string; question: string };
+/** One question as a browser sees it: the options in this learner's fixed order. No answer key. */
+export type PretestQuestionView = { topicId: string; topicTitle: string; question: string; options: string[] };
+
+/** What a learner sees about one question after the unit is submitted (the key is revealed only then). */
+export type PretestReviewView = McReviewItem;
 
 /** The unit to answer now. Only topics not proved yet are asked. */
 export type PretestUnitView = {
@@ -58,8 +63,11 @@ export type PretestUnitView = {
   questions: PretestQuestionView[];
 };
 
-/** One graded question. No model text, no answer key. */
-export type PretestResultView = { unitId: string; topicId: string; topicTitle: string; outcome: PretestOutcome };
+/**
+ * One graded question. `review` (the choice, the correct option, the explanation) is there for every
+ * unit graded as multiple choice; a record made before that has the outcome only.
+ */
+export type PretestResultView = { unitId: string; topicId: string; topicTitle: string; outcome: PretestOutcome; review?: PretestReviewView };
 
 /** What GET /api/pretest/[mapId] and every POST under it return. */
 export type PretestView = {
@@ -87,22 +95,26 @@ export type PretestView = {
   knownTopicIds: string[];
   /** The learner chose "Not now" on the offer. */
   dismissed: boolean;
-  /** Most characters one answer may have. */
-  maxAnswerCharacters: number;
 };
 
-/** POST /api/pretest/[mapId]/answers. A question left out counts as skipped. */
+/**
+ * POST /api/pretest/[mapId]/answers. `choice` is the index (0 to 3) of the option shown, or null for
+ * "I don't know this". A question left out counts as skipped.
+ */
 export type PretestAnswersRequest = {
   unitId: string;
-  answers: { topicId: string; answer?: string | null; dontKnow?: boolean }[];
+  answers: { topicId: string; choice?: number | null }[];
   /** Grade these, then end the pre-test ("stopped") instead of moving on. */
   stop?: boolean;
 };
 
 /* Server only below. */
 
-/** One question with its answer key. Stored canonically; never sent to a browser. */
-export type PretestQuestion = { topicId: string; question: string; keyPoints: string[] };
+/**
+ * One question with its answer key, stored canonically; never sent to a browser. The correct option
+ * is FIRST here; each learner gets their own fixed shuffle of it (see layout.ts).
+ */
+export type PretestQuestion = { topicId: string; question: string; options: string[]; explanation: string };
 
 /** `pretest-sets/<courseId>/<unitId>`: the unit's questions, written once for every learner of the course. */
 export type PretestQuestionSet = { courseId: string; unitId: string; questions: PretestQuestion[]; createdAt: string };
@@ -111,7 +123,7 @@ export type PretestQuestionSet = { courseId: string; unitId: string; questions: 
 export type PretestGradedUnit = {
   unitId: string;
   gradedAt: string;
-  results: { topicId: string; outcome: PretestOutcome }[];
+  results: { topicId: string; outcome: PretestOutcome; review?: McReviewItem }[];
 };
 
 /** `pretest/<courseId>/<ownerId>`: one learner's pre-test of one course. Removed by "Delete my data". */
@@ -121,6 +133,11 @@ export type PretestRecord = {
   ownerId: string;
   /** The learner's map the passes were recorded on. */
   mapId: string;
+  /**
+   * Seeds this learner's option order (kept on the server only). A record from before multiple choice
+   * has none; layout.ts then derives one from the course and owner ids.
+   */
+  seed?: number;
   state: "dismissed" | "in-progress" | "ended";
   dismissedAt?: string;
   startedAt?: string;

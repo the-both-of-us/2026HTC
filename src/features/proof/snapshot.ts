@@ -9,7 +9,7 @@ import {
   type SourceKind,
 } from "@/shared/types";
 import { redactSkill } from "./redact";
-import type { ProofFinalInterview, ProofKnownByPretest, ProofSkill, ProofSnapshot, ProofSource } from "./types";
+import type { ProofFinalInterview, ProofKnownByPretest, ProofSkill, ProofSnapshot, ProofSource, ProofUnitTest } from "./types";
 
 type SnapshotInput = {
   proofId: string;
@@ -19,8 +19,10 @@ type SnapshotInput = {
   states: Record<string, NodeState>;
   /** The attempt that proved each node, by node id. */
   attempts: Record<string, Attempt | null>;
-  /** The final interview's result, only when it was passed. */
+  /** The course final's result, only when it was passed. */
   finalInterview?: ProofFinalInterview | null;
+  /** Passed unit tests, in unit order. */
+  unitTests?: ProofUnitTest[];
   /** Node id to when it was passed, for proven nodes whose proof is a pre-test pass (no attempt). */
   pretestPasses?: Record<string, string>;
 };
@@ -55,14 +57,21 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
     skills,
     ...(knownByPretest.length > 0 && { knownByPretest }),
     notYetProven,
-    ...(input.finalInterview && {
-      finalInterview: {
-        passedCount: input.finalInterview.passedCount,
-        ...(input.finalInterview.spokenCount !== undefined && { spokenCount: input.finalInterview.spokenCount }),
-        finishedAt: input.finalInterview.finishedAt,
-      },
-    }),
+    ...(input.finalInterview && { finalInterview: toProofTest(input.finalInterview) }),
+    ...(input.unitTests &&
+      input.unitTests.length > 0 && { unitTests: input.unitTests.map((test) => ({ title: test.title, ...toProofTest(test) })) }),
     publishedAt: input.publishedAt,
+  };
+}
+
+/** A test result field by field. Keys for unknown values are left out, so older records hash as before. */
+function toProofTest(test: ProofFinalInterview): ProofFinalInterview {
+  return {
+    passedCount: test.passedCount,
+    ...(test.spokenCount !== undefined && { spokenCount: test.spokenCount }),
+    finishedAt: test.finishedAt,
+    ...(test.format === "multiple-choice" && { format: "multiple-choice" as const }),
+    ...(test.questionCount !== undefined && { questionCount: test.questionCount }),
   };
 }
 

@@ -1,6 +1,7 @@
 import { HttpError } from "@/shared/http";
 import { claimDoc, deleteDoc, getDoc, listKeys, putDoc } from "@/shared/store";
-import type { PretestQuestionSet, PretestRecord } from "./types";
+import { MC_OPTION_COUNT } from "@/shared/multipleChoice";
+import type { PretestQuestion, PretestQuestionSet, PretestRecord } from "./types";
 
 /*
  * Keys.
@@ -27,8 +28,41 @@ export const setKey = (courseId: string, unitId: string) => `${SET_PREFIX}${chec
 export const recordKey = (courseId: string, ownerId: string) => `${RECORD_PREFIX}${checkPart(courseId)}/${checkPart(ownerId)}`;
 const lockKey = (courseId: string, ownerId: string) => `${recordKey(courseId, ownerId)}/lock`;
 
-export function getQuestionSet(courseId: string, unitId: string): Promise<PretestQuestionSet | null> {
-  return getDoc<PretestQuestionSet>(setKey(courseId, unitId));
+/**
+ * True for a multiple-choice set. A set written before multiple choice (short answers with
+ * `keyPoints`) has no options, so it counts as missing and is written again.
+ */
+export function isMultipleChoiceSet(value: unknown): value is PretestQuestionSet {
+  if (typeof value !== "object" || value === null) return false;
+  const { questions } = value as { questions?: unknown };
+  return (
+    Array.isArray(questions) &&
+    questions.length > 0 &&
+    questions.every((question) => {
+      const q = question as Partial<PretestQuestion> | null;
+      return (
+        typeof q?.topicId === "string" &&
+        typeof q.question === "string" &&
+        typeof q.explanation === "string" &&
+        Array.isArray(q.options) &&
+        q.options.length === MC_OPTION_COUNT &&
+        q.options.every((option) => typeof option === "string")
+      );
+    })
+  );
+}
+
+/** The unit's multiple-choice set, or null when there is none (an old-shape set counts as none). */
+export async function getQuestionSet(courseId: string, unitId: string): Promise<PretestQuestionSet | null> {
+  const set = await getDoc<unknown>(setKey(courseId, unitId));
+  return isMultipleChoiceSet(set) ? set : null;
+}
+
+/** Removes an old-shape set so a multiple-choice one can be written in its place. Never touches a good set. */
+export async function discardOldSet(courseId: string, unitId: string): Promise<void> {
+  const key = setKey(courseId, unitId);
+  const stored = await getDoc<unknown>(key);
+  if (stored !== null && !isMultipleChoiceSet(stored)) await deleteDoc(key);
 }
 
 export function getRecord(courseId: string, ownerId: string): Promise<PretestRecord | null> {

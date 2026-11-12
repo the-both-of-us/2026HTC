@@ -62,6 +62,7 @@ const CONTENT_DELETE: Rule[] = [
   { prefix: "progress/", action: "delete", note: "progress on wiped maps" },
   { prefix: "unlocks/", action: "delete", note: "progress on wiped maps" },
   { prefix: "final/", action: "delete", note: "progress on wiped maps" },
+  { prefix: "final-submits/", action: "delete", note: "test submission claims on wiped maps" },
   { prefix: "catch-revealed/", action: "delete", note: "progress on wiped maps" },
   { prefix: "pretest/", action: "delete", note: "pre-test records on wiped maps" },
   { prefix: "proofs/", action: "delete", note: "evidence pages point at wiped maps" },

@@ -108,14 +108,24 @@ export function fetchCatchRound(mapId: string, nodeId: string) {
 }
 
 /** The course final, or a degree unit's test when `unitId` is given. */
-function finalUrl(mapId: string, unitId?: string) {
-  return `/api/maps/${encodeURIComponent(mapId)}/final${unitId ? `?unit=${encodeURIComponent(unitId)}` : ""}`;
+function finalUrl(mapId: string, unitId?: string, path = "") {
+  return `/api/maps/${encodeURIComponent(mapId)}/final${path}${unitId ? `?unit=${encodeURIComponent(unitId)}` : ""}`;
 }
 
 export function fetchFinal(mapId: string, unitId?: string) {
   return requestJson<FinalView>(finalUrl(mapId, unitId));
 }
 
+/** Starts the test, or a retake with new questions after a fail. */
 export function startFinal(mapId: string, unitId?: string) {
   return requestJson<FinalView>(finalUrl(mapId, unitId), { method: "POST" });
+}
+
+/** Submits the whole test once: the chosen option's index for each question. */
+export function submitFinal(mapId: string, unitId: string | undefined, testId: string, answers: number[]) {
+  return requestJson<FinalView>(finalUrl(mapId, unitId, "/submit"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ testId, answers }),
+  });
 }

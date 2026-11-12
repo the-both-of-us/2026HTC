@@ -4,9 +4,10 @@
  * app imports this file.
  */
 import { randomUUID } from "node:crypto";
-import { putDoc } from "@/shared/store";
+import { getDoc, putDoc } from "@/shared/store";
 import type { CourseSyllabus, SkillMap, SkillNode, SyllabusUnit } from "@/shared/types";
-import type { PretestQuestionSet } from "./types";
+import { presentSet, seedOf } from "./layout";
+import type { PretestAnswersRequest, PretestQuestionSet, PretestRecord } from "./types";
 
 /** Every answer key in the fixtures contains this, so a test can look for it in any reply. */
 export const KEY_MARK = "ANSWERKEY";
@@ -99,7 +100,27 @@ export async function seedPostingMap(ownerId: string, sourceKind: "posting" | "p
   return map;
 }
 
+/** Every explanation in the fixtures contains KEY_MARK; the correct option of a topic is `Right: <topicId>`. */
+export function mcQuestion(topicId: string, title = topicId) {
+  return {
+    topicId,
+    question: `What does ${title} do?`,
+    options: [`Right: ${topicId}`, `Wrong A for ${topicId}`, `Wrong B for ${topicId}`, `Wrong C for ${topicId}`],
+    explanation: `${KEY_MARK} ${topicId} explains why Right is right.`,
+  };
+}
+
 export function questionSet(courseId: string, unit: SyllabusUnit): PretestQuestionSet {
+  return {
+    courseId,
+    unitId: unit.id,
+    questions: unit.topics.map((topic) => mcQuestion(topic.id, topic.title)),
+    createdAt: new Date().toISOString(),
+  };
+}
+
+/** A set as written before multiple choice: short-answer questions with key points. */
+export function oldShapeSet(courseId: string, unit: SyllabusUnit) {
   return {
     courseId,
     unitId: unit.id,
@@ -112,18 +133,30 @@ export async function seedSets(courseId: string, syllabus: CourseSyllabus): Prom
   for (const unit of syllabus.units) await putDoc(`pretest-sets/${courseId}/${unit.id}`, questionSet(courseId, unit));
 }
 
-/**
- * A stand-in for chatJSON. Questions: one per "- id:" line of the prompt, with key points holding
- * KEY_MARK. Grading: an answer containing "RIGHT" is correct.
- */
+/** A stand-in for chatJSON: one multiple-choice question per "- id:" line of the prompt, the correct option first. */
 export function fakeChat(options: { label: string; prompt: string }): unknown {
   if (options.label === "pretest-questions") {
     const ids = [...options.prompt.matchAll(/^- id: (\S+)$/gm)].map((match) => match[1]);
-    return { questions: ids.map((id) => ({ topicId: id, question: `What does ${id} do?`, keyPoints: [`${KEY_MARK} ${id} a.`, `${KEY_MARK} ${id} b.`] })) };
-  }
-  if (options.label === "pretest-grade") {
-    const items = options.prompt.split(/^Item \d+$/m).slice(1);
-    return { verdicts: items.map((item, index) => ({ item: index + 1, correct: /RIGHT/.test(item.split("<learner_answer>")[1] ?? "") })) };
+    return { questions: ids.map((id) => mcQuestion(id)) };
   }
   throw new Error(`unexpected call ${options.label}`);
+}
+
+export type Pick = "right" | "wrong" | "dk";
+
+/**
+ * The body of an answers request for one unit. The option order is this learner's own, so the index
+ * of the right option is read from their record and the stored set. "dk" is "I don't know this" (null).
+ */
+export async function answersFor(map: SkillMap, unitId: string, picks: Record<string, Pick>): Promise<PretestAnswersRequest> {
+  const record = await getDoc<PretestRecord>(`pretest/${map.courseId}/${map.ownerId}`);
+  const set = await getDoc<PretestQuestionSet>(`pretest-sets/${map.courseId}/${unitId}`);
+  const presented = presentSet(set as PretestQuestionSet, seedOf(record as PretestRecord));
+  return {
+    unitId,
+    answers: Object.entries(picks).map(([topicId, pick]) => {
+      const { correctIndex } = presented.find((question) => question.topicId === topicId) as { correctIndex: number };
+      return { topicId, choice: pick === "right" ? correctIndex : pick === "wrong" ? (correctIndex + 1) % 4 : null };
+    }),
+  };
 }

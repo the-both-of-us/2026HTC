@@ -78,7 +78,9 @@ function UnitEntry({ unit }: { unit: SyllabusUnitView }) {
       </h3>
       <p className="text-sm text-ink-soft tabular-nums">
         {plural(unit.plannedTopics, "topic")} planned · {unit.proved} proved
-        {unit.test ? ` · unit test ${unit.test === "passed" ? "passed" : unit.test === "open" ? "open" : "locked"}` : ""}
+        {unit.test
+          ? ` · unit test ${unit.test === "passed" ? `passed${unit.testScore ? ` (${unit.testScore})` : ""}` : unit.test === "open" ? "open" : "locked"}`
+          : ""}
       </p>
       {unit.outcomes.length > 0 && <p className="mt-1 text-sm text-ink-soft">Serves outcomes: {comma(unit.outcomes)}</p>}
       <ol className="mt-2">
@@ -164,12 +166,17 @@ export function SyllabusDocument({ view }: { view: LiveSyllabusView }) {
               <li>Each topic is proved by teaching it back in your own words.</li>
               {view.assessment.unitTests && (
                 <li>
-                  A unit test after each unit: {view.assessment.unitTestQuestions} questions, pass mark {view.assessment.unitTestPassMark}.
+                  A multiple-choice unit test after each unit: {view.assessment.unitTestQuestions} questions, pass mark {view.assessment.unitTestPassMark}.
                 </li>
               )}
               <li>
-                Course final: {view.assessment.finalQuestions} questions, pass mark {view.assessment.finalPassMark}
-                {view.assessment.final === "passed" ? " (passed)" : view.assessment.final === "open" ? " (open now)" : ""}.
+                A multiple-choice final test: {view.assessment.finalQuestions} questions, pass mark {view.assessment.finalPassMark}
+                {view.assessment.final === "passed"
+                  ? ` (passed${view.assessment.finalScore ? `: ${view.assessment.finalScore}` : ""})`
+                  : view.assessment.final === "open"
+                    ? " (open now)"
+                    : ""}
+                .
               </li>
             </ul>
             <p className="mt-3 text-sm text-ink-soft">

@@ -10,6 +10,7 @@ export {
   getPassedUnitTests,
   getUnitTests,
   startFinalInterview,
+  submitFinalTest,
   deleteLearnerData,
   getAttempt,
   getOwnAttempt,
@@ -25,11 +26,13 @@ export {
   toLearnerView,
   unlockNode,
 } from "./attempts";
-export type { LearnerAttempt, NewAttempt, ProgressView, UnitTestView } from "./attempts";
-export { FINAL_NODE_ID, FINAL_QUESTIONS, finalPlan, isFinalNodeId } from "./final";
+export type { FinalSubmission, LearnerAttempt, NewAttempt, ProgressView, UnitTestView } from "./attempts";
+export { FINAL_NODE_ID, FINAL_PASS_MARK, FINAL_QUESTIONS, finalPlan, isFinalNodeId } from "./final";
 export { generateFollowUp, gradeFollowUp } from "./followUp";
 export { computeScore, gradeExplanation, isUsableQuote } from "./grading";
-export { followUpBody, newAttemptBody } from "./http";
+export { finalSubmitBody, followUpBody, newAttemptBody, unitOf } from "./http";
 export { assignFormats, FORMAT_LABELS } from "./formats";
 export type { TopicFormat } from "./formats";
-export type { FinalPlan, FinalResult, FinalView } from "./final";
+export type { FinalPlan, FinalQuestionView, FinalResult, FinalReviewItem, FinalView } from "./final";
+export { testScoreLabel } from "./testLabel";
+export type { TestScore } from "./testLabel";

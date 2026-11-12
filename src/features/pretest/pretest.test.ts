@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AiUnavailableError, chatJSON } from "@/features/ai";
+import { chatJSON } from "@/features/ai";
 import { getProgramView, startUnit } from "@/features/programs";
 import { publishProof } from "@/features/proof";
 import { getSkillMap } from "@/features/skill-map";
@@ -9,7 +9,9 @@ import { deleteUserData } from "@/features/trust";
 import { getDoc, listKeys, putDoc } from "@/shared/store";
 import { PRETEST_PROOF_LABEL } from "@/shared/types";
 import { dismissPretest, getPretestView, startPretest, stopPretest, submitPretestAnswers, type PretestOptions } from "./index";
-import { fakeChat, KEY_MARK, nodesOf, seedCourse, seedMap, seedPostingMap, seedSets } from "./test-fixtures";
+import { questionsReplySchema } from "./prompt";
+import type { PretestRecord } from "./types";
+import { answersFor, fakeChat, KEY_MARK, mcQuestion, nodesOf, oldShapeSet, seedCourse, seedMap, seedPostingMap, seedSets } from "./test-fixtures";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
@@ -35,9 +37,6 @@ function collector(): PretestOptions & { settle: () => Promise<void> } {
 
 const callsLabelled = (label: string) => mockChat.mock.calls.filter(([options]) => options.label === label);
 
-const right = (topicId: string) => ({ topicId, answer: `RIGHT: ${topicId} works like this, with an example.` });
-const wrong = (topicId: string) => ({ topicId, answer: `Something unrelated about ${topicId}.` });
-
 beforeEach(() => {
   vi.stubEnv("BLOB_READ_WRITE_TOKEN", "");
   mockChat.mockReset();
@@ -49,7 +48,7 @@ afterEach(() => {
 });
 
 describe("question sets", () => {
-  it("are written once per unit and shared by two learners of one course", async () => {
+  it("are written once per unit and shared by two learners of one course, each with their own option order", async () => {
     const { courseId, syllabus, map } = await seedCourse();
     const other = await seedMap(courseId, randomUUID(), syllabus);
 
@@ -57,17 +56,37 @@ describe("question sets", () => {
     expect((await startPretest(map.id, map.ownerId, first)).state).toBe("writing");
     await first.settle();
     const second = collector();
-    const view = await startPretest(other.id, other.ownerId, second);
+    await startPretest(other.id, other.ownerId, second);
     await second.settle();
 
-    // Unit 1 and the unit ahead (u2), one call each, and nothing more for the second learner.
-    const written = callsLabelled("pretest-questions").map(([options]) => /Unit (\d+):/.exec(options.prompt)?.[1]);
-    expect(written.sort()).toEqual(["1", "2"]);
-    expect(view.state).toBe("answering");
-    expect(view.current?.unitId).toBe("u1");
-    expect(view.current?.questions.map((question) => question.topicId)).toEqual(["u1-t1", "u1-t2", "u1-t3", "u1-t4"]);
+    // Unit 1 and the unit ahead (u2), one write-profile call each, and nothing more for the second learner.
+    const written = callsLabelled("pretest-questions");
+    expect(written.map(([options]) => /Unit (\d+):/.exec(options.prompt)?.[1]).sort()).toEqual(["1", "2"]);
+    expect(written.every(([options]) => options.profile === "write")).toBe(true);
+    expect(mockChat).toHaveBeenCalledTimes(2);
+
+    const mine = await getPretestView(map.id, map.ownerId);
+    const theirs = await getPretestView(other.id, other.ownerId);
+    expect(mine.state).toBe("answering");
+    expect(mine.current?.unitId).toBe("u1");
+    expect(mine.current?.questions.map((question) => question.topicId)).toEqual(["u1-t1", "u1-t2", "u1-t3", "u1-t4"]);
+    // Same questions, same four options each, but not the same order for both learners.
+    const sorted = (view: typeof mine) => view.current?.questions.map((question) => [question.question, [...question.options].sort()]);
+    expect(sorted(mine)).toEqual(sorted(theirs));
+    expect(mine.current?.questions.map((question) => question.options)).not.toEqual(theirs.current?.questions.map((question) => question.options));
     // The set is keyed by course, not learner.
     expect(await listKeys(`pretest-sets/${courseId}/`)).toEqual(expect.arrayContaining([`pretest-sets/${courseId}/u1`, `pretest-sets/${courseId}/u2`]));
+  });
+
+  it("show a learner the same option order after a reload", async () => {
+    const { courseId, syllabus, map } = await seedCourse();
+    await seedSets(courseId, syllabus);
+    await startPretest(map.id, map.ownerId, collector());
+    const a = await getPretestView(map.id, map.ownerId);
+    const b = await getPretestView(map.id, map.ownerId);
+    const c = await startPretest(map.id, map.ownerId, collector());
+    expect(b.current).toEqual(a.current);
+    expect(c.current).toEqual(a.current);
   });
 
   it("are written from the syllabus only, with no learner data", async () => {
@@ -80,11 +99,41 @@ describe("question sets", () => {
     expect(options.prompt).not.toContain(map.ownerId);
     expect(options.prompt).not.toContain(map.id);
     expect(options.profile).toBe("write");
+    expect(options.system).toMatch(/multiple-choice/);
+  });
+
+  it("treat an old short-answer set as missing and write a new one", async () => {
+    const { courseId, syllabus, map } = await seedCourse();
+    await putDoc(`pretest-sets/${courseId}/u1`, oldShapeSet(courseId, syllabus.units[0]));
+
+    const background = collector();
+    expect((await startPretest(map.id, map.ownerId, background)).state).not.toBe("answering");
+    // Reading the old set did not crash and did not show it.
+    expect(JSON.stringify(await getPretestView(map.id, map.ownerId))).not.toContain(KEY_MARK);
+    await background.settle();
+
+    expect(callsLabelled("pretest-questions").length).toBeGreaterThanOrEqual(1);
+    const stored = await getDoc<{ questions: { options?: string[]; keyPoints?: string[] }[] }>(`pretest-sets/${courseId}/u1`);
+    expect(stored?.questions.every((question) => question.options?.length === 4 && question.keyPoints === undefined)).toBe(true);
+    const view = await getPretestView(map.id, map.ownerId);
+    expect(view.state).toBe("answering");
+    expect(view.current?.questions[0].options).toHaveLength(4);
+  });
+
+  it("must have four distinct options and an explanation that names no position", () => {
+    const schema = questionsReplySchema(["t1"]);
+    const good = mcQuestion("t1");
+    expect(schema.safeParse({ questions: [good] }).success).toBe(true);
+    expect(schema.safeParse({ questions: [{ ...good, options: good.options.slice(0, 3) }] }).success).toBe(false);
+    expect(schema.safeParse({ questions: [{ ...good, options: [good.options[0], good.options[0], good.options[2], good.options[3]] }] }).success).toBe(false);
+    expect(schema.safeParse({ questions: [{ ...good, options: [good.options[0], good.options[1], good.options[2], "None of the above"] }] }).success).toBe(false);
+    expect(schema.safeParse({ questions: [{ ...good, explanation: "Option A is right." }] }).success).toBe(false);
+    expect(schema.safeParse({ questions: [{ ...good, topicId: "other" }] }).success).toBe(false);
   });
 });
 
 describe("answer keys", () => {
-  it("never appear in any reply, including errors", async () => {
+  it("never appear in any reply before the unit is submitted, including errors", async () => {
     const { courseId, syllabus, map } = await seedCourse();
     await seedSets(courseId, syllabus);
     const replies: unknown[] = [];
@@ -99,83 +148,125 @@ describe("answer keys", () => {
     await record(getPretestView(map.id, map.ownerId));
     await record(startPretest(map.id, map.ownerId, collector()));
     await record(submitPretestAnswers(map.id, map.ownerId, { unitId: "u2", answers: [] }));
-    mockChat.mockRejectedValueOnce(new AiUnavailableError());
-    await record(submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [right("u1-t1")] }));
-    await record(submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [right("u1-t1"), wrong("u1-t2")] }));
     await record(getPretestView(map.id, map.ownerId));
 
-    expect(replies).toHaveLength(6);
-    expect(JSON.stringify(replies)).not.toContain(KEY_MARK);
+    expect(replies).toHaveLength(4);
+    const text = JSON.stringify(replies);
+    expect(text).not.toContain(KEY_MARK);
+    expect(text).not.toMatch(/correctIndex|explanation|keyPoints/);
+    // Each question is only its text and its four options.
+    const view = replies[1] as Awaited<ReturnType<typeof getPretestView>>;
+    expect(view.current?.questions.every((question) => Object.keys(question).sort().join() === "options,question,topicId,topicTitle")).toBe(true);
+  });
+
+  it("are revealed for the submitted unit only, and the next unit stays closed", async () => {
+    const { courseId, syllabus, map } = await seedCourse();
+    await seedSets(courseId, syllabus);
+    await startPretest(map.id, map.ownerId, collector());
+
+    const view = await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, "u1", { "u1-t1": "right", "u1-t2": "wrong", "u1-t3": "dk" }), collector());
+
+    const reply = JSON.stringify(view);
+    expect(reply).toContain(`${KEY_MARK} u1-t1`);
+    expect(reply).not.toContain(`${KEY_MARK} u2`);
+    expect(JSON.stringify(view.current)).not.toMatch(/correctIndex|explanation|ANSWERKEY/);
+    expect(view.current?.unitId).toBe("u2");
+    // The review comes back on later reads too.
+    const again = await getPretestView(map.id, map.ownerId);
+    expect(again.results[0].review?.explanation).toContain(KEY_MARK);
   });
 });
 
 describe("grading", () => {
-  it("never sends empty or \"I don't know\" answers to the model, and never passes them", async () => {
+  it("is done in code: no model call, a review per question, and null never passes", async () => {
     const { courseId, syllabus, map } = await seedCourse();
     await seedSets(courseId, syllabus);
     await startPretest(map.id, map.ownerId, collector());
+    mockChat.mockClear();
 
-    const view = await submitPretestAnswers(map.id, map.ownerId, {
-      unitId: "u1",
-      answers: [
-        { topicId: "u1-t1", answer: "RIGHT but I ticked it", dontKnow: true },
-        { topicId: "u1-t2", answer: "   " },
-        { topicId: "u1-t3", answer: "I don't know" },
-        right("u1-t4"),
-      ],
-    });
+    const request = await answersFor(map, "u1", { "u1-t1": "right", "u1-t2": "wrong", "u1-t3": "dk" });
+    // u1-t4 is left out: unanswered.
+    const view = await submitPretestAnswers(map.id, map.ownerId, request, collector());
 
-    const grades = callsLabelled("pretest-grade");
-    expect(grades).toHaveLength(1);
-    expect(grades[0][0].profile).toBe("check");
-    expect(grades[0][0].prompt).toContain("u1-t4");
-    expect(grades[0][0].prompt).not.toMatch(/u1-t1|u1-t2|u1-t3|ticked|don't know/);
+    expect(mockChat).not.toHaveBeenCalled();
     expect(view.results.map((result) => [result.topicId, result.outcome])).toEqual([
-      ["u1-t1", "skipped"],
-      ["u1-t2", "skipped"],
+      ["u1-t1", "known"],
+      ["u1-t2", "missed"],
       ["u1-t3", "skipped"],
-      ["u1-t4", "known"],
+      ["u1-t4", "skipped"],
     ]);
-    expect(view.knownTopicIds).toEqual(["u1-t4"]);
+    expect(view.knownTopicIds).toEqual(["u1-t1"]);
+    const [right, wrong, dontKnow, left] = view.results.map((result) => result.review);
+    // The right pick shows the right option; the wrong pick shows both; "I don't know" shows no choice.
+    expect(right?.options[right.chosen as number]).toBe("Right: u1-t1");
+    expect(right?.chosen).toBe(right?.correctIndex);
+    expect(wrong?.options[wrong.correctIndex]).toBe("Right: u1-t2");
+    expect(wrong?.chosen).not.toBe(wrong?.correctIndex);
+    expect(wrong?.explanation).toContain(KEY_MARK);
+    expect(dontKnow?.chosen).toBeNull();
+    expect(left?.chosen).toBeNull();
   });
 
-  it("makes no call when every answer is skipped, and ends the test on that unit", async () => {
+  it("ends the test on a unit where nothing was right", async () => {
     const { courseId, syllabus, map } = await seedCourse();
     await seedSets(courseId, syllabus);
     await startPretest(map.id, map.ownerId, collector());
 
-    const view = await submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [{ topicId: "u1-t1", answer: "idk" }] });
+    const view = await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, "u1", { "u1-t1": "dk", "u1-t2": "wrong" }));
 
-    expect(callsLabelled("pretest-grade")).toHaveLength(0);
     expect(view.state).toBe("ended");
     expect(view.offer).toBe("taken");
     expect(view.ended).toMatchObject({ reason: "unit-missed", unitId: "u1" });
     expect(view.knownTopicIds).toEqual([]);
   });
 
-  it("lets code decide: a missing or contradictory verdict is a miss", async () => {
+  it("refuses a unit that is sent twice, and a choice or topic repeated within one", async () => {
     const { courseId, syllabus, map } = await seedCourse();
     await seedSets(courseId, syllabus);
     await startPretest(map.id, map.ownerId, collector());
-    mockChat.mockResolvedValueOnce({ verdicts: [{ item: 1, correct: true }, { item: 2, correct: true }, { item: 2, correct: false }, { item: 9, correct: true }] } as never);
+    const request = await answersFor(map, "u1", { "u1-t1": "right" });
 
-    const view = await submitPretestAnswers(map.id, map.ownerId, {
-      unitId: "u1",
-      answers: [right("u1-t1"), right("u1-t2"), right("u1-t3")],
-    });
-    expect(view.results.map((result) => result.outcome)).toEqual(["known", "missed", "missed", "skipped"]);
+    const view = await submitPretestAnswers(map.id, map.ownerId, request, collector());
+    expect(view.unitsDone).toBe(1);
+    await expect(submitPretestAnswers(map.id, map.ownerId, request, collector())).rejects.toMatchObject({ status: 409 });
+    expect((await getPretestView(map.id, map.ownerId)).unitsDone).toBe(1);
+
+    const twice = { unitId: "u2", answers: [{ topicId: "u2-t1", choice: 0 }, { topicId: "u2-t1", choice: 1 }] };
+    await expect(submitPretestAnswers(map.id, map.ownerId, twice, collector())).rejects.toMatchObject({ status: 400 });
   });
 
-  it("records nothing when the check fails, so the same answers can be sent again", async () => {
+  it("works for a record made before option orders were seeded", async () => {
     const { courseId, syllabus, map } = await seedCourse();
     await seedSets(courseId, syllabus);
     await startPretest(map.id, map.ownerId, collector());
-    mockChat.mockRejectedValueOnce(new AiUnavailableError());
+    const key = `pretest/${courseId}/${map.ownerId}`;
+    const stored = (await getDoc<PretestRecord>(key)) as PretestRecord;
+    delete stored.seed;
+    await putDoc(key, stored);
 
-    await expect(submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [right("u1-t1")] })).rejects.toThrow(AiUnavailableError);
-    expect((await getPretestView(map.id, map.ownerId)).unitsDone).toBe(0);
-    const view = await submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [right("u1-t1")] });
-    expect(view.unitsDone).toBe(1);
+    const before = await getPretestView(map.id, map.ownerId);
+    expect(before.current?.questions[0].options).toHaveLength(4);
+    const view = await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, "u1", { "u1-t1": "right" }), collector());
+    expect(view.knownTopicIds).toEqual(["u1-t1"]);
+  });
+
+  it("still shows a graded unit saved with outcomes only (written before multiple choice)", async () => {
+    const { courseId, syllabus, map } = await seedCourse();
+    await seedSets(courseId, syllabus);
+    await startPretest(map.id, map.ownerId, collector());
+    const key = `pretest/${courseId}/${map.ownerId}`;
+    const stored = (await getDoc<PretestRecord>(key)) as PretestRecord;
+    await putDoc(key, {
+      ...stored,
+      unitIndex: 1,
+      graded: [{ unitId: "u1", gradedAt: new Date().toISOString(), results: [{ topicId: "u1-t1", outcome: "known" }, { topicId: "u1-t2", outcome: "missed" }] }],
+    });
+
+    const view = await getPretestView(map.id, map.ownerId);
+    expect(view.results).toEqual([
+      { unitId: "u1", topicId: "u1-t1", topicTitle: "Topic 1.1", outcome: "known" },
+      { unitId: "u1", topicId: "u1-t2", topicTitle: "Topic 1.2", outcome: "missed" },
+    ]);
     expect(view.current?.unitId).toBe("u2");
   });
 });
@@ -207,9 +298,9 @@ describe("a pre-test pass", () => {
     expect((await getProgramView(programId, map.ownerId))?.courses[1].state).toBe("locked");
 
     await startPretest(map.id, map.ownerId, collector());
-    await submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: ["u1-t1", "u1-t2", "u1-t3", "u1-t4"].map(right) });
+    await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, "u1", { "u1-t1": "right", "u1-t2": "right", "u1-t3": "right", "u1-t4": "right" }));
     // Unit 2 is not built yet: its passes are recorded against the topic ids.
-    const view = await submitPretestAnswers(map.id, map.ownerId, { unitId: "u2", answers: [right("u2-t1"), wrong("u2-t2")] });
+    const view = await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, "u2", { "u2-t1": "right", "u2-t2": "wrong" }));
     expect(view.knownTopicIds.sort()).toEqual(["u1-t1", "u1-t2", "u1-t3", "u1-t4", "u2-t1"]);
 
     // Node state: proven, and labelled as a pre-test pass.
@@ -242,7 +333,7 @@ describe("a pre-test pass", () => {
     const { courseId, syllabus, map } = await seedCourse();
     await seedSets(courseId, syllabus);
     await startPretest(map.id, map.ownerId, collector());
-    await submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [right("u1-t1")] });
+    await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, "u1", { "u1-t1": "right" }));
 
     const proof = await publishProof(map.ownerId, map.id, "Sam");
     expect(proof.snapshot.skills).toEqual([]);
@@ -265,11 +356,20 @@ describe("the offer", () => {
     expect(stopped).toMatchObject({ offer: "taken", state: "ended", ended: { reason: "stopped" } });
 
     await expect(startPretest(map.id, map.ownerId, collector())).rejects.toMatchObject({ status: 409 });
-    await expect(submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [right("u1-t1")] })).rejects.toMatchObject({ status: 409 });
+    await expect(submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [{ topicId: "u1-t1", choice: 0 }] })).rejects.toMatchObject({ status: 409 });
     // A second map of the same course does not reset it.
     const again = await seedMap(courseId, map.ownerId, syllabus);
     await expect(startPretest(again.id, map.ownerId, collector())).rejects.toMatchObject({ status: 409 });
     expect((await getPretestView(again.id, map.ownerId)).offer).toBe("taken");
+  });
+
+  it("stops after grading what was answered on the current unit", async () => {
+    const { courseId, syllabus, map } = await seedCourse();
+    await seedSets(courseId, syllabus);
+    await startPretest(map.id, map.ownerId, collector());
+    const request = { ...(await answersFor(map, "u1", { "u1-t1": "right" })), stop: true };
+    const view = await submitPretestAnswers(map.id, map.ownerId, request, collector());
+    expect(view).toMatchObject({ state: "ended", ended: { reason: "stopped" }, knownTopicIds: ["u1-t1"] });
   });
 
   it("ends as completed after the last unit", async () => {
@@ -277,7 +377,7 @@ describe("the offer", () => {
     await seedSets(courseId, syllabus);
     await startPretest(map.id, map.ownerId, collector());
     for (const unit of syllabus.units) {
-      await submitPretestAnswers(map.id, map.ownerId, { unitId: unit.id, answers: [right(unit.topics[0].id)] });
+      await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, unit.id, { [unit.topics[0].id]: "right" }));
     }
     const view = await getPretestView(map.id, map.ownerId);
     expect(view).toMatchObject({ offer: "taken", state: "ended", unitsDone: 3, ended: { reason: "completed" } });
@@ -304,7 +404,7 @@ describe("Delete my data", () => {
     const { courseId, syllabus, map } = await seedCourse();
     await seedSets(courseId, syllabus);
     await startPretest(map.id, map.ownerId, collector());
-    await submitPretestAnswers(map.id, map.ownerId, { unitId: "u1", answers: [right("u1-t1")] });
+    await submitPretestAnswers(map.id, map.ownerId, await answersFor(map, "u1", { "u1-t1": "right" }));
     expect(await getDoc(`pretest/${courseId}/${map.ownerId}`)).not.toBeNull();
 
     const counts = await deleteUserData(map.ownerId);

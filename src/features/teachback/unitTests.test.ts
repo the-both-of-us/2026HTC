@@ -4,15 +4,15 @@ import { chatJSON } from "@/features/ai";
 import { getDoc, listKeys, putDoc } from "@/shared/store";
 import type { CourseSyllabus, SkillMap, SkillNode } from "@/shared/types";
 import {
-  answerFollowUp,
   deleteLearnerData,
   getFinalInterview,
   getPassedFinal,
   getPassedUnitTests,
   getUnitTests,
   startFinalInterview,
+  submitFinalTest,
 } from "./attempts";
-import { FINAL_NODE_ID, finalKey, finalPlan, questionsSystem, QUESTIONS_SYSTEM } from "./final";
+import { FINAL_NODE_ID, finalKey, finalPlan, testSystem, type McFinalRecord } from "./final";
 
 vi.mock("@/features/ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/ai")>()),
@@ -53,6 +53,7 @@ function syllabus(builtUnits: string[]): CourseSyllabus {
     courseSlug: "intro",
     outcomes: [{ id: "o1", text: "Outcome" }],
     units,
+    // What syllabi written before Nov 12 store. The test's own count comes from SYLLABUS_SHAPE.
     assessment: { unitTests: true, finalQuestions: 6 },
   };
 }
@@ -80,17 +81,37 @@ async function prove(...nodeIds: string[]) {
   }
 }
 
-function modelAsks(count: number) {
+function modelWrites(count: number, prefix = "Question", topics = [1, 2]) {
   mockChatJSON.mockResolvedValueOnce({
-    questions: Array.from({ length: count }, (_, i) => ({ question: `Question ${i + 1}?`, topics: [1, 2] })),
+    questions: Array.from({ length: count }, (_, i) => ({
+      question: `${prefix} ${i + 1}: what follows from these topics?`,
+      options: [`Right ${i + 1}`, `Wrong a ${i + 1}`, `Wrong b ${i + 1}`, `Wrong c ${i + 1}`],
+      explanation: `Why ${i + 1}.`,
+      topics,
+    })),
   });
 }
 
-/** Answers every question in a started test, passing the first `passes` of them. */
-async function answerAll(attemptIds: string[], passes: number) {
-  for (const [index, attemptId] of attemptIds.entries()) {
-    mockChatJSON.mockResolvedValueOnce({ passed: index < passes, feedback: index < passes ? "Right." : "Not passed." });
-    await answerFollowUp(OWNER, attemptId, "An answer about the topics.");
+/** Submits the started test, getting the first `right` questions right. */
+async function submitGetting(right: number, unitId?: string) {
+  const record = (await getDoc<McFinalRecord>(finalKey(mapId, unitId)))!;
+  const answers = record.questions.map((question, index) => (index < right ? question.correctIndex : (question.correctIndex + 1) % 4));
+  return submitFinalTest(OWNER, mapId, unitId, { testId: record.testId, answers });
+}
+
+async function passUnitTests(...unitIds: string[]) {
+  for (const unitId of unitIds) {
+    await putDoc(finalKey(mapId, unitId), {
+      mapId,
+      ownerId: OWNER,
+      unitId,
+      format: "multiple-choice",
+      testId: randomUUID(),
+      passMark: 5,
+      questions: [],
+      startedAt: "x",
+      result: { passed: true, passedCount: 6, finishedAt: "x", format: "multiple-choice", questionCount: 6 },
+    });
   }
 }
 
@@ -114,33 +135,35 @@ describe("a unit test", () => {
 
     await prove("a2");
     const ready = await getFinalInterview(OWNER, mapId, "u1");
-    expect(ready).toMatchObject({ state: "ready", unitId: "u1", questionCount: 4, passMark: 3 });
+    expect(ready).toMatchObject({ state: "ready", unitId: "u1", questionCount: 6, passMark: 5, format: "multiple-choice" });
     // Another unit is still shut: its topic is not proved.
     expect((await getFinalInterview(OWNER, mapId, "u2")).state).toBe("locked");
   });
 
-  it("asks 4 questions about that unit's topics only, stored as a final with node id final:<unit>", async () => {
+  it("asks 6 multiple-choice questions about that unit's topics only, stored at final/<map>/<unit>", async () => {
     await saveMap("degree", ["u1", "u2"], UNIT_NODES);
     await prove("a1", "a2");
-    modelAsks(4);
+    modelWrites(6);
     const started = await startFinalInterview(OWNER, mapId, "u1");
 
-    expect(started).toMatchObject({ state: "in-progress", unitId: "u1", questionCount: 4, passMark: 3 });
-    expect(started.questions).toHaveLength(4);
+    expect(started).toMatchObject({ state: "in-progress", unitId: "u1", questionCount: 6, passMark: 5 });
+    expect(started.questions).toHaveLength(6);
     expect(started.questions[0].topics).toEqual(["Topic a1", "Topic a2"]);
+    expect(JSON.stringify(started)).not.toContain("correctIndex");
 
     const call = mockChatJSON.mock.calls[0][0];
-    expect(call.system).toContain("Write 4 questions for a short unit test on that unit only");
+    expect(call.profile).toBe("write");
+    expect(call.system).toContain("multiple-choice unit test of exactly 6 questions on that unit only");
     expect(call.prompt).toContain("Unit: Unit u1");
     expect(call.prompt).toContain("Topic a1");
     expect(call.prompt).not.toContain("Topic b1");
-    // Syllabus nodes carry their lines into the final's topic list.
+    // Syllabus nodes carry their lines into the test's topic list.
     expect(call.prompt).toContain("Objectives: explain it");
 
-    const record = await getDoc<{ unitId: string; passMark: number; attemptIds: string[] }>(`final/${mapId}/u1`);
-    expect(record).toMatchObject({ unitId: "u1", passMark: 3 });
-    const attempt = await getDoc<{ nodeId: string; format: string }>(`attempts/${record!.attemptIds[0]}`);
-    expect(attempt).toMatchObject({ nodeId: "final:u1", format: "final" });
+    const record = await getDoc<McFinalRecord>(`final/${mapId}/u1`);
+    expect(record).toMatchObject({ unitId: "u1", passMark: 5, format: "multiple-choice" });
+    // No per-question attempts any more.
+    expect(await listKeys("attempts/")).toEqual([]);
     // The course final's own record is untouched.
     expect(await getDoc(finalKey(mapId))).toBeNull();
 
@@ -149,39 +172,56 @@ describe("a unit test", () => {
     expect(mockChatJSON).toHaveBeenCalledTimes(1);
   });
 
-  it("3 of 4 passes it, 2 of 4 does not, and a retry writes fresh questions", async () => {
+  it("5 of 6 passes it, 4 of 6 does not, and a retake writes new questions", async () => {
     await saveMap("degree", ["u1", "u2"], UNIT_NODES);
     await prove("a1", "a2");
-    modelAsks(4);
+    modelWrites(6);
     const first = await startFinalInterview(OWNER, mapId, "u1");
-    await answerAll(first.questions.map((q) => q.attemptId), 2);
-    const failed = await getFinalInterview(OWNER, mapId, "u1");
-    expect(failed.state).toBe("failed");
-    expect(failed.result).toMatchObject({ passed: false, passedCount: 2 });
+    const failed = await submitGetting(4, "u1");
+    expect(failed).toMatchObject({ state: "failed", result: { passed: false, passedCount: 4, questionCount: 6 } });
     expect(await getPassedUnitTests(mapId)).toEqual({});
 
-    modelAsks(4);
-    const retry = await startFinalInterview(OWNER, mapId, "u1");
-    expect(retry.state).toBe("in-progress");
-    expect(retry.questions[0].attemptId).not.toBe(first.questions[0].attemptId);
-    await answerAll(retry.questions.map((q) => q.attemptId), 3);
-    const passed = await getFinalInterview(OWNER, mapId, "u1");
-    expect(passed.state).toBe("passed");
-    expect(passed.result).toMatchObject({ passed: true, passedCount: 3 });
+    modelWrites(6, "Retake");
+    const retake = await startFinalInterview(OWNER, mapId, "u1");
+    expect(mockChatJSON).toHaveBeenCalledTimes(2);
+    expect(retake.state).toBe("in-progress");
+    expect(retake.testId).not.toBe(first.testId);
+    expect(retake.questions[0].question).toMatch(/^Retake/);
+
+    const passed = await submitGetting(5, "u1");
+    expect(passed).toMatchObject({ state: "passed", result: { passed: true, passedCount: 5 } });
+    expect(mockChatJSON).toHaveBeenCalledTimes(2);
     expect(Object.keys(await getPassedUnitTests(mapId))).toEqual(["u1"]);
     // A unit test never counts as the course final.
     expect(await getPassedFinal(mapId)).toBeNull();
   });
 
-  it("grades an answer against that unit's facts only", async () => {
+  it("tells a retake the failed questions and drops any repeat of them", async () => {
     await saveMap("degree", ["u1", "u2"], UNIT_NODES);
     await prove("a1", "a2");
-    modelAsks(4);
-    const started = await startFinalInterview(OWNER, mapId, "u1");
-    await answerAll([started.questions[0].attemptId], 1);
-    const grading = mockChatJSON.mock.calls[1][0];
-    expect(grading.prompt).toContain("Topic a1");
-    expect(grading.prompt).not.toContain("Topic b1");
+    modelWrites(6);
+    const first = await startFinalInterview(OWNER, mapId, "u1");
+    await submitGetting(0, "u1");
+
+    // The model repeats one old question among seven: code drops it and keeps six new ones.
+    mockChatJSON.mockResolvedValueOnce({
+      questions: [
+        { question: first.questions[0].question, options: ["R", "W1", "W2", "W3"], explanation: "Why.", topics: [1] },
+        ...Array.from({ length: 6 }, (_, i) => ({
+          question: `Fresh ${i + 1}: what follows?`,
+          options: [`Right ${i}`, `Wrong a ${i}`, `Wrong b ${i}`, `Wrong c ${i}`],
+          explanation: "Why.",
+          topics: [1],
+        })),
+      ],
+    });
+    const retake = await startFinalInterview(OWNER, mapId, "u1");
+    const prompt = mockChatJSON.mock.calls[1][0].prompt;
+    for (const question of first.questions) expect(prompt).toContain(question.question);
+    expect(retake.questions.map((question) => question.question)).toEqual(Array.from({ length: 6 }, (_, i) => `Fresh ${i + 1}: what follows?`));
+    // Kept on the server for the next retake, never sent.
+    expect(JSON.stringify(retake)).not.toContain("previousQuestions");
+    expect((await getDoc<McFinalRecord>(finalKey(mapId, "u1")))!.previousQuestions).toEqual(first.questions.map((question) => question.question));
   });
 
   it("lists every built unit's test, and a quick course has none", async () => {
@@ -205,19 +245,36 @@ describe("a unit test", () => {
     await expect(getFinalInterview(OWNER, mapId, "u9")).rejects.toMatchObject({ status: 404 });
     await expect(startFinalInterview(OWNER, mapId, "u9")).rejects.toMatchObject({ status: 404 });
   });
+
+  it("an old written unit test that was passed still counts and shows as written", async () => {
+    await saveMap("degree", ["u1", "u2"], UNIT_NODES);
+    await prove("a1", "a2");
+    await putDoc(finalKey(mapId, "u1"), {
+      mapId,
+      ownerId: OWNER,
+      unitId: "u1",
+      passMark: 3,
+      attemptIds: ["x1", "x2", "x3", "x4"],
+      topics: [[], [], [], []],
+      startedAt: "x",
+      result: { passed: true, passedCount: 3, finishedAt: "2026-11-10T00:00:00.000Z" },
+    });
+    expect(await getFinalInterview(OWNER, mapId, "u1")).toMatchObject({ state: "passed", format: "written", questionCount: 4, passMark: 3 });
+    expect((await getPassedUnitTests(mapId)).u1).toMatchObject({ passedCount: 3, questionCount: 4 });
+  });
 });
 
 describe("the degree course final", () => {
   const ALL = [node("a1", "u1"), node("b1", "u2"), node("c1", "u3")];
 
-  it("is 6 questions with pass mark 4; a map with no syllabus stays at 3 with pass mark 2", () => {
+  it("is 10 questions with pass mark 8; a map with no syllabus is 5 with pass mark 4", () => {
     const degree = finalPlan({ ...({} as SkillMap), nodes: [], syllabus: syllabus([]) });
-    expect(degree).toMatchObject({ kind: "course", nodeId: FINAL_NODE_ID, questions: 6, passMark: 4 });
+    expect(degree).toMatchObject({ kind: "course", nodeId: FINAL_NODE_ID, questions: 10, passMark: 8 });
     const plain = finalPlan({ ...({} as SkillMap), nodes: [] });
-    expect(plain).toMatchObject({ questions: 3, passMark: 2 });
-    expect(questionsSystem(plain)).toBe(QUESTIONS_SYSTEM);
-    expect(questionsSystem(degree)).toContain("Write 6 questions for the final interview");
-    expect(questionsSystem(degree)).toContain("Spread them across the whole course");
+    expect(plain).toMatchObject({ questions: 5, passMark: 4 });
+    expect(finalPlan({ ...({} as SkillMap), nodes: [], syllabus: syllabus([]) }, "u1")).toMatchObject({ questions: 6, passMark: 5 });
+    expect(testSystem(degree, true)).toContain("multiple-choice final test of exactly 10 questions");
+    expect(testSystem(degree, true)).toContain("every unit gets at least one question");
   });
 
   it("stays shut while a unit is unbuilt, even with every built topic proved", async () => {
@@ -232,59 +289,34 @@ describe("the degree course final", () => {
     expect((await getFinalInterview(OWNER, mapId)).state).toBe("locked");
     await expect(startFinalInterview(OWNER, mapId)).rejects.toMatchObject({ status: 403, message: expect.stringMatching(/pass each unit test/) });
 
-    for (const unitId of ["u1", "u2"]) {
-      await putDoc(finalKey(mapId, unitId), {
-        mapId,
-        ownerId: OWNER,
-        unitId,
-        passMark: 3,
-        attemptIds: [],
-        topics: [],
-        startedAt: "x",
-        result: { passed: true, passedCount: 4, finishedAt: "x" },
-      });
-    }
+    await passUnitTests("u1", "u2");
     expect((await getFinalInterview(OWNER, mapId)).state).toBe("locked");
   });
 
-  it("then asks 6 questions, and 4 of 6 passes it while 3 does not", async () => {
+  it("then asks 10 questions spread over the units, and 8 of 10 passes it while 7 does not", async () => {
     await saveMap("degree", ["u1", "u2", "u3"], ALL);
     await prove("a1", "b1", "c1");
-    for (const unitId of ["u1", "u2", "u3"]) {
-      await putDoc(finalKey(mapId, unitId), {
-        mapId,
-        ownerId: OWNER,
-        unitId,
-        passMark: 3,
-        attemptIds: [],
-        topics: [],
-        startedAt: "x",
-        result: { passed: true, passedCount: 4, finishedAt: "x" },
-      });
-    }
-    expect(await getFinalInterview(OWNER, mapId)).toMatchObject({ state: "ready", questionCount: 6, passMark: 4 });
+    await passUnitTests("u1", "u2", "u3");
+    expect(await getFinalInterview(OWNER, mapId)).toMatchObject({ state: "ready", questionCount: 10, passMark: 8 });
 
-    mockChatJSON.mockResolvedValueOnce({
-      questions: Array.from({ length: 6 }, (_, i) => ({ question: `Question ${i + 1}?`, topics: [i % 3 === 0 ? 1 : 2, 3] })),
-    });
+    modelWrites(10, "Final", [1, 3]);
     const started = await startFinalInterview(OWNER, mapId);
-    expect(started.questions).toHaveLength(6);
+    expect(started.questions).toHaveLength(10);
     expect(started.unitId).toBeUndefined();
-    // Forty topics would make a huge prompt, so the long final leaves the syllabus lines out.
-    expect(mockChatJSON.mock.calls[0][0].prompt).not.toContain("Objectives:");
+    const prompt = String(mockChatJSON.mock.calls[0][0].prompt);
+    // Topics grouped under their units; forty topics would make a huge prompt, so no syllabus lines.
+    expect(prompt).toContain("Unit 1: Unit u1\n1. Topic a1");
+    expect(prompt).toContain("Unit 3: Unit u3\n3. Topic c1");
+    expect(prompt).not.toContain("Objectives:");
+    expect(started.questions[0].topics).toEqual(["Topic a1", "Topic c1"]);
 
-    await answerAll(started.questions.map((q) => q.attemptId), 3);
-    expect((await getFinalInterview(OWNER, mapId)).state).toBe("failed");
+    expect(await submitGetting(7)).toMatchObject({ state: "failed", result: { passedCount: 7 } });
+    expect(await getPassedFinal(mapId)).toBeNull();
 
-    mockChatJSON.mockResolvedValueOnce({ questions: Array.from({ length: 6 }, (_, i) => ({ question: `Again ${i}?`, topics: [1] })) });
-    const retry = await startFinalInterview(OWNER, mapId);
-    await answerAll(retry.questions.map((q) => q.attemptId), 4);
-    expect(await getFinalInterview(OWNER, mapId)).toMatchObject({ state: "passed", result: { passed: true, passedCount: 4 } });
-    expect(await getPassedFinal(mapId)).toMatchObject({ passedCount: 4 });
-    // The grader of a long final sees only the question's own topics.
-    const lastGrade = mockChatJSON.mock.calls.at(-1)![0];
-    expect(lastGrade.prompt).toContain("Topic a1");
-    expect(lastGrade.prompt).not.toContain("Topic b1");
+    modelWrites(10, "Again");
+    await startFinalInterview(OWNER, mapId);
+    expect(await submitGetting(8)).toMatchObject({ state: "passed", result: { passed: true, passedCount: 8, questionCount: 10 } });
+    expect(await getPassedFinal(mapId)).toMatchObject({ passedCount: 8, format: "multiple-choice" });
   });
 
   it("a map with no syllabus keeps the old rule: every topic proved", async () => {
@@ -292,17 +324,17 @@ describe("the degree course final", () => {
     await prove("a1");
     expect((await getFinalInterview(OWNER, mapId)).state).toBe("locked");
     await prove("a2");
-    expect(await getFinalInterview(OWNER, mapId)).toMatchObject({ state: "ready", questionCount: 3, passMark: 2 });
-    modelAsks(3);
-    expect((await startFinalInterview(OWNER, mapId)).questions).toHaveLength(3);
+    expect(await getFinalInterview(OWNER, mapId)).toMatchObject({ state: "ready", questionCount: 5, passMark: 4 });
+    modelWrites(5);
+    expect((await startFinalInterview(OWNER, mapId)).questions).toHaveLength(5);
   });
 });
 
 describe("Delete my data", () => {
-  it("removes unit test records and their attempts", async () => {
+  it("removes unit test records", async () => {
     await saveMap("degree", ["u1"], [node("a1", "u1"), node("a2", "u1")]);
     await prove("a1", "a2");
-    modelAsks(4);
+    modelWrites(6);
     await startFinalInterview(OWNER, mapId, "u1");
     expect(await listKeys(`final/${mapId}/`)).toHaveLength(1);
 
