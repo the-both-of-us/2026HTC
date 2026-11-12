@@ -101,20 +101,18 @@ export function UnitRail({
 
 /**
  * Shown in place of the canvas for a unit that is not built yet: what it will cover, and either
- * "Start unit", what it waits for, or (for anyone but the owner) that it is not built yet.
+ * "Start unit" or what it waits for.
  * `onBuilt` reloads the map once the unit's topics are in it.
  */
 export function UnitStartPanel({
   mapId,
   unit,
   unitCount,
-  isOwner,
   onBuilt,
 }: {
   mapId: string;
   unit: UnitRailItem;
   unitCount: number;
-  isOwner: boolean;
   onBuilt: () => Promise<void> | void;
 }) {
   const [phase, setPhase] = useState<"idle" | "building" | "error">("idle");
@@ -191,8 +189,6 @@ export function UnitStartPanel({
               {unit.waitingFor.proved} so far.
             </span>
           </p>
-        ) : !isOwner ? (
-          <p className="text-ink-soft">This unit has not been built yet.</p>
         ) : phase === "error" ? (
           <ErrorNotice message={message} onRetry={() => void start()} />
         ) : (

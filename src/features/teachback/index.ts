@@ -26,7 +26,7 @@ export {
   unlockNode,
 } from "./attempts";
 export type { LearnerAttempt, NewAttempt, ProgressView, UnitTestView } from "./attempts";
-export { FINAL_NODE_ID, finalPlan, isFinalNodeId } from "./final";
+export { FINAL_NODE_ID, FINAL_QUESTIONS, finalPlan, isFinalNodeId } from "./final";
 export { generateFollowUp, gradeFollowUp } from "./followUp";
 export { computeScore, gradeExplanation, isUsableQuote } from "./grading";
 export { followUpBody, newAttemptBody } from "./http";

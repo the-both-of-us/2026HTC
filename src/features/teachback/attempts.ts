@@ -73,8 +73,8 @@ export type NewAttempt = {
   mapId: string;
   nodeId: string;
   explanation: string;
-  /** wordCount is left out: the server counts the words itself. */
-  integrity: Omit<IntegritySignals, "wordCount">;
+  /** wordCount is left out: the server counts the words itself. inputMethod is left out: explanations are always typed. */
+  integrity: Omit<IntegritySignals, "wordCount" | "inputMethod">;
   /** The topic's own format, or "explain" when the learner swapped. Missing means "explain". */
   format?: TopicFormat;
   /** Only for "catch": the sentences the learner tapped. */
@@ -126,6 +126,7 @@ export async function startAttempt(userId: string, input: NewAttempt): Promise<A
       ...input.integrity,
       activeMs: Math.min(input.integrity.activeMs, MAX_ACTIVE_MS),
       wordCount: countWords(explanation),
+      inputMethod: "typed",
     },
     grade,
     followUp: null,
@@ -171,6 +172,7 @@ async function startCatch(userId: string, map: SkillMap, node: SkillNode, input:
       ...input.integrity,
       activeMs: Math.min(input.integrity.activeMs, MAX_ACTIVE_MS),
       wordCount: countWords(explanation),
+      inputMethod: "typed",
     },
     grade,
     followUp: null,
@@ -332,8 +334,8 @@ async function courseFinalOpen(map: SkillMap): Promise<boolean> {
   return map.syllabus.units.every((unit) => passed[unit.id] !== undefined);
 }
 
-/** How the follow-up was answered. The browser reports it, like the explanation's integrity signals. */
-export type AnswerDetails = { inputMethod?: "typed" | "voice"; startedAfterMs?: number };
+/** What the browser reports about a follow-up answer, like the explanation's integrity signals. */
+export type AnswerDetails = { startedAfterMs?: number };
 
 /** Grades the follow-up answer. Passing it is what proves the node and unlocks the next ones. */
 export async function answerFollowUp(
@@ -372,8 +374,8 @@ export async function answerFollowUp(
         answer: trimmedAnswer,
         passed: result.passed,
         feedback: result.passed ? result.feedback : NOT_PASSED_FEEDBACK,
+        inputMethod: "typed",
         // Left out when unknown, so a record never claims more than the browser said.
-        ...(details.inputMethod && { inputMethod: details.inputMethod }),
         ...(details.startedAfterMs !== undefined && {
           startedAfterMs: Math.round(Math.min(details.startedAfterMs, MAX_ACTIVE_MS)),
         }),
@@ -396,13 +398,13 @@ export async function answerFollowUp(
 }
 
 /**
- * The topics whose key facts the final's grader sees. The whole map for a quick course's final
- * (as before), a unit's topics for a unit test, and for a degree course's long final just the
+ * The topics whose key facts the final's grader sees. The whole map for the final of a map with
+ * no syllabus (a posting or PDF map), a unit's topics for a unit test, and for a degree course's long final just the
  * topics the question mixes.
  */
 async function finalFactsFor(map: SkillMap, attempt: Attempt, unitId: string | undefined): Promise<SkillNode[]> {
   const plan = finalPlan(map, unitId);
-  if (plan.kind === "unit" || map.syllabus?.depth !== "degree") return plan.nodes;
+  if (plan.kind === "unit" || !map.syllabus) return plan.nodes;
   const record = await getFinalRecord(map.id);
   const titles = record?.topics[record.attemptIds.indexOf(attempt.id)] ?? [];
   const mixed = plan.nodes.filter((node) => titles.includes(node.title));
@@ -473,8 +475,7 @@ export async function unlockNode(userId: string, mapId: string, nodeId: string):
 
 /**
  * Whether a skill is still locked for this viewer, so nothing is generated for it yet.
- * The owner's own progress counts. Anyone else reading a published course has none, so
- * only its first skills are open to them.
+ * The owner's own progress counts. Anyone else has none, so only its first skills are open to them.
  */
 export async function isNodeLockedFor(map: SkillMap, viewerId: string, nodeId: string): Promise<boolean> {
   const progress = viewerId !== "" && map.ownerId === viewerId ? await getProgress(map.id, viewerId) : null;

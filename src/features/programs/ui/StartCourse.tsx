@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SYLLABUS_SHAPE } from "@/shared/types";
 import { Button, ErrorNotice, Spinner, pollLoop } from "@/shared/ui";
-import type { CourseView, OpenCourseResponse, ProgramDepth } from "../types";
+import type { CourseView, OpenCourseResponse } from "../types";
 import { plural } from "./format";
 
 /** How often to ask again while another request holds the same course. */
@@ -17,14 +17,12 @@ const GIVE_UP_MS = 60_000;
  * What the button promises, from computed numbers only. Every catalog course gets a full
  * syllabus, so a course with no plan yet says how it will be shaped.
  */
-export function startPromise(course: CourseView, _depth?: ProgramDepth): string {
-  void _depth;
+export function startPromise(course: CourseView): string {
   if (course.plannedTopics !== undefined) {
     const units = course.units?.length;
     return `${plural(course.plannedTopics, "topic")}${units && units > 1 ? ` in ${plural(units, "unit")}` : ""}, planned.`;
   }
-  const shape = SYLLABUS_SHAPE.degree;
-  return `${shape.units} units of ${shape.topicsPerUnit.min} to ${shape.topicsPerUnit.max} topics. The syllabus shows on the course map as it is written.`;
+  return `${SYLLABUS_SHAPE.units} units of ${SYLLABUS_SHAPE.topicsPerUnit.min} to ${SYLLABUS_SHAPE.topicsPerUnit.max} topics. The syllabus shows on the course map as it is written.`;
 }
 
 /**
@@ -36,11 +34,9 @@ export function startPromise(course: CourseView, _depth?: ProgramDepth): string 
 export function StartCourseButton({
   programId,
   course,
-  depth,
 }: {
   programId: string;
   course: CourseView;
-  depth: ProgramDepth | undefined;
 }) {
   const router = useRouter();
   const registering = course.startable === false;
@@ -97,7 +93,7 @@ export function StartCourseButton({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-ink-soft">{registering ? "This course is still being named. It can be started in a moment." : startPromise(course, depth)}</p>
+        <p className="text-sm text-ink-soft">{registering ? "This course is still being named. It can be started in a moment." : startPromise(course)}</p>
         <Button onClick={() => void start()} pending={pending} disabled={registering} className="grow sm:grow-0">
           {!pending && !registering && <Sparkles aria-hidden="true" size={17} />}
           {registering ? "Planning" : pending ? "Opening this course" : "Start course"}

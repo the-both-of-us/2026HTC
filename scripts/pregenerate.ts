@@ -4,11 +4,11 @@
  * the app does, so finished keys are skipped and dead claims are taken over. Never run by builders
  * against production: a live store needs --live.
  *
- *   npx tsx --conditions=react-server scripts/pregenerate.ts --program psychology --depth degree
+ *   npx tsx --conditions=react-server scripts/pregenerate.ts --program psychology
  *   npx tsx --conditions=react-server scripts/pregenerate.ts --program <catalogProgramId> --units all --lessons --live
  *
- * Options: --program <catalog program id | topic> (required), --depth quick|degree (topic only,
- * default quick), --units all|N (units per course, default 1), --lessons, --rpm 30 (steps a minute;
+ * Options: --program <catalog program id | topic> (required; a program is always the 40-course
+ * degree), --units all|N (units per course, default 1), --lessons, --rpm 30 (steps a minute;
  * a step makes one or two model calls), --concurrency 3, --live (write the store in .env.local).
  */
 import { existsSync } from "node:fs";
@@ -18,7 +18,7 @@ import { claimProgram, getFinalSyllabus, isCatalogId, readCatalogProgram, resolv
 import { ensureCourseBuilt, ensureProgramPlanned } from "../src/features/programs/build";
 import { ensureUnitNodes } from "../src/features/skill-map";
 import { cleanAudience, inferAudience } from "../src/shared/audience";
-import type { CourseSyllabus, ProgramDepth, SkillNode } from "../src/shared/types";
+import type { CourseSyllabus, SkillNode } from "../src/shared/types";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
@@ -30,7 +30,6 @@ const WAIT_FOR_OTHER_MS = 5_000;
 
 type Options = {
   program: string;
-  depth: ProgramDepth;
   units: number;
   lessons: boolean;
   rpm: number;
@@ -45,7 +44,7 @@ function parseArgs(argv: string[]): Options {
   };
   const program = value("program");
   if (!program || argv.includes("--help")) {
-    console.log("Usage: tsx --conditions=react-server scripts/pregenerate.ts --program <id|topic> [--depth quick|degree] [--units all|N] [--lessons] [--rpm 30] [--concurrency 3] [--live]");
+    console.log("Usage: tsx --conditions=react-server scripts/pregenerate.ts --program <id|topic> [--units all|N] [--lessons] [--rpm 30] [--concurrency 3] [--live]");
     process.exit(program ? 0 : 1);
   }
   const units = value("units") ?? "1";
@@ -56,7 +55,6 @@ function parseArgs(argv: string[]): Options {
   };
   return {
     program,
-    depth: value("depth") === "degree" ? "degree" : "quick",
     units: units === "all" ? Infinity : number(units, 1),
     lessons: argv.includes("--lessons"),
     rpm: number(value("rpm"), 30),
@@ -133,9 +131,9 @@ async function catalogProgramId(options: Options): Promise<string> {
   if (isCatalogId(options.program)) return options.program;
   // The audience is decided in code from the topic, as the app does, so "grade 3 math" lands on the same entry.
   const audience = cleanAudience(inferAudience(options.program));
-  const resolved = await resolveProgram({ text: options.program, audience, depth: options.depth, deadline: deadline() });
+  const resolved = await resolveProgram({ text: options.program, audience, deadline: deadline() });
   if (resolved.status === "found") return resolved.programId;
-  const claim = await claimProgram({ text: options.program, audience, depth: options.depth, title: resolved.title, summary: resolved.summary });
+  const claim = await claimProgram({ text: options.program, audience, title: resolved.title, summary: resolved.summary });
   return claim.id;
 }
 
@@ -198,7 +196,7 @@ async function main() {
 
   // 4. Lessons for every node of the built units.
   if (options.lessons) {
-    // Loaded only here: lessons.ts reaches features/courses -> auth, which may not load under tsx.
+    // Loaded only here, so a lessons import that fails under tsx stops only --lessons, after the units are done.
     const { ensureLesson } = await import("../src/features/lessons/lessons").catch((error: Error) => {
       console.error(`--lessons could not load the lesson writer under tsx (${error.message}). Units are done; run lessons from the app.`);
       process.exit(1);

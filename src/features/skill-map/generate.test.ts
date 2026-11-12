@@ -123,12 +123,6 @@ describe("reading maps", () => {
     }
     expect(publicMap.nodes.map((node) => node.checkpointCount)).toEqual(map.nodes.map((node) => node.checkpoints.length));
   });
-  it("says whether the posting is energy related, without sharing the posting", () => {
-    const energy = { ...buildSkillMap(GOOD_REPLY, POSTING, "posting", "o"), sourceText: "Analyst for a wind farm operator" };
-    const other = { ...energy, sourceText: "Analyst for a retail bank" };
-    expect(toPublicMap(energy).energyRelated).toBe(true);
-    expect(toPublicMap(other).energyRelated).toBe(false);
-  });
 });
 
 const PDF_PAGES = [

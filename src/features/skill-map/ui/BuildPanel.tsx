@@ -14,12 +14,10 @@ import { startUnit } from "./unitApi";
 export function BuildPanel({
   mapId,
   wait,
-  isOwner,
   onRestarted,
 }: {
   mapId: string;
   wait: CanvasWait;
-  isOwner: boolean;
   onRestarted: () => Promise<void> | void;
 }) {
   const [retrying, setRetrying] = useState(false);
@@ -44,18 +42,12 @@ export function BuildPanel({
               {wait === "failed-syllabus" ? "The syllabus was not finished" : "Unit 1 was not finished"}
             </h2>
             <p className="text-ink-soft">The writer stopped before it was done. Nothing you did is lost.</p>
-            {isOwner ? (
-              <>
-                {error && <ErrorNotice message={error} />}
-                <div>
-                  <Button onClick={() => void retry()} pending={retrying}>
-                    Try again
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-ink-soft">The owner of this map can try again.</p>
-            )}
+            {error && <ErrorNotice message={error} />}
+            <div>
+              <Button onClick={() => void retry()} pending={retrying}>
+                Try again
+              </Button>
+            </div>
           </>
         ) : (
           <>

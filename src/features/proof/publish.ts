@@ -1,6 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { listGridSolves } from "@/features/grid";
-import { deriveNodeStates, getSkillMap, isEnergyRelated } from "@/features/skill-map";
+import { deriveNodeStates, getSkillMap } from "@/features/skill-map";
 import { getAttempt, getPassedFinal, getProgress, listProvedNodes } from "@/features/teachback";
 import { deleteDoc, getDoc, listDocs, putDoc } from "@/shared/store";
 import { isPretestProof, type Attempt, type SkillMap } from "@/shared/types";
@@ -51,9 +50,6 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
       )
     : {};
 
-  // Grid practice is evidence only for a job in the energy sector.
-  const gridSolves = isEnergyRelated(map.sourceText) ? await listGridSolves(ownerId) : [];
-
   const existingId = await getProofIdForMap(map.id);
   const id = existingId ?? randomBytes(12).toString("base64url");
 
@@ -64,7 +60,6 @@ export async function publishProof(ownerId: string, mapId: string, displayName: 
     map,
     states,
     attempts,
-    gridSolves,
     finalInterview: await getPassedFinal(map.id),
     pretestPasses,
   });

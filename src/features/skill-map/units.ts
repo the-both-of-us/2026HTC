@@ -16,7 +16,7 @@ import {
   type UnitCacheEntry,
 } from "./storage";
 import type { UnitNodesInput, UnitNodesResult } from "./types";
-import { NODE_LIMITS, validateUnitNodes } from "./validate";
+import { UNIT_NODE_LIMITS, validateUnitNodes } from "./validate";
 
 /**
  * After this long, a unit append claim counts as a request that died. An append is a few store
@@ -35,10 +35,6 @@ const TOO_FEW = "We could not build this unit this time. Please try again.";
 /** The canonical content id. Repeated here (not imported from canonical.ts) to keep the import graph a tree. */
 const contentIdOf = (map: Pick<SkillMap, "id" | "courseId">) => map.courseId ?? map.id;
 
-function limitsFor(syllabus: Pick<CourseSyllabus, "depth">) {
-  return syllabus.depth === "degree" ? NODE_LIMITS.degreeUnit : NODE_LIMITS.quickUnit;
-}
-
 /** True once the unit's nodes are in the map (`built` on the learner's syllabus), or every planned topic is a node. */
 export function isUnitBuilt(map: Pick<SkillMap, "nodes" | "syllabus">, unitId: string): boolean {
   const unit = map.syllabus?.units.find((candidate) => candidate.id === unitId);
@@ -50,7 +46,7 @@ export function isUnitBuilt(map: Pick<SkillMap, "nodes" | "syllabus">, unitId: s
 
 /** How many units the prompt says the course has: while the syllabus is still being written, its planned shape. */
 function unitCountOf(syllabus: CourseSyllabus): number {
-  return syllabus.planning ? Math.max(syllabus.units.length, SYLLABUS_SHAPE[syllabus.depth].units) : syllabus.units.length;
+  return syllabus.planning ? Math.max(syllabus.units.length, SYLLABUS_SHAPE.units) : syllabus.units.length;
 }
 
 /** The unit as the unit prompt sees it. Links it may name are only those inside the unit. */
@@ -80,10 +76,9 @@ async function writeUnitNodes(
   course: UnitNodesInput["course"],
   deadline: number,
 ): Promise<SkillNode[]> {
-  const limits = limitsFor(syllabus);
   const input = promptInput(syllabus, unit, course);
   const reply = await askModelForUnit(input, Math.min(UNIT_TOTAL_MS, deadline - Date.now()));
-  let nodes = validateUnitNodes(reply.nodes, unit.id, unit.topics, [], limits.max);
+  let nodes = validateUnitNodes(reply.nodes, unit.id, unit.topics, [], UNIT_NODE_LIMITS.max);
 
   const built = new Set(nodes.map((node) => node.id));
   const missing = unit.topics.map((topic) => topic.id).filter((id) => !built.has(id));
@@ -94,10 +89,10 @@ async function writeUnitNodes(
       console.warn(`[skill-map] unit repair failed: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     });
-    if (repair) nodes = validateUnitNodes([...reply.nodes, ...repair.nodes], unit.id, unit.topics, [], limits.max);
+    if (repair) nodes = validateUnitNodes([...reply.nodes, ...repair.nodes], unit.id, unit.topics, [], UNIT_NODE_LIMITS.max);
   }
 
-  if (nodes.length < limits.min) throw new SkillMapError(TOO_FEW, 422);
+  if (nodes.length < UNIT_NODE_LIMITS.min) throw new SkillMapError(TOO_FEW, 422);
   return nodes;
 }
 

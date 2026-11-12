@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getReviewSummary, listReviewActivity } from "@/features/review";
 import { listProvedNodes } from "@/features/teachback";
 import { saveSkillMap } from "@/features/skill-map";
-import { putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 import { assembleDashboard, loadDashboard, type MapFacts } from "./data";
 
@@ -34,13 +33,12 @@ function map(overrides: Partial<SkillMap> = {}): SkillMap {
 }
 
 describe("assembleDashboard", () => {
-  it("counts proven skills, labels public maps and copies, and finds the last activity", () => {
+  it("counts proven skills, labels copies, and finds the last activity", () => {
     const own = map({ title: "Own" });
     const copy = map({ title: "Copy", forkedFrom: randomUUID(), createdAt: "2026-11-02T12:00:00.000Z" });
     const facts: MapFacts[] = [
       {
         map: own,
-        isPublic: true,
         proved: [
           { nodeId: "a", provenAt: "2026-11-03T12:00:00.000Z" },
           { nodeId: "b", provenAt: "2026-11-06T12:00:00.000Z" },
@@ -48,7 +46,7 @@ describe("assembleDashboard", () => {
           { nodeId: "gone", provenAt: "2026-11-07T11:00:00.000Z" },
         ],
       },
-      { map: copy, isPublic: false, proved: [] },
+      { map: copy, proved: [] },
     ];
     const data = assembleDashboard(facts, SUMMARY, [], NOW);
 
@@ -59,7 +57,6 @@ describe("assembleDashboard", () => {
         subtitle: "Calgary",
         provenCount: 2,
         totalSkills: 3,
-        isPublic: true,
         isCopy: false,
         startedFrom: null,
         canDelete: true,
@@ -71,7 +68,6 @@ describe("assembleDashboard", () => {
         subtitle: "Calgary",
         provenCount: 0,
         totalSkills: 3,
-        isPublic: false,
         isCopy: true,
         startedFrom: copy.forkedFrom,
         canDelete: true,
@@ -92,7 +88,7 @@ describe("assembleDashboard", () => {
     const original = () => map({ title: "Calculus" });
     const copyOf = (source: SkillMap, overrides: Partial<SkillMap> = {}) => map({ title: source.title, forkedFrom: source.id, ...overrides });
     const facts = (entries: [SkillMap, MapFacts["proved"]?][]): MapFacts[] =>
-      entries.map(([item, proved]) => ({ map: item, proved: proved ?? [], isPublic: !item.forkedFrom }));
+      entries.map(([item, proved]) => ({ map: item, proved: proved ?? [] }));
     const ids = (data: ReturnType<typeof assembleDashboard>) => data.courses.map((course) => course.mapId);
 
     it("shows only your copy, not the public original", () => {
@@ -127,7 +123,6 @@ describe("assembleDashboard", () => {
       expect(data.provenTotal).toBe(2);
       expect(data.provenCourseCount).toBe(1);
       expect(data.recentProven.map((item) => item.mapId)).toEqual([copy.id, source.id]);
-      expect(data.startedIds).toEqual(expect.arrayContaining([source.id, copy.id]));
     });
 
     it("keeps two maps you built yourself, even with the same title and skills", () => {
@@ -146,7 +141,7 @@ describe("assembleDashboard", () => {
   it("keeps the 8 most recent proofs and sends only the last 60 days of activity, oldest first", () => {
     const big = map({ nodes: Array.from({ length: 10 }, (_, i) => ({ ...map().nodes[0], id: `n${i}`, title: `S${i}` })) });
     const proved = big.nodes.map((node, i) => ({ nodeId: node.id, provenAt: `2026-11-0${(i % 7) + 1}T0${i}:00:00.000Z` }));
-    const data = assembleDashboard([{ map: big, isPublic: false, proved }], null, ["2026-11-07T10:00:00.000Z", "2026-08-01T00:00:00.000Z"], NOW);
+    const data = assembleDashboard([{ map: big, proved }], null, ["2026-11-07T10:00:00.000Z", "2026-08-01T00:00:00.000Z"], NOW);
     expect(data.provenTotal).toBe(10);
     expect(data.recentProven).toHaveLength(8);
     expect(data.recentProven[0].provenAt >= data.recentProven[7].provenAt).toBe(true);
@@ -166,20 +161,19 @@ describe("loadDashboard", () => {
     vi.mocked(listReviewActivity).mockReset().mockResolvedValue([]);
   });
 
-  it("lists only the viewer's maps, newest first, with publish state", async () => {
+  it("lists only the viewer's maps, newest first", async () => {
     const older = map({ title: "Older" });
     const newer = map({ title: "Newer", createdAt: "2026-11-05T12:00:00.000Z" });
     const theirs = map({ title: "Theirs", ownerId: randomUUID() });
     for (const m of [older, newer, theirs]) await saveSkillMap(m);
-    await putDoc(`courses/${older.id}`, { mapId: older.id });
     vi.mocked(listProvedNodes).mockImplementation(async (mapId) =>
       mapId === newer.id ? [{ nodeId: "a", provenAt: "2026-11-06T12:00:00.000Z" }] : [],
     );
 
     const data = await loadDashboard(ME, NOW);
-    expect(data.courses.map((c) => [c.title, c.isPublic, c.provenCount])).toEqual([
-      ["Newer", false, 1],
-      ["Older", true, 0],
+    expect(data.courses.map((c) => [c.title, c.provenCount])).toEqual([
+      ["Newer", 1],
+      ["Older", 0],
     ]);
     expect(data.activity).toEqual(["2026-11-06T12:00:00.000Z"]);
     expect(vi.mocked(listReviewActivity).mock.calls[0][1]).toEqual(new Date("2026-09-08T12:00:00.000Z"));

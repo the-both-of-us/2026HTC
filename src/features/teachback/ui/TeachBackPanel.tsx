@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { VoiceInterview, type InputMethod, type VoiceVerdict } from "@/features/voice/client";
 import type { Attempt, NodeState, PublicSkillNode } from "@/shared/types";
 import { ErrorNotice, PretestBadge, Spinner } from "@/shared/ui";
 import { fetchAttempt, fetchProvenAttempt, submitExplanation, submitFollowUp } from "./api";
@@ -32,8 +31,6 @@ export type TeachBackPanelProps = {
   nextStep?: ReactNode;
   /** Opens the evidence page. It comes from the map, which knows how many skills are proven. */
   evidenceAction?: ReactNode;
-  /** The server checked its voice key works. Without it, the follow-up is a plain typed form. */
-  voiceReady?: boolean;
   /** How this topic is proved. See assignFormats. */
   format?: TopicFormat;
 };
@@ -43,7 +40,7 @@ export function TeachBackPanel(props: TeachBackPanelProps) {
   return <Panel key={`${props.mapId}/${props.node.id}`} {...props} />;
 }
 
-function Panel({ mapId, node, state, pretest = false, onProven, nextStep, evidenceAction, voiceReady = false, format = "explain" }: TeachBackPanelProps) {
+function Panel({ mapId, node, state, pretest = false, onProven, nextStep, evidenceAction, format = "explain" }: TeachBackPanelProps) {
   // This panel only mounts after a click in the browser, so sessionStorage is safe to read here.
   const [draft] = useState(() => loadDraft(mapId, node.id));
   const young = useYoungLearner();
@@ -81,20 +78,6 @@ function Panel({ mapId, node, state, pretest = false, onProven, nextStep, eviden
       startedAfterMs.current = Date.now() - questionShownAt.current;
     }
   }
-
-  // A spoken answer's result waits on screen until the learner taps Continue.
-  const spokenResult = useRef<Attempt | null>(null);
-  const latestOnProven = useRef(onProven);
-  useEffect(() => {
-    latestOnProven.current = onProven;
-  });
-  // If the panel closes before Continue, the map still has to hear about a pass.
-  useEffect(
-    () => () => {
-      if (spokenResult.current?.status === "proven") latestOnProven.current(spokenResult.current.nodeId);
-    },
-    [],
-  );
 
   // Move focus to a result the learner just asked for, once it is on screen. A follow-up
   // question needs an answer right away, so it goes straight to the answer box.
@@ -152,19 +135,15 @@ function Panel({ mapId, node, state, pretest = false, onProven, nextStep, eviden
   }
 
   /** Sends the answer. Returns the finished attempt, or null once the error is on screen. */
-  async function sendFollowUp(attemptId: string, answer: string, inputMethod: InputMethod): Promise<Attempt | null> {
+  async function sendFollowUp(attemptId: string, answer: string): Promise<Attempt | null> {
     setPending(true);
     setRequestError(null);
     setAnnouncement("Checking your answer.");
 
-    const result = await submitFollowUp(attemptId, answer, { inputMethod, startedAfterMs: startedAfterMs.current });
+    const result = await submitFollowUp(attemptId, answer, { startedAfterMs: startedAfterMs.current });
 
     setPending(false);
-    // The spoken interview announces its own verdict, so "Checking" must not linger here until Continue.
-    if (result.ok) {
-      setAnnouncement("");
-      return result.attempt;
-    }
+    if (result.ok) return result.attempt;
 
     // 409 means this answer was already sent: the reply was lost, or another click sent it.
     // Ask the server what became of it. While it is still being checked, the form stays.
@@ -175,23 +154,7 @@ function Panel({ mapId, node, state, pretest = false, onProven, nextStep, eviden
   }
 
   async function sendTypedFollowUp(attemptId: string, answer: string) {
-    const finished = await sendFollowUp(attemptId, answer, "typed");
-    if (finished) finishFollowUp(finished);
-  }
-
-  /** The interview shows the verdict itself, then Continue shows the full result. */
-  async function sendSpokenFollowUp(attemptId: string, answer: string, inputMethod: InputMethod): Promise<VoiceVerdict> {
-    const finished = await sendFollowUp(attemptId, answer, inputMethod);
-    // Throwing keeps the words in the interview, with a way to send them again.
-    if (!finished) throw new Error("The answer was not sent.");
-    saveDraft(mapId, node.id, { text, openAttempt: null, integrity: integrity.toSave(), swapped });
-    spokenResult.current = finished;
-    return { passed: finished.status === "proven", feedback: finished.followUp?.feedback ?? null };
-  }
-
-  function continueAfterSpokenAnswer() {
-    const finished = spokenResult.current;
-    spokenResult.current = null;
+    const finished = await sendFollowUp(attemptId, answer);
     if (finished) finishFollowUp(finished);
   }
 
@@ -273,26 +236,14 @@ function Panel({ mapId, node, state, pretest = false, onProven, nextStep, eviden
         >
           {attempt.status === "needs-followup" && attempt.followUp && (
             <div ref={followUpArea} className="scroll-mt-4">
-              {voiceReady ? (
-                <VoiceInterview
-                  attemptId={attempt.id}
-                  question={attempt.followUp.question}
-                  onBegin={markBegan}
-                  onAnswer={(answer, inputMethod) => sendSpokenFollowUp(attempt.id, answer, inputMethod)}
-                  onContinue={continueAfterSpokenAnswer}
-                  // The interview has its own text box, so typing needs nothing from here.
-                  onTypeInstead={() => {}}
-                />
-              ) : (
-                <FollowUpForm
-                  attemptId={attempt.id}
-                  question={attempt.followUp.question}
-                  pending={pending}
-                  requestError={requestError}
-                  onBegin={markBegan}
-                  onSubmit={(answer) => sendTypedFollowUp(attempt.id, answer)}
-                />
-              )}
+              <FollowUpForm
+                attemptId={attempt.id}
+                question={attempt.followUp.question}
+                pending={pending}
+                requestError={requestError}
+                onBegin={markBegan}
+                onSubmit={(answer) => sendTypedFollowUp(attempt.id, answer)}
+              />
             </div>
           )}
         </AttemptResult>
@@ -301,7 +252,6 @@ function Panel({ mapId, node, state, pretest = false, onProven, nextStep, eviden
       {active !== "catch" && (!attempt || attempt.status === "not-yet") && (
         <ExplainForm
           format={active}
-          mapId={mapId}
           nodeId={node.id}
           skillTitle={node.title}
           checkpointCount={node.checkpointCount}
@@ -312,7 +262,6 @@ function Panel({ mapId, node, state, pretest = false, onProven, nextStep, eviden
           pending={pending}
           requestError={requestError}
           onSubmit={sendExplanation}
-          voiceReady={voiceReady}
         />
       )}
     </div>

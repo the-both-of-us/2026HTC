@@ -8,7 +8,7 @@ The **Read** tab: a 3 to 5 minute lesson on one skill, so a learner can learn it
 
 ## How it is made
 
-1. `POST /api/lessons { mapId, nodeId }` calls `getOrCreateLesson(mapId, nodeId, viewerId)`. The map's owner may always read; anyone else only once the map is published as a course. A private map gets the same 404 as a missing one, before any store key or model call.
+1. `POST /api/lessons { mapId, nodeId }` calls `getOrCreateLesson(mapId, nodeId, viewerId)`. Only the map's owner may read. Someone else's map gets the same 404 as a missing one, before any store key or model call.
 2. A saved lesson at `lessons/<contentId>/<nodeId>/<audienceKey>` is returned as it is. `contentId` is `contentIdOf(map)`: the catalog course id for a catalog map (one lesson per topic, shared by every learner of the course), the map id for a posting or PDF map.
 3. A map built from a sample posting uses the lessons saved in `fixtures/`, matched by node id and title, so the demo needs no model call. `npx tsx --conditions=react-server scripts/cache-lessons.ts` writes them.
 4. Otherwise it is written once under `startOnce` (`@/shared/store/once`): one `streamLines` call (label `lesson`, write profile: Claude Haiku, 12k tokens, at most 60 s) from the course title, audience, syllabus unit and the node's title, why and checkpoints. The source text and owner are never sent. The reply is JSON lines, one lesson part per line (`lessonLineSchema`); each valid line is cleaned and checked on its own (`cleanLine`, `lineProblem`), and a line that copies a checkpoint or has an empty field is rejected and never shown. If a line was rejected or the assembled lesson fails `lessonProblem`, one rewrite runs (`restart()`, attempt 2) when at least 25 s of the deadline is left; otherwise a 503 sentence. A failure leaves `<key>.failed` for 60 s, so the next request gets one 503 instead of a second call at once.
@@ -25,11 +25,11 @@ The **Read** tab: a 3 to 5 minute lesson on one skill, so a learner can learn it
 
 With `map.audience` set, the prompt adds an AUDIENCE section and the length follows the age (`targetWords`): 200 to 350 words up to about 9, 350 to 600 up to 13, the usual 600 to 900 after. A children's lesson also has a ceiling and no code. Its key is `lessons/<contentId>/<nodeId>/<audienceKey>`, so a lesson written for adults before the audience was known is never served.
 
-## Degree courses
+## Syllabus courses
 
-For a map whose `syllabus.depth` is `"degree"` (`isDegree(map)`):
+For a map with a syllabus (`isDegree(map)`: every topic course; posting and PDF maps have none):
 
-- **Length.** The target is 1,000 to 1,400 words (`DEGREE_TARGET_WORDS`, from `SYLLABUS_SHAPE.degree.lessonWords`), about 5 to 7 minutes. Validation wants 750 to 1,550, so a degree lesson has a ceiling too, as children's lessons do. A child's audience keeps its own shorter length. A quick course's lesson is the usual 600 to 900.
+- **Length.** The target is 1,000 to 1,400 words (`DEGREE_TARGET_WORDS`, from `SYLLABUS_SHAPE.lessonWords`), about 5 to 7 minutes. Validation wants 750 to 1,550, so a degree lesson has a ceiling too, as children's lessons do. A child's audience keeps its own shorter length. A posting or PDF map's lesson is the usual 600 to 900.
 - **Syllabus lines.** A node built from a syllabus gets its objectives, key terms and scope lines from `skillBlock` (`@/features/skill-map`), inside the `<skill>` block. A node with none of those fields gives the old prompt byte for byte (`degree.test.ts` pins the hashes).
 - **Practice.** Each degree lesson also has 2 practice cases (`practice: { scenario, question }[]` on the `Lesson`), shown under "Practice". The model writes a `modelAnswer` for each, but it is stored apart, with the lesson's key, as `practiceAnswers` and never put on a `Lesson`, so it cannot reach a browser. `checkPracticeAnswer(mapId, nodeId, viewerId, caseIndex, answer)` compares the learner's answer to it on the server and returns only `{ verdict: "solid" | "partly" | "off", feedback }`; a note that repeats the model answer (an 8-word run) is replaced by a fixed sentence. The browser calls `POST /api/lessons/practice`.
 

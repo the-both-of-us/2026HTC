@@ -3,17 +3,13 @@ import { ArrowRight, CircleCheck, Medal, Plus, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { listCourses, type PublicCourse } from "@/features/courses";
-import { CourseCard, CourseCover } from "@/features/courses/client";
 import { getSession } from "@/shared/identity";
 import { buttonClasses, ErrorNotice, PageShell, PretestBadge, Spinner } from "@/shared/ui";
 import { loadDashboard, type CourseRow, type DashboardData, type ProvenItem } from "../data";
 import { cardsLabel, timeAgo, timeUntil } from "../format";
+import { CourseCard, CourseCover } from "./CourseCard";
 import { DeleteCourseButton } from "./DeleteCourseButton";
 import { StreakCard } from "./StreakCard";
-
-/** At most this many public courses under "Start with a course". */
-const EXPLORE_COUNT = 3;
 
 /** /dashboard. The cookie is only known at request time, so the content waits behind Suspense. */
 export function DashboardScreen() {
@@ -38,18 +34,6 @@ function DashboardLoading() {
   );
 }
 
-/** Popular public courses this person has not started. A failure only hides the section. */
-async function exploreCourses(startedIds: string[]): Promise<PublicCourse[]> {
-  const started = new Set(startedIds);
-  try {
-    const courses = await listCourses({ sort: "popular" });
-    return courses.filter((course) => !started.has(course.mapId)).slice(0, EXPLORE_COUNT);
-  } catch (error) {
-    console.error("[dashboard] could not list courses to explore", error);
-    return [];
-  }
-}
-
 async function DashboardContent() {
   // The store reads live data and its client uses the clock, so mark this as request time first.
   await connection();
@@ -57,7 +41,7 @@ async function DashboardContent() {
   const name = session.signedIn ? session.displayName : null;
   const now = new Date();
 
-  // A first visit has no data yet: the same page, with zeros and courses to start.
+  // A first visit has no data yet: the same page, with zeros.
   let data: DashboardData | null = null;
   if (session.userId) {
     try {
@@ -77,7 +61,6 @@ async function DashboardContent() {
   }
 
   const courses = [...(data?.courses ?? [])].sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
-  const explore = await exploreCourses(data?.startedIds ?? []);
   const latest = courses[0] ?? null;
 
   return (
@@ -105,12 +88,9 @@ async function DashboardContent() {
                   subtitle={`Last active ${timeAgo(course.lastActivityAt, now)}`}
                   skillCount={course.totalSkills}
                   progress={{ proven: course.provenCount, total: course.totalSkills }}
-                  coverLabel={course.isCopy ? "Your copy" : course.isPublic ? "Public" : "Private"}
-                  headingLevel="h3"
+                  coverLabel={course.isCopy ? "Your copy" : "Private"}
                 />
-                {course.canDelete && (
-                  <DeleteCourseButton mapId={course.mapId} title={course.title} isPublic={course.isPublic} />
-                )}
+                {course.canDelete && <DeleteCourseButton mapId={course.mapId} title={course.title} />}
               </li>
             ))}
           </ul>
@@ -130,29 +110,6 @@ async function DashboardContent() {
         </section>
       )}
 
-      {explore.length > 0 && (
-        <section aria-labelledby="explore-heading" className="mt-12">
-          <SectionHeading id="explore-heading" action={<SectionLink href="/courses">All courses</SectionLink>}>
-            {courses.length > 0 ? "More to explore" : "Start with a course"}
-          </SectionHeading>
-          <ul className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {explore.map((course) => (
-              <li key={course.mapId} className="min-w-0">
-                <CourseCard
-                  href={`/courses/${course.mapId}`}
-                  fingerprint={course.mapId}
-                  title={course.title}
-                  subtitle={course.subtitle}
-                  authorName={course.authorName}
-                  skillCount={course.skillCount}
-                  likeCount={course.likeCount}
-                  headingLevel="h3"
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
     </>
   );
 }
@@ -173,7 +130,7 @@ function Hero({ name, data, latest }: { name: string | null; data: DashboardData
       ]
         .filter(Boolean)
         .join(" · ") + "."
-    : "Learn anything, then prove you get it. Start a course below, or build a map from a topic, a job posting or a PDF.";
+    : "Learn anything, then prove you get it. Start a shared course, or build a map from a topic, a job posting or a PDF.";
 
   return (
     <CourseCover

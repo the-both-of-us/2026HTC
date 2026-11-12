@@ -5,7 +5,7 @@ import { rewardFor, type MapHabits, type ProofReward } from "../rules";
 import { fetchMapHabits } from "./api";
 
 /** The streak, topic of the day and fading for a map the learner owns. Null until loaded, or if it fails. */
-export function useMapHabits(mapId: string, isOwner: boolean) {
+export function useMapHabits(mapId: string) {
   const [habits, setHabits] = useState<MapHabits | null>(null);
   const latest = useRef<MapHabits | null>(null);
 
@@ -20,8 +20,8 @@ export function useMapHabits(mapId: string, isOwner: boolean) {
   const reload = useCallback(async () => keep(await fetchMapHabits(mapId)), [mapId, keep]);
 
   useEffect(() => {
-    if (isOwner) void fetchMapHabits(mapId).then(keep);
-  }, [isOwner, mapId, keep]);
+    void fetchMapHabits(mapId).then(keep);
+  }, [mapId, keep]);
 
   /** Call right after a proof. Reloads, and returns what the unlock moment should celebrate. */
   const afterProof = useCallback(

@@ -5,7 +5,6 @@ import { audienceForMap } from "@/shared/audience";
 import { readCatalogSyllabus } from "@/features/catalog";
 import { SkillMapError } from "./build";
 import type { CourseBuildState } from "./types";
-import { isEnergyRelated } from "./energy";
 import { syllabusForLearner } from "./learnerSyllabus";
 import { isUuid } from "@/shared/ids";
 
@@ -18,8 +17,6 @@ import { isUuid } from "@/shared/ids";
  */
 export type PublicSkillMap = Pick<SkillMap, "id" | "title" | "subtitle" | "sourceKind" | "createdAt" | "program" | "audience"> & {
   nodes: PublicSkillNode[];
-  /** True when the posting is energy related, so the map can show the live grid card. */
-  energyRelated: boolean;
   /**
    * The course plan, for the unit rail. Only on maps built from a syllabus. It holds no answer
    * key (objectives, key terms and scope may be shown), and `rootMapId` is left out because it
@@ -46,7 +43,6 @@ export function toPublicMap(map: SkillMap, build?: CourseBuildState | null): Pub
     subtitle: map.subtitle,
     sourceKind: map.sourceKind,
     nodes: map.nodes.map(({ checkpoints, ...node }) => ({ ...node, checkpointCount: checkpoints.length })),
-    energyRelated: isEnergyRelated(map.sourceText),
     createdAt: map.createdAt,
     program: map.program,
     // Only when there is one, so a map for adults looks exactly as before.
@@ -60,7 +56,7 @@ export function toPublicMap(map: SkillMap, build?: CourseBuildState | null): Pub
 /**
  * The owner index: `maps-by-owner/<ownerId>/<mapId>` exists for every map, so one
  * person's maps are found by listing their own keys, never by reading every map.
- * Owner ids go into a key, so only plain ids (a UUID, or a fixed seed id) are indexed.
+ * Owner ids go into a key, so only plain ids (letters, digits, - and _) are indexed.
  */
 const OWNER_ID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
 const ownerIndexPrefix = (ownerId: string) => `maps-by-owner/${ownerId}/`;
@@ -140,7 +136,7 @@ async function withCatalogSyllabus(map: SkillMap, courseId: string): Promise<Ski
 }
 
 /**
- * Copies a map for a new owner, for "Start this course". Progress lives under the
+ * Copies a map for a new owner, for joining a study circle. Progress lives under the
  * map's id, so the copy starts with none, and edits to the original never reach it.
  *
  * This does not check who may read the original: the caller must do that first.

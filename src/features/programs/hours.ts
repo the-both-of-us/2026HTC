@@ -7,7 +7,7 @@
  * - practice: item counts (teach-backs, quiz questions, cases, test questions), never minutes.
  * Pure functions: programs.ts reads the store and passes the facts in.
  */
-import { SYLLABUS_SHAPE, UNIT_TEST, READING_WORDS_PER_MINUTE, type ProgramDepth } from "@/shared/types";
+import { SYLLABUS_SHAPE, UNIT_TEST, READING_WORDS_PER_MINUTE } from "@/shared/types";
 import type { HoursBreakdown, HoursFigure, PracticeCounts } from "./types";
 
 /** Gaps longer than this between two recorded actions count as a break, not study. */
@@ -15,15 +15,13 @@ export const MEASURED_GAP_MS = 10 * 60_000;
 
 /** One course as the hours need it. */
 export type CourseFacts = {
-  /** The depth its lessons are written to (a course's syllabus depth, else its program's). */
-  depth: ProgramDepth;
   /** The words a lesson of this course is written to, for its audience. */
   lessonWords: { min: number; max: number };
-  /** Practice cases per lesson: 2 for degree lessons for readers old enough, else 0. */
+  /** Practice cases per lesson: 2 for syllabus lessons for readers old enough, else 0. */
   practiceCasesPerTopic: number;
   /**
    * What the course plans, when it is known: from its syllabus (draft or map), or the topics of a
-   * map built before syllabi. Null for a course not started yet: the depth's shape gives a range.
+   * map built before syllabi. Null for a course not started yet: SYLLABUS_SHAPE gives a range.
    */
   plan: { topics: number; units: number; unitTests: boolean; finalQuestions: number } | null;
   /** Words of each lesson written so far. */
@@ -36,16 +34,15 @@ const round1 = (hours: number) => Math.round(hours * 10) / 10;
 const toHours = (words: number) => words / READING_WORDS_PER_MINUTE / 60;
 const thousands = (n: number) => n.toLocaleString("en-CA");
 
-/** Topics a course will have: exactly, once planned; else the range its depth's shape allows. */
-export function plannedTopicRange(course: Pick<CourseFacts, "depth" | "plan">): { min: number; max: number } {
+/** Topics a course will have: exactly, once planned; else the range SYLLABUS_SHAPE allows. */
+export function plannedTopicRange(course: Pick<CourseFacts, "plan">): { min: number; max: number } {
   if (course.plan) return { min: course.plan.topics, max: course.plan.topics };
-  const shape = SYLLABUS_SHAPE[course.depth];
-  return { min: shape.units * shape.topicsPerUnit.min, max: shape.units * shape.topicsPerUnit.max };
+  return { min: SYLLABUS_SHAPE.units * SYLLABUS_SHAPE.topicsPerUnit.min, max: SYLLABUS_SHAPE.units * SYLLABUS_SHAPE.topicsPerUnit.max };
 }
 
-/** Units a course will have: its syllabus's, else its depth's shape (8 for degree, 1 for quick). */
-export function plannedUnits(course: Pick<CourseFacts, "depth" | "plan">): number {
-  return course.plan?.units ?? SYLLABUS_SHAPE[course.depth].units;
+/** Units a course will have: its syllabus's, else SYLLABUS_SHAPE's 8. */
+export function plannedUnits(course: Pick<CourseFacts, "plan">): number {
+  return course.plan?.units ?? SYLLABUS_SHAPE.units;
 }
 
 function lengthPhrase(courses: CourseFacts[]): string {

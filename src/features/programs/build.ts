@@ -139,7 +139,6 @@ async function planFrame(programId: string, once: OnceContext<ProgramPart>, dead
       title: head.title,
       summary: head.summary,
       audience: seed.audience,
-      depth: seed.depth,
       status: "ready",
       courses: builder.ordered().map((course) => {
         const courseId = registrar.courseIds.get(course.slug);
@@ -257,7 +256,7 @@ export async function ensureCourseBuilt(courseId: string, options: { deadline: n
   const started = await startOnce<CourseSyllabus, SyllabusPart>(catalogKeys.syllabus(courseId), async (once) => {
     const ctx = await syllabusContextFor(course);
     programTitle = ctx.programTitle;
-    const assessment = { unitTests: SYLLABUS_SHAPE.degree.unitTests, finalQuestions: SYLLABUS_SHAPE.degree.finalQuestions };
+    const assessment = { unitTests: SYLLABUS_SHAPE.unitTests, finalQuestions: SYLLABUS_SHAPE.finalQuestions };
     return streamSyllabus(ctx, {
       deadline: options.deadline,
       onHead: (outcomes) =>

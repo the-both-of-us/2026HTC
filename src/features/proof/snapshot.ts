@@ -1,4 +1,3 @@
-import type { GridSolve } from "@/features/grid";
 import { isUsableQuote } from "@/features/teachback";
 import {
   PASS_SCORE,
@@ -10,7 +9,7 @@ import {
   type SourceKind,
 } from "@/shared/types";
 import { redactSkill } from "./redact";
-import type { ProofFinalInterview, ProofGridSolve, ProofKnownByPretest, ProofSkill, ProofSnapshot, ProofSource } from "./types";
+import type { ProofFinalInterview, ProofKnownByPretest, ProofSkill, ProofSnapshot, ProofSource } from "./types";
 
 type SnapshotInput = {
   proofId: string;
@@ -20,8 +19,6 @@ type SnapshotInput = {
   states: Record<string, NodeState>;
   /** The attempt that proved each node, by node id. */
   attempts: Record<string, Attempt | null>;
-  /** Grid questions the owner solved. Only passed for an energy map. */
-  gridSolves?: GridSolve[];
   /** The final interview's result, only when it was passed. */
   finalInterview?: ProofFinalInterview | null;
   /** Node id to when it was passed, for proven nodes whose proof is a pre-test pass (no attempt). */
@@ -47,8 +44,6 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
     }
   }
 
-  const grid = (input.gridSolves ?? []).map(toProofGridSolve);
-
   return {
     version: 1,
     proofId: input.proofId,
@@ -60,29 +55,14 @@ export function buildSnapshot(input: SnapshotInput): ProofSnapshot {
     skills,
     ...(knownByPretest.length > 0 && { knownByPretest }),
     notYetProven,
-    ...(grid.length > 0 && { grid }),
     ...(input.finalInterview && {
       finalInterview: {
         passedCount: input.finalInterview.passedCount,
-        spokenCount: input.finalInterview.spokenCount,
+        ...(input.finalInterview.spokenCount !== undefined && { spokenCount: input.finalInterview.spokenCount }),
         finishedAt: input.finalInterview.finishedAt,
       },
     }),
     publishedAt: input.publishedAt,
-  };
-}
-
-/** Only what a reader needs. The ids and AESO's ISO time stay out. */
-function toProofGridSolve(solve: GridSolve): ProofGridSolve {
-  return {
-    title: solve.title,
-    skill: solve.skill,
-    answer: solve.answer,
-    asOfLabel: solve.asOfLabel,
-    figures: solve.figures,
-    working: solve.working,
-    stale: solve.stale,
-    solvedAt: solve.solvedAt,
   };
 }
 

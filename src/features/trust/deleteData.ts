@@ -1,7 +1,5 @@
 import { deleteCircleData } from "@/features/circles";
-import { isPublished, unpublishCourse } from "@/features/courses";
 import { deleteFeedData } from "@/features/feed";
-import { deleteGridSolves } from "@/features/grid";
 import { deleteLessonsForMaps } from "@/features/lessons";
 import { deleteUserData as deleteNetworkProfile } from "@/features/network";
 import { deletePretestData } from "@/features/pretest";
@@ -19,8 +17,6 @@ export type DeletedCounts = {
   attempts: number;
   provenSkills: number;
   evidencePages: number;
-  courses: number;
-  gridAnswers: number;
   /** Study circles left, including any this user started, which close for everyone. */
   circles: number;
   /** The public profile on /people: 0 or 1. */
@@ -36,8 +32,6 @@ export const NOTHING_DELETED: DeletedCounts = {
   attempts: 0,
   provenSkills: 0,
   evidencePages: 0,
-  courses: 0,
-  gridAnswers: 0,
   circles: 0,
   networkProfiles: 0,
   reviewRecords: 0,
@@ -45,8 +39,8 @@ export const NOTHING_DELETED: DeletedCounts = {
 };
 
 /**
- * Deletes everything one person made: their public people profile, evidence pages, course listings, attempts,
- * proven skills, grid answers, streak, study circles, programs and maps. Public things go first, so they stop showing straight away.
+ * Deletes everything one person made: their public people profile, evidence pages, attempts,
+ * proven skills, streak, study circles, programs and maps. Public things go first, so they stop showing straight away.
  * Maps go last, because the steps before look things up through them.
  *
  * Every step only touches records whose owner is this user, so nobody else's work changes.
@@ -58,14 +52,10 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
   const evidencePages = await deleteProofsByOwner(userId);
 
   const maps = await listMapsByOwner(userId);
-  const published = await Promise.all(maps.map((map) => isPublished(map.id)));
-  const listed = maps.filter((_, index) => published[index]);
-  await Promise.all(listed.map((map) => unpublishCourse(map.id, userId)));
 
   const learner = await deleteLearnerData(userId);
   // Pre-test records; the canonical question sets hold no learner data and stay.
   const { pretests } = await deletePretestData(userId);
-  const gridAnswers = await deleteGridSolves(userId);
   const { reviewRecords } = await deleteReviewData(userId);
   await deleteStreak(userId);
   await deleteFeedData(userId);
@@ -81,8 +71,6 @@ export async function deleteUserData(userId: string): Promise<DeletedCounts> {
     maps: maps.length,
     ...learner,
     evidencePages,
-    courses: listed.length,
-    gridAnswers,
     circles: memberships,
     networkProfiles: profiles,
     reviewRecords,

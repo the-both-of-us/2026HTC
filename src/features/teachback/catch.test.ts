@@ -17,7 +17,7 @@ vi.mock("@/features/catalog", async (importOriginal) => ({
 }));
 
 const OWNER = "owner-user";
-const integrity: Omit<IntegritySignals, "wordCount"> = { pasted: false, activeMs: 20_000, inputMethod: "typed" };
+const integrity: Omit<IntegritySignals, "wordCount" | "inputMethod"> = { pasted: false, activeMs: 20_000 };
 
 // Sentences 2 and 5 are the planted mistakes.
 const SENTENCES = [

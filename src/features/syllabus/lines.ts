@@ -48,7 +48,7 @@ export const SIBLING_TOPIC_OVERLAP = 0.8;
 /** A syllabus with fewer units than this after the repair is not accepted. */
 export const MIN_UNITS = 6;
 /** Usable topics a unit needs, and at most this many are kept. */
-const TOPICS = SYLLABUS_SHAPE.degree.topicsPerUnit;
+const TOPICS = SYLLABUS_SHAPE.topicsPerUnit;
 const MAX_OBJECTIVES = SYLLABUS_LIMITS.objectivesPerTopic.max;
 const MAX_KEY_TERMS = SYLLABUS_LIMITS.keyTermsPerTopic.max;
 
@@ -138,7 +138,7 @@ export class SyllabusBuilder {
    */
   unit(line: UnitLine): UnitResult {
     if (!this.outcomes) return { ok: false, problem: "A unit came before the head." };
-    if (this.units.length >= SYLLABUS_SHAPE.degree.units) return { ok: false, problem: "All units are already in." };
+    if (this.units.length >= SYLLABUS_SHAPE.units) return { ok: false, problem: "All units are already in." };
     const rawId = line.id.trim().toLowerCase();
     if (rawId && this.rawUnitIds.has(rawId)) return { ok: false, problem: `The unit id "${rawId}" was already used.` };
     const title = text(line.title, 80);
@@ -192,7 +192,7 @@ export class SyllabusBuilder {
   /** Unit ids still missing, such as ["u7", "u8"]. */
   missing(): string[] {
     const ids: string[] = [];
-    for (let n = this.units.length + 1; n <= SYLLABUS_SHAPE.degree.units; n++) ids.push(`u${n}`);
+    for (let n = this.units.length + 1; n <= SYLLABUS_SHAPE.units; n++) ids.push(`u${n}`);
     return ids;
   }
 
@@ -214,11 +214,10 @@ export class SyllabusBuilder {
 
   /** The fixed fields every version of this syllabus has. */
   base(outcomes: SyllabusOutcome[]): CourseSyllabus {
-    const shape = SYLLABUS_SHAPE.degree;
+    const shape = SYLLABUS_SHAPE;
     return {
       version: 1,
       rootMapId: this.ctx.courseId,
-      depth: "degree",
       courseSlug: this.ctx.course.slug,
       ...(this.ctx.course.level ? { level: this.ctx.course.level } : {}),
       outcomes,

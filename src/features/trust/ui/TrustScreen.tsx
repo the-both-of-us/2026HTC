@@ -46,7 +46,7 @@ export function TrustScreen() {
             <li>
               <strong className="font-medium">Your attempts:</strong> your explanation, the follow-up
               question and your answer, the score, the words that met each checkpoint, and how you
-              wrote it: word count, active typing time, whether anything was pasted, typed or spoken.
+              wrote it: word count, active typing time, whether anything was pasted.
             </li>
             <li>
               <strong className="font-medium">Your pre-test results:</strong> if you took a course&apos;s
@@ -56,13 +56,12 @@ export function TrustScreen() {
             </li>
             <li>
               <strong className="font-medium">What you chose to share:</strong> evidence pages (with
-              the name you typed) and courses you published. Anyone with an evidence page&apos;s link
-              can read it until you withdraw it.
+              the name you typed). Anyone with an evidence page&apos;s link can read it until you
+              withdraw it.
             </li>
             <li>
               <strong className="font-medium">Study and practice:</strong> flashcards and quiz
-              questions made for your maps, which courses you liked or started, and the live grid
-              questions you answered correctly.
+              questions made for your maps.
             </li>
             <li>
               <strong className="font-medium">Study circles:</strong> the name you gave the circle
@@ -88,8 +87,6 @@ export function TrustScreen() {
             to an AI model (Claude Haiku, from Anthropic) to build maps and lessons and to grade.
             Courses and lessons made from a topic are saved once and shared, so two learners who ask
             for the same course get the same one. They hold no names, accounts or source text.
-            When you speak instead of typing, the audio goes to a speech-to-text
-            service and we keep only the words.
           </p>
         </Section>
 
@@ -180,9 +177,8 @@ export function TrustScreen() {
           <p>
             Turns on Lexend, a typeface designed for easier reading, with larger text, more space
             between lines and letters, and no motion. It also adds &ldquo;Read aloud&rdquo; buttons to
-            each skill and each result. Those use your browser&apos;s own voice: nothing is sent to us,
-            and they are a reading aid, separate from the spoken follow-up interview. The setting is
-            saved in this browser only.
+            each skill and each result. Those use your browser&apos;s own voice: nothing is sent to us.
+            The setting is saved in this browser only.
           </p>
           <LearningModeToggle className="self-start border border-rule-strong bg-raised/50 px-3" />
           <p className="text-ink-soft">
@@ -193,14 +189,13 @@ export function TrustScreen() {
 
         <Section title="Delete my data" id="delete">
           <p>
-            Deletes your maps, attempts, scores, proven skills, pre-test results and grid answers from our storage, takes down any
-            evidence page or course you published, takes you out of every study circle (and closes the ones you started), and starts this browser as a new guest. If someone
-            started a copy of a course you published, their copy is theirs and stays.
+            Deletes your maps, attempts, scores, proven skills, and pre-test results from our storage, takes down any
+            evidence page you published, takes you out of every study circle (and closes the ones you started), and starts this browser as a new guest. If someone
+            joined a study circle you started, their copy of the map is theirs and stays.
           </p>
           <p className="text-ink-soft">
-            Not covered yet: the flashcards and quiz questions made for your maps, and your course
-            likes and starts. None of them hold words you wrote, and they can no longer be linked to
-            you once your session is replaced.
+            Not covered yet: the flashcards and quiz questions made for your maps. They hold no words
+            you wrote, and they can no longer be linked to you once your session is replaced.
           </p>
           <DeleteMyData />
         </Section>

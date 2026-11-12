@@ -75,7 +75,7 @@ describe("ensureCourseBuilt", () => {
     expect(mockUnits.mock.calls[0][0]).toMatchObject({ contentId: courseId, unitId: "u1" });
     const final = await readCatalogSyllabus(courseId);
     expect(final.state).toBe("ready");
-    expect(final.state === "ready" && final.syllabus).toMatchObject({ rootMapId: courseId, depth: "degree" });
+    expect(final.state === "ready" && final.syllabus).toMatchObject({ rootMapId: courseId });
     expect(final.state === "ready" && final.syllabus.planning).toBeFalsy();
   });
 

@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chatJSON } from "@/features/ai";
-import { publishCourse } from "@/features/courses";
 import { unlockNode } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -22,7 +21,6 @@ vi.mock("@/shared/store", async (importOriginal) => {
 });
 const mockGetDoc = vi.mocked(getDoc);
 
-/** Publishing needs owner ids that look like ours. */
 const OWNER = randomUUID();
 const STRANGER = randomUUID();
 
@@ -174,8 +172,6 @@ describe("getSavedFlashcards", () => {
 });
 
 describe("who may read a map's cards", () => {
-  const CARDS_KEY = () => `flashcards/${mapId}/sql-joins`;
-
   it("lets the owner read and make cards for their private map", async () => {
     expect(await getSavedFlashcards(mapId, "sql-joins", OWNER)).toBeNull();
     await expect(getOrCreateFlashcards(mapId, "sql-joins", OWNER)).resolves.toHaveLength(6);
@@ -202,16 +198,6 @@ describe("who may read a map's cards", () => {
 
   it("refuses an empty viewer id", async () => {
     await expect(getSavedFlashcards(mapId, "sql-joins", "")).rejects.toMatchObject({ status: 404 });
-  });
-
-  it("lets a stranger read and make cards once the map is published", async () => {
-    await publishCourse(mapId, OWNER);
-
-    expect(await getSavedFlashcards(mapId, "sql-joins", STRANGER)).toBeNull();
-    const cards = await getOrCreateFlashcards(mapId, "sql-joins", STRANGER);
-    expect(cards).toHaveLength(6);
-    expect(await getSavedFlashcards(mapId, "sql-joins", STRANGER)).toEqual(cards);
-    expect(await getDoc(CARDS_KEY())).toMatchObject({ items: cards });
   });
 
   it("does not let a stranger wait on the owner's generation for a private map", async () => {

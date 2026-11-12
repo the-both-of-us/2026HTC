@@ -52,7 +52,6 @@ export function assembleProgram(seed: CatalogProgramSeed, parts: ProgramPart[]):
     title: head?.title || seed.title,
     summary: head?.summary || seed.summary,
     audience: seed.audience,
-    depth: seed.depth,
     status: "planning",
     courses: assembleCourses(parts),
     createdAt: seed.createdAt,
@@ -92,12 +91,11 @@ export async function getFinalSyllabus(courseId: string): Promise<CourseSyllabus
 /** A syllabus assembled from the parts written so far, with `planning: true`. */
 export function assembleSyllabus(courseId: string, parts: SyllabusPart[], fallbackSlug: string): CourseSyllabus {
   const head = parts.find((part): part is Extract<SyllabusPart, { kind: "head" }> => part?.kind === "head");
-  const shape = SYLLABUS_SHAPE.degree;
+  const shape = SYLLABUS_SHAPE;
   return {
     version: 1,
     rootMapId: courseId,
     planning: true,
-    depth: "degree",
     courseSlug: head?.courseSlug ?? fallbackSlug,
     ...(head?.level && { level: head.level }),
     outcomes: head?.outcomes ?? [],

@@ -167,7 +167,7 @@ describe("wipe-courses --confirm", () => {
 });
 
 describe("wipe-courses all-but-accounts", () => {
-  it("also deletes settings, streaks, grid, the feed, reels and seeds; keeps accounts and network; warns about circles", async () => {
+  it("also deletes settings, streaks, dead grid data, the feed, reels and seeds; keeps accounts and network; warns about circles", async () => {
     await seed([...CONTENT, ...KEPT_BY_CONTENT]);
 
     const dry = await runScript(["--scope", "all-but-accounts"]);

@@ -3,7 +3,6 @@ import "server-only";
 export type {
   CourseLevel,
   CourseSyllabus,
-  ProgramDepth,
   SyllabusContext,
   SyllabusCourseInfo,
   SyllabusOutcome,

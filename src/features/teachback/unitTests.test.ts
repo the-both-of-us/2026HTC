@@ -40,7 +40,7 @@ function node(id: string, unitId: string | undefined): SkillNode {
   };
 }
 
-function syllabus(depth: "quick" | "degree", builtUnits: string[]): CourseSyllabus {
+function syllabus(builtUnits: string[]): CourseSyllabus {
   const units = ["u1", "u2", "u3"].map((id) => ({
     id,
     title: `Unit ${id}`,
@@ -50,15 +50,15 @@ function syllabus(depth: "quick" | "degree", builtUnits: string[]): CourseSyllab
   }));
   return {
     version: 1,
-    depth,
     courseSlug: "intro",
     outcomes: [{ id: "o1", text: "Outcome" }],
-    units: depth === "quick" ? units.slice(0, 1) : units,
-    assessment: { unitTests: depth === "degree", finalQuestions: depth === "degree" ? 6 : 3 },
+    units,
+    assessment: { unitTests: true, finalQuestions: 6 },
   };
 }
 
-async function saveMap(depth: "quick" | "degree", builtUnits: string[], nodes: SkillNode[]) {
+/** "degree": a syllabus course (every topic course); "plain": a posting or PDF map, with no syllabus. */
+async function saveMap(kind: "plain" | "degree", builtUnits: string[], nodes: SkillNode[]) {
   const map: SkillMap = {
     id: mapId,
     ownerId: OWNER,
@@ -68,7 +68,7 @@ async function saveMap(depth: "quick" | "degree", builtUnits: string[], nodes: S
     sourceText: "",
     nodes,
     createdAt: new Date().toISOString(),
-    syllabus: syllabus(depth, builtUnits),
+    ...(kind === "degree" && { syllabus: syllabus(builtUnits) }),
   };
   await putDoc(`maps/${mapId}`, map);
   return map;
@@ -195,7 +195,7 @@ describe("a unit test", () => {
     // u3 is not built, so it has no test to show yet.
     expect(tests.map((t) => t.title)).toEqual(["Unit u1", "Unit u2"]);
 
-    await saveMap("quick", ["u1"], [node("a1", "u1")]);
+    await saveMap("plain", ["u1"], [node("a1", "u1")]);
     expect(await getUnitTests(OWNER, mapId)).toEqual([]);
     await expect(getFinalInterview(OWNER, mapId, "u1")).rejects.toMatchObject({ status: 404 });
   });
@@ -210,13 +210,12 @@ describe("a unit test", () => {
 describe("the degree course final", () => {
   const ALL = [node("a1", "u1"), node("b1", "u2"), node("c1", "u3")];
 
-  it("is 6 questions with pass mark 4; a quick course stays at 3 with pass mark 2", () => {
-    const degree = finalPlan({ ...({} as SkillMap), nodes: [], syllabus: syllabus("degree", []) });
+  it("is 6 questions with pass mark 4; a map with no syllabus stays at 3 with pass mark 2", () => {
+    const degree = finalPlan({ ...({} as SkillMap), nodes: [], syllabus: syllabus([]) });
     expect(degree).toMatchObject({ kind: "course", nodeId: FINAL_NODE_ID, questions: 6, passMark: 4 });
-    const quick = finalPlan({ ...({} as SkillMap), nodes: [], syllabus: syllabus("quick", ["u1"]) });
-    expect(quick).toMatchObject({ questions: 3, passMark: 2 });
-    expect(finalPlan({ ...({} as SkillMap), nodes: [] })).toMatchObject({ questions: 3, passMark: 2 });
-    expect(questionsSystem(quick)).toBe(QUESTIONS_SYSTEM);
+    const plain = finalPlan({ ...({} as SkillMap), nodes: [] });
+    expect(plain).toMatchObject({ questions: 3, passMark: 2 });
+    expect(questionsSystem(plain)).toBe(QUESTIONS_SYSTEM);
     expect(questionsSystem(degree)).toContain("Write 6 questions for the final interview");
     expect(questionsSystem(degree)).toContain("Spread them across the whole course");
   });
@@ -242,7 +241,7 @@ describe("the degree course final", () => {
         attemptIds: [],
         topics: [],
         startedAt: "x",
-        result: { passed: true, passedCount: 4, spokenCount: 0, finishedAt: "x" },
+        result: { passed: true, passedCount: 4, finishedAt: "x" },
       });
     }
     expect((await getFinalInterview(OWNER, mapId)).state).toBe("locked");
@@ -260,7 +259,7 @@ describe("the degree course final", () => {
         attemptIds: [],
         topics: [],
         startedAt: "x",
-        result: { passed: true, passedCount: 4, spokenCount: 0, finishedAt: "x" },
+        result: { passed: true, passedCount: 4, finishedAt: "x" },
       });
     }
     expect(await getFinalInterview(OWNER, mapId)).toMatchObject({ state: "ready", questionCount: 6, passMark: 4 });
@@ -288,8 +287,8 @@ describe("the degree course final", () => {
     expect(lastGrade.prompt).not.toContain("Topic b1");
   });
 
-  it("a quick course with a syllabus keeps the old rule: every topic proved", async () => {
-    await saveMap("quick", ["u1"], [node("a1", "u1"), node("a2", "u1")]);
+  it("a map with no syllabus keeps the old rule: every topic proved", async () => {
+    await saveMap("plain", ["u1"], [node("a1", "u1"), node("a2", "u1")]);
     await prove("a1");
     expect((await getFinalInterview(OWNER, mapId)).state).toBe("locked");
     await prove("a2");

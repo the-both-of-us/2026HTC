@@ -70,7 +70,6 @@ describe("old documents under the new contract", () => {
       title: "Psychology",
       summary: "",
       sourceKind: "topic",
-      isSample: false,
       courses: [view],
     };
     expect([node, map, program, view, programView]).toHaveLength(5);
@@ -85,7 +84,6 @@ describe("old documents under the new contract", () => {
       expect(node[field]).toBeUndefined();
     }
     expect(map.syllabus).toBeUndefined();
-    expect(program.depth).toBeUndefined();
     for (const course of program.courses) {
       expect(course.year).toBeUndefined();
       expect(course.term).toBeUndefined();
@@ -99,7 +97,7 @@ describe("old documents under the new contract", () => {
     const map = JSON.parse(OLD_MAP_JSON) as SkillMap;
     const pub = toPublicMap(map);
     expect(Object.keys(pub).sort()).toEqual(
-      ["createdAt", "energyRelated", "id", "nodes", "program", "sourceKind", "subtitle", "title"].sort(),
+      ["createdAt", "id", "nodes", "program", "sourceKind", "subtitle", "title"].sort(),
     );
     expect(Object.keys(pub.nodes[0]).sort()).toEqual(
       ["checkpointCount", "citation", "fromSource", "id", "prerequisites", "title", "why"].sort(),
@@ -112,7 +110,6 @@ describe("syllabus shape", () => {
     const syllabus: CourseSyllabus = {
       version: 1,
       rootMapId: "m1",
-      depth: "degree",
       courseSlug: "intro-psych",
       level: 100,
       outcomes: [{ id: "o1", text: "Describe what psychology studies." }],
@@ -135,7 +132,7 @@ describe("syllabus shape", () => {
           ],
         },
       ],
-      assessment: { unitTests: true, finalQuestions: SYLLABUS_SHAPE.degree.finalQuestions },
+      assessment: { unitTests: true, finalQuestions: SYLLABUS_SHAPE.finalQuestions },
     };
     const map = { ...(JSON.parse(OLD_MAP_JSON) as SkillMap), syllabus };
     const copy: SkillMap = JSON.parse(JSON.stringify({ ...map, id: "m2", forkedFrom: map.id }));
@@ -144,12 +141,10 @@ describe("syllabus shape", () => {
   });
 
   it("matches the owner's decisions", () => {
-    const { degree, quick } = SYLLABUS_SHAPE;
-    expect(degree.units * degree.topicsPerUnit.min).toBe(32);
-    expect(degree.units * degree.topicsPerUnit.max).toBe(48);
-    expect(quick.units).toBe(1);
-    expect([quick.topicsPerUnit.min, quick.topicsPerUnit.max]).toEqual([6, 10]);
-    expect([degree.finalQuestions, degree.finalPassMark]).toEqual([6, 4]);
+    const shape = SYLLABUS_SHAPE;
+    expect(shape.units * shape.topicsPerUnit.min).toBe(32);
+    expect(shape.units * shape.topicsPerUnit.max).toBe(48);
+    expect([shape.finalQuestions, shape.finalPassMark]).toEqual([6, 4]);
     expect([UNIT_TEST.questions, UNIT_TEST.passMark]).toEqual([4, 3]);
     expect(DEGREE_FRAME.years * DEGREE_FRAME.termsPerYear * DEGREE_FRAME.coursesPerTerm).toBe(DEGREE_FRAME.courses);
     expect(READING_WORDS_PER_MINUTE).toBe(200);

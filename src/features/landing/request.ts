@@ -1,20 +1,18 @@
 /*
- * What the front page sends. Postings and PDFs always build one private map. The program shape and
- * the depth are for topics only: a topic goes to `/api/programs` (the server reads the catalog and
+ * What the front page sends. Postings and PDFs always build one private map. The program shape is
+ * for topics only: a topic goes to `/api/programs` (the server reads the catalog and
  * replies `{ programId }` or `{ mapId }`) unless the person asked for one course.
  */
 
 export type Shape = "auto" | "program" | "course";
-export type Depth = "quick" | "degree";
 export type BuildKind = "topic" | "posting";
 
 export type BuildTarget = { url: string; body: Record<string, unknown> };
 
-export function buildTarget(kind: BuildKind, text: string, shape: Shape, depth: Depth): BuildTarget {
+export function buildTarget(kind: BuildKind, text: string, shape: Shape): BuildTarget {
   if (kind === "posting") return { url: "/api/maps", body: { text, kind: "posting" } };
   if (shape === "course") return { url: "/api/maps", body: { text, kind: "topic" } };
-  // Depth is sent only for a degree, so a short path is exactly what it always was.
-  return { url: "/api/programs", body: depth === "degree" ? { text, kind: "topic", shape, depth: "degree" } : { text, kind: "topic", shape } };
+  return { url: "/api/programs", body: { text, kind: "topic", shape } };
 }
 
 /** Where a successful reply goes: a program, or a map (`id` from /api/maps, `mapId` from /api/programs). */

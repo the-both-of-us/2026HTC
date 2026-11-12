@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { skillBlock } from "@/features/skill-map";
 import { audienceAge, isYoungAudience } from "@/shared/audience";
-import { SYLLABUS_SHAPE, type ProgramDepth, type SkillMap, type SkillNode } from "@/shared/types";
+import { SYLLABUS_SHAPE, type SkillMap, type SkillNode } from "@/shared/types";
 
 export type WordTarget = { readonly min: number; readonly max: number };
 
@@ -13,27 +13,27 @@ export const YOUNG_TARGET_WORDS = { min: 200, max: 350 } as const;
 export const CHILD_TARGET_WORDS = { min: 350, max: 600 } as const;
 
 /** About 5 to 7 minutes at 200 words a minute. The lesson of a degree course (shape comes from the shared contract). */
-export const DEGREE_TARGET_WORDS: WordTarget = SYLLABUS_SHAPE.degree.lessonWords;
+export const DEGREE_TARGET_WORDS: WordTarget = SYLLABUS_SHAPE.lessonWords;
 
 /**
  * How long a lesson for this audience should be. No audience, or teenagers and up, get the usual
- * length, or the degree length when the course is a degree course (`depth`). Children's lengths
- * win over the depth: a young reader is never given 1,000 words.
+ * length, or the degree length when the course is a full syllabus course (`degree`). Children's
+ * lengths win: a young reader is never given 1,000 words.
  */
-export function targetWords(audience?: string, depth?: ProgramDepth): WordTarget {
+export function targetWords(audience?: string, degree = false): WordTarget {
   const age = audienceAge(audience);
-  if (age === null || age >= 14) return depth === "degree" ? DEGREE_TARGET_WORDS : TARGET_WORDS;
+  if (age === null || age >= 14) return degree ? DEGREE_TARGET_WORDS : TARGET_WORDS;
   return age <= 9 ? YOUNG_TARGET_WORDS : CHILD_TARGET_WORDS;
 }
 
-/** Whether a lesson has practice cases: degree depth, and a reader old enough for the degree length. */
-export function wantsPractice(audience?: string, depth?: ProgramDepth): boolean {
-  return depth === "degree" && targetWords(audience, depth) === DEGREE_TARGET_WORDS;
+/** Whether a lesson has practice cases: a syllabus course, and a reader old enough for the degree length. */
+export function wantsPractice(audience?: string, degree = false): boolean {
+  return degree && targetWords(audience, degree) === DEGREE_TARGET_WORDS;
 }
 
-/** True for a course built at degree depth. A map with no syllabus is never a degree course. */
+/** True for a course map with a syllabus (every topic course). A posting or PDF map has none. */
 export function isDegree(map: Pick<SkillMap, "syllabus">): boolean {
-  return map.syllabus?.depth === "degree";
+  return map.syllabus !== undefined;
 }
 
 
@@ -80,24 +80,23 @@ const USUAL_LENGTH = `- ${TARGET_WORDS.min} to ${TARGET_WORDS.max} words in tota
 
 /** The practice section of a degree lesson prompt. The count comes from the shared syllabus shape. */
 const PRACTICE_SECTION = `PRACTICE
-- practice: exactly ${SYLLABUS_SHAPE.degree.practiceCases} practice cases that make the learner use the idea, not recall it.
+- practice: exactly ${SYLLABUS_SHAPE.practiceCases} practice cases that make the learner use the idea, not recall it.
 - scenario: a short, realistic situation in 2 to 4 sentences. question: one question about it that needs reasoning, such as what would happen, what to do, or which explanation fits.
 - modelAnswer: the answer a strong learner would give, in 2 to 4 sentences. Learners never see it: a grader compares their answer to it. Accuracy comes first.
 - The scenario and question count toward the lesson length. Do not copy a checkpoint into them, and do not state the answer in the scenario.`;
 
 /**
  * The lesson prompt, pitched at the map's audience when it has one, and at the degree length
- * (with practice cases) when `depth` is "degree". The audience comes from code or a cleaned
+ * (with practice cases) when `degree` is true. The audience comes from code or a cleaned
  * model reply, never straight from the learner. With neither, it is unchanged.
  */
-export function lessonSystemPrompt(audience?: string, depth?: ProgramDepth): string {
-  const degree = depth === "degree";
+export function lessonSystemPrompt(audience?: string, degree = false): string {
   if (!audience && !degree) return LESSON_PROMPT;
   if (!LESSON_PROMPT.includes(USUAL_LENGTH)) throw new Error("Lesson prompt length rule moved.");
-  const target = targetWords(audience, depth);
+  const target = targetWords(audience, degree);
   const young = isYoungAudience(audience);
   // A child's lesson keeps the usual shape and its own length: no degree length, no practice cases.
-  const withPractice = wantsPractice(audience, depth);
+  const withPractice = wantsPractice(audience, degree);
   const length = withPractice
     ? DEGREE_LENGTH
     : `- ${target.min} to ${target.max} words in total. Warm, plain and short sentences. Explain any new word the first time you use it.`;
@@ -184,7 +183,7 @@ Write the lesson as lines, in this order. Each line is one JSON object with only
 4. 2 lines {"part":"check","question":"...","answer":"..."}: the check-yourself questions.`;
 
 const LINES_PRACTICE = `
-5. ${SYLLABUS_SHAPE.degree.practiceCases} lines {"part":"practice","scenario":"...","question":"...","modelAnswer":"..."}: the practice cases.`;
+5. ${SYLLABUS_SHAPE.practiceCases} lines {"part":"practice","scenario":"...","question":"...","modelAnswer":"..."}: the practice cases.`;
 
 /**
  * Last, so it is fresh when each line is written: measured on Haiku (Nov 2026), check answers and
@@ -194,7 +193,7 @@ const LINES_CHECKED = `
 Every line is checked against the checkpoints as it arrives. A line that repeats 6 or more of a checkpoint's words in order is thrown away and the whole lesson is written again. Check answers and idea lines are where this slips in most: say each point in new words, never as a checkpoint sentence.`;
 
 /** The lesson prompt for JSON lines: `lessonSystemPrompt` with the line format added at the end. */
-export function lessonLinesSystemPrompt(audience?: string, depth?: ProgramDepth): string {
-  const practice = wantsPractice(audience, depth) ? LINES_PRACTICE : "";
-  return `${lessonSystemPrompt(audience, depth)}\n\n${LINES_FORMAT}${practice}\n${LINES_CHECKED}`;
+export function lessonLinesSystemPrompt(audience?: string, degree = false): string {
+  const practice = wantsPractice(audience, degree) ? LINES_PRACTICE : "";
+  return `${lessonSystemPrompt(audience, degree)}\n\n${LINES_FORMAT}${practice}\n${LINES_CHECKED}`;
 }

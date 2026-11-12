@@ -9,7 +9,7 @@ import { buildUnitPrompt, UNIT_SYSTEM_PROMPT, unitSystemPrompt, type RawUnitNode
 import { copySkillMap, getSkillMap, saveSkillMap, toPublicMap } from "./storage";
 import { fakeRunning } from "@/shared/store/onceFake";
 import { ensureUnitNodes, generateUnit, isUnitBuilt, STALE_UNIT_CLAIM_MS } from "./units";
-import { NODE_LIMITS, validateUnitNodes } from "./validate";
+import { UNIT_NODE_LIMITS, validateUnitNodes } from "./validate";
 
 vi.mock("@/features/ai", () => ({ chatJSON: vi.fn() }));
 vi.mock("@/shared/store/once", async () => await import("@/shared/store/onceFake"));
@@ -51,7 +51,6 @@ function topic(id: string, overrides: Partial<SyllabusTopic> = {}): SyllabusTopi
 function makeSyllabus(): CourseSyllabus {
   return {
     version: 1,
-    depth: "degree",
     courseSlug: "intro-psych",
     level: 100,
     outcomes: [
@@ -187,9 +186,8 @@ describe("validateUnitNodes", () => {
     expect(nodes[1].why).toBe(topics[1].inScope);
   });
 
-  it("caps per kind: a degree unit at 6, legacy maps unchanged", () => {
-    expect(NODE_LIMITS.degreeUnit).toEqual({ min: 3, max: 6 });
-    expect(NODE_LIMITS.legacy).toEqual({ min: 5, max: 14 });
+  it("caps a unit at 6 topics", () => {
+    expect(UNIT_NODE_LIMITS).toEqual({ min: 3, max: 6 });
     const many = Array.from({ length: 8 }, (_, index) => topic(`t${index}`));
     const nodes = validateUnitNodes(unitReply(many.map((t) => t.id)).nodes, "u1", many);
     expect(nodes).toHaveLength(6);

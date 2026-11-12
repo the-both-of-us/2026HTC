@@ -67,13 +67,6 @@ export function PrintSummary({ snapshot, hash, url }: PrintSummaryProps) {
         </p>
       )}
 
-      {snapshot.grid && (
-        <p className="mt-2 text-[9pt]">
-          <span className="font-semibold">Worked on AESO&apos;s live grid figures, checked by code:</span>{" "}
-          {snapshot.grid.map((solve) => `${solve.title} (${solve.answer}, AESO ${solve.asOfLabel}${solve.stale ? ", stale" : ""})`).join("; ")}.
-        </p>
-      )}
-
       {snapshot.notYetProven.length > 0 && (
         <p className="mt-2 text-[9pt] text-ink-soft">
           <span className="font-semibold">Not yet proven:</span> {snapshot.notYetProven.join(", ")}.

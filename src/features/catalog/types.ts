@@ -8,16 +8,15 @@
  * - `catalog/programs/<programId>`                                 CatalogProgram (final frame, guarded by `startOnce`)
  * - `catalog/syllabi/<courseId>`                                   CourseSyllabus, final, never rewritten
  * - `catalog/names/course/<aud>/<titleKey(title)>`                 CatalogNameEntry `{ courseId }`, claimDoc, first wins
- * - `catalog/names/program/<aud>/<depth>/<titleKey(title)>`        CatalogNameEntry `{ programId }`
+ * - `catalog/names/program/<aud>/<titleKey(title)>`                CatalogNameEntry `{ programId }`
  * - `catalog/alias/course/<aud>/<aliasHash(text)>`                 CatalogNameEntry `{ courseId }`, claimed before generation
- * - `catalog/alias/program/<aud>/<depth>/<aliasHash(text)>`        CatalogNameEntry `{ programId }`
+ * - `catalog/alias/program/<aud>/<aliasHash(text)>`                CatalogNameEntry `{ programId }`
  * While a canonical key K is being written, `partial/K` holds its parts (see `@/shared/store/once`):
  * ProgramPart for a program frame, SyllabusPart for a syllabus.
  */
 import type {
   CourseLevel,
   CourseSyllabus,
-  ProgramDepth,
   SyllabusOutcome,
   SyllabusUnit,
 } from "@/shared/types";
@@ -64,7 +63,6 @@ export type CatalogProgram = {
   title: string;
   summary: string;
   audience: string;
-  depth: ProgramDepth;
   /** The stored doc is always "ready" (the final frame). "planning" exists only on a read assembled from the partial doc. */
   status: "planning" | "ready";
   courses: CatalogProgramCourse[];
@@ -81,7 +79,6 @@ export type CatalogProgramSeed = {
   title: string;
   summary: string;
   audience: string;
-  depth: ProgramDepth;
   createdAt: string;
 };
 

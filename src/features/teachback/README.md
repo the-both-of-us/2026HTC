@@ -20,7 +20,7 @@ The owner found proving a simple topic too grueling (Nov 9), so the pass mark dr
 - **Explain it**: the loop above.
 - **Catch the mistake** (`catch.ts`): the AI writes 5 to 8 sentences with 1 or 2 planted mistakes, each breaking a checkpoint. It is written once per topic and shared by every copy of a course (`catch/<contentId>/<nodeId>`, where `contentId` is `contentIdOf(map)`; it is written once under `startOnce`, and a second request waits up to 40 s for it). The browser gets the sentences and how many are wrong, never which. Since Nov 9 the learner only taps: nothing to write, and no AI call checks the round (the owner found writing a correction for each tap too much). Code checks the tapped sentence numbers against the planted ones, so the result is instant. Each planted mistake is a checkpoint, met when tapped (its quote is the tapped sentence, which `catchTranscript` puts in the attempt's text), and each correct sentence tapped costs 20, through `computeScore`. Rounds played earlier keep their written corrections and the AI's verdict on them. No follow-up: a pass proves the topic. One play per learner (`catch-revealed/<mapId>/<ownerId>/<nodeId>`), because the reveal shows the answers.
 - **Explain it to a 10-year-old**: the same grader, plus `readingGrade` (Flesch-Kincaid, worked out by code), shown as a tip and kept for the evidence page. Since Nov 9 it never blocks a pass: a plain-worded run-on sentence measured grade 23 and failed a 100.
-- **Say it in 30 seconds**: the same grader, with a clock in the browser. The evidence page says whether it was spoken or typed.
+- **Say it in 30 seconds**: the same grader, with a clock in the browser. Answers are typed.
 
 The format is saved on the attempt (`format`, missing on older ones, which were all "explain") and on the progress record.
 
@@ -28,20 +28,20 @@ With `map.audience` set, grading, follow-ups, catch rounds (`catch/<id>/<nodeId>
 
 ## The final interview
 
-`final.ts`. Once every topic on a map is proven, `POST /api/maps/[id]/final` writes three questions that mix topics (one AI call) and saves each as an attempt with an open follow-up (`nodeId: "final-interview"`), so the voice interview and the follow-up route work unchanged. Two passes of three earn the course badge, which `publishProof` puts on the evidence page. A fail lets the learner ask for a fresh set. Stored at `final/<mapId>`.
+`final.ts`. Once every topic on a map is proven, `POST /api/maps/[id]/final` writes three questions that mix topics (one AI call) and saves each as an attempt with an open follow-up (`nodeId: "final-interview"`), so the follow-up route works unchanged. Two passes of three earn the course badge, which `publishProof` puts on the evidence page. A fail lets the learner ask for a fresh set. Stored at `final/<mapId>`.
 
 ### Degree courses: unit tests and a longer final
 
-A course whose `map.syllabus` is a degree one (8 units) adds a **unit test** after each unit, and a longer course final. Counts and pass marks come from the shared contract (`UNIT_TEST`, `SYLLABUS_SHAPE`), never typed again here. `finalPlan(map, unitId?)` is the one place that decides them:
+A course with a `map.syllabus` (every topic course: 8 units) adds a **unit test** after each unit, and a longer course final. Counts and pass marks come from the shared contract (`UNIT_TEST`, `SYLLABUS_SHAPE`), never typed again here. `finalPlan(map, unitId?)` is the one place that decides them:
 
 | | questions | pass mark | covers | node id | stored at |
 |---|---|---|---|---|---|
-| quick or legacy course final | 3 | 2 | every topic | `final-interview` | `final/<mapId>` |
+| final of a map with no syllabus (posting, PDF, legacy) | 3 | 2 | every topic | `final-interview` | `final/<mapId>` |
 | degree course final | 6 | 4 | every topic | `final-interview` | `final/<mapId>` |
 | degree unit test | 4 | 3 | that unit's topics | `final:<unitId>` | `final/<mapId>/<unitId>` |
 
 - A unit test opens when every topic of that unit is proved (`GET/POST /api/maps/[id]/final?unit=u2`). It uses the same machinery as the final: one question-writing call, each question an attempt with an open follow-up, `settle` with the pass mark saved on the record (`passMark`, absent on old records, which mean 2).
-- The degree course final opens only when every planned unit is built (a map holds just the units built so far), every topic is proved and every unit test is passed. A course with a syllabus but no unit tests (quick) keeps the old rule: every topic proved.
+- The degree course final opens only when every planned unit is built (a map holds just the units built so far), every topic is proved and every unit test is passed. A map with no syllabus keeps the old rule: every topic proved.
 - The long final's answer grader sees only the topics its question mixes, and its question-writing prompt leaves out the syllabus lines, to keep both prompts a sane size.
 - `getUnitTests(userId, mapId)` lists each built unit's test state. `getPassedUnitTests(mapId)` lists the passed ones (for "a degree course is done").
 - `FinalView` carries `unitId`, `questionCount` and `passMark` so a screen never hard-codes "three questions" or "pass two".
@@ -75,7 +75,7 @@ Asking a model to "score this answer" gave fluent, empty text 55-85/100. So the 
 | `POST /api/attempts` `{mapId, nodeId, explanation, integrity}` | the attempt |
 | `POST /api/attempts/[id]/followup` `{answer}` | the attempt |
 | `GET /api/attempts/[id]` | the attempt, owner only |
-| `GET /api/maps/[id]/progress` | `{isOwner: true, mapId, proven, unlocked, states}` for the owner; `{isOwner: false, proven: {}, unlocked: {}}` with a 200 for anyone else |
+| `GET /api/maps/[id]/progress` | `{mapId, proven, unlocked, states, knownByPretest}` for the owner; a 403 sentence for anyone else |
 | `GET /api/attempts/catch?mapId&nodeId` | `{sentences, mistakeCount, revealed}`, owner only |
 | `GET`, `POST /api/maps/[id]/final` | the final interview's state and questions, owner only |
 
@@ -90,7 +90,7 @@ Anything public, such as the evidence page, must also leave out `ownerId`.
 
 ## Integrity signals
 
-The server counts `wordCount` itself and caps `activeMs` at an hour. `pasted`, `activeMs` and `inputMethod` come from the browser, so a determined person could fake them, and the evidence page says so. They are signals, and they never block a pass.
+The server counts `wordCount` itself and caps `activeMs` at an hour. `pasted` and `activeMs` come from the browser, so a determined person could fake them, and the evidence page says so. They are signals, and they never block a pass.
 
 ## Storage
 
@@ -106,7 +106,7 @@ The server counts `wordCount` itself and caps `activeMs` at an hour. `pasted`, `
 
 A locked skill can be opened by its owner without proving what it builds on: `unlockNode(userId, mapId, nodeId)` (`POST /api/maps/[id]/unlock` `{nodeId}`) saves `unlocks/<mapId>/<ownerId>/<nodeId>` `{nodeId, unlockedAt}`. `getProgress` returns it as `unlocked`, and `deriveNodeStates` counts an unlocked skill as available, so every check that uses them (attempts, catch, the map) treats it as open, including proving it. The map marks it "Unlocked early" until its prerequisites are proven (`unlockedEarlyIds`). Delete my data removes the unlocks.
 
-`isNodeLockedFor(map, viewerId, nodeId)` is how other features decide whether to generate anything: lessons, flashcards and quiz refuse a locked skill with a 403 before any model call. The owner's progress counts; anyone else reading a published course has none, so only its first skills are open to them.
+`isNodeLockedFor(map, viewerId, nodeId)` is how other features decide whether to generate anything: lessons, flashcards and quiz refuse a locked skill with a 403 before any model call. Only the owner reads a map, so only the owner's progress counts.
 
 **Routes and wiring (Nov 11):** `GET/POST /api/maps/[id]/final?unit=<unitId>` serves a unit's test (no `unit` = the course final). `FinalInterview` takes optional `unitId`/`unitTitle` and reads `questionCount`/`passMark` from the view; the map screen shows the active unit's test once that unit is fully proved. `activityTimes(mapId, ownerId)` returns the learner's attempt and proof timestamps for the programs feature's measured hours.
 

@@ -29,7 +29,7 @@ import {
   unitStartRule,
   type UnitRailItem,
 } from "@/features/skill-map";
-import { activityTimes, getPassedFinal, getPassedUnitTests, getProgress } from "@/features/teachback";
+import { activityTimes, FINAL_QUESTIONS, getPassedFinal, getPassedUnitTests, getProgress } from "@/features/teachback";
 import { cleanAudience, inferAudience } from "@/shared/audience";
 import { HttpError } from "@/shared/http";
 import {
@@ -37,7 +37,6 @@ import {
   type CourseSyllabus,
   type MapProgress,
   type NodeState,
-  type ProgramDepth,
   type ProgramLink,
   type SkillMap,
 } from "@/shared/types";
@@ -126,9 +125,9 @@ async function courseIdFor(resolution: CourseResolution, text: string, audience:
   return (await claimCourse({ text, audience, title: resolution.title, summary: resolution.summary })).id;
 }
 
-async function programIdFor(resolution: ProgramResolution, text: string, audience: string, depth: ProgramDepth): Promise<string> {
+async function programIdFor(resolution: ProgramResolution, text: string, audience: string): Promise<string> {
   if (resolution.status === "found") return resolution.programId;
-  return (await claimProgram({ text, audience, depth, title: resolution.title, summary: resolution.summary })).id;
+  return (await claimProgram({ text, audience, title: resolution.title, summary: resolution.summary })).id;
 }
 
 /**
@@ -160,13 +159,12 @@ export async function createCourseMap(input: {
 async function createCatalogProgram(input: {
   text: string;
   audience: string;
-  depth: ProgramDepth;
   ownerId: string;
   deadline: number;
   resolution?: ProgramResolution;
 }): Promise<{ programId: string }> {
-  const resolution = input.resolution ?? (await resolveProgram({ text: input.text, audience: input.audience, depth: input.depth, deadline: input.deadline }));
-  const catalogId = await programIdFor(resolution, input.text, input.audience, input.depth);
+  const resolution = input.resolution ?? (await resolveProgram({ text: input.text, audience: input.audience, deadline: input.deadline }));
+  const catalogId = await programIdFor(resolution, input.text, input.audience);
   return followCatalogProgram({ catalogId, sourceText: input.text, ownerId: input.ownerId, deadline: input.deadline });
 }
 
@@ -175,7 +173,6 @@ async function followCatalogProgram(input: { catalogId: string; sourceText: stri
   const { catalogId } = input;
   const read = await readCatalogProgram(catalogId);
   if (!read) throw new HttpError("We could not set up that program. Please try again.", 500);
-  const depth = read.program.depth;
   const program: Program = {
     id: randomUUID(),
     ownerId: input.ownerId,
@@ -186,7 +183,6 @@ async function followCatalogProgram(input: { catalogId: string; sourceText: stri
     courses: [],
     createdAt: new Date().toISOString(),
     catalogId,
-    ...(depth === "degree" && { depth: "degree" as const }),
     ...(read.program.audience && { audience: read.program.audience }),
   };
   await saveProgram(program);
@@ -247,15 +243,14 @@ export function startCatalogProgram(catalogId: string, ownerId: string): Promise
 
 /**
  * Where `POST /api/programs` goes. A posting builds one private map whatever the shape. A topic:
- * "program" (or a degree) makes a catalog program, "course" one catalog course, and "auto" lets
- * one check call decide (it also resolves against existing programs and courses).
+ * "program" makes a catalog program (always the 40-course degree), "course" one catalog course,
+ * and "auto" lets one check call decide (it also resolves against existing programs and courses).
  */
 export async function createProgramOrMap(input: {
   text: string;
   kind: "posting" | "topic";
   shape: ProgramShape;
   ownerId: string;
-  depth?: ProgramDepth;
 }): Promise<{ programId: string } | { mapId: string }> {
   if (input.kind === "posting") {
     const text = checkPostingText(input.text);
@@ -265,15 +260,12 @@ export async function createProgramOrMap(input: {
   const text = checkTopicText(input.text);
   const audience = cleanAudience(inferAudience(text));
   const deadline = deadlineFrom();
-  const depth: ProgramDepth = input.depth ?? "quick";
-  if (input.depth === "degree" || input.shape === "program") {
-    return createCatalogProgram({ text, audience, depth, ownerId: input.ownerId, deadline });
-  }
+  if (input.shape === "program") return createCatalogProgram({ text, audience, ownerId: input.ownerId, deadline });
   if (input.shape === "course") return createCourseMap({ text, ownerId: input.ownerId, deadline, audience });
 
-  const auto = await resolveAuto({ text, audience, depth, deadline });
+  const auto = await resolveAuto({ text, audience, deadline });
   return auto.shape === "program"
-    ? createCatalogProgram({ text, audience, depth, ownerId: input.ownerId, deadline, resolution: auto.resolution })
+    ? createCatalogProgram({ text, audience, ownerId: input.ownerId, deadline, resolution: auto.resolution })
     : createCourseMap({ text, ownerId: input.ownerId, deadline, audience, resolution: auto.resolution });
 }
 
@@ -319,7 +311,7 @@ export type LoadedCourse = {
     /** Topics the course is counted against: the syllabus's planned topics, else `total`. */
     planned: number;
     badge: boolean;
-    /** Degree courses only: every topic, unit test and the final passed. Undefined means "every topic proved". */
+    /** Syllabus courses only: every topic, unit test and the final passed. Undefined means "every topic proved". */
     complete?: boolean;
   } | null;
   rail: UnitRailItem[] | null;
@@ -395,7 +387,7 @@ async function loadCourse(course: ProgramCourse, index: number, catalogSyllabus:
       total,
       planned,
       badge,
-      ...(syllabus.depth === "degree" && { complete: allProved && testsDone && passedFinal !== null }),
+      complete: allProved && testsDone && passedFinal !== null,
     },
     rail,
     units: unitSummaries(rail, unitTests, passedTests),
@@ -404,7 +396,7 @@ async function loadCourse(course: ProgramCourse, index: number, catalogSyllabus:
 }
 
 /** The fewest topics a full catalog course can plan (8 units of at least 4). */
-const MIN_FULL_COURSE_TOPICS = SYLLABUS_SHAPE.degree.units * SYLLABUS_SHAPE.degree.topicsPerUnit.min;
+const MIN_FULL_COURSE_TOPICS = SYLLABUS_SHAPE.units * SYLLABUS_SHAPE.topicsPerUnit.min;
 
 /**
  * Topics a started course is counted against for unlocking the courses after it: its planned
@@ -419,7 +411,7 @@ function unlockTotal(loaded: LoadedCourse): number {
 
 /**
  * The program and its owner's progress, or null when it is missing or someone else's: the
- * same answer, so nobody can tell a private program exists. Public ones go through sharing.ts.
+ * same answer, so nobody can tell a private program exists.
  * `syllabi`: "final" reads the catalog's final syllabus of each course not started yet (one read
  * each, skipped while the course list is still planning); "none" reads none.
  */
@@ -447,23 +439,22 @@ export async function loadOwnProgram(programId: string, userId: string | null, o
         : undefined,
     ]),
   );
-  // Every catalog course is a full course: a quarter of each required course opens the next.
-  const rule: ProgramDepth = program.catalogId ? "degree" : (program.depth ?? "quick");
-  return { program, planning: found.planning, courses, progress, states: courseStates(program.courses, progress, rule) };
+  return { program, planning: found.planning, courses, progress, states: courseStates(program.courses, progress) };
 }
 
 export type LoadedProgram = NonNullable<Awaited<ReturnType<typeof loadOwnProgram>>>;
 
-/** The depth a course's lessons are written to: its syllabus's, else its program's. */
-function courseDepth(program: Program, loaded: LoadedCourse): ProgramDepth {
-  if (loaded.syllabus) return loaded.syllabus.depth;
-  if (program.catalogId) return "degree";
-  return loaded.map ? "quick" : (program.depth ?? "quick");
+/**
+ * Whether a course's lessons are written to the syllabus length (with practice cases): every
+ * course but a map built before syllabi, which has no courseId and no syllabus.
+ */
+function isSyllabusCourse(loaded: LoadedCourse): boolean {
+  return Boolean(loaded.syllabus || !loaded.map || loaded.map.courseId);
 }
 
 /** What the hours need to know about one course, without the store reads (written words and activity come later). */
 export function courseFacts(program: Program, loaded: LoadedCourse, writtenWords: number[] = [], activity: string[] = []): CourseFacts {
-  const depth = courseDepth(program, loaded);
+  const degree = isSyllabusCourse(loaded);
   const audience = loaded.map ? (loaded.map.audience ?? "") : programAudience(program);
   const plan = loaded.syllabus
     ? {
@@ -473,12 +464,11 @@ export function courseFacts(program: Program, loaded: LoadedCourse, writtenWords
         finalQuestions: loaded.syllabus.assessment.finalQuestions,
       }
     : loaded.built && !loaded.map?.courseId
-      ? { topics: loaded.built.total, units: 1, unitTests: false, finalQuestions: SYLLABUS_SHAPE.quick.finalQuestions }
+      ? { topics: loaded.built.total, units: 1, unitTests: false, finalQuestions: FINAL_QUESTIONS }
       : null;
   return {
-    depth,
-    lessonWords: targetWords(audience || undefined, depth),
-    practiceCasesPerTopic: wantsPractice(audience || undefined, depth) ? SYLLABUS_SHAPE.degree.practiceCases : 0,
+    lessonWords: targetWords(audience || undefined, degree),
+    practiceCasesPerTopic: wantsPractice(audience || undefined, degree) ? SYLLABUS_SHAPE.practiceCases : 0,
     plan,
     writtenWords,
     activity,
@@ -537,19 +527,15 @@ export async function getProgramView(programId: string, userId: string | null): 
     title: program.title,
     summary: program.summary,
     sourceKind: program.sourceKind,
-    isSample: Boolean(program.sampleId),
     courses: courses.map((course) => courseView(program, course, states[course.course.slug])),
-    ...(program.depth && { depth: program.depth }),
     hours: hoursBreakdown(facts),
     ...(planning && { planning: planning satisfies ProgramPlanning }),
   };
 }
 
 /** The sentence for a course still locked behind `title`. */
-function lockedMessage(program: Program, blocker: { title: string; needed: number | null }): string {
-  return program.catalogId || program.depth === "degree"
-    ? `Prove a quarter of "${blocker.title}" first, and this course opens.`
-    : `Prove half of "${blocker.title}" first, and this course opens.`;
+function lockedMessage(blocker: { title: string }): string {
+  return `Prove a quarter of "${blocker.title}" first, and this course opens.`;
 }
 
 /**
@@ -574,7 +560,7 @@ export async function openCourse(programId: string, slug: string, userId: string
   if (!course.courseId) throw new HttpError(COURSE_STILL_PLANNING, 409);
 
   const { blockers } = states[slug];
-  if (blockers.length > 0) throw new HttpError(lockedMessage(program, blockers[0]), 409);
+  if (blockers.length > 0) throw new HttpError(lockedMessage(blockers[0]), 409);
 
   const mapId = randomUUID();
   if (!(await claimProgramCourse(program.id, slug, { mapId, claimedAt: new Date().toISOString() }))) {

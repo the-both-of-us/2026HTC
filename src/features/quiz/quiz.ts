@@ -1,5 +1,4 @@
 import { chatJSON } from "@/features/ai";
-import { isPublished } from "@/features/courses";
 import { isNodeLockedFor } from "@/features/teachback";
 import { contentIdOf, getSkillMap } from "@/features/skill-map";
 import { getDoc } from "@/shared/store";
@@ -35,10 +34,9 @@ const NOT_FOUND = "We could not find that skill. Check the link, or open the map
  */
 const inFlight = new Map<string, Promise<QuizQuestion[]>>();
 
-/** The owner may always read a map. Anyone else only once it is published as a course. */
-async function mayRead(map: SkillMap, viewerId: string): Promise<boolean> {
-  if (viewerId !== "" && map.ownerId === viewerId) return true;
-  return isPublished(map.id);
+/** Only the owner may read a map. */
+function mayRead(map: SkillMap, viewerId: string): boolean {
+  return viewerId !== "" && map.ownerId === viewerId;
 }
 
 /**
@@ -49,7 +47,7 @@ async function mayRead(map: SkillMap, viewerId: string): Promise<boolean> {
 async function findNode(mapId: string, nodeId: string, viewerId: string): Promise<Found> {
   const map = await getSkillMap(mapId);
   const node = map?.nodes.find((candidate) => candidate.id === nodeId);
-  if (!map || !node || !(await mayRead(map, viewerId))) throw new QuizError(NOT_FOUND, 404);
+  if (!map || !node || !mayRead(map, viewerId)) throw new QuizError(NOT_FOUND, 404);
   // Keyed by the content id: every learner of one catalog course shares the quiz.
   return { map, node, key: `quiz/${contentIdOf(map)}/${node.id}` };
 }

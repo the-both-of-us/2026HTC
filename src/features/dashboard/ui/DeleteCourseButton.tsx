@@ -8,10 +8,9 @@ import { Button, buttonClasses } from "@/shared/ui";
 /**
  * Deletes one of your courses from its Dashboard card. The card is a link, so this sits on top
  * of it as a sibling: a small button on the cover, then a confirm panel over the whole card
- * (two steps on the page, no browser dialog). Uses the same `DELETE /api/maps/[id]` as the
- * course page.
+ * (two steps on the page, no browser dialog). Calls `DELETE /api/maps/[id]`.
  */
-export function DeleteCourseButton({ mapId, title, isPublic }: { mapId: string; title: string; isPublic: boolean }) {
+export function DeleteCourseButton({ mapId, title }: { mapId: string; title: string }) {
   const router = useRouter();
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -80,7 +79,7 @@ export function DeleteCourseButton({ mapId, title, isPublic }: { mapId: string; 
     >
       <p className="text-sm">
         <span className="font-semibold">Delete “{title}”</span> and your progress on it?{" "}
-        {isPublic && "It also comes off the Courses list. "}Copies other learners started stay theirs. This can&apos;t be undone.
+        Copies in study circles you started stay with their members. This can&apos;t be undone.
       </p>
       {error && (
         <p role="alert" className="text-sm font-semibold text-danger">

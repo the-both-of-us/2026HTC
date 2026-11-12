@@ -15,7 +15,7 @@ const legacyCourses: CourseView[] = [
   { ...base, slug: "a", number: 1, title: "Intro", mapId: "m1", proven: 3, total: 8, state: "open" },
   { ...base, slug: "b", number: 2, title: "Second", mapId: null, proven: 0, total: null, state: "open" },
 ];
-const legacy: ProgramView = { id: "p1", title: "Psychology", summary: "", sourceKind: "topic", isSample: false, courses: legacyCourses };
+const legacy: ProgramView = { id: "p1", title: "Psychology", summary: "", sourceKind: "topic", courses: legacyCourses };
 
 const hours = {
   planned: { kind: "planned", hours: 4.5, label: "planned", basis: "b" },
@@ -35,7 +35,7 @@ const degreeCourses: CourseView[] = [
   },
   { ...base, slug: "b", number: 2, title: "Second", mapId: null, proven: 0, total: null, state: "locked", year: 1, term: 2, level: 100, blockers: [{ title: "Intro", needed: 7 }] },
 ];
-const degree: ProgramView = { ...legacy, depth: "degree", courses: degreeCourses, hours: { ...hours } };
+const degree: ProgramView = { ...legacy, courses: degreeCourses, hours: { ...hours } };
 
 describe("ProgramScreen", () => {
   it("renders a legacy view as it always did", () => {
@@ -94,11 +94,10 @@ describe("ProgramScreen", () => {
   });
 
   it("states a computed topic count on a degree course with a plan, and the shape without one", () => {
-    expect(startPromise({ ...legacyCourses[1], plannedTopics: 36, units: new Array(8).fill(0).map((_, i) => ({ id: `u${i}`, number: i + 1, title: "t", plannedTopics: 4, built: false, proved: 0, state: "open", test: null })) }, "degree")).toBe(
+    expect(startPromise({ ...legacyCourses[1], plannedTopics: 36, units: new Array(8).fill(0).map((_, i) => ({ id: `u${i}`, number: i + 1, title: "t", plannedTopics: 4, built: false, proved: 0, state: "open", test: null })) })).toBe(
       "36 topics in 8 units, planned.",
     );
-    expect(startPromise(legacyCourses[1], "degree")).toContain("8 units of 4 to 6 topics");
-    expect(startPromise(legacyCourses[1], undefined)).toContain("8 units of 4 to 6 topics");
+    expect(startPromise(legacyCourses[1])).toContain("8 units of 4 to 6 topics");
   });
 
   it("decides when to poll", () => {
@@ -109,7 +108,7 @@ describe("ProgramScreen", () => {
     expect(needsProgramPoll({ courses: [{ ...degreeCourses[0], startable: false }], planning: plan("ready") })).toBe(true);
     expect(needsProgramPoll({ courses: [{ ...degreeCourses[0], startable: false }], planning: plan("stalled") })).toBe(false);
     expect(needsProgramPoll({ courses: degreeCourses })).toBe(false);
-    expect(planningLine({ planned: 5, expected: null })).toBe("Planning courses: 5 so far");
+    expect(planningLine({ planned: 5, expected: 40 })).toBe("Planning courses: 5 of 40");
   });
 });
 
@@ -121,7 +120,7 @@ describe("format", () => {
 });
 
 const comparison: ComparisonView = {
-  programId: "p1", programTitle: "Psychology", depth: "degree",
+  programId: "p1", programTitle: "Psychology",
   ours: { courses: 40, coursesBuilt: 1, units: { planned: 8, built: 1 }, topics: { planned: 40, built: 5, proved: 3 }, hours: { ...hours }, practice: { teachBacks: 40, quizQuestions: 200, practiceCases: 80, unitTestQuestions: 32, finalQuestions: 6 } },
   course: null,
   norms: [{ id: "n", label: "Courses in a BA", value: 40, unit: "courses", source: "University of Calgary", url: "https://example.org/x", retrievedOn: "2026-11-11", derived: "120 units / 3" }],
@@ -147,7 +146,7 @@ describe("Compare panel", () => {
 
 describe("SyllabusDocument", () => {
   const view: SyllabusView = {
-    programId: "p1", programTitle: "Psychology", depth: "degree",
+    programId: "p1", programTitle: "Psychology",
     course: { slug: "a", number: 1, title: "Intro", summary: "s", year: 1, term: 1, level: 100, requires: [], mapId: "m1" },
     status: "built",
     outcomes: [{ id: "o1", text: "Explain behaviour" }],

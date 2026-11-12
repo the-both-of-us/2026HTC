@@ -15,7 +15,7 @@ import { getDoc, listKeys, putDoc } from "@/shared/store";
 import type { SkillMap } from "@/shared/types";
 import { createCourseMap, createProgramOrMap, getProgramView, openCourse, resumePlanning, startUnit } from "./programs";
 import { getProgram } from "./storage";
-import { degreeFrameLines, fakeStreamLines, psychologyPlanLines, syllabusLines, unitNodes } from "./test-fixtures";
+import { degreeFrameLines, fakeStreamLines, syllabusLines, unitNodes } from "./test-fixtures";
 
 const { afters } = vi.hoisted(() => {
   const queue: (() => unknown)[] = [];
@@ -96,7 +96,6 @@ function scriptAi() {
   mockStream.mockImplementation(
     fakeStreamLines((options: StreamLinesOptions<unknown>) => {
       calls[options.label] = (calls[options.label] ?? 0) + 1;
-      if (options.label === "short-plan") return psychologyPlanLines();
       if (options.label === "degree-frame") return degreeFrameLines();
       if (options.label === "syllabus") return syllabusLines(/slug: ([a-z0-9-]+)/.exec(options.prompt)![1]);
       return null;
@@ -118,8 +117,8 @@ const A = randomUUID();
 const B = randomUUID();
 const C = randomUUID();
 
-async function planPsychology(owner: string, depth?: "degree") {
-  const result = await createProgramOrMap({ text: "psychology", kind: "topic", shape: "program", ownerId: owner, ...(depth && { depth }) });
+async function planPsychology(owner: string) {
+  const result = await createProgramOrMap({ text: "psychology", kind: "topic", shape: "program", ownerId: owner });
   return (result as { programId: string }).programId;
 }
 
@@ -147,7 +146,7 @@ describe("one course, whoever asks first (the owner's psychology case)", () => {
     const programId = await planPsychology(A);
     await afters.drain();
     const program = (await getProgram(programId))!;
-    expect(program.courses).toHaveLength(5);
+    expect(program.courses).toHaveLength(40);
     const intro = program.courses[0];
     expect(intro).toMatchObject({ title: "Introduction to psychology", courseId: expect.any(String) });
     // Rule 1: course 1's syllabus and unit 1 were built right after the frame.
@@ -164,7 +163,7 @@ describe("one course, whoever asks first (the owner's psychology case)", () => {
     expect(calls.syllabus).toBe(1);
     expect(await listKeys("catalog/syllabi/")).toHaveLength(1);
     // The course keeps its home in the program, so its syllabus was planned in that context.
-    expect(await getCatalogCourse(intro.courseId!)).toMatchObject({ homeProgramId: program.catalogId, homeSlug: "intro-psychology" });
+    expect(await getCatalogCourse(intro.courseId!)).toMatchObject({ homeProgramId: program.catalogId, homeSlug: "course-1" });
   });
 
   it("course first: the program planned later reuses that course, its syllabus and its unit 1", async () => {
@@ -196,7 +195,7 @@ describe("one course, whoever asks first (the owner's psychology case)", () => {
     expect((await getProgram(programId))!.courses[0].courseId).toBe(courseB);
     expect(calls.syllabus).toBe(1);
     expect(await listKeys("catalog/syllabi/")).toHaveLength(1);
-    expect(await listKeys("catalog/courses/")).toHaveLength(5);
+    expect(await listKeys("catalog/courses/")).toHaveLength(40);
   });
 
   it("two people planning the same program share one frame, planned once", async () => {
@@ -204,7 +203,7 @@ describe("one course, whoever asks first (the owner's psychology case)", () => {
     await afters.drainTogether();
     const [p1, p2] = [(await getProgram(first))!, (await getProgram(second))!];
     expect(p1.catalogId).toBe(p2.catalogId);
-    expect(calls["short-plan"]).toBe(1);
+    expect(calls["degree-frame"]).toBe(1);
     expect(p2.courses.map((c) => c.courseId)).toEqual(p1.courses.map((c) => c.courseId));
   });
 });
@@ -215,15 +214,16 @@ describe("opening and unlocking", () => {
     await afters.drain();
     const program = (await getProgram(programId))!;
     const before = { ...calls };
-    const opened = (await openCourse(programId, "intro-psychology", A)) as { status: "ready"; mapId: string };
+    const opened = (await openCourse(programId, "course-1", A)) as { status: "ready"; mapId: string };
     expect(calls).toEqual(before);
     expect(opened.status).toBe("ready");
     const map = (await getSkillMap(opened.mapId))!;
     expect(map).toMatchObject({ courseId: program.courses[0].courseId, nodes: [], program: { id: programId, courseNumber: 1 } });
     // Opening again (a double click) gives the same map.
-    expect(await openCourse(programId, "intro-psychology", A)).toEqual(opened);
+    expect(await openCourse(programId, "course-1", A)).toEqual(opened);
 
-    await expect(openCourse(programId, "research-methods", A)).rejects.toMatchObject({ status: 409 });
+    // course-6 (year 1 term 2) requires course-1.
+    await expect(openCourse(programId, "course-6", A)).rejects.toMatchObject({ status: 409 });
     // Unit 1 and unit 2 on the map (as syncCourseMap and a unit start would append them), then proofs.
     const syllabus = map.syllabus!;
     const ids = syllabus.units.slice(0, 2).flatMap((u) => u.topics.map((t) => t.id));
@@ -232,9 +232,9 @@ describe("opening and unlocking", () => {
     const quarter = Math.ceil(planned / 4);
     for (const nodeId of ids.slice(0, quarter - 1)) await putDoc(`progress/${opened.mapId}/${A}/${nodeId}`, { nodeId, attemptId: "x", provenAt: new Date().toISOString() });
     const view = (await getProgramView(programId, A))!;
-    expect(view.courses[1]).toMatchObject({ state: "locked", blockers: [{ title: "Introduction to psychology", needed: 1 }] });
+    expect(view.courses[5]).toMatchObject({ state: "locked", blockers: [{ title: "Introduction to psychology", needed: 1 }] });
     await putDoc(`progress/${opened.mapId}/${A}/${ids[quarter - 1]}`, { nodeId: ids[quarter - 1], attemptId: "x", provenAt: new Date().toISOString() });
-    expect((await getProgramView(programId, A))!.courses[1].state).toBe("open");
+    expect((await getProgramView(programId, A))!.courses[5].state).toBe("open");
   });
 
   it("keeps Start off for a course line not registered yet, and shows planning progress while the frame streams", async () => {
@@ -245,7 +245,7 @@ describe("opening and unlocking", () => {
     const { catalogId } = (await getProgram(programId))!;
     const key = catalogKeys.program(catalogId!);
     const now = new Date().toISOString();
-    const [line1, line2] = psychologyPlanLines().slice(1, 3) as { slug: string; title: string; summary: string; requires: string[] }[];
+    const [line1, line2] = degreeFrameLines().slice(1, 3) as { slug: string; title: string; summary: string; requires: string[] }[];
     await putDoc(`claims/${key}`, { startedAt: now, heartbeatAt: now, attempt: 1 });
     await putDoc(`partial/${key}`, {
       attempt: 1,
@@ -258,7 +258,7 @@ describe("opening and unlocking", () => {
       ],
     });
     const view = (await getProgramView(programId, A))!;
-    expect(view.planning).toEqual({ state: "planning", planned: 2, expected: null });
+    expect(view.planning).toEqual({ state: "planning", planned: 2, expected: 40 });
     expect(view.courses.map((c) => c.startable)).toEqual([true, false]);
     await expect(openCourse(programId, line2.slug, A)).rejects.toMatchObject({ status: 409 });
     expect(await resumePlanning(programId, A)).toEqual({ status: "planning" });
@@ -273,18 +273,18 @@ describe("opening and unlocking", () => {
     expect(await resumePlanning(programId, A)).toEqual({ status: "planning" });
     await afters.drain();
     expect((await readCatalogProgram(catalogId!))!.state).toBe("ready");
-    expect((await getProgramView(programId, A))!.planning).toEqual({ state: "ready", planned: 5, expected: null });
+    expect((await getProgramView(programId, A))!.planning).toEqual({ state: "ready", planned: 40, expected: 40 });
     await expect(resumePlanning(programId, B)).rejects.toMatchObject({ status: 404 });
   });
 
-  it("a degree plans 40 courses in years and terms, and its planning counts against 40", async () => {
-    const programId = await planPsychology(A, "degree");
+  it("a program plans 40 courses in years and terms, and its planning counts against 40", async () => {
+    const programId = await planPsychology(A);
     // Before its planner starts (in after()), a new program reads as planning, not stalled.
     const early = (await getProgramView(programId, A))!;
     expect(early.planning).toEqual({ state: "planning", planned: 0, expected: 40 });
     await afters.drain();
     const view = (await getProgramView(programId, A))!;
-    expect(view).toMatchObject({ depth: "degree", planning: { state: "ready", planned: 40, expected: 40 } });
+    expect(view).toMatchObject({ planning: { state: "ready", planned: 40, expected: 40 } });
     expect(view.courses.every((c) => c.startable && c.year && c.term && c.level)).toBe(true);
   });
 
@@ -330,7 +330,7 @@ describe("Delete my data", () => {
   it("removes the learner's maps and programs but never canonical content", async () => {
     const programId = await planPsychology(A);
     await afters.drain();
-    const opened = (await openCourse(programId, "intro-psychology", A)) as { mapId: string };
+    const opened = (await openCourse(programId, "course-1", A)) as { mapId: string };
     await afters.drain();
     const courseId = await courseIdOfMap(opened.mapId);
     await putDoc(`lessons/${courseId}/some-topic`, { words: 1000 });

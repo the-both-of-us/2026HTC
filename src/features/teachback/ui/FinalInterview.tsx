@@ -4,7 +4,6 @@ import clsx from "clsx";
 import { Check, Lock, Trophy, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { VoiceInterview, type InputMethod, type VoiceVerdict } from "@/features/voice/client";
 import { Button, ErrorNotice } from "@/shared/ui";
 import type { FinalView } from "../final";
 import { fetchFinal, startFinal, submitFollowUp } from "./api";
@@ -15,7 +14,6 @@ type FinalInterviewProps = {
   mapId: string;
   provenCount: number;
   topicCount: number;
-  voiceReady: boolean;
   /** Set for a degree unit's test instead of the course final. */
   unitId?: string;
   unitTitle?: string;
@@ -26,11 +24,10 @@ const numberWord = (n: number) => NUMBER_WORDS[n] ?? String(n);
 const capitalized = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /**
- * The course boss. Locked until every topic is proven, then questions that mix topics, spoken or
- * typed: three with two passes for the course badge, or as many as the server says (a degree
+ * The course boss. Locked until every topic is proven, then questions that mix topics, typed: three with two passes for the course badge, or as many as the server says (a degree
  * course's final, or a unit's test when `unitId` is given).
  */
-export function FinalInterview({ mapId, provenCount, topicCount, voiceReady, unitId, unitTitle }: FinalInterviewProps) {
+export function FinalInterview({ mapId, provenCount, topicCount, unitId, unitTitle }: FinalInterviewProps) {
   const allProven = topicCount > 0 && provenCount === topicCount;
   const isUnit = unitId !== undefined;
   const name = isUnit ? "Unit test" : "Final interview";
@@ -69,16 +66,17 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady, uni
     setView(result.data);
   }
 
-  async function answer(attemptId: string, text: string, inputMethod: InputMethod): Promise<VoiceVerdict> {
+  /** Sends one typed answer. Returns false once the error is on screen. */
+  async function answer(attemptId: string, text: string): Promise<boolean> {
     setPending(true);
     setError(null);
-    const result = await submitFollowUp(attemptId, text, { inputMethod });
+    const result = await submitFollowUp(attemptId, text);
     setPending(false);
     if (!result.ok) {
       setError(result.message);
-      throw new Error("The answer was not sent.");
+      return false;
     }
-    return { passed: result.attempt.followUp?.passed === true, feedback: result.attempt.followUp?.feedback ?? null };
+    return true;
   }
 
   if (!view) {
@@ -159,7 +157,7 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady, uni
               <p className="text-sm text-ink-soft">
                 {view.state === "failed"
                   ? "Try a fresh set of questions. They mix different topics each time."
-                  : `${capitalized(numberWord(questionCount))} questions that mix your topics. Say or type each answer. Pass ${numberWord(passMark)} ${reward}.`}
+                  : `${capitalized(numberWord(questionCount))} questions that mix your topics. Type each answer. Pass ${numberWord(passMark)} ${reward}.`}
               </p>
             </div>
           </div>
@@ -202,30 +200,17 @@ export function FinalInterview({ mapId, provenCount, topicCount, voiceReady, uni
         {current && (
           <>
             <p className="text-sm text-ink-soft">Mixes {current.topics.join(" and ") || "your topics"}.</p>
-            {voiceReady ? (
-              <VoiceInterview
-                key={current.attemptId}
-                attemptId={current.attemptId}
-                question={current.question}
-                final
-                onAnswer={(text, inputMethod) => answer(current.attemptId, text, inputMethod)}
-                onContinue={refresh}
-                onTypeInstead={() => {}}
-              />
-            ) : (
-              <FollowUpForm
-                key={current.attemptId}
-                attemptId={current.attemptId}
-                question={current.question}
-                pending={pending}
-                requestError={error}
-                onBegin={() => {}}
-                onSubmit={async (text) => {
-                  const verdict = await answer(current.attemptId, text, "typed").catch(() => null);
-                  if (verdict) await refresh();
-                }}
-              />
-            )}
+            <FollowUpForm
+              key={current.attemptId}
+              attemptId={current.attemptId}
+              question={current.question}
+              pending={pending}
+              requestError={error}
+              onBegin={() => {}}
+              onSubmit={async (text) => {
+                if (await answer(current.attemptId, text)) await refresh();
+              }}
+            />
           </>
         )}
       </div>

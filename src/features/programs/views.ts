@@ -4,9 +4,8 @@
  * its source. There is never a match score, and the "Not equivalent" lines always go with it.
  */
 import { readCatalogSyllabus } from "@/features/catalog";
-import { learningOrder } from "@/features/courses";
 import { QUESTIONS_WANTED } from "@/features/quiz";
-import { SYLLABUS_SHAPE, UNIT_TEST } from "@/shared/types";
+import { SYLLABUS_SHAPE, UNIT_TEST, type SkillNode } from "@/shared/types";
 import { hoursBreakdown, plannedUnits, practiceCounts } from "./hours";
 import { normsFor, referenceFor } from "./norms";
 import { courseFacts, courseHoursFacts, loadOwnProgram, type LoadedCourse } from "./programs";
@@ -50,8 +49,6 @@ export async function getSyllabusView(programId: string, slug: string, viewerId:
     if (read.state !== "idle") syllabus = read.syllabus;
   }
   const status: SyllabusView["status"] = !syllabus ? "none" : (course.map?.nodes.length ?? 0) > 0 ? "built" : "draft";
-  const depth = syllabus?.depth ?? (program.catalogId ? "degree" : (program.depth ?? "quick"));
-  const shape = SYLLABUS_SHAPE[depth];
   const elsewhere = topicTitles(courses);
   const nodeIds = new Set(course.map?.nodes.map((node) => node.id) ?? []);
 
@@ -96,7 +93,6 @@ export async function getSyllabusView(programId: string, slug: string, viewerId:
   return {
     programId: program.id,
     programTitle: program.title,
-    depth,
     course: {
       slug: course.course.slug,
       number: course.index + 1,
@@ -114,16 +110,34 @@ export async function getSyllabusView(programId: string, slug: string, viewerId:
     outcomes: syllabus?.outcomes.map((outcome) => ({ ...outcome })) ?? [],
     units,
     assessment: {
-      unitTests: syllabus?.assessment.unitTests ?? shape.unitTests,
+      unitTests: syllabus?.assessment.unitTests ?? SYLLABUS_SHAPE.unitTests,
       unitTestQuestions: UNIT_TEST.questions,
       unitTestPassMark: UNIT_TEST.passMark,
-      finalQuestions: syllabus?.assessment.finalQuestions ?? shape.finalQuestions,
-      finalPassMark: shape.finalPassMark,
+      finalQuestions: syllabus?.assessment.finalQuestions ?? SYLLABUS_SHAPE.finalQuestions,
+      finalPassMark: SYLLABUS_SHAPE.finalPassMark,
       final: course.final ?? "locked",
     },
     hours: hoursBreakdown([facts]),
     practice: practiceCounts([facts], QUESTIONS_WANTED),
   };
+}
+
+/** A map's nodes with each after its prerequisites (a cycle or a missing one keeps the rest in place). */
+function learningOrder(nodes: SkillNode[]): SkillNode[] {
+  const ids = new Set(nodes.map((node) => node.id));
+  const placed = new Set<string>();
+  const ordered: SkillNode[] = [];
+  let progressed = true;
+  while (progressed && ordered.length < nodes.length) {
+    progressed = false;
+    for (const node of nodes) {
+      if (placed.has(node.id) || !node.prerequisites.every((id) => !ids.has(id) || placed.has(id))) continue;
+      placed.add(node.id);
+      ordered.push(node);
+      progressed = true;
+    }
+  }
+  return [...ordered, ...nodes.filter((node) => !placed.has(node.id))];
 }
 
 /** Units built in a course: its syllabus's built units, or 1 for a course built before syllabi. */
@@ -172,7 +186,6 @@ export async function getComparisonView(programId: string, viewerId: string | nu
   return {
     programId: program.id,
     programTitle: program.title,
-    depth: program.depth ?? "quick",
     ours: {
       courses: courses.length,
       coursesBuilt: courses.filter((course) => course.built).length,

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { publishCourse } from "@/features/courses";
 import { copySkillMap } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -182,15 +181,13 @@ beforeEach(async () => {
 describe("getSkillReels", () => {
   const ONE = [{ id: id(1), title: "SQL joins in 60 seconds" }];
 
-  it("searches once, then serves the saved list to the course and every learner's copy", async () => {
+  it("searches once, then serves the saved list to every learner's copy", async () => {
     const yt = mockYouTube(ONE);
     const first = await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key" });
     expect(first.map((reel) => reel.videoId)).toEqual([id(1)]);
 
-    await publishCourse(map.id, OWNER, "Ada");
     const copy = await copySkillMap(map.id, STRANGER);
     expect(await getSkillReels(copy.id, "sql-joins", STRANGER, { apiKey: "key" })).toEqual(first);
-    expect(await getSkillReels(map.id, "sql-joins", STRANGER, { apiKey: "key" })).toEqual(first);
     expect(yt.searches()).toBe(1);
 
     const saved = await getDoc<SavedReels>(`skill-reels/${topicKey(map, map.nodes[0])}`);
@@ -299,20 +296,24 @@ describe("getSkillReels", () => {
 
 describe("likes and dislikes", () => {
   const SIX = Array.from({ length: 6 }, (_, n) => ({ id: id(n + 1), title: `SQL joins clip ${n + 1}` }));
-  const shown = async (viewer: string) => (await getSkillReels(map.id, "sql-joins", viewer, { apiKey: "key" })).map((reel) => reel.videoId);
   let VOTERS: string[];
+  /** Each learner votes on their own copy of the map (as in a study circle); the owner on the map itself. */
+  let copies: Map<string, string>;
+  const mapOf = (viewer: string) => copies.get(viewer) ?? map.id;
+  const shown = async (viewer: string) => (await getSkillReels(mapOf(viewer), "sql-joins", viewer, { apiKey: "key" })).map((reel) => reel.videoId);
 
   beforeEach(async () => {
     VOTERS = [randomUUID(), randomUUID(), randomUUID()];
     mockYouTube(SIX);
-    await publishCourse(map.id, OWNER, "Ada");
+    copies = new Map();
+    for (const viewer of [...VOTERS, STRANGER]) copies.set(viewer, (await copySkillMap(map.id, viewer)).id);
   });
 
   it("shows 4 of the saved videos, each with its likes and your own vote", async () => {
     expect(await shown(OWNER)).toEqual([id(1), id(2), id(3), id(4)]);
     expect(MAX_SHOWN).toBe(4);
-    expect(await voteOnReel(map.id, "sql-joins", id(1), VOTERS[0], 1)).toEqual({ likes: 1, myVote: 1, removed: false });
-    const [first] = await getSkillReels(map.id, "sql-joins", VOTERS[0], { apiKey: "key" });
+    expect(await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(1), VOTERS[0], 1)).toEqual({ likes: 1, myVote: 1, removed: false });
+    const [first] = await getSkillReels(mapOf(VOTERS[0]), "sql-joins", VOTERS[0], { apiKey: "key" });
     expect(first).toMatchObject({ videoId: id(1), likes: 1, myVote: 1 });
     const [forOwner] = await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key" });
     expect(forOwner).toMatchObject({ likes: 1, myVote: 0 });
@@ -320,42 +321,42 @@ describe("likes and dislikes", () => {
 
   it("hides a video from the person who disliked it, and gives it back when they take that back", async () => {
     await shown(OWNER);
-    expect(await voteOnReel(map.id, "sql-joins", id(2), VOTERS[0], -1)).toEqual({ likes: 0, myVote: -1, removed: false });
+    expect(await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(2), VOTERS[0], -1)).toEqual({ likes: 0, myVote: -1, removed: false });
     expect(await shown(VOTERS[0])).toEqual([id(1), id(3), id(4), id(5)]);
     // One dislike removes it for nobody else.
     expect(await shown(OWNER)).toEqual([id(1), id(2), id(3), id(4)]);
 
-    await voteOnReel(map.id, "sql-joins", id(2), VOTERS[0], 0);
+    await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(2), VOTERS[0], 0);
     expect(await shown(VOTERS[0])).toEqual([id(1), id(2), id(3), id(4)]);
   });
 
   it("removes a video for everyone at 2 dislikes outnumbering the likes, and the next saved one takes its place", async () => {
     await shown(OWNER);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[0], 1);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[1], -1);
-    expect((await voteOnReel(map.id, "sql-joins", id(1), VOTERS[2], -1)).removed).toBe(true);
+    await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(1), VOTERS[0], 1);
+    await voteOnReel(mapOf(VOTERS[1]), "sql-joins", id(1), VOTERS[1], -1);
+    expect((await voteOnReel(mapOf(VOTERS[2]), "sql-joins", id(1), VOTERS[2], -1)).removed).toBe(true);
     expect(await shown(OWNER)).toEqual([id(2), id(3), id(4), id(5)]);
   });
 
   it("keeps a video whose likes keep up with its dislikes", async () => {
     await shown(OWNER);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[0], 1);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[1], 1);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[2], -1);
-    expect((await voteOnReel(map.id, "sql-joins", id(1), OWNER, -1)).removed).toBe(false);
+    await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(1), VOTERS[0], 1);
+    await voteOnReel(mapOf(VOTERS[1]), "sql-joins", id(1), VOTERS[1], 1);
+    await voteOnReel(mapOf(VOTERS[2]), "sql-joins", id(1), VOTERS[2], -1);
+    expect((await voteOnReel(mapOf(OWNER), "sql-joins", id(1), OWNER, -1)).removed).toBe(false);
     expect(await shown(STRANGER)).toContain(id(1));
   });
 
   it("changing a vote replaces it rather than adding to it", async () => {
     await shown(OWNER);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[0], 1);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[0], 1);
-    expect(await voteOnReel(map.id, "sql-joins", id(1), VOTERS[0], -1)).toEqual({ likes: 0, myVote: -1, removed: false });
+    await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(1), VOTERS[0], 1);
+    await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(1), VOTERS[0], 1);
+    expect(await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(1), VOTERS[0], -1)).toEqual({ likes: 0, myVote: -1, removed: false });
   });
 
   it("refuses a video that is not on the skill, and a private map", async () => {
     await shown(OWNER);
-    await expect(voteOnReel(map.id, "sql-joins", id(99), VOTERS[0], 1)).rejects.toMatchObject({ status: 404 });
+    await expect(voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(99), VOTERS[0], 1)).rejects.toMatchObject({ status: 404 });
     const privateMap = { ...map, id: randomUUID() };
     await putDoc(`maps/${privateMap.id}`, privateMap);
     await expect(voteOnReel(privateMap.id, "sql-joins", id(1), STRANGER, -1)).rejects.toMatchObject({ status: 404 });
@@ -365,8 +366,8 @@ describe("likes and dislikes", () => {
     const yt = mockYouTube(SIX.slice(0, 2));
     await shown(OWNER);
     for (const video of [id(1), id(2)]) {
-      await voteOnReel(map.id, "sql-joins", video, VOTERS[0], -1);
-      await voteOnReel(map.id, "sql-joins", video, VOTERS[1], -1);
+      await voteOnReel(mapOf(VOTERS[0]), "sql-joins", video, VOTERS[0], -1);
+      await voteOnReel(mapOf(VOTERS[1]), "sql-joins", video, VOTERS[1], -1);
     }
     const again = mockYouTube(SIX);
     const later = await getSkillReels(map.id, "sql-joins", OWNER, { apiKey: "key", now: Date.now() + 2 * 3_600_000 });
@@ -376,8 +377,8 @@ describe("likes and dislikes", () => {
 
   it("forgets someone's votes when they delete their data, and nobody else's", async () => {
     await shown(OWNER);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[0], -1);
-    await voteOnReel(map.id, "sql-joins", id(1), VOTERS[1], -1);
+    await voteOnReel(mapOf(VOTERS[0]), "sql-joins", id(1), VOTERS[0], -1);
+    await voteOnReel(mapOf(VOTERS[1]), "sql-joins", id(1), VOTERS[1], -1);
     expect(await deleteReelVotes(VOTERS[0])).toBe(1);
     expect(await shown(OWNER)).toContain(id(1));
     expect(await shown(VOTERS[1])).not.toContain(id(1));

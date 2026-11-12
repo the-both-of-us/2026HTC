@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveNodeStates } from "@/features/skill-map";
 import { deleteDoc, getDoc, putDoc } from "@/shared/store";
-import type { GridSolve } from "@/features/grid";
 import type { Attempt, SkillMap, SkillNode } from "@/shared/types";
 import { canonicalJson, checkSnapshot, hashSnapshot, sealFor } from "./hash";
 import {
@@ -145,55 +144,12 @@ describe("buildSnapshot", () => {
   });
 });
 
-describe("grid practice on the record", () => {
-  const solve: GridSolve = {
-    exerciseId: "reserve-margin",
-    title: "Reserve margin",
-    skill: "the reserve margin",
-    asOf: "2026-11-07T13:45:00-06:00",
-    asOfLabel: "Nov 07, 2026 13:45",
-    answer: "31 MW",
-    figures: [{ label: "Dispatched reserve", value: "510 MW" }],
-    working: ["Dispatched minus required: 510 − 479 = 31 MW."],
-    stale: false,
-    solvedAt: "2026-11-07T19:50:00.000Z",
-  };
-
-  it("leaves the field out with no solves, so a record from before it existed keeps its fingerprint", () => {
+describe("fingerprint of older records", () => {
+  it("keeps a record from before pre-tests and the final interview hashing as it did", () => {
     const map = makeMap();
     const snapshot = snapshotFor(map, makeAttempt(map, "joins"));
     expect(snapshot.skills).toHaveLength(1);
-    expect("grid" in snapshot).toBe(false);
-    // Worked out on main before grid solves existed, from this same test data.
     expect(hashSnapshot(snapshot)).toBe(OLD_HASH);
-  });
-
-  it("adds solves without ids or AESO's ISO time, and the fingerprint covers them", () => {
-    const map = makeMap();
-    const attempt = makeAttempt(map, "joins");
-    const snapshot = buildSnapshot({ ...snapshotInput(map, attempt), gridSolves: [solve] });
-    expect(snapshot.grid).toEqual([
-      { title: "Reserve margin", skill: "the reserve margin", answer: "31 MW", asOfLabel: "Nov 07, 2026 13:45", figures: solve.figures, working: solve.working, stale: false, solvedAt: solve.solvedAt },
-    ]);
-    const hash = hashSnapshot(snapshot);
-    expect(checkSnapshot(snapshot, hash).hashMatches).toBe(true);
-    const edited = { ...snapshot, grid: [{ ...snapshot.grid![0], answer: "90 MW" }] };
-    expect(checkSnapshot(edited, hash).hashMatches).toBe(false);
-  });
-
-  it("includes the owner's solves only when the map is energy related", async () => {
-    const owner = randomUUID();
-    await putDoc(`grid-solves/${owner}/reserve-margin`, solve);
-
-    for (const [sourceText, expected] of [["Data analyst for AESO grid operations.", 1], ["Barista, Calgary.", 0]] as const) {
-      const map = { ...makeMap(), ownerId: owner, sourceText };
-      const attempt = makeAttempt(map, "joins", { ownerId: owner });
-      await putDoc(`maps/${map.id}`, map);
-      await putDoc(`attempts/${attempt.id}`, attempt);
-      await putDoc(`progress/${map.id}/${owner}/joins`, { nodeId: "joins", attemptId: attempt.id, provenAt: "2026-11-07T11:00:00.000Z" });
-      const record = await publishProof(owner, map.id, "Maya Chen");
-      expect(record.snapshot.grid?.length ?? 0).toBe(expected);
-    }
   });
 });
 

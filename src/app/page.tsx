@@ -1,25 +1,11 @@
-import { Suspense } from "react";
-import { LandingFigures, LandingFiguresSource, PostingForm } from "@/features/landing";
+import { PostingForm } from "@/features/landing";
 import { HowItWorksButton } from "@/features/landing/client";
 import { PageShell } from "@/shared/ui";
 
 export default function Home() {
   return (
-    <PageShell
-      width="full"
-      footer={
-        <Suspense fallback={null}>
-          <LandingFiguresSource />
-        </Suspense>
-      }
-    >
-      <PostingForm
-        figures={
-          <Suspense fallback={null}>
-            <LandingFigures />
-          </Suspense>
-        }
-      >
+    <PageShell width="full">
+      <PostingForm>
         <h1 className="text-[clamp(2.5rem,11.4vw,4rem)] leading-[1.02] font-bold lg:text-[clamp(2.875rem,5.1vw,4.625rem)]">
           Learn anything. Prove you get it.
         </h1>

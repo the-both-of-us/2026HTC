@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AiUnavailableError, chatJSON } from "@/features/ai";
-import { publishCourse } from "@/features/courses";
 import { unlockNode } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -24,7 +23,6 @@ vi.mock("@/shared/store", async (importOriginal) => {
 });
 const mockGetDoc = vi.mocked(getDoc);
 
-/** Publishing needs owner ids that look like ours. */
 const OWNER = randomUUID();
 const STRANGER = randomUUID();
 
@@ -291,16 +289,6 @@ describe("who may read a map's quiz", () => {
 
   it("refuses an empty viewer id", async () => {
     await expect(getSavedQuiz(mapId, "first", "")).rejects.toMatchObject({ status: 404 });
-  });
-
-  it("lets a stranger read and make a quiz once the map is published", async () => {
-    await publishCourse(mapId, OWNER);
-    mockChatJSON.mockResolvedValueOnce(modelReply());
-
-    expect(await getSavedQuiz(mapId, "first", STRANGER)).toBeNull();
-    const items = await getOrCreateQuiz(mapId, "first", STRANGER);
-    expect(items).toHaveLength(5);
-    expect(await getSavedQuiz(mapId, "first", STRANGER)).toEqual(items);
   });
 
   it("does not let a stranger wait on the owner's generation for a private map", async () => {

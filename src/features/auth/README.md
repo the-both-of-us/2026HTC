@@ -1,12 +1,12 @@
 # auth
 
-Optional sign-in with Auth0. **Never a login wall:** guests can build maps, prove skills, use flashcards and quizzes, and start courses. Only **publishing** a course and **liking** one need a sign-in, and only when Auth0 is set up. Signing in links the visitor's current guest id to their Auth0 account, so the same id, and every map, proof and course under it, follows them to any device. No data is copied or moved.
+Optional sign-in with Auth0. **Never a login wall:** guests can build maps, prove skills, use flashcards and quizzes, and start courses. Only **joining the network** (a profile on People) needs a sign-in, and only when Auth0 is set up. Signing in links the visitor's current guest id to their Auth0 account, so the same id, and every map, proof and course under it, follows them to any device. No data is copied or moved.
 
 Written by hand against OpenID Connect (Authorization Code flow with PKCE), with `fetch` and `node:crypto`. No Auth0 SDK and no JWT library: the SDK hooks in through middleware, and Next 16 changed middleware (now "proxy"), so three small route handlers were simpler and easier to explain.
 
 ## The flow, in words
 
-1. **Sign in** link → `GET /api/auth/login?returnTo=/courses/abc`.
+1. **Sign in** link → `GET /api/auth/login?returnTo=/people`.
    - The server makes three random values (32 bytes each, base64url): `state`, `nonce` and the PKCE `code_verifier`.
    - It saves them, with `returnTo` and the time, in the `pf_auth_tx` cookie: httpOnly, SameSite=Lax, Secure in production, path `/api/auth`, 10 minutes, HMAC-SHA256 signed with `AUTH0_SECRET`.
    - It redirects (302) to `https://<AUTH0_DOMAIN>/authorize` with `response_type=code`, `client_id`, `redirect_uri=<base>/api/auth/callback`, `scope=openid profile email`, `state`, `nonce`, `code_challenge=base64url(sha256(verifier))` and `code_challenge_method=S256`. No secret is in that URL.
@@ -59,7 +59,7 @@ On each sign-in, with `current = await getUserId()`:
 **Known gaps:**
 
 - Guest progress made on a second device before signing in stays under that device's old guest id. Signing in there switches to the account's id.
-- **Shared laptops (session fixation).** A first sign-in keeps the browser's guest id, and identity never rotates it. Someone who used the laptop as a guest earlier and copied their `pf_uid` from DevTools keeps owner access to that id after the next person signs in for the first time with it, on their own machine, without signing in: map ownership and unpublishing only check `pf_uid`, and the signed value has no expiry or revocation. It can't be done remotely (state is bound to `pf_auth_tx`, and `vercel.app` is on the Public Suffix List). The fix belongs in `src/shared/identity.ts` (Abdu's): once `account-of/<id>` exists, accept `pf_uid` only together with a matching signed `pf_account`, or give `pf_uid` an issued-at and refuse a pre-link one. Until then, on a shared laptop, sign out before handing it over, or sign in before doing anything as a guest.
+- **Shared laptops (session fixation).** A first sign-in keeps the browser's guest id, and identity never rotates it. Someone who used the laptop as a guest earlier and copied their `pf_uid` from DevTools keeps owner access to that id after the next person signs in for the first time with it, on their own machine, without signing in: map ownership only checks `pf_uid`, and the signed value has no expiry or revocation. It can't be done remotely (state is bound to `pf_auth_tx`, and `vercel.app` is on the Public Suffix List). The fix belongs in `src/shared/identity.ts` (Abdu's): once `account-of/<id>` exists, accept `pf_uid` only together with a matching signed `pf_account`, or give `pf_uid` an issued-at and refuse a pre-link one. Until then, on a shared laptop, sign out before handing it over, or sign in before doing anything as a guest.
 
 **`forgetAccount(userId)`**, exported for delete-my-data, deletes `account-of/<userId>` and the `accounts/<hash>` it points to (only if that still names this user). Signing in again afterwards links the account afresh, to whatever id the browser has then.
 
@@ -74,7 +74,7 @@ On each sign-in, with `current = await getUserId()`:
 | `APP_BASE_URL` | Recommended | Origin only, such as `https://oryxlearn.vercel.app`. Without it the base comes from the request. |
 | `SESSION_SECRET` | In production | Identity's own secret, which signs `pf_uid` and `pf_account`. |
 
-With none of the four Auth0 values set, sign-in is simply off: `isAuthConfigured()` is false, guests may publish and like, `AccountStatusServer` and `AccountStatusLoader` render nothing, and `/api/auth/login` redirects to `/?signin=unavailable`. Nothing throws. A value that is set but malformed also turns sign-in off, and the server logs which variable is wrong, by name only, never its value.
+With none of the four Auth0 values set, sign-in is simply off: `isAuthConfigured()` is false, guests may join the network, `AccountStatusServer` and `AccountStatusLoader` render nothing, and `/api/auth/login` redirects to `/?signin=unavailable`. Nothing throws. A value that is set but malformed also turns sign-in off, and the server logs which variable is wrong, by name only, never its value.
 
 **Auth0 dashboard:** the application is a Regular Web Application, with Token Endpoint Authentication Method "Post". Allowed Callback URLs must include `<base>/api/auth/callback` and Allowed Logout URLs must include `<base>`, for every host (localhost, Vercel).
 
@@ -100,14 +100,13 @@ From `@/features/auth/client`:
 
 - `AccountStatus({ signedIn, displayName, returnTo? })`: "Sign in" plus "Sign in to keep your courses on any device.", or "Signed in as <name>" plus a "Sign out" form post. Presentational: give it only `signedIn` and `displayName`, never a user id. `returnTo` defaults to the current path.
 - `AccountStatusLoader()`: the same, for places rendered on the client, where a server component can't go. It asks `GET /api/auth/session`.
-- `SignInPrompt({ action: "like" | "publish" })`: "Sign in to like courses." or "Sign in to publish, so your name shows on it.", linking back to the current page.
 - `SignInNotice()`: the dismissible `role="status"` sentence for `?signin=failed|expired|unavailable`. It reads the URL in the browser only, so it needs no Suspense.
 
 ## For Abdu
 
 These are in your files, so they are yours to place:
 
-1. **Account status where PageShell says "Learning as a guest. Your progress stays with this browser."** (the sidebar footer, and the phone top bar). Most screens render `PageShell` from client components (for example `CourseScreen`), where a server component can't go, so use the client loader there:
+1. **Account status where PageShell says "Learning as a guest. Your progress stays with this browser."** (the sidebar footer, and the phone top bar). Most screens render `PageShell` from client components (for example `MapScreen`), where a server component can't go, so use the client loader there:
 
    ```tsx
    import { AccountStatusLoader } from "@/features/auth/client";
@@ -135,7 +134,7 @@ These are in your files, so they are yours to place:
 - `config.ts`: reads and checks the environment. `returnTo.ts`: the safe return path. `transaction.ts`: the signed `pf_auth_tx` cookie.
 - `oidc.ts`: the authorize and logout URLs, PKCE, the token exchange, and the id_token claim checks.
 - `accounts.ts`: account linking, `forgetAccount` and the display name. `handlers.ts`: the four routes.
-- `ui/`: `AccountStatus`, `AccountStatusLoader`, `AccountStatusServer`, `SignInPrompt`, `SignInNotice`.
+- `ui/`: `AccountStatus`, `AccountStatusLoader`, `AccountStatusServer`, `SignInNotice`.
 
 ## Tests
 

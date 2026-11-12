@@ -33,7 +33,7 @@ export type ProofSkill = {
   /** Quotes the AI offered that code rejected, because they were not in the person's text. */
   rejectedQuotes: number;
   /**
-   * inputMethod and startedAfterMs are only present when they were recorded. Records
+   * inputMethod ("voice" only on pages published while answers could be spoken) and startedAfterMs are only present when they were recorded. Records
    * published before they existed don't have the keys, so their fingerprints still match.
    */
   followUp: {
@@ -69,21 +69,11 @@ export type ProofSkill = {
 export type ProofKnownByPretest = { nodeId: string; title: string; label: string; passedAt: string };
 
 /** A passed final interview: three questions mixing the course's topics, two needed to pass. */
-export type ProofFinalInterview = { passedCount: number; spokenCount: number; finishedAt: string };
-
-/** A "Read the Grid" question the person answered correctly, checked by code on the server. */
-export type ProofGridSolve = {
-  title: string;
-  /** "the reserve margin", for "Worked out the reserve margin from AESO's reading at 13:45". */
-  skill: string;
-  answer: string;
-  /** AESO's report time, in AESO's words, such as "Nov 07, 2026 13:45" (Alberta time). */
-  asOfLabel: string;
-  figures: { label: string; value: string }[];
-  working: string[];
-  /** The report was over 15 minutes old when it was solved. */
-  stale: boolean;
-  solvedAt: string;
+export type ProofFinalInterview = {
+  passedCount: number;
+  /** Only on pages published while answers could be spoken. New pages leave it out. */
+  spokenCount?: number;
+  finishedAt: string;
 };
 
 /**
@@ -105,12 +95,7 @@ export type ProofSnapshot = {
    */
   knownByPretest?: ProofKnownByPretest[];
   notYetProven: string[];
-  /**
-   * Only on an energy map whose owner solved a grid question. Left out otherwise, rather than
-   * set empty, so a record published before this field existed keeps the same fingerprint.
-   */
-  grid?: ProofGridSolve[];
-  /** Only once the final interview was passed. Left out otherwise, like grid. */
+  /** Only once the final interview was passed. Left out otherwise. */
   finalInterview?: ProofFinalInterview;
   publishedAt: string;
 };

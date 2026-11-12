@@ -79,12 +79,12 @@ describe("the final interview", () => {
 
     for (const [index, passed] of [true, false, true].entries()) {
       modelJudges(passed);
-      await answerFollowUp(OWNER, started.questions[index].attemptId, "An answer about both topics.", { inputMethod: "voice" });
+      await answerFollowUp(OWNER, started.questions[index].attemptId, "An answer about both topics.");
     }
 
     const finished = await getFinalInterview(OWNER, mapId);
     expect(finished.state).toBe("passed");
-    expect(finished.result).toMatchObject({ passed: true, passedCount: 2, spokenCount: 3 });
+    expect(finished.result).toMatchObject({ passed: true, passedCount: 2 });
     expect(await getPassedFinal(mapId)).toMatchObject({ passedCount: 2 });
   });
 

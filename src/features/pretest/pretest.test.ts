@@ -196,7 +196,6 @@ describe("a pre-test pass", () => {
       summary: "Build software.",
       sourceKind: "topic",
       sourceText: "Software",
-      depth: "degree",
       createdAt: new Date().toISOString(),
       courses: [
         { slug: "system-design", title: "System design", summary: "Design.", requires: [], mapId: map.id, courseId },

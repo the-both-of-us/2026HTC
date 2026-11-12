@@ -167,7 +167,7 @@ beforeEach(() => {
 describe("degree routes", () => {
   it("create, poll while planning, open a course at once, read its syllabus and the comparison", async () => {
     asUser(OWNER);
-    const created = await createRoute(post({ text: "psychology", kind: "topic", shape: "program", depth: "degree" }));
+    const created = await createRoute(post({ text: "psychology", kind: "topic", shape: "program" }));
     expect(created.status).toBe(201);
     const { programId } = (await json(created)) as { programId: string };
     const id = { params: Promise.resolve({ id: programId }) };
@@ -178,8 +178,8 @@ describe("degree routes", () => {
     await afters.drain();
     const polled = await programRoute(get(), id);
     expect(polled.headers.get("cache-control")).toBe("no-store");
-    const { program } = (await json(polled)) as { program: { depth: string; planning: unknown; courses: { slug: string; startable: boolean }[] } };
-    expect(program).toMatchObject({ depth: "degree", planning: { state: "ready", planned: 40, expected: 40 } });
+    const { program } = (await json(polled)) as { program: { planning: unknown; courses: { slug: string; startable: boolean }[] } };
+    expect(program).toMatchObject({ planning: { state: "ready", planned: 40, expected: 40 } });
     expect(program.courses).toHaveLength(40);
     expect(program.courses.every((c) => c.startable)).toBe(true);
 
@@ -196,10 +196,10 @@ describe("degree routes", () => {
 
     const syllabus = await syllabusRoute(get(), params("course-2"));
     expect(syllabus.status).toBe(200);
-    expect(await json(syllabus)).toMatchObject({ depth: "degree", course: { slug: "course-2" } });
+    expect(await json(syllabus)).toMatchObject({ course: { slug: "course-2" } });
 
     const comparison = await comparisonRoute(get("http://localhost/api?course=course-1"), id);
-    expect(await json(comparison)).toMatchObject({ depth: "degree", course: { slug: "course-1" } });
+    expect(await json(comparison)).toMatchObject({ course: { slug: "course-1" } });
 
     // Try again on a program whose plan is final says so.
     const plan = await planRoute(post(), id);

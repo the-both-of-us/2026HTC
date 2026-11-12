@@ -14,7 +14,7 @@ export const MIN_REWRITE_MS = 25_000;
 
 const TOO_SLOW = "Writing this lesson did not work this time. Please try again in a moment.";
 
-/** What the lesson prompt needs: the course's title, audience and syllabus (for the depth and the node's unit). */
+/** What the lesson prompt needs: the course's title, audience and syllabus (for the lesson length and the node's unit). */
 export type LessonCourse = Pick<SkillMap, "title"> & { audience?: string; syllabus?: CourseSyllabus };
 
 export type WrittenLesson = { raw: RawLesson; writtenBy: WrittenBy };
@@ -32,8 +32,8 @@ async function attempt(
   totalMs: number,
   feedback: string,
 ): Promise<{ raw: RawLesson | null; problems: string[] }> {
-  const depth = isDegree(course) ? "degree" : undefined;
-  const withPractice = wantsPractice(course.audience, depth);
+  const degree = isDegree(course);
+  const withPractice = wantsPractice(course.audience, degree);
   const kept: LessonLine[] = [];
   const problems: string[] = [];
   const counts: Record<LessonLine["part"], number> = { idea: 0, example: 0, mistake: 0, check: 0, practice: 0 };
@@ -41,7 +41,7 @@ async function attempt(
   const result = await streamLines({
     profile: "write",
     label: "lesson",
-    system: lessonLinesSystemPrompt(course.audience, depth),
+    system: lessonLinesSystemPrompt(course.audience, degree),
     prompt: `${buildLessonPrompt(course, node)}${feedback}`,
     line: lessonLineSchema,
     maxTokens: LESSON_MAX_TOKENS,
@@ -67,7 +67,7 @@ async function attempt(
   for (const rejected of result.rejected) problems.push(`line ${rejected.index + 1} was not valid: ${rejected.reason}`);
   if (result.truncated) problems.push("the reply was cut off before the end.");
   const raw = assembleLesson(kept, withPractice);
-  const problem = raw ? lessonProblem(raw, node.checkpoints, course.audience, depth) : "there was no example line.";
+  const problem = raw ? lessonProblem(raw, node.checkpoints, course.audience, degree) : "there was no example line.";
   if (problem) problems.push(problem);
   return { raw, problems };
 }
@@ -95,8 +95,8 @@ export async function writeLesson(
   await context.restart();
   const feedback = `\n\nYour previous lesson was rejected because ${first.problems.join(" ")}\nWrite the whole lesson again, fixing that.`;
   const second = await attempt(course, node, context, Math.min(LESSON_TOTAL_MS, left), feedback);
-  const depth = isDegree(course) ? "degree" : undefined;
-  if (second.raw && lessonProblem(second.raw, node.checkpoints, course.audience, depth) === null) {
+  const degree = isDegree(course);
+  if (second.raw && lessonProblem(second.raw, node.checkpoints, course.audience, degree) === null) {
     return { raw: second.raw, writtenBy: writtenBy() };
   }
   console.warn(`[lessons] the rewrite failed too: ${second.problems.join(" ")}`);

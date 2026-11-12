@@ -5,7 +5,7 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } f
 import type { FormEvent, ReactNode } from "react";
 import { SAMPLE_POSTINGS } from "@/shared/samplePostings";
 import { Badge, Button, ErrorNotice, Seal, SealBlank, sha256Hex, Spinner, tabId, Tabs } from "@/shared/ui";
-import { buildTarget, destinationOf, type Depth, type Shape } from "./request";
+import { buildTarget, destinationOf, type Shape } from "./request";
 import { SampleFromLink } from "./SampleFromLink";
 
 /** Anything shorter than this cannot be a whole job posting. */
@@ -26,22 +26,13 @@ type Mode = (typeof MODES)[number]["id"];
 const nounOf = (mode: Mode) => MODES.find((item) => item.id === mode)?.noun ?? "posting";
 
 /**
- * Topics only. A broad goal, such as a whole subject, becomes a program of courses; "Decide for me"
- * lets the catalog check decide. A posting or a PDF always builds one private map.
+ * Topics only. A full program is a 40-course degree over four years; "Decide for me" lets the
+ * catalog check decide between that and one course. A posting or a PDF always builds one private map.
  */
 const SHAPES: readonly { id: Shape; label: string }[] = [
   { id: "auto", label: "Decide for me" },
-  { id: "program", label: "Program" },
+  { id: "program", label: "Full program" },
   { id: "course", label: "One course" },
-];
-
-/**
- * How far a program goes. A short path is 4 to 8 courses; a full degree is 40 courses over four
- * years. Every course gets a full syllabus either way. Only shown for a topic that is not one course.
- */
-const DEPTHS: readonly { id: Depth; label: string }[] = [
-  { id: "quick", label: "Short path" },
-  { id: "degree", label: "Full degree" },
 ];
 
 const couldNotBuild = (mode: Mode) =>
@@ -51,14 +42,13 @@ const couldNotConnect = (mode: Mode) =>
 
 /**
  * The front page, after Seal: the headline and the input on the left, a large guilloche seal on
- * the right that redraws as you type (its centre is `figures`), and an ink band of sample postings.
+ * the right that redraws as you type, and an ink band of sample postings.
  * On phones: the input, then the samples, then the seal. `children` is the headline copy.
  */
-export function PostingForm({ children, figures }: { children: ReactNode; figures?: ReactNode }) {
+export function PostingForm({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("topic");
   const [shape, setShape] = useState<Shape>("auto");
-  const [depth, setDepth] = useState<Depth>("quick");
   const [text, setText] = useState("");
   const [topic, setTopic] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -140,7 +130,7 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
       setFieldError("That is too short to be a full posting. Paste all of it, including the requirements.");
       return null;
     }
-    const target = buildTarget(buildMode, value, shape, depth);
+    const target = buildTarget(buildMode, value, shape);
     return {
       url: target.url,
       init: { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(target.body) },
@@ -326,33 +316,13 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
                   {item.label}
                 </button>
               ))}
-            </div>
-          )}
-          {mode === "topic" && shape !== "course" && (
-            <div role="group" aria-label="How far to go" className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="mr-1 text-sm text-ink-soft">Length:</span>
-              {DEPTHS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-pressed={depth === item.id}
-                  disabled={pending}
-                  onClick={() => setDepth(item.id)}
-                  className={
-                    "min-h-9 cursor-pointer px-2.5 text-sm font-semibold transition-control disabled:cursor-default " +
-                    (depth === item.id
-                      ? "bg-ink text-on-ink"
-                      : "text-ink-soft shadow-[inset_0_0_0_1.5px_var(--color-rule-strong)] hover:text-ink hover:shadow-[inset_0_0_0_1.5px_var(--color-ink)]")
-                  }
-                >
-                  {item.label}
-                </button>
-              ))}
-              <p className="basis-full text-sm text-ink-soft">
-                {depth === "degree"
-                  ? "A full degree plans 40 courses across four years, each with its own syllabus. Courses show up as they are planned, and you can start the first one right away."
-                  : "A short path plans 4 to 8 courses, each with its own syllabus. You can start the first one as soon as it appears."}
-              </p>
+              {shape !== "course" && (
+                <p className="basis-full text-sm text-ink-soft">
+                  {shape === "program"
+                    ? "A full program plans 40 courses across four years, each with its own syllabus. Courses show up as they are planned, and you can start the first one right away."
+                    : "A broad subject, such as psychology, becomes a full program of 40 courses; a narrow one becomes one course."}
+                </p>
+              )}
             </div>
           )}
           {loadedSample && (
@@ -375,14 +345,14 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
             )}
           </div>
 
-          {pending && <BuildStatus seconds={seconds} mode={mode} planning={mode === "topic" && shape !== "course"} degree={depth === "degree"} />}
+          {pending && <BuildStatus seconds={seconds} mode={mode} planning={mode === "topic" && shape !== "course"} degree={shape === "program"} />}
           {requestError && <ErrorNotice className="mt-4" message={requestError} onRetry={() => buildMap(mode, text)} />}
         </form>
       </section>
 
       {/* The seal sits beside the copy on large screens and after the samples on phones. */}
       <section
-        aria-label="Alberta unemployment, live from Statistics Canada"
+        aria-hidden="true"
         className="order-last overflow-hidden pt-2 pb-5 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:top-0 lg:order-none lg:h-[max(37.5rem,calc(100dvh-11.875rem))] lg:p-0"
       >
         <div className="relative left-1/2 aspect-square w-[min(135vw,40rem)] -translate-x-1/2 lg:absolute lg:top-1/2 lg:left-[52%] lg:w-[min(48.75rem,118vh)] lg:translate-x-0 lg:-translate-y-1/2">
@@ -406,7 +376,6 @@ export function PostingForm({ children, figures }: { children: ReactNode; figure
               }}
             />
           </div>
-          {figures && <div className="absolute inset-0 flex items-center justify-center">{figures}</div>}
         </div>
       </section>
 

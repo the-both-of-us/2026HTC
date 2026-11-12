@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { chatJSON } from "@/features/ai";
-import { isPublished } from "@/features/courses";
 import { contentIdOf, getSkillMap, routeDeadline } from "@/features/skill-map";
 import { audienceKey } from "@/shared/audience";
 import { isNodeLockedFor } from "@/features/teachback";
@@ -46,12 +45,12 @@ export function lessonKey(contentId: string, nodeId: string, audience?: string):
 const failureKey = (key: string) => `${key}.failed`;
 
 /**
- * The map and node, checked to exist and to be readable by this viewer: its owner, or anyone
- * once it is published as a course. A private map gets the same 404 as a missing one.
+ * The map and node, checked to exist and to be readable by this viewer: only its owner. Someone
+ * else's map gets the same 404 as a missing one.
  */
 async function resolveNode(mapId: string, nodeId: string, viewerId: string) {
   const map = await getSkillMap(mapId);
-  const mayRead = map && ((viewerId !== "" && map.ownerId === viewerId) || (await isPublished(map.id)));
+  const mayRead = map && viewerId !== "" && map.ownerId === viewerId;
   if (!map || !mayRead) throw new HttpError(MAP_NOT_FOUND, 404);
   const node = map.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new HttpError("We could not find that skill on this map.", 404);
@@ -158,7 +157,7 @@ export type EnsureLessonInput = {
   /** `contentIdOf(map)`: the catalog courseId, or the map id of a posting or PDF map. */
   contentId: string;
   node: SkillNode;
-  /** The course's title, audience and syllabus (the depth and the node's unit come from it). */
+  /** The course's title, audience and syllabus (the lesson length and the node's unit come from it). */
   course: LessonCourse;
   /** Epoch ms by which the writer must finish. A lesson that cannot fit (60 s) is not started. */
   deadline: number;

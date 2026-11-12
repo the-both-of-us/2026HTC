@@ -7,7 +7,6 @@ export type MapLoadResult =
       proven: Record<string, string>;
       /** Skills the learner unlocked anyway: node id to when. */
       unlocked: Record<string, string>;
-      isOwner: boolean;
     }
   | { kind: "missing" };
 
@@ -51,20 +50,17 @@ export async function fetchProven(mapId: string): Promise<Record<string, string>
 async function fetchProgress(
   mapId: string,
   signal?: AbortSignal,
-): Promise<{ proven: Record<string, string>; unlocked: Record<string, string>; isOwner: boolean }> {
+): Promise<{ proven: Record<string, string>; unlocked: Record<string, string> }> {
   const response = await fetch(`${mapUrl(mapId)}/progress`, { signal });
-  // Only a map's owner has progress. Anyone else with the link gets { isOwner: false } and sees
-  // a fresh map. (A server from before that change answered 403.)
-  if (response.status === 403) return { proven: {}, unlocked: {}, isOwner: false };
-  if (response.status === 404) return { proven: {}, unlocked: {}, isOwner: true };
+  // A missing map: the map request says so.
+  if (response.status === 404) return { proven: {}, unlocked: {} };
   if (!response.ok) throw new Error(`Progress request failed: ${response.status}`);
 
   const progress = (await response.json()) as {
-    isOwner?: boolean;
     proven?: Record<string, string>;
     unlocked?: Record<string, string>;
   };
-  return { proven: progress.proven ?? {}, unlocked: progress.unlocked ?? {}, isOwner: progress.isOwner !== false };
+  return { proven: progress.proven ?? {}, unlocked: progress.unlocked ?? {} };
 }
 
 /**

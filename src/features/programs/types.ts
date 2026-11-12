@@ -1,6 +1,6 @@
-import type { CourseLevel, ProgramDepth, SourceKind } from "@/shared/types";
+import type { CourseLevel, SourceKind } from "@/shared/types";
 
-export type { CourseLevel, ProgramDepth } from "@/shared/types";
+export type { CourseLevel } from "@/shared/types";
 
 /** One course in a program. Its map is built the first time the learner opens it. */
 export type ProgramCourse = {
@@ -13,8 +13,8 @@ export type ProgramCourse = {
   requires: string[];
   mapId?: string;
   /*
-   * Degree programs only. Absent on quick and older programs, which show one flat list as before.
-   * Code checks them when the frame is planned: requires points to an earlier term only, and the
+   * Absent on programs planned before the degree frame, which show one flat list. Code checks
+   * them when the frame is planned: requires points to an earlier term only, and the
    * level never goes down from one year to the next.
    */
   /** Year 1 to 4. */
@@ -44,19 +44,13 @@ export type Program = {
   summary: string;
   sourceKind: Exclude<SourceKind, "pdf">;
   sourceText: string;
-  /** Set when the program came from a sample posting, so the page can say it is sample text. */
-  sampleId?: string;
   /** Who the program is pitched at, such as "Grade 1 students (about 6 years old)". Every course inherits it. */
   audience?: string;
   courses: ProgramCourse[];
   createdAt: string;
-  /** The public program this one was started from, if any. */
-  forkedFrom?: string;
-  /** Absent means "quick": today's 4 to 8 courses. "degree" is 4 years of 40 courses. */
-  depth?: ProgramDepth;
   /**
    * Wave 2: the canonical catalog program (`catalog/programs/<catalogId>`) this learner program
-   * follows. Set on every topic program; title, summary, audience, depth and the course list come
+   * follows. Set on every topic program; title, summary, audience and the course list come
    * from it (see ProgramCourse.courseId). Two learners of the same program share one catalogId.
    */
   catalogId?: string;
@@ -88,7 +82,7 @@ export type UnitSummary = {
   proved: number;
   /** Unit k+1 opens once half of unit k is proved. "done" means every topic is proved and its test (if any) passed. */
   state: CourseState;
-  /** The unit test, or null when the course has none (quick). */
+  /** The unit test, or null when the course has none. */
   test: AssessmentState | null;
 };
 
@@ -118,9 +112,9 @@ export type PracticeCounts = {
   teachBacks: number;
   /** Topics x the quiz's fixed question count. */
   quizQuestions: number;
-  /** Topics x 2 for degree lessons, 0 for quick. */
+  /** Topics x the lesson's practice cases (0 for a young reader's shorter lessons). */
   practiceCases: number;
-  /** Units x 4 for degree courses, 0 for quick. */
+  /** Units x the unit test's question count. */
   unitTestQuestions: number;
   /** Course finals x their question count. */
   finalQuestions: number;
@@ -142,7 +136,7 @@ export type CourseView = {
   /** What stands between a locked course and opening it. */
   blockers: { title: string; needed: number | null }[];
   /*
-   * Added with syllabi. All optional: a view without them is a quick or older program, shown as before.
+   * Added with syllabi. All optional: a view without them is an older program, shown as before.
    */
   year?: 1 | 2 | 3 | 4;
   term?: 1 | 2;
@@ -169,10 +163,7 @@ export type ProgramView = {
   title: string;
   summary: string;
   sourceKind: Program["sourceKind"];
-  isSample: boolean;
   courses: CourseView[];
-  /** Absent means "quick". */
-  depth?: ProgramDepth;
   /** Reading time for the whole program, computed in code, each figure with its label. */
   hours?: HoursBreakdown;
   /** Wave 2: where planning of the course list stands. Absent on a program planned before wave 2 (ready). */
@@ -190,8 +181,8 @@ export type ProgramPlanning = {
   state: "planning" | "ready" | "stalled";
   /** Course lines committed so far. */
   planned: number;
-  /** 40 for a degree (DEGREE_FRAME.courses); null for a short program (4 to 8, not known in advance). */
-  expected: number | null;
+  /** Always DEGREE_FRAME.courses (40). */
+  expected: number;
 };
 
 /** A number from a published source, shown beside ours. Lives in programs/norms.ts. */
@@ -243,7 +234,6 @@ export type CourseComparison = {
 export type ComparisonView = {
   programId: string;
   programTitle: string;
-  depth: ProgramDepth;
   ours: {
     courses: number;
     coursesBuilt: number;
@@ -296,7 +286,6 @@ export type SyllabusUnitView = UnitSummary & {
 export type SyllabusView = {
   programId: string;
   programTitle: string;
-  depth: ProgramDepth;
   course: {
     slug: string;
     number: number;
@@ -343,14 +332,13 @@ export type SyllabusView = {
  *   about 2 s: 201 `{ programId }` for a program (the frame streams in `after()`; poll
  *   `GET /api/programs/[id]`), or 201 `{ mapId }` for one course (its syllabus streams in
  *   `after()`; poll `GET /api/maps/[id]`).
- * - `depth`: "degree" plans 40 courses in years and terms, "quick" (or absent) 4 to 8.
+ * - A program is always a full degree: 40 courses in 4 years of 2 terms.
  * Errors: 400/422 with `{ error }`, a sentence.
  */
 export type CreateProgramRequest = {
   text: string;
   kind?: "posting" | "topic";
   shape?: ProgramShape;
-  depth?: ProgramDepth;
 };
 
 /** `POST /api/programs` reply 201. */
@@ -401,78 +389,3 @@ export type OpenCourseResult = { status: "ready"; mapId: string } | { status: "b
 export type StartUnitResponse =
   | { status: "ready"; mapId: string; unitId: string }
   | { status: "building"; building: true };
-
-/** What `program-listings/<programId>` holds. Present means the program is public. */
-export type ProgramListing = {
-  programId: string;
-  title: string;
-  summary: string;
-  /** The owner's id, which is their identity cookie. Server only: never sent to a browser. */
-  authorId: string;
-  authorName: string;
-  courseCount: number;
-  /** Planned from a sample posting, which is fictional. */
-  isSample: boolean;
-  publishedAt: string;
-  updatedAt: string;
-};
-
-/** The only listing shape that ever leaves the server. */
-export type PublicProgram = Omit<ProgramListing, "authorId">;
-
-/** Builds the public shape field by field, so a new server-only field can never slip through. */
-export function toPublicProgram(listing: ProgramListing): PublicProgram {
-  return {
-    programId: listing.programId,
-    title: listing.title,
-    summary: listing.summary,
-    authorName: listing.authorName,
-    courseCount: listing.courseCount,
-    isSample: listing.isSample,
-    publishedAt: listing.publishedAt,
-    updatedAt: listing.updatedAt,
-  };
-}
-
-/** One course of a public program, as anyone sees it. No map ids, no progress. */
-export type PublicCourseOutline = {
-  slug: string;
-  number: number;
-  title: string;
-  summary: string;
-  /** Topic titles in learning order once the author built the course, else null (built when started). */
-  topics: string[] | null;
-  /** Degree programs only, as on ProgramCourse. */
-  year?: 1 | 2 | 3 | 4;
-  term?: 1 | 2;
-  level?: CourseLevel;
-};
-
-/** A public program for someone other than its owner. */
-export type PublicProgramView = {
-  id: string;
-  title: string;
-  summary: string;
-  isSample: boolean;
-  authorName: string;
-  courses: PublicCourseOutline[];
-  /** The viewer's own copy, if they started this program and it still exists. */
-  myCopyId: string | null;
-  /** Absent means "quick". */
-  depth?: ProgramDepth;
-};
-
-/** The owner's share panel: whether the program is public, and what publishing needs. */
-export type ProgramSharing = {
-  listing: PublicProgram | null;
-  /** A guest while sign-in is set up: show a sign-in sentence instead of the share form. */
-  signInRequired: boolean;
-  /** The viewer's own name from sign-in, to pre-fill "Name to show". */
-  displayName: string | null;
-  maxNameLength: number;
-};
-
-/** What /program/[id] shows: the owner's own program, or a public one to start. */
-export type ProgramPage =
-  | { mode: "owner"; program: ProgramView; sharing: ProgramSharing }
-  | { mode: "public"; program: PublicProgramView };

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { AiUnavailableError, chatJSON, PROFILES } from "@/features/ai";
 import { listKeys } from "@/shared/store";
-import type { ProgramDepth } from "@/shared/types";
 import { claimCourseAlias, claimProgramAlias, readCourseEntry, readProgramEntry } from "./claims";
 import { aliasHash, audKey, catalogKeys, subjectTokens, titleJaccard, titleKey } from "./identity";
 import { getCatalogCourse, getProgramSeed } from "./read";
@@ -57,8 +56,8 @@ async function courseCandidatesFrom(keys: string[], aud: AudienceKey, text: stri
   return courses.flatMap((course) => (course ? [{ id: course.id, title: course.title, summary: course.summary }] : []));
 }
 
-async function programCandidatesFrom(keys: string[], aud: AudienceKey, depth: ProgramDepth, text: string, limit: number): Promise<Candidate[]> {
-  const prefix = catalogKeys.programNamesPrefix(aud, depth);
+async function programCandidatesFrom(keys: string[], aud: AudienceKey, text: string, limit: number): Promise<Candidate[]> {
+  const prefix = catalogKeys.programNamesPrefix(aud);
   const ids = await Promise.all(rankKeys(keys, prefix, text, limit).map((suffix) => readProgramEntry(`${prefix}${suffix}`)));
   const unique = [...new Set(ids.filter((id): id is string => id !== null))];
   const seeds = await Promise.all(unique.map((id) => getProgramSeed(id)));
@@ -235,19 +234,19 @@ export async function resolveCourses(
   return results as CourseResolution[];
 }
 
-export async function resolveProgram(request: ResolveRequest & { depth: ProgramDepth }): Promise<ProgramResolution> {
+export async function resolveProgram(request: ResolveRequest): Promise<ProgramResolution> {
   const aud = audKey(request.audience);
-  const viaAlias = await readProgramEntry(catalogKeys.programAlias(aud, request.depth, aliasHash(request.text)));
+  const viaAlias = await readProgramEntry(catalogKeys.programAlias(aud, aliasHash(request.text)));
   if (viaAlias) return { status: "found", programId: viaAlias };
   const key = titleKey(request.text);
-  const viaName = key ? await readProgramEntry(catalogKeys.programName(aud, request.depth, key)) : null;
+  const viaName = key ? await readProgramEntry(catalogKeys.programName(aud, key)) : null;
   if (viaName) {
-    await claimProgramAlias(request.text, request.audience, request.depth, viaName);
+    await claimProgramAlias(request.text, request.audience, viaName);
     return { status: "found", programId: viaName };
   }
 
-  const keys = await listKeys(catalogKeys.programNamesPrefix(aud, request.depth));
-  const candidates = await programCandidatesFrom(keys, aud, request.depth, request.text, MAX_CANDIDATES);
+  const keys = await listKeys(catalogKeys.programNamesPrefix(aud));
+  const candidates = await programCandidatesFrom(keys, aud, request.text, MAX_CANDIDATES);
   if (!checkFits(request.deadline)) return { status: "new", ...newName(null) };
   const answer = await chatJSON({
     profile: "check",
@@ -260,30 +259,30 @@ export async function resolveProgram(request: ResolveRequest & { depth: ProgramD
   const pick = checkedPick(answer.pick, candidates.length);
   if (pick > 0) {
     const programId = candidates[pick - 1].id;
-    await claimProgramAlias(request.text, request.audience, request.depth, programId);
+    await claimProgramAlias(request.text, request.audience, programId);
     return { status: "found", programId };
   }
   return { status: "new", ...newName(answer) };
 }
 
 /** Shape "auto": one check call over program and course candidates together (adds `broad`). */
-export async function resolveAuto(request: ResolveRequest & { depth: ProgramDepth }): Promise<AutoResolution> {
+export async function resolveAuto(request: ResolveRequest): Promise<AutoResolution> {
   const aud = audKey(request.audience);
   const hash = aliasHash(request.text);
   const key = titleKey(request.text);
   const [programAlias, courseAlias] = await Promise.all([
-    readProgramEntry(catalogKeys.programAlias(aud, request.depth, hash)),
+    readProgramEntry(catalogKeys.programAlias(aud, hash)),
     readCourseEntry(catalogKeys.courseAlias(aud, hash)),
   ]);
   if (programAlias) return { shape: "program", resolution: { status: "found", programId: programAlias } };
   if (courseAlias) return { shape: "course", resolution: { status: "found", courseId: courseAlias } };
   if (key) {
     const [programName, courseName] = await Promise.all([
-      readProgramEntry(catalogKeys.programName(aud, request.depth, key)),
+      readProgramEntry(catalogKeys.programName(aud, key)),
       readCourseEntry(catalogKeys.courseName(aud, key)),
     ]);
     if (programName) {
-      await claimProgramAlias(request.text, request.audience, request.depth, programName);
+      await claimProgramAlias(request.text, request.audience, programName);
       return { shape: "program", resolution: { status: "found", programId: programName } };
     }
     if (courseName) {
@@ -293,10 +292,10 @@ export async function resolveAuto(request: ResolveRequest & { depth: ProgramDept
   }
 
   const [programKeys, courseKeys] = await Promise.all([
-    listKeys(catalogKeys.programNamesPrefix(aud, request.depth)),
+    listKeys(catalogKeys.programNamesPrefix(aud)),
     listKeys(catalogKeys.courseNamesPrefix(aud)),
   ]);
-  const programs = await programCandidatesFrom(programKeys, aud, request.depth, request.text, 4);
+  const programs = await programCandidatesFrom(programKeys, aud, request.text, 4);
   const courses = await courseCandidatesFrom(courseKeys, aud, request.text, MAX_CANDIDATES - programs.length);
   const all = [...programs, ...courses];
   const kindOf = (index: number) => (index < programs.length ? "program" : "course");
@@ -316,7 +315,7 @@ export async function resolveAuto(request: ResolveRequest & { depth: ProgramDept
   if (pick > 0) {
     const chosen = all[pick - 1];
     if (kindOf(pick - 1) === "program") {
-      await claimProgramAlias(request.text, request.audience, request.depth, chosen.id);
+      await claimProgramAlias(request.text, request.audience, chosen.id);
       return { shape: "program", resolution: { status: "found", programId: chosen.id } };
     }
     await claimCourseAlias(request.text, request.audience, chosen.id);

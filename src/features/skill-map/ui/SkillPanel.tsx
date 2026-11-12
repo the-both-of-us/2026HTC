@@ -41,10 +41,6 @@ type SkillPanelProps = {
   onNextStep: (step: NextStep) => void;
   /** Counts each time a skill is selected, even the one already open (a retry for a failed lesson). */
   selectCount?: number;
-  /** Only the map's owner can attempt its skills. */
-  isOwner: boolean;
-  /** The server checked its voice key works, so voice answers can be offered. */
-  voiceReady: boolean;
   onSelect: (nodeId: string) => void;
   onProven: (nodeId: string) => void;
   /** "Unlock anyway": saves the unlock on the server. Throws an Error with a sentence for people. */
@@ -58,7 +54,7 @@ type SkillPanelProps = {
   reward?: ReactNode;
   /** The quick check that relights a proved skill that has started to fade. */
   relight?: ReactNode;
-  /** Start in full-page reading, as when a course page links straight to this skill. */
+  /** Start in full-page reading, as when a link (from "Practise this" on People) opens this skill. */
   initialFullPage?: boolean;
 };
 
@@ -75,8 +71,6 @@ export function SkillPanel({
   nextStepFor,
   onNextStep,
   selectCount = 0,
-  isOwner,
-  voiceReady,
   onSelect,
   onProven,
   onUnlock,
@@ -107,7 +101,7 @@ export function SkillPanel({
   // These tabs are typed for a full SkillNode, but only show its title and citation. Their
   // routes load the checkpoints on the server, so the browser never needs them.
   const studySkill = { ...skill, checkpoints: [] };
-  const canProve = state !== "locked" && isOwner;
+  const canProve = state !== "locked";
 
   // "Prove it" at the end of the lesson: down to the teach-back, with the cursor in its box if it has one.
   function goToTeachBack() {
@@ -359,23 +353,14 @@ export function SkillPanel({
 
               {/* Nothing is written for a locked skill: no lesson, cards or quiz until it opens. */}
               {state === "locked" ? (
-                <UnlockAnyway key={skill.id} isOwner={isOwner} onUnlock={() => onUnlock(skill.id)} />
+                <UnlockAnyway key={skill.id} onUnlock={() => onUnlock(skill.id)} />
               ) : (
                 study
               )}
             </>
           )}
 
-          {isOwner && relight}
-
-          {state !== "locked" && !isOwner && (
-            <p className="border-t border-rule pt-5">
-              This map belongs to someone else, so only they can prove skills on it.{" "}
-              <Link href="/" className="font-medium text-accent-bright underline underline-offset-4">
-                Build your own from a posting.
-              </Link>
-            </p>
-          )}
+          {relight}
 
           {canProve && (
             <section ref={teachRef} className="scroll-mt-4 border-t border-rule pt-5">
@@ -385,7 +370,6 @@ export function SkillPanel({
                 node={skill}
                 state={state}
                 pretest={known}
-                voiceReady={voiceReady}
                 format={format}
                 onProven={onProven}
                 nextStep={nextStep}
@@ -487,7 +471,7 @@ export function NextStepView({ step, onGo, primary = false }: { step: NextStep; 
 }
 
 /** What a locked skill shows instead of its lesson, flashcards and quiz. */
-function UnlockAnyway({ isOwner, onUnlock }: { isOwner: boolean; onUnlock: () => Promise<void> }) {
+function UnlockAnyway({ onUnlock }: { onUnlock: () => Promise<void> }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -505,26 +489,20 @@ function UnlockAnyway({ isOwner, onUnlock }: { isOwner: boolean; onUnlock: () =>
   return (
     <section className="flex flex-col gap-3 rounded-sheet border border-dashed border-control-edge bg-raised/50 p-4">
       <h3 className="font-medium">The lesson, flashcards and quiz open with this skill</h3>
-      {isOwner ? (
-        <>
-          <p className="text-ink-soft">
-            Prove the skills above first, or unlock it now if you already know them. Unlocking opens
-            everything here, including proving it, and the map marks it as unlocked early.
-          </p>
-          <div>
-            <Button variant="subtle" onClick={unlock} disabled={pending}>
-              <LockOpen aria-hidden="true" size={16} />
-              {pending ? "Unlocking…" : "Unlock anyway"}
-            </Button>
-          </div>
-          {error && (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          )}
-        </>
-      ) : (
-        <p className="text-ink-soft">They open once the skills above are proven on your own copy of this map.</p>
+      <p className="text-ink-soft">
+        Prove the skills above first, or unlock it now if you already know them. Unlocking opens
+        everything here, including proving it, and the map marks it as unlocked early.
+      </p>
+      <div>
+        <Button variant="subtle" onClick={unlock} disabled={pending}>
+          <LockOpen aria-hidden="true" size={16} />
+          {pending ? "Unlocking…" : "Unlock anyway"}
+        </Button>
+      </div>
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
       )}
     </section>
   );

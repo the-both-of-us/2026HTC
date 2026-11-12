@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { getProgramPage, type ProgramPage } from "@/features/programs";
-import { ProgramScreen, PublicProgramScreen } from "@/features/programs/client";
+import { getProgramView, type ProgramView } from "@/features/programs";
+import { ProgramScreen } from "@/features/programs/client";
 import { readUserId } from "@/shared/identity";
 import { buttonClasses, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
 
@@ -37,23 +37,22 @@ async function ProgramFromRoute({ params }: ProgramPageProps) {
       </PageShell>
     );
   }
-  // A private program is the same answer as a missing one, so nobody can tell it exists.
+  // Someone else's program is the same answer as a missing one, so nobody can tell it exists.
   if (!loaded) {
     return (
       <Notice title="This program is not here">
-        The link may be incomplete, or the program may be private or deleted. If it is yours, open it in the
-        browser you planned it in. You can also plan a new one from a job posting or a topic.
+        The link may be incomplete, or the program may be someone else&apos;s or deleted. Programs are private: if it
+        is yours, open it in the browser you planned it in. You can also plan a new one from a topic.
       </Notice>
     );
   }
-  if (loaded.mode === "public") return <PublicProgramScreen program={loaded.program} />;
-  return <ProgramScreen program={loaded.program} sharing={loaded.sharing} />;
+  return <ProgramScreen program={loaded} />;
 }
 
-/** The program for this visitor: their own, a public one, or null when missing or private. */
-async function loadProgram(id: string): Promise<ProgramPage | null | "failed"> {
+/** The visitor's own program, or null when it is missing or someone else's. */
+async function loadProgram(id: string): Promise<ProgramView | null | "failed"> {
   try {
-    return await getProgramPage(id, await readUserId());
+    return await getProgramView(id, await readUserId());
   } catch (error) {
     console.error("[program page] could not load a program", error);
     return "failed";
@@ -70,7 +69,7 @@ function Notice({ title, children }: { title: string; children: ReactNode }) {
           Plan something new
         </Link>
         <Link href="/courses" className={buttonClasses("secondary")}>
-          Browse public courses
+          Browse shared courses
         </Link>
       </div>
     </PageShell>

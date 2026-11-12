@@ -1,5 +1,4 @@
 import { chatJSON } from "@/features/ai";
-import { isPublished } from "@/features/courses";
 import { isNodeLockedFor } from "@/features/teachback";
 import { contentIdOf, getSkillMap } from "@/features/skill-map";
 import { getDoc } from "@/shared/store";
@@ -37,10 +36,9 @@ const inFlight = new Map<string, Promise<Flashcard[]>>();
 
 const MAP_NOT_FOUND = "We could not find that map. Check the link, or build a new one.";
 
-/** The owner may always read a map. Anyone else only once it is published as a course. */
-async function mayRead(map: SkillMap, viewerId: string): Promise<boolean> {
-  if (viewerId !== "" && map.ownerId === viewerId) return true;
-  return isPublished(map.id);
+/** Only the owner may read a map. */
+function mayRead(map: SkillMap, viewerId: string): boolean {
+  return viewerId !== "" && map.ownerId === viewerId;
 }
 
 /**
@@ -54,7 +52,7 @@ async function resolveNode(
   viewerId: string,
 ): Promise<{ map: SkillMap; node: SkillNode; key: string }> {
   const map = await getSkillMap(mapId);
-  if (!map || !(await mayRead(map, viewerId))) throw new FlashcardsError(MAP_NOT_FOUND, 404);
+  if (!map || !mayRead(map, viewerId)) throw new FlashcardsError(MAP_NOT_FOUND, 404);
   const node = map.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new FlashcardsError("We could not find that skill on this map.", 404);
   return { map, node, key: `flashcards/${contentIdOf(map)}/${node.id}` };

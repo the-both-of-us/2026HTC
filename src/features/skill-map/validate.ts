@@ -223,18 +223,8 @@ export function validateNodes(rawNodes: RawNode[], source: string, kind: SourceK
  * fields from the syllabus and makes the node id equal the topic id.
  */
 
-/**
- * Node counts per kind of map. Legacy maps (posting, PDF, topic, course) keep 5 to 14 exactly as
- * before. A degree unit plans 4 to 6 topics and is usable from 3. A quick course's single unit
- * plans 6 to 10 topics and keeps the old floor of 5.
- */
-export const NODE_LIMITS = {
-  legacy: { min: 5, max: MAX_NODES },
-  quickUnit: { min: 5, max: MAX_NODES },
-  degreeUnit: { min: 3, max: 6 },
-} as const;
-
-export type NodeLimitKind = keyof typeof NODE_LIMITS;
+/** Node counts of one syllabus unit: it plans 4 to 6 topics and is usable from 3. */
+export const UNIT_NODE_LIMITS = { min: 3, max: 6 } as const;
 
 /** A planned topic as validation needs it: the syllabus topic with its unit. */
 export type UnitTopic = {
@@ -267,7 +257,7 @@ export function validateUnitNodes(
   unitId: string,
   topics: UnitTopic[],
   takenIds: Iterable<string> = [],
-  max: number = NODE_LIMITS.degreeUnit.max,
+  max: number = UNIT_NODE_LIMITS.max,
 ): SkillNode[] {
   const taken = new Set(takenIds);
   const topicById = new Map<string, UnitTopic>();

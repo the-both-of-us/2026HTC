@@ -8,7 +8,6 @@ import type { CourseLevel, CourseSyllabus } from "@/shared/types";
 export type {
   CourseLevel,
   CourseSyllabus,
-  ProgramDepth,
   SyllabusOutcome,
   SyllabusTopic,
   SyllabusUnit,

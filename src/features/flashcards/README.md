@@ -13,7 +13,7 @@ Writes 6 to 8 flashcards for one skill on a map, saves them, and shows them one 
 
 ## Who may read
 
-A map's owner may always read and make its cards. Anyone else may only once the map is published as a course (`isPublished` from `@/features/courses`). A private map someone else owns gets exactly the same 404 and sentence as a missing map, so nobody can tell it exists. The check runs for every caller before any store key is built, any store read or any model call, and before a request can join a generation already in flight, so a stranger can't wait on the owner's generation and receive its cards.
+Only a map's owner may read and make its cards. A map someone else owns gets exactly the same 404 and sentence as a missing map, so nobody can tell it exists. The check runs for every caller before any store key is built, any store read or any model call, and before a request can join a generation already in flight, so a stranger can't wait on the owner's generation and receive its cards.
 
 ## The skill text is data
 
@@ -63,7 +63,7 @@ Every action also has a visible button: **Show answer** or **Show question**, **
 
 ## Tests
 
-`npm test -- flashcards` mocks the model. It covers validation, the prompt's tags, saving and reuse, one call for concurrent requests, the 45 second deadline, unknown maps and nodes, who may read a private or published map (including that a stranger can't join the owner's in-flight generation), the HTTP errors and parsing (`http.test.ts`), the client's error sentences (`ui/api.test.ts`) and the deck's key handling.
+`npm test -- flashcards` mocks the model. It covers validation, the prompt's tags, saving and reuse, one call for concurrent requests, the 45 second deadline, unknown maps and nodes, who may read a map (including that a stranger can't join the owner's in-flight generation), the HTTP errors and parsing (`http.test.ts`), the client's error sentences (`ui/api.test.ts`) and the deck's key handling.
 
 ## Delete my data
 

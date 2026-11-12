@@ -1,6 +1,5 @@
 "use client";
 
-import { PublishCourseButton } from "@/features/courses/client";
 import { HowItWorksButton } from "@/features/landing/client";
 import { PretestOffer, PretestScreen, usePretest } from "@/features/pretest/client";
 import { ProgramCrumb } from "@/features/programs/client";
@@ -10,7 +9,7 @@ import { FinalInterview, YoungLearnerProvider } from "@/features/teachback/clien
 import { isYoungAudience } from "@/shared/audience";
 import { isPretestProof } from "@/shared/types";
 import clsx from "clsx";
-import { BookOpen, Compass, Globe, ListChecks, Lock, Network, Sparkles, Upload } from "lucide-react";
+import { BookOpen, Compass, ListChecks, Lock, Network, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
@@ -47,28 +46,13 @@ type LoadState =
       map: PublicSkillMap;
       proven: Record<string, string>;
       unlocked: Record<string, string>;
-      isOwner: boolean;
     };
 
-/** The whole map screen: loads the map, then shows it. */
 /**
- * voiceReady comes from the server, which checked that its voice key works.
- * banner shows above the header (the study circle line), ownerActions beside the owner's buttons.
- * published says the map is a public course, so the header links to its page instead of offering Publish.
+ * The whole map screen: loads the map, then shows it. Only the owner reaches it. banner shows
+ * above the header (the study circle line), ownerActions beside the header's other buttons.
  */
-export function MapScreen({
-  mapId,
-  voiceReady = false,
-  banner,
-  ownerActions,
-  published = false,
-}: {
-  mapId: string;
-  voiceReady?: boolean;
-  banner?: ReactNode;
-  ownerActions?: ReactNode;
-  published?: boolean;
-}) {
+export function MapScreen({ mapId, banner, ownerActions }: { mapId: string; banner?: ReactNode; ownerActions?: ReactNode }) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const pollFailures = useRef(0);
@@ -85,7 +69,6 @@ export function MapScreen({
                 map: result.map,
                 proven: result.proven,
                 unlocked: result.unlocked,
-                isOwner: result.isOwner,
               },
         );
       })
@@ -99,7 +82,7 @@ export function MapScreen({
   const reloadMap = useCallback(async () => {
     const result = await fetchMapWithProgress(mapId, new AbortController().signal).catch(() => null);
     if (result?.kind !== "found") return;
-    setLoad({ status: "ready", map: result.map, proven: result.proven, unlocked: result.unlocked, isOwner: result.isOwner });
+    setLoad({ status: "ready", map: result.map, proven: result.proven, unlocked: result.unlocked });
   }, [mapId]);
 
   // While a catalog course is being written (its syllabus, then unit 1) ask for the map again:
@@ -160,11 +143,8 @@ export function MapScreen({
       map={load.map}
       initialProven={load.proven}
       initialUnlocked={load.unlocked}
-      isOwner={load.isOwner}
-      voiceReady={voiceReady}
       banner={banner}
       ownerActions={ownerActions}
-      published={published}
       onMapChanged={reloadMap}
     />
   );
@@ -231,26 +211,20 @@ function LoadedMap({
   map,
   initialProven,
   initialUnlocked,
-  isOwner,
-  voiceReady,
   banner,
   ownerActions,
-  published,
   onMapChanged,
 }: {
   map: PublicSkillMap;
   initialProven: Record<string, string>;
   initialUnlocked: Record<string, string>;
-  isOwner: boolean;
-  voiceReady: boolean;
   banner?: ReactNode;
   ownerActions?: ReactNode;
-  published: boolean;
   onMapChanged: () => Promise<void>;
 }) {
   const [proven, setProven] = useState(initialProven);
   const [unlocked, setUnlocked] = useState(initialUnlocked);
-  // A link like /map/<id>?skill=<nodeId> (from a course page) opens that skill as a full page.
+  // A link like /map/<id>?skill=<nodeId> (from "Practise this" on People) opens that skill as a full page.
   const [selectedId, setSelectedId] = useState<string | null>(() => linkedSkillId(map));
   const [openFullPage, setOpenFullPage] = useState(() => linkedSkillId(map) !== null);
   // This component only mounts in the browser, after the fetch, so matchMedia is safe.
@@ -259,8 +233,8 @@ function LoadedMap({
   );
   const [playReveal, setPlayReveal] = useState(true);
   const [notice, setNotice] = useState<ProvenNotice | null>(null);
-  // The habit loop: streak, topic of the day, fading. Only for the map's owner.
-  const { habits, reload: reloadHabits, afterProof } = useMapHabits(map.id, isOwner);
+  // The habit loop: streak, topic of the day, fading.
+  const { habits, reload: reloadHabits, afterProof } = useMapHabits(map.id);
   const [reward, setReward] = useState<ProofRewardData | null>(null);
   const [relitId, setRelitId] = useState<string | null>(null);
 
@@ -295,11 +269,11 @@ function LoadedMap({
     [units, knownIds],
   );
   const unitNumbers = useMemo(() => Object.fromEntries((units ?? []).map((unit) => [unit.id, unit.number])), [units]);
-  // The optional pre-test of a syllabus course: only the owner, never on a posting or PDF map.
+  // The optional pre-test of a syllabus course, never on a posting or PDF map.
   const [pretestOpen, setPretestOpen] = useState(false);
   const pretest = usePretest(
     map.id,
-    isOwner && map.syllabus !== undefined,
+    map.syllabus !== undefined,
     pretestOpen,
     `${wait ?? "ready"}:${map.syllabus?.units.length ?? 0}:${map.syllabus?.planning === true}`,
   );
@@ -322,14 +296,13 @@ function LoadedMap({
     .map((unit) => unit.id)
     .join(",");
   useEffect(() => {
-    if (!isOwner) return;
     const abort = new AbortController();
     const unitIds = unitTestsRequired && fullyProvedUnitIds ? fullyProvedUnitIds.split(",") : [];
     void fetchPassed(map.id, unitIds, allProven, abort.signal).then((result) => {
       if (result && !abort.signal.aborted) setPassed(result);
     });
     return () => abort.abort();
-  }, [map.id, isOwner, unitTestsRequired, fullyProvedUnitIds, allProven, notice]);
+  }, [map.id, unitTestsRequired, fullyProvedUnitIds, allProven, notice]);
 
   // The one next step, for the after-proof notice, the Read tab and the header button alike.
   const nextStepFor = useCallback(
@@ -478,7 +451,7 @@ function LoadedMap({
         <header className="flex flex-col gap-1.5 border-b border-rule px-4 pt-2 sm:gap-2 sm:px-6 sm:pt-2.5">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
             <div className="min-w-0 flex-1 basis-full sm:basis-72">
-              {map.program && <ProgramCrumb program={map.program} proven={provenCount} total={topicTotal} depth={map.syllabus?.depth} />}
+              {map.program && <ProgramCrumb program={map.program} proven={provenCount} total={topicTotal} />}
               <div className="flex items-center gap-x-4 gap-y-1 sm:flex-wrap">
                 <h1
                   className="min-w-0 text-lg leading-tight font-medium break-words max-sm:flex-1 max-sm:truncate sm:line-clamp-2 sm:text-xl"
@@ -496,14 +469,13 @@ function LoadedMap({
               </div>
             </div>
             {/* Compact buttons with one primary: the next skill. Only on the overview. */}
-            {reading ? null : isOwner ? (
+            {reading ? null : (
               <MapActions
                 more={
                   <>
                     <HowItWorksButton />
                     {ownerActions}
                     <PretestButton offer={pretest.view?.offer ?? "none"} onOpen={openPretest} />
-                    {published ? <CoursePageLink mapId={map.id} /> : <PublishMenu mapId={map.id} />}
                     {provenCount > 0 && <ShareProofButton mapId={map.id} provenCount={provenCount} />}
                   </>
                 }
@@ -521,14 +493,12 @@ function LoadedMap({
                   )
                 }
               />
-            ) : (
-              <HowItWorksButton className="min-h-9! px-3! text-sm!" />
             )}
           </div>
 
           <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1.5 group-has-[[data-reading-page]]/map:hidden sm:gap-y-2">
             <div className="flex min-w-0 items-center gap-2 text-sm max-sm:w-full sm:flex-wrap sm:pb-2">
-              {!reading && isOwner && habits && (
+              {!reading && habits && (
                 <StreakNudge
                   className="min-w-0"
                   streak={habits.streak}
@@ -540,7 +510,7 @@ function LoadedMap({
                 />
               )}
               {/* On a phone the progress count already says how many are left. */}
-              {!reading && isOwner && !allProven && (
+              {!reading && !allProven && (
                 <p
                   className="inline-flex min-h-8 items-center gap-1.5 text-ink-soft max-sm:hidden"
                   title="The final interview unlocks when every topic is proven."
@@ -568,7 +538,7 @@ function LoadedMap({
           </div>
         </header>
 
-        {isOwner && pretest.view?.offer === "suggest" && provenCount === 0 && !pretestOpen && (
+        {pretest.view?.offer === "suggest" && provenCount === 0 && !pretestOpen && (
           <PretestOffer
             onStart={openPretest}
             onDismiss={() => void pretest.dismiss()}
@@ -578,9 +548,9 @@ function LoadedMap({
         )}
 
         {/* Once every topic is proven the final interview needs room, so it gets its own strip. */}
-        {isOwner && allProven && (
+        {allProven && (
           <div id="next-final" tabIndex={-1} className="outline-none">
-            <FinalInterview mapId={map.id} provenCount={provenCount} topicCount={topicTotal} voiceReady={voiceReady} />
+            <FinalInterview mapId={map.id} provenCount={provenCount} topicCount={topicTotal} />
           </div>
         )}
 
@@ -595,7 +565,7 @@ function LoadedMap({
         )}
 
         {/* A degree unit's test, once every topic of the unit shown is proven. */}
-        {isOwner && showUnits && activeUnit?.built && map.syllabus?.assessment.unitTests && activeUnit.nodeIds.length > 0 && activeUnit.proved >= activeUnit.nodeIds.length && (
+        {showUnits && activeUnit?.built && map.syllabus?.assessment.unitTests && activeUnit.nodeIds.length > 0 && activeUnit.proved >= activeUnit.nodeIds.length && (
           <div id="next-unit-test" tabIndex={-1} className="outline-none">
             <FinalInterview
               key={activeUnit.id}
@@ -604,7 +574,6 @@ function LoadedMap({
               unitTitle={activeUnit.title}
               provenCount={activeUnit.proved}
               topicCount={activeUnit.nodeIds.length}
-              voiceReady={voiceReady}
             />
           </div>
         )}
@@ -638,7 +607,7 @@ function LoadedMap({
           >
             {wait ? (
               <div className="absolute inset-0">
-                <BuildPanel mapId={map.id} wait={wait} isOwner={isOwner} onRestarted={onMapChanged} />
+                <BuildPanel mapId={map.id} wait={wait} onRestarted={onMapChanged} />
               </div>
             ) : activeUnit && !activeUnit.built ? (
               <div className="absolute inset-0">
@@ -647,7 +616,6 @@ function LoadedMap({
                   mapId={map.id}
                   unit={activeUnit}
                   unitCount={units?.length ?? 0}
-                  isOwner={isOwner}
                   onBuilt={onMapChanged}
                 />
               </div>
@@ -701,8 +669,6 @@ function LoadedMap({
               nextStepFor={nextStepFor}
               onNextStep={goToStep}
               selectCount={selectCount}
-              isOwner={isOwner}
-              voiceReady={voiceReady}
               onSelect={selectSkill}
               onProven={handleProven}
               onUnlock={handleUnlock}
@@ -782,31 +748,6 @@ function PretestButton({ offer, onOpen }: { offer: string; onOpen: () => void })
       <ListChecks aria-hidden="true" size={15} />
       {label}
     </button>
-  );
-}
-
-/** Once a course is public, its page is where it is managed (Public or Private), so the header just links there. */
-function CoursePageLink({ mapId }: { mapId: string }) {
-  return (
-    <Link href={`/courses/${mapId}`} className={clsx(buttonClasses("subtle", "sm"), "min-h-9! px-3!")}>
-      <Globe aria-hidden="true" size={15} />
-      Course page
-    </Link>
-  );
-}
-
-/** Publishing is occasional, so it sits behind one small button instead of a sentence in the header. */
-function PublishMenu({ mapId }: { mapId: string }) {
-  return (
-    <details className="relative">
-      <summary className={clsx(buttonClasses("subtle", "sm"), "min-h-9! list-none px-3! [&::-webkit-details-marker]:hidden")}>
-        <Upload aria-hidden="true" size={15} />
-        Publish
-      </summary>
-      <div className="absolute top-full right-0 z-30 mt-1.5 w-80 max-w-[calc(100vw-2rem)] rounded-control border border-rule-strong bg-sheet p-3.5 shadow-panel">
-        <PublishCourseButton mapId={mapId} />
-      </div>
-    </details>
   );
 }
 

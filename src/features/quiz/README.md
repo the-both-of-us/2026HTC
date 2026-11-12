@@ -15,7 +15,7 @@ The citation is the node's own, and only when `verified` is true. The model neve
 
 ## Who may read
 
-A map's owner may always read and make its quiz. Anyone else may only once the map is published as a course (`isPublished` from `@/features/courses`). A private map someone else owns gets exactly the same 404 and sentence as a missing map, so nobody can tell it exists. The check runs for every caller before any store key is built, any store read or any model call, and before a request can join a generation already in flight, so a stranger can't wait on the owner's generation and receive its questions.
+Only a map's owner may read and make its quiz. A map someone else owns gets exactly the same 404 and sentence as a missing map, so nobody can tell it exists. The check runs for every caller before any store key is built, any store read or any model call, and before a request can join a generation already in flight, so a stranger can't wait on the owner's generation and receive its questions.
 
 ## The posting is data
 
@@ -68,7 +68,7 @@ When a button press removes the focused control (making a quiz, an error, trying
 
 ## Tests
 
-`npm test -- quiz` mocks the model. `quiz.test.ts` covers saving and reuse, one call for concurrent requests, the deadline, unknown maps and nodes, and who may read a private or published map (including that a stranger can't join the owner's in-flight generation).
+`npm test -- quiz` mocks the model. `quiz.test.ts` covers saving and reuse, one call for concurrent requests, the deadline, unknown maps and nodes, and who may read a map (including that a stranger can't join the owner's in-flight generation).
 
 ## Delete my data
 

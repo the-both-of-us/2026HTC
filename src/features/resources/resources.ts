@@ -1,4 +1,3 @@
-import { isPublished } from "@/features/courses";
 import { contentIdOf, getSkillMap } from "@/features/skill-map";
 import { audienceKey } from "@/shared/audience";
 import { HttpError } from "@/shared/http";
@@ -41,10 +40,10 @@ export async function gatherResources(
   return { items: [...watch, ...wiki, ...books, ...podcasts, ...news], failed };
 }
 
-/** Links for one skill, saved per course (`contentIdOf(map)`), skill and audience. Same access rule as lessons: the owner, or anyone once published. */
+/** Links for one skill, saved per course (`contentIdOf(map)`), skill and audience. Same access rule as lessons: the owner only. */
 export async function getResources(mapId: string, nodeId: string, viewerId: string): Promise<ResourceList> {
   const map = await getSkillMap(mapId);
-  const mayRead = map && ((viewerId !== "" && map.ownerId === viewerId) || (await isPublished(map.id)));
+  const mayRead = map && viewerId !== "" && map.ownerId === viewerId;
   if (!map || !mayRead) throw new HttpError("We could not find that map. Check the link, or build a new one.", 404);
   const node = map.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new HttpError("We could not find that skill on this map.", 404);

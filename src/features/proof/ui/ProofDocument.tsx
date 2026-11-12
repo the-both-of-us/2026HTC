@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { PASS_SCORE } from "@/shared/types";
 import type { ProofSnapshot } from "../types";
 import { DocumentActions } from "./DocumentActions";
-import { GridEvidence } from "./GridEvidence";
 import { formatDateTime, plural, roleLead } from "./format";
 import { PrintSummary } from "./PrintSummary";
 import { ProofQr } from "./ProofQr";
@@ -40,7 +39,6 @@ export function ProofDocument({ snapshot, hash, url }: ProofDocumentProps) {
         {snapshot.knownByPretest && snapshot.knownByPretest.length > 0 && (
           <KnownByPretest topics={snapshot.knownByPretest} displayName={snapshot.displayName} />
         )}
-        {snapshot.grid && <GridEvidence solves={snapshot.grid} displayName={snapshot.displayName} />}
         <ProvesAndDoesNot />
         <HowChecked />
         <Fingerprint proofId={snapshot.proofId} hash={hash} />
@@ -105,7 +103,7 @@ function Summary({ snapshot, url }: { snapshot: ProofSnapshot; url: string }) {
               <span>
                 <span className="font-semibold">Course badge.</span> Passed the final interview: three questions mixing
                 these skills, written by the AI after every skill was proven. {snapshot.finalInterview.passedCount} of 3
-                passed{snapshot.finalInterview.spokenCount > 0 ? `, ${snapshot.finalInterview.spokenCount} answered aloud` : ""}.
+                passed{(snapshot.finalInterview.spokenCount ?? 0) > 0 ? `, ${snapshot.finalInterview.spokenCount} answered aloud` : ""}.
               </span>
             </p>
           )}
@@ -186,7 +184,7 @@ function ProvesAndDoesNot() {
         </div>
       </div>
       <p className="mt-5 text-sm text-ink-soft">
-        How an explanation was written (typed or spoken, pasted or not, active time) is reported by the person&apos;s
+        How an explanation was written (pasted or not, active time) is reported by the person&apos;s
         browser. These signals give context. They do not affect the score, and they are not a judgement.
       </p>
     </section>

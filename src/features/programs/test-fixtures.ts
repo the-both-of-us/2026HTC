@@ -9,18 +9,6 @@ import { DEGREE_FRAME, type SkillNode } from "@/shared/types";
 
 export type ScriptedLines = Record<string, unknown>[];
 
-/** A short psychology plan: head plus 5 course lines. */
-export function psychologyPlanLines(): ScriptedLines {
-  return [
-    { kind: "head", title: "Psychology", summary: "Understand how people think, feel and act." },
-    { kind: "course", slug: "intro-psychology", title: "Introduction to psychology", summary: "Know the field and its methods.", requires: [] },
-    { kind: "course", slug: "research-methods", title: "Research methods", summary: "Read and design a study.", requires: ["intro-psychology"] },
-    { kind: "course", slug: "biological-psychology", title: "Biological psychology", summary: "Link brain and behaviour.", requires: ["intro-psychology"] },
-    { kind: "course", slug: "social-psychology", title: "Social psychology", summary: "Explain how others shape us.", requires: ["research-methods"] },
-    { kind: "course", slug: "cognitive-psychology", title: "Cognitive psychology", summary: "Explain memory and attention.", requires: ["research-methods"] },
-  ];
-}
-
 const AREAS = ["Foundations", "Methods", "Biological", "Social", "Cognitive"];
 
 /** A 40-course degree frame: 4 years x 2 terms x 5 courses, levels by year. */

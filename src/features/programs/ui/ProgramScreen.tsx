@@ -4,24 +4,24 @@ import clsx from "clsx";
 import { Award, Check, ChevronRight, GraduationCap, Lock, PartyPopper, Sparkles, Unlock } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DEGREE_FRAME } from "@/shared/types";
 import { Badge, buttonClasses, PageShell, usePoll } from "@/shared/ui";
-import type { CourseView, ProgramSharing as Sharing, ProgramView } from "../types";
+import type { CourseView, ProgramView } from "../types";
 import { ComparePanel } from "./ComparePanel";
 import { formatHours, groupByTerm, plural, termProgressLine, topicDenominator } from "./format";
 import { needsProgramPoll, PROGRAM_POLL_MS } from "./planning";
 import { PlanningNotice } from "./PlanningNotice";
-import { ProgramSharing } from "./ProgramSharing";
 import { StartCourseButton } from "./StartCourse";
 
 /** After this many failed polls in a row the page stops asking and offers a reconnect. */
 const MAX_POLL_FAILURES = 4;
 
 /**
- * A program as a path of courses: one card each, with the next one to do lit up. The owner can share it.
+ * A program as a path of courses: one card each, with the next one to do lit up.
  * While the course list is being planned (or a course is still being registered) the page asks
  * `GET /api/programs/[id]` every 1.5 s, one request at a time and never while the tab is hidden.
  */
-export function ProgramScreen({ program: initial, sharing }: { program: ProgramView; sharing?: Sharing }) {
+export function ProgramScreen({ program: initial }: { program: ProgramView }) {
   const [program, setProgram] = useState(initial);
   // A fresh server render (router.refresh) replaces what polling has built up.
   const [seenInitial, setSeenInitial] = useState(initial);
@@ -69,7 +69,7 @@ export function ProgramScreen({ program: initial, sharing }: { program: ProgramV
         setRetryError(typeof body?.error === "string" ? body.error : "Planning could not be restarted. Please try again.");
       } else {
         const state = body?.status === "ready" ? "ready" : "planning";
-        setProgram((current) => ({ ...current, planning: { planned: 0, expected: null, ...current.planning, state } }));
+        setProgram((current) => ({ ...current, planning: { planned: 0, expected: DEGREE_FRAME.courses, ...current.planning, state } }));
       }
     } catch {
       setRetryError("OryxLearn could not be reached. Check your connection, then try again.");
@@ -82,9 +82,10 @@ export function ProgramScreen({ program: initial, sharing }: { program: ProgramV
   const proven = program.courses.reduce((sum, course) => sum + course.proven, 0);
   const badges = program.courses.filter((course) => course.badge).length;
   const upNext = program.courses.find((course) => course.state === "open") ?? null;
-  const isDegree = program.depth === "degree";
-  const terms = isDegree && program.courses.some((course) => course.year) ? groupByTerm(program.courses) : null;
-  const showCompare = isDegree;
+  // Every program is a degree. Ones planned before the degree frame have no years: they show one
+  // flat list, with no "Degree" label and no comparison.
+  const legacy = program.courses.length > 0 && !program.courses.some((course) => course.year);
+  const terms = legacy ? null : groupByTerm(program.courses);
 
   return (
     <PageShell width="reading">
@@ -92,15 +93,14 @@ export function ProgramScreen({ program: initial, sharing }: { program: ProgramV
         <p className="inline-flex items-center gap-1.5 self-start rounded-control border border-accent/45 bg-accent/10 px-2.5 py-1 text-sm text-accent-bright">
           <GraduationCap aria-hidden="true" size={15} />
           {stillPlanning
-            ? `Program · planning${isDegree ? " · Degree" : ""}`
-            : `Program · ${program.courses.length} courses${isDegree ? " · Degree" : ""}`}
+            ? "Program · planning · Degree"
+            : `Program · ${program.courses.length} courses${legacy ? "" : " · Degree"}`}
         </p>
         <h1 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl">
           {program.title || (stillPlanning ? "Naming your program" : "Program")}
         </h1>
         {program.summary && <p className="text-lg text-ink-soft">{program.summary}</p>}
         <div className="flex flex-wrap gap-2">
-          {program.isSample && <Badge tone="sample">Planned from sample text, not a real listing</Badge>}
           <Badge tone="sample">AI-planned courses, with no citations</Badge>
         </div>
         <PlanningNotice
@@ -124,19 +124,12 @@ export function ProgramScreen({ program: initial, sharing }: { program: ProgramV
         <NextGoal courses={program.courses} />
       </header>
 
-      {sharing && (
-        <div className="mt-6">
-          <ProgramSharing programId={program.id} sharing={sharing} />
-        </div>
-      )}
-
       {terms ? (
         <div className="mt-8 flex flex-col gap-4">
           {terms.map((group, index) => (
             <TermSection
               key={group.key}
               programId={program.id}
-              depth={program.depth}
               label={group.label}
               courses={group.courses}
               upNextSlug={upNext?.slug}
@@ -151,7 +144,6 @@ export function ProgramScreen({ program: initial, sharing }: { program: ProgramV
             <CourseStep
               key={course.slug}
               programId={program.id}
-              depth={program.depth}
               course={course}
               isUpNext={course.slug === upNext?.slug}
               isLast={index === program.courses.length - 1}
@@ -160,7 +152,7 @@ export function ProgramScreen({ program: initial, sharing }: { program: ProgramV
         </ol>
       )}
 
-      {showCompare && (
+      {!legacy && (
         <ComparePanel
           programId={program.id}
           courses={program.courses.filter((c) => c.mapId).map((c) => ({ slug: c.slug, title: c.title }))}
@@ -286,14 +278,12 @@ function Celebration({ program }: { program: ProgramView }) {
 /** One year-and-term of a degree: a collapsible section with a single progress line. */
 function TermSection({
   programId,
-  depth,
   label,
   courses,
   upNextSlug,
   defaultOpen,
 }: {
   programId: string;
-  depth: ProgramView["depth"];
   label: string;
   courses: CourseView[];
   upNextSlug: string | undefined;
@@ -317,7 +307,6 @@ function TermSection({
           <CourseStep
             key={course.slug}
             programId={programId}
-            depth={depth}
             course={course}
             isUpNext={course.slug === upNextSlug}
             isLast={index === courses.length - 1}
@@ -330,13 +319,11 @@ function TermSection({
 
 function CourseStep({
   programId,
-  depth,
   course,
   isUpNext,
   isLast,
 }: {
   programId: string;
-  depth: ProgramView["depth"];
   course: CourseView;
   isUpNext: boolean;
   isLast: boolean;
@@ -375,7 +362,7 @@ function CourseStep({
           <p className="mt-1 text-sm text-ink-soft">{[course.level ? `Level ${course.level}` : null, course.area].filter(Boolean).join(" · ")}</p>
         )}
         <div className="mt-4">
-          <CourseAction programId={programId} depth={depth} course={course} />
+          <CourseAction programId={programId} course={course} />
         </div>
         {course.units && course.units.length > 0 && <UnitProgress units={course.units} final={course.final} />}
         {(course.hasSyllabus || course.units) && (
@@ -415,7 +402,7 @@ function StepMarker({ course, isUpNext }: { course: CourseView; isUpNext: boolea
 }
 
 /** The one thing to do on a course: continue it, start it, or see what opens it. */
-function CourseAction({ programId, depth, course }: { programId: string; depth: ProgramView["depth"]; course: CourseView }) {
+function CourseAction({ programId, course }: { programId: string; course: CourseView }) {
   if (course.state === "locked") {
     const blocker = course.blockers[0];
     const almost = blocker?.needed !== null && blocker?.needed !== undefined && blocker.needed <= 2;
@@ -432,7 +419,7 @@ function CourseAction({ programId, depth, course }: { programId: string; depth: 
     );
   }
 
-  // A degree course builds a unit at a time, so progress counts against the topics the syllabus plans.
+  // A course builds a unit at a time, so progress counts against the topics the syllabus plans.
   const total = topicDenominator(course);
   if (course.mapId && total !== null) {
     const percent = total > 0 ? (course.proven / total) * 100 : 0;
@@ -457,10 +444,10 @@ function CourseAction({ programId, depth, course }: { programId: string; depth: 
     );
   }
 
-  return <StartCourseButton programId={programId} course={course} depth={depth} />;
+  return <StartCourseButton programId={programId} course={course} />;
 }
 
-/** Per-unit progress of a degree course, with its unit tests and the course final. */
+/** Per-unit progress of a course, with its unit tests and the course final. */
 function UnitProgress({ units, final }: { units: NonNullable<CourseView["units"]>; final: CourseView["final"] }) {
   return (
     <details className="mt-3">

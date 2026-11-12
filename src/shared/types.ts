@@ -95,9 +95,6 @@ export type SkillMap = {
  * holds it and shared code never imports a feature. `@/features/syllabus` re-exports these.
  */
 
-/** Quick is today's 4 to 8 course program with one unit per course. Degree is 4 years of 40 courses. */
-export type ProgramDepth = "quick" | "degree";
-
 /** Our own planning label for how advanced a course is. Not a university's course number. */
 export type CourseLevel = 100 | 200 | 300 | 400;
 
@@ -151,65 +148,42 @@ export type CourseSyllabus = {
    * stored on a final syllabus. Absent means final.
    */
   planning?: boolean;
-  depth: ProgramDepth;
   courseSlug: string;
   level?: CourseLevel;
   /** 4 to 6. */
   outcomes: SyllabusOutcome[];
-  /** Quick: 1 unit of 6 to 10 topics. Degree: 8 units of 4 to 6 topics. See SYLLABUS_SHAPE. */
+  /** 8 units of 4 to 6 topics. See SYLLABUS_SHAPE. */
   units: SyllabusUnit[];
   assessment: {
-    /** A 4-question unit test after each unit (degree only). */
+    /** A 4-question unit test after each unit. */
     unitTests: boolean;
-    /** Questions in the course final: 3 for quick (as today), 6 for degree. */
+    /** Questions in the course final: 6. */
     finalQuestions: number;
   };
 };
 
 /**
- * Every count the syllabus, units, lessons and tests are built to. Code checks these; prompts
- * quote them. Quick's numbers equal today's, so a quick course reads exactly like before.
+ * Every count a course syllabus, its units, lessons and tests are built to. Every topic course is
+ * a full course of the 40-course degree. Code checks these; prompts quote them.
  */
 export const SYLLABUS_SHAPE = {
-  quick: {
-    units: 1,
-    topicsPerUnit: { min: 6, max: 10 },
-    unitTests: false,
-    finalQuestions: 3,
-    finalPassMark: 2,
-    lessonWords: { min: 600, max: 900 },
-    practiceCases: 0,
-  },
-  degree: {
-    units: 8,
-    topicsPerUnit: { min: 4, max: 6 },
-    unitTests: true,
-    finalQuestions: 6,
-    finalPassMark: 4,
-    lessonWords: { min: 1000, max: 1400 },
-    practiceCases: 2,
-  },
-} as const satisfies Record<
-  ProgramDepth,
-  {
-    units: number;
-    topicsPerUnit: { min: number; max: number };
-    unitTests: boolean;
-    finalQuestions: number;
-    finalPassMark: number;
-    lessonWords: { min: number; max: number };
-    practiceCases: number;
-  }
->;
+  units: 8,
+  topicsPerUnit: { min: 4, max: 6 },
+  unitTests: true,
+  finalQuestions: 6,
+  finalPassMark: 4,
+  lessonWords: { min: 1000, max: 1400 },
+  practiceCases: 2,
+} as const;
 
-/** Per syllabus, whatever the depth. */
+/** Per syllabus. */
 export const SYLLABUS_LIMITS = {
   outcomes: { min: 4, max: 6 },
   objectivesPerTopic: { min: 2, max: 3 },
   keyTermsPerTopic: { min: 3, max: 6 },
 } as const;
 
-/** The unit test after each degree unit. Stored as a final attempt with node id `unitTestNodeId(unitId)`. */
+/** The unit test after each syllabus unit. Stored as a final attempt with node id `unitTestNodeId(unitId)`. */
 export const UNIT_TEST = { questions: 4, passMark: 3 } as const;
 
 /** Node id of a unit's test, such as "final:u2". The course final keeps its own id ("final-interview"). */
@@ -230,7 +204,7 @@ export type ProgramLink = {
   /** 1-based position of this course in the program. */
   courseNumber: number;
   courseCount: number;
-  /** Titles of the courses that open once half of this one is proved. */
+  /** Titles of the courses that open once a quarter of this one is proved. */
   unlocks: string[];
 };
 
@@ -239,6 +213,7 @@ export type IntegritySignals = {
   /** Milliseconds of active typing or speaking. */
   activeMs: number;
   wordCount: number;
+  /** Always "typed" on new records. "voice" is only on records saved while answers could be spoken. */
   inputMethod: "typed" | "voice";
 };
 
@@ -263,7 +238,7 @@ export type FollowUp = {
   answer: string | null;
   passed: boolean | null;
   feedback: string | null;
-  /** How the answer was given, as the browser reported it. Missing on answers saved before Nov 7. */
+  /** Always "typed" on new answers. "voice" is only on older ones, and the key is missing on answers saved before Nov 7. */
   inputMethod?: "typed" | "voice";
   /** Milliseconds from the question appearing to the learner starting to answer. Missing when not known. */
   startedAfterMs?: number;

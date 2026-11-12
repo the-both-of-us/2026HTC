@@ -9,7 +9,7 @@ export function clean(text: string): string {
   return text.replace(new RegExp(`<\\s*/?\\s*(${TAGS})\\s*>`, "gi"), " ");
 }
 
-const shape = SYLLABUS_SHAPE.degree;
+const shape = SYLLABUS_SHAPE;
 const { outcomes, objectivesPerTopic, keyTermsPerTopic } = SYLLABUS_LIMITS;
 
 /**

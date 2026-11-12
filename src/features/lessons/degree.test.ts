@@ -58,14 +58,13 @@ const SYLLABUS_NODE: SkillNode = {
   checkpoints: ["Selective attention filters what reaches awareness, so unattended input is mostly lost."],
 };
 
-function syllabus(depth: "quick" | "degree"): CourseSyllabus {
+function syllabus(): CourseSyllabus {
   return {
     version: 1,
-    depth,
     courseSlug: "intro-psych",
     outcomes: [{ id: "o1", text: "Describe attention" }],
     units: [{ id: "u1", title: "Mind", outcomeIds: ["o1"], built: true, topics: [] }],
-    assessment: { unitTests: depth === "degree", finalQuestions: depth === "degree" ? 6 : 3 },
+    assessment: { unitTests: true, finalQuestions: 6 },
   };
 }
 
@@ -105,15 +104,15 @@ describe("legacy lesson prompts are untouched", () => {
   it("system prompt and node prompt are byte for byte the old text", () => {
     expect(hash(LESSON_SYSTEM_PROMPT)).toBe("bd96d3eb0e8ccefc");
     expect(lessonSystemPrompt(undefined, undefined)).toBe(LESSON_SYSTEM_PROMPT);
-    expect(lessonSystemPrompt(undefined, "quick")).toBe(LESSON_SYSTEM_PROMPT);
+    expect(lessonSystemPrompt(undefined, false)).toBe(LESSON_SYSTEM_PROMPT);
     expect(hash(buildLessonPrompt({ title: "T" }, { ...LEGACY_NODE, title: "Counting to 100", why: "w", id: "n" }))).toBe("3e7b6406c2c81dfb");
-    // A quick course with a syllabus has the old text too: only the node's extra lines differ.
-    expect(hash(buildLessonPrompt({ title: "T", syllabus: syllabus("quick") }, LEGACY_NODE))).toBe("3e7b6406c2c81dfb");
+    // A course with a syllabus has the old node prompt too: only a node's syllabus lines differ.
+    expect(hash(buildLessonPrompt({ title: "T", syllabus: syllabus() }, LEGACY_NODE))).toBe("3e7b6406c2c81dfb");
     expect(skillBlock).not.toHaveBeenCalled();
   });
 
   it("a node built from a syllabus gets its lines inside the block, before the checkpoints", () => {
-    const prompt = buildLessonPrompt({ title: "Psych", syllabus: syllabus("degree") }, SYLLABUS_NODE);
+    const prompt = buildLessonPrompt({ title: "Psych", syllabus: syllabus() }, SYLLABUS_NODE);
     expect(skillBlock).toHaveBeenCalledTimes(1);
     expect(prompt).toContain("Why it matters: w\nObjectives: explain X\nKey terms: alpha, beta\nCheckpoints:");
     expect(prompt.match(/<skill>/g)).toHaveLength(1);
@@ -123,38 +122,38 @@ describe("legacy lesson prompts are untouched", () => {
 describe("the degree lesson target", () => {
   it("is 1,000 to 1,400 words, from the shared shape", () => {
     expect(DEGREE_TARGET_WORDS).toEqual({ min: 1000, max: 1400 });
-    expect(targetWords(undefined, "degree")).toBe(DEGREE_TARGET_WORDS);
+    expect(targetWords(undefined, true)).toBe(DEGREE_TARGET_WORDS);
     expect(targetWords(undefined, undefined)).toBe(TARGET_WORDS);
-    // Children keep their own length whatever the depth.
-    expect(targetWords("Grade 1 students (about 6 years old)", "degree").max).toBe(350);
+    // Children keep their own length, even in a syllabus course.
+    expect(targetWords("Grade 1 students (about 6 years old)", true).max).toBe(350);
   });
 
   it("the prompt asks for it and for two practice cases", () => {
-    const prompt = lessonSystemPrompt(undefined, "degree");
+    const prompt = lessonSystemPrompt(undefined, true);
     expect(prompt).toContain("1000 to 1400 words in total, so it takes 5 to 7 minutes");
     expect(prompt).not.toContain("600 to 900");
     expect(prompt).toContain("PRACTICE");
     expect(prompt).toContain("exactly 2 practice cases");
-    expect(lessonSystemPrompt("Grade 1 students (about 6 years old)", "degree")).not.toContain("PRACTICE");
+    expect(lessonSystemPrompt("Grade 1 students (about 6 years old)", true)).not.toContain("PRACTICE");
   });
 
   it("accepts about 1,200 words and rejects a thin or a bloated lesson", () => {
     expect(wordLimits(DEGREE_TARGET_WORDS)).toEqual({ min: 750, max: 1550 });
-    expect(lessonProblem(degreeLesson(1200), SYLLABUS_NODE.checkpoints, undefined, "degree")).toBeNull();
-    expect(lessonProblem(degreeLesson(700), SYLLABUS_NODE.checkpoints, undefined, "degree")).toMatch(/Write 1000 to 1400/);
-    expect(lessonProblem(degreeLesson(1900), SYLLABUS_NODE.checkpoints, undefined, "degree")).toMatch(/too long/);
-    // The same 700 words are fine for a quick lesson.
+    expect(lessonProblem(degreeLesson(1200), SYLLABUS_NODE.checkpoints, undefined, true)).toBeNull();
+    expect(lessonProblem(degreeLesson(700), SYLLABUS_NODE.checkpoints, undefined, true)).toMatch(/Write 1000 to 1400/);
+    expect(lessonProblem(degreeLesson(1900), SYLLABUS_NODE.checkpoints, undefined, true)).toMatch(/too long/);
+    // The same 700 words are fine for a posting map's lesson.
     expect(lessonProblem(degreeLesson(700), SYLLABUS_NODE.checkpoints)).toBeNull();
   });
 
   it("needs exactly two practice cases, each complete", () => {
     const one = { ...degreeLesson(), practice: degreeLesson().practice!.slice(0, 1) };
-    expect(lessonProblem(one, SYLLABUS_NODE.checkpoints, undefined, "degree")).toMatch(/exactly 2 cases/);
+    expect(lessonProblem(one, SYLLABUS_NODE.checkpoints, undefined, true)).toMatch(/exactly 2 cases/);
     const blank = degreeLesson();
     blank.practice![1].modelAnswer = " ";
-    expect(lessonProblem(blank, SYLLABUS_NODE.checkpoints, undefined, "degree")).toMatch(/exactly 2 cases/);
-    expect(wantsPractice(undefined, "degree")).toBe(true);
-    expect(wantsPractice(undefined, "quick")).toBe(false);
+    expect(lessonProblem(blank, SYLLABUS_NODE.checkpoints, undefined, true)).toMatch(/exactly 2 cases/);
+    expect(wantsPractice(undefined, true)).toBe(true);
+    expect(wantsPractice(undefined, false)).toBe(false);
   });
 
   it("counts a practice scenario and question as reading, never the model answer", () => {
@@ -178,7 +177,7 @@ describe("practice answers stay on the server", () => {
       sourceText: "",
       nodes: [SYLLABUS_NODE],
       createdAt: new Date().toISOString(),
-      syllabus: syllabus("degree"),
+      syllabus: syllabus(),
     };
     await putDoc(`maps/${mapId}`, map);
   });
@@ -187,9 +186,9 @@ describe("practice answers stay on the server", () => {
     mockStream.mockImplementationOnce(replyWith(degreeLesson()));
     const lesson = lessonIn(await getOrCreateLesson(mapId, "attention", OWNER));
 
-    expect(mockStream.mock.calls[0][0].system).toBe(lessonLinesSystemPrompt(undefined, "degree"));
-    expect(lessonLinesSystemPrompt(undefined, "degree")).toContain(lessonSystemPrompt(undefined, "degree"));
-    expect(lessonLinesSystemPrompt(undefined, "degree")).toContain('{"part":"practice"');
+    expect(mockStream.mock.calls[0][0].system).toBe(lessonLinesSystemPrompt(undefined, true));
+    expect(lessonLinesSystemPrompt(undefined, true)).toContain(lessonSystemPrompt(undefined, true));
+    expect(lessonLinesSystemPrompt(undefined, true)).toContain('{"part":"practice"');
     expect(mockStream.mock.calls[0][0].prompt).toContain("Objectives: explain X");
     expect(lesson.practice).toEqual([
       { scenario: "Two people talk at a party and you listen to only one of them.", question: "What do you remember of the other talker?" },
@@ -209,14 +208,16 @@ describe("practice answers stay on the server", () => {
     expect(toLesson(degreeLesson()).practice?.[0]).not.toHaveProperty("modelAnswer");
   });
 
-  it("a quick course's lesson has no practice", async () => {
-    await putDoc(`maps/${mapId}`, { ...(await getDoc<SkillMap>(`maps/${mapId}`)), syllabus: syllabus("quick") });
-    const quick = degreeLesson(700);
-    delete quick.practice;
-    mockStream.mockImplementationOnce(replyWith(quick));
+  it("a lesson on a map with no syllabus (a posting or PDF map) has no practice", async () => {
+    const { syllabus: _dropped, ...plain } = (await getDoc<SkillMap>(`maps/${mapId}`))!;
+    void _dropped;
+    await putDoc(`maps/${mapId}`, plain);
+    const short = degreeLesson(700);
+    delete short.practice;
+    mockStream.mockImplementationOnce(replyWith(short));
     const lesson = lessonIn(await getOrCreateLesson(mapId, "attention", OWNER));
     expect(lesson.practice).toBeUndefined();
-    expect(mockStream.mock.calls[0][0].system).toBe(lessonLinesSystemPrompt(undefined, "quick"));
+    expect(mockStream.mock.calls[0][0].system).toBe(lessonLinesSystemPrompt(undefined, false));
     expect(mockStream.mock.calls[0][0].system).not.toContain('"part":"practice"');
   });
 

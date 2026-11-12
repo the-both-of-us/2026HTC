@@ -30,7 +30,6 @@ const startProgram = (programId: string) =>
 const topic = { id: "t1", title: "T", objectives: ["a", "b"], keyTerms: ["x", "y", "z"], inScope: "i", outOfScope: "o", buildsOn: [] };
 const SYLLABUS = {
   version: 1,
-  depth: "degree",
   courseSlug: "sd",
   outcomes: [],
   units: [{ id: "u1", title: "U", outcomeIds: [], built: false, topics: [topic, { ...topic, id: "t2" }] }],
@@ -53,7 +52,7 @@ beforeEach(async () => {
   await putDoc(catalogKeys.course(courseId), course);
   await putDoc(catalogKeys.syllabus(courseId), SYLLABUS);
   const program: CatalogProgram = {
-    id: programId, title: "Backend", summary: "Servers.", audience: "", depth: "quick", status: "ready", createdAt: "2026-11-09T00:00:00Z",
+    id: programId, title: "Backend", summary: "Servers.", audience: "", status: "ready", createdAt: "2026-11-09T00:00:00Z",
     courses: [{ slug: "a", title: "A", summary: "s", requires: [], courseId }],
   };
   await putDoc(catalogKeys.program(programId), program);
@@ -70,7 +69,7 @@ describe("GET /api/catalog", () => {
     ]);
     expect(body.programs).toEqual([]);
     const all = await (await listRoute(new Request("http://localhost/api/catalog"))).json();
-    expect(all.programs).toEqual([{ programId, title: "Backend", summary: "Servers.", audience: "", depth: "quick", courseCount: 1 }]);
+    expect(all.programs).toEqual([{ programId, title: "Backend", summary: "Servers.", audience: "", courseCount: 1 }]);
     expect(JSON.stringify(all)).not.toMatch(/ownerId|authorId|sourceText|alias|hash|homeProgramId/);
   });
 });

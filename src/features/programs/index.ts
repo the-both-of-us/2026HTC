@@ -22,9 +22,7 @@ export {
   scheduleProgramPlanning,
 } from "./pregen";
 export { getComparisonView, getSyllabusView } from "./views";
-export { getProgramPage, listPublicPrograms, publishProgram, startProgram, unpublishProgram } from "./sharing";
-export type { StartProgramResult } from "./sharing";
-export { deleteProgramsByOwner, listMyPrograms, listProgramsByOwner, type ProgramSummary } from "./storage";
+export { deleteProgramsByOwner } from "./storage";
 export type {
   ComparisonView,
   CourseView,
@@ -33,15 +31,10 @@ export type {
   OpenCourseResponse,
   OpenCourseResult,
   Program,
-  ProgramDepth,
-  ProgramPage,
   ProgramPlanning,
   ProgramPollResponse,
   ProgramShape,
-  ProgramSharing,
   ProgramView,
-  PublicProgram,
-  PublicProgramView,
   ResumePlanningResponse,
   StartUnitResponse,
   SyllabusView,

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { isPublished, publishCourse } from "@/features/courses";
 import { deleteUserData as deleteNetworkProfile } from "@/features/network";
 import { getProof, publishProof } from "@/features/proof";
 import { deleteUserData as deleteReviewData } from "@/features/review";
@@ -117,12 +116,7 @@ async function seedLearner() {
     attemptId: attempt.id,
     provenAt: "2026-11-07T11:00:00.000Z",
   });
-  await putDoc(`grid-solves/${userId}/reserve-margin`, {
-    exerciseId: "reserve-margin",
-    solvedAt: "2026-11-07T12:00:00.000Z",
-  });
   const proof = await publishProof(userId, map.id, "Maya Chen");
-  await publishCourse(map.id, userId, "Maya");
   return { userId, map, attempt, proofId: proof.id };
 }
 
@@ -138,7 +132,7 @@ describe("deleteUserData", () => {
     someoneElse = await seedLearner();
   });
 
-  it("removes the user's maps, attempts, claims, progress, evidence pages, course listings and grid answers", async () => {
+  it("removes the user's maps, attempts, claims, progress and evidence pages", async () => {
     const counts = await deleteUserData(me.userId);
 
     expect(counts).toEqual({
@@ -146,8 +140,6 @@ describe("deleteUserData", () => {
       attempts: 1,
       provenSkills: 1,
       evidencePages: 1,
-      courses: 1,
-      gridAnswers: 1,
       circles: 0,
       networkProfiles: 1,
       reviewRecords: 4,
@@ -159,8 +151,6 @@ describe("deleteUserData", () => {
     expect(await getProgress(me.map.id, me.userId)).toBeNull();
     expect(await getProof(me.proofId)).toBeNull();
     expect(await getDoc(`proof-index/${me.map.id}`)).toBeNull();
-    expect(await isPublished(me.map.id)).toBe(false);
-    expect(await getDoc(`grid-solves/${me.userId}/reserve-margin`)).toBeNull();
   });
 
   it("leaves another user's work exactly as it was", async () => {
@@ -183,10 +173,6 @@ describe("deleteUserData", () => {
     );
     expect(await getProof(someoneElse.proofId)).toEqual(before.proof);
     expect(before.proof?.state).toBe("live");
-    expect(await isPublished(someoneElse.map.id)).toBe(true);
-    expect(
-      await getDoc(`grid-solves/${someoneElse.userId}/reserve-margin`),
-    ).not.toBeNull();
   });
 
   it("deletes the public people profile before anything else, and the review data with the user's id", async () => {

@@ -52,12 +52,12 @@ describe("needsMapPoll", () => {
 
 describe("BuildPanel and the planning rail", () => {
   it("says Unit 1 is being written", () => {
-    const html = renderToStaticMarkup(<BuildPanel mapId="m" wait="unit1" isOwner onRestarted={() => {}} />);
+    const html = renderToStaticMarkup(<BuildPanel mapId="m" wait="unit1" onRestarted={() => {}} />);
     expect(html).toContain("Unit 1 is being written. It usually takes under a minute.");
   });
-  it("offers Try again to the owner of a failed build and no one else", () => {
-    expect(renderToStaticMarkup(<BuildPanel mapId="m" wait="failed-syllabus" isOwner onRestarted={() => {}} />)).toContain("Try again");
-    expect(renderToStaticMarkup(<BuildPanel mapId="m" wait="failed-unit1" isOwner={false} onRestarted={() => {}} />)).not.toContain("Try again");
+  it("offers Try again on a failed build", () => {
+    expect(renderToStaticMarkup(<BuildPanel mapId="m" wait="failed-syllabus" onRestarted={() => {}} />)).toContain("Try again");
+    expect(renderToStaticMarkup(<BuildPanel mapId="m" wait="failed-unit1" onRestarted={() => {}} />)).toContain("Try again");
   });
   it("shows the planning pill beside the units so far", () => {
     const unit: UnitRailItem = { id: "u1", number: 1, title: "Survey", plannedTopics: 5, built: false, nodeIds: [], topicTitles: [], proved: 0, status: "ready", waitingFor: null };

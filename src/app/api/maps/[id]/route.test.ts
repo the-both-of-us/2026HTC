@@ -61,17 +61,6 @@ describe("GET /api/maps/[id]", () => {
     expect(text).not.toContain("Data analyst");
   });
 
-  it("lets anyone read a published map, without ownerId", async () => {
-    const map = await savedMap();
-    await putDoc(`courses/${map.id}`, { mapId: map.id });
-    mockReadUserId.mockResolvedValue(null);
-
-    const response = await read(map.id);
-
-    expect(response.status).toBe(200);
-    expect(await response.text()).not.toContain(OWNER);
-  });
-
   it("returns a readable 404 for a map that does not exist", async () => {
     mockReadUserId.mockResolvedValue(OWNER);
 

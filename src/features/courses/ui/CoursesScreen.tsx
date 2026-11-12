@@ -2,24 +2,14 @@
 
 import clsx from "clsx";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { PublicPrograms } from "@/features/programs/client";
 import { Button, ErrorNotice, PageShell, Spinner } from "@/shared/ui";
-import type { CourseSort, PublicCourse } from "../types";
-import { fetchCourses, type Result } from "./api";
-import { CourseCard } from "./CourseCard";
-import { SharedCatalog } from "./SharedCatalog";
-import { courseHref, hasSample, resultsSummary, SAMPLE_NOTE, SEARCH_DEBOUNCE_MS } from "./courseView";
+import { SharedCatalogView } from "./SharedCatalog";
+import { fetchSharedCatalog, resultsSummary, SEARCH_DEBOUNCE_MS, type SharedCatalog, type SharedResult } from "./sharedApi";
 
-type Loaded = { key: string; query: string; result: Result<{ courses: PublicCourse[] }> };
+type Loaded = { key: string; query: string; result: SharedResult<SharedCatalog> };
 
-const SORTS: { value: CourseSort; label: string }[] = [
-  { value: "popular", label: "Popular" },
-  { value: "new", label: "Newest" },
-];
-
-/** The public directory at /courses: search, sort, and a card per course. */
+/** /courses: search the shared catalog of AI-written courses and programs, and start one. */
 export function CoursesScreen() {
-  const [sort, setSort] = useState<CourseSort>("popular");
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -28,7 +18,7 @@ export function CoursesScreen() {
   const summary = useRef<HTMLParagraphElement>(null);
   const loadingLine = useRef<HTMLParagraphElement>(null);
 
-  const requestKey = `${sort}\n${query}\n${attempt}`;
+  const requestKey = `${query}\n${attempt}`;
 
   // A link such as /courses?q=SQL%20joins (from "Practise this" on People) starts with that
   // search. The server renders no search, and the browser applies the link's once.
@@ -48,19 +38,20 @@ export function CoursesScreen() {
 
   useEffect(() => {
     let current = true;
-    const key = `${sort}\n${query}\n${attempt}`;
-    fetchCourses(sort, query).then((result) => {
+    const key = `${query}\n${attempt}`;
+    fetchSharedCatalog(query).then((result) => {
       if (current) setLoaded({ key, query, result });
     });
     return () => {
       current = false;
     };
-  }, [sort, query, attempt]);
+  }, [query, attempt]);
 
   const stale = loaded?.key !== requestKey;
   const failed = loaded && !loaded.result.ok ? loaded.result : null;
-  const courses = loaded?.result.ok ? loaded.result.courses : null;
+  const catalog = loaded?.result.ok ? loaded.result : null;
   const showLoadingLine = !loaded || (stale && failed);
+  const count = catalog ? catalog.courses.length + catalog.programs.length : 0;
 
   // After "Try again", focus follows the content that replaced the button.
   useEffect(() => {
@@ -74,7 +65,7 @@ export function CoursesScreen() {
 
   function retry() {
     focusSummary.current = true;
-    setAttempt((count) => count + 1);
+    setAttempt((value) => value + 1);
   }
 
   function clearSearch() {
@@ -87,55 +78,33 @@ export function CoursesScreen() {
     <PageShell width="wide">
       <h1 className="text-3xl font-medium">Courses</h1>
       <p className="mt-2 max-w-2xl text-lg text-ink-soft">
-        Skill maps and programs that people chose to share, and AI-written courses that already exist. Open one to see what it covers, in learning order.
+        AI-written courses and programs that already exist. Start one to get your own copy to prove skills on, with no wait.
       </p>
 
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex min-w-0 flex-col gap-1.5 sm:max-w-md sm:flex-1">
-          <label htmlFor="course-search" className="text-base font-semibold">
-            Search courses and programs
-          </label>
-          <input
-            id="course-search"
-            type="search"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            maxLength={100}
-            placeholder="A role, a skill or an author"
-            className="block min-h-11 w-full rounded-control border-2 border-control-edge bg-sheet px-3.5 py-2 text-base text-ink placeholder:text-ink-soft"
-          />
-        </div>
-        <div role="group" aria-label="Sort courses" className="flex gap-1.5">
-          {SORTS.map((option) => (
-            <Button
-              key={option.value}
-              variant="subtle"
-              size="sm"
-              aria-pressed={sort === option.value}
-              onClick={() => setSort(option.value)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
+      <div className="mt-6 flex min-w-0 flex-col gap-1.5 sm:max-w-md">
+        <label htmlFor="course-search" className="text-base font-semibold">
+          Search courses and programs
+        </label>
+        <input
+          id="course-search"
+          type="search"
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          maxLength={100}
+          placeholder="A subject or a skill"
+          className="block min-h-11 w-full rounded-control border-2 border-control-edge bg-sheet px-3.5 py-2 text-base text-ink placeholder:text-ink-soft"
+        />
       </div>
 
       <div className="mt-6 flex flex-col gap-4">
-        <PublicPrograms query={query} />
-        <SharedCatalog query={query} />
         {showLoadingLine ? (
-          <p
-            ref={loadingLine}
-            tabIndex={-1}
-            role="status"
-            className="flex items-center gap-3 text-lg outline-none"
-          >
+          <p ref={loadingLine} tabIndex={-1} role="status" className="flex items-center gap-3 text-lg outline-none">
             <Spinner size={22} />
             Loading courses.
           </p>
         ) : failed ? (
           <ErrorNotice message={failed.message} onRetry={retry} />
-        ) : courses ? (
+        ) : catalog ? (
           <>
             <p
               ref={summary}
@@ -143,7 +112,7 @@ export function CoursesScreen() {
               role="status"
               className="flex items-center gap-2.5 text-base text-ink-soft outline-none"
             >
-              {resultsSummary(courses.length, loaded?.query ?? "")}
+              {resultsSummary(count, loaded?.query ?? "")}
               {stale && (
                 <span className="inline-flex items-center gap-2">
                   <Spinner size={16} />
@@ -152,38 +121,15 @@ export function CoursesScreen() {
               )}
             </p>
 
-            {courses.length === 0 && loaded?.query && (
+            {count === 0 && loaded?.query && (
               <Button variant="secondary" onClick={clearSearch} className="self-start">
                 Clear the search
               </Button>
             )}
 
-            {courses.length > 0 && (
-              <ul
-                aria-busy={stale || undefined}
-                className={clsx(
-                  "grid gap-5 sm:grid-cols-2 xl:grid-cols-3",
-                  stale && "motion-safe:transition-opacity opacity-70",
-                )}
-              >
-                {courses.map((course) => (
-                  <li key={course.mapId} className="min-w-0">
-                    <CourseCard
-                      href={courseHref(course.mapId)}
-                      fingerprint={course.mapId}
-                      title={course.title}
-                      subtitle={course.subtitle}
-                      authorName={course.authorName}
-                      skillCount={course.skillCount}
-                      likeCount={course.likeCount}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* No "Sample" tag on the cards; this one quiet line still says the job ads are made up. */}
-            {hasSample(courses) && <p className="text-sm text-ink-soft">{SAMPLE_NOTE}</p>}
+            <div aria-busy={stale || undefined} className={clsx("flex flex-col gap-4", stale && "motion-safe:transition-opacity opacity-70")}>
+              <SharedCatalogView courses={catalog.courses} programs={catalog.programs} />
+            </div>
           </>
         ) : null}
       </div>

@@ -7,10 +7,10 @@
  *
  * Scopes (design2.md section D):
  * - content: maps, programs, generated content, the catalog, claims and partial docs, progress,
- *   evidence pages, the course directory, circles and spaced repetition. Keeps sign-in
- *   (accounts, account-of), network, old settings, streaks, grid solves, the feed, reels and
- *   the sample seeds. This is the recommended scope.
- * - all-but-accounts: all of the above, plus settings, streaks, grid, the feed, reels and
+ *   evidence pages, the dead data of the removed course and program publishing, circles and spaced
+ *   repetition. Keeps sign-in (accounts, account-of), network, old settings, streaks, the dead grid
+ *   data, the feed, reels and the dead sample seeds. This is the recommended scope.
+ * - all-but-accounts: all of the above, plus settings, streaks, the dead grid data, the feed, reels and
  *   course-seeds. Keeps accounts, account-of, network and circles (as the owner worded it;
  *   kept circles point at deleted maps and will 404, so add --delete-circles).
  *
@@ -42,8 +42,8 @@ const CONTENT_DELETE: Rule[] = [
   { prefix: "programs-by-owner/", action: "delete", note: "owner index of programs" },
   { prefix: "indexes/programs-by-owner-v1", action: "delete", note: "marker for that index" },
   { prefix: "program-courses/", action: "delete", note: "course claims inside programs" },
-  { prefix: "program-starts/", action: "delete", note: "program starts" },
-  { prefix: "program-listings/", action: "delete", note: "public program listings" },
+  { prefix: "program-starts/", action: "delete", note: "dead data of removed program publishing (starts)" },
+  { prefix: "program-listings/", action: "delete", note: "dead data of removed program publishing (listings)" },
   { prefix: "program-deepen/", action: "delete", note: "wave 1 deepen claims" },
   { prefix: "syllabi/", action: "delete", note: "wave 1 syllabus drafts" },
   { prefix: "unit-nodes/", action: "delete", note: "unit cache" },
@@ -66,9 +66,9 @@ const CONTENT_DELETE: Rule[] = [
   { prefix: "pretest/", action: "delete", note: "pre-test records on wiped maps" },
   { prefix: "proofs/", action: "delete", note: "evidence pages point at wiped maps" },
   { prefix: "proof-index/", action: "delete", note: "evidence page index" },
-  { prefix: "courses/", action: "delete", note: "directory listings of wiped maps" },
-  { prefix: "course-starts/", action: "delete", note: "directory starts" },
-  { prefix: "likes/", action: "delete", note: "directory likes" },
+  { prefix: "courses/", action: "delete", note: "dead data of removed course publishing (listings)" },
+  { prefix: "course-starts/", action: "delete", note: "dead data of removed course publishing (starts)" },
+  { prefix: "likes/", action: "delete", note: "dead data of removed course publishing (likes)" },
   { prefix: "circles/", action: "delete", note: "each circle is one wiped map's race" },
   { prefix: "review/", action: "delete", note: "spaced-repetition cards of wiped maps" },
 ];
@@ -84,11 +84,11 @@ const ALWAYS_KEEP: Rule[] = [
 const OTHER_STATE: { prefix: string; note: string }[] = [
   { prefix: "settings/", note: "old AI settings (Delete my data still removes them)" },
   { prefix: "streaks/", note: "not tied to one course" },
-  { prefix: "grid-solves/", note: "AESO exercises, not courses" },
-  { prefix: "grid/", note: "cached AESO data" },
+  { prefix: "grid-solves/", note: "dead data of the removed grid feature" },
+  { prefix: "grid/", note: "dead data of the removed grid feature (cached AESO reading)" },
   { prefix: "feed-", note: "the interest feed (feed-*)" },
   { prefix: "skill-reel", note: "reels, their claims and votes (skill-reel*)" },
-  { prefix: "course-seeds/", note: "fixtures for the samples (reseeded by prepareSamples)" },
+  { prefix: "course-seeds/", note: "dead data of removed course publishing (sample listings)" },
 ];
 
 export function rulesFor(scope: Scope, options: { deleteCircles?: boolean } = {}): Rule[] {

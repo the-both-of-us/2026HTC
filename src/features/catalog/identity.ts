@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import { audienceKey } from "@/shared/audience";
-import type { ProgramDepth } from "@/shared/types";
 import type { AudienceKey } from "./types";
 
 /** The audience part of every name and alias key: `audienceKey(audience)`, or "general". */
@@ -20,11 +19,10 @@ export const catalogKeys = {
   syllabus: (courseId: string) => `catalog/syllabi/${courseId}`,
   courseNamesPrefix: (aud: AudienceKey) => `catalog/names/course/${aud}/`,
   courseName: (aud: AudienceKey, titleKey: string) => `catalog/names/course/${aud}/${titleKey}`,
-  programNamesPrefix: (aud: AudienceKey, depth: ProgramDepth) => `catalog/names/program/${aud}/${depth}/`,
-  programName: (aud: AudienceKey, depth: ProgramDepth, titleKey: string) =>
-    `catalog/names/program/${aud}/${depth}/${titleKey}`,
+  programNamesPrefix: (aud: AudienceKey) => `catalog/names/program/${aud}/`,
+  programName: (aud: AudienceKey, titleKey: string) => `catalog/names/program/${aud}/${titleKey}`,
   courseAlias: (aud: AudienceKey, hash: string) => `catalog/alias/course/${aud}/${hash}`,
-  programAlias: (aud: AudienceKey, depth: ProgramDepth, hash: string) => `catalog/alias/program/${aud}/${depth}/${hash}`,
+  programAlias: (aud: AudienceKey, hash: string) => `catalog/alias/program/${aud}/${hash}`,
 } as const;
 
 const DROPPED = new Set(["a", "an", "the", "of", "to", "for", "in", "on", "and", "with"]);

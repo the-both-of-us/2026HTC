@@ -1,11 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Badge, Button } from "@/shared/ui";
-import { countLabel } from "./courseView";
 import {
-  fetchSharedCatalog,
+  countLabel,
   startSharedCourse,
   startSharedProgram,
   type SharedCourseItem,
@@ -13,28 +12,7 @@ import {
   type SharedResult,
 } from "./sharedApi";
 
-const AI_NOTE = "Written by AI once and shared, not published by a person. Start gives you your own copy to prove skills on.";
-
-/**
- * The shared catalog on /courses: AI-written courses and programs that already exist, matching the
- * page's search. It shows nothing while loading, when nothing matches, or if loading fails, so the
- * published courses below are never held up by it.
- */
-export function SharedCatalog({ query }: { query: string }) {
-  const [shared, setShared] = useState<{ courses: SharedCourseItem[]; programs: SharedProgramItem[] }>({ courses: [], programs: [] });
-
-  useEffect(() => {
-    let current = true;
-    fetchSharedCatalog(query).then((result) => {
-      if (current) setShared(result.ok ? { courses: result.courses, programs: result.programs } : { courses: [], programs: [] });
-    });
-    return () => {
-      current = false;
-    };
-  }, [query]);
-
-  return <SharedCatalogView courses={shared.courses} programs={shared.programs} />;
-}
+const AI_NOTE = "Written by AI once and shared. Start gives you your own copy to prove skills on.";
 
 /** The sections only; nothing at all when both lists are empty. */
 export function SharedCatalogView({ courses, programs }: { courses: SharedCourseItem[]; programs: SharedProgramItem[] }) {
@@ -42,7 +20,7 @@ export function SharedCatalogView({ courses, programs }: { courses: SharedCourse
   return (
     <>
       {programs.length > 0 && (
-        <section aria-labelledby="shared-programs" className="flex flex-col gap-3 border-b border-rule-strong pb-8">
+        <section aria-labelledby="shared-programs" className="flex flex-col gap-3 border-b border-rule-strong pb-8 last:border-b-0 last:pb-0">
           <div>
             <h2 id="shared-programs" className="text-2xl font-medium">
               Shared programs
@@ -59,7 +37,7 @@ export function SharedCatalogView({ courses, programs }: { courses: SharedCourse
         </section>
       )}
       {courses.length > 0 && (
-        <section aria-labelledby="shared-courses" className="flex flex-col gap-3 border-b border-rule-strong pb-8">
+        <section aria-labelledby="shared-courses" className="flex flex-col gap-3 border-b border-rule-strong pb-8 last:border-b-0 last:pb-0">
           <div>
             <h2 id="shared-courses" className="text-2xl font-medium">
               Shared courses
@@ -165,7 +143,7 @@ function SharedProgramCard({ program }: { program: SharedProgramItem }) {
       title={program.title}
       summary={program.summary}
       audience={program.audience}
-      facts={`${program.depth === "degree" ? "Full degree" : "Short path"} · ${countLabel(program.courseCount, "course", "courses")}`}
+      facts={`Full degree · ${countLabel(program.courseCount, "course", "courses")}`}
       pending={pending}
       error={error}
       onStart={start}

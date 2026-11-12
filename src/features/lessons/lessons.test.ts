@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { streamLines } from "@/features/ai";
-import { publishCourse } from "@/features/courses";
 import { unlockNode } from "@/features/teachback";
 import { getDoc, putDoc } from "@/shared/store";
 import type { SkillMap, SkillNode } from "@/shared/types";
@@ -209,11 +208,6 @@ describe("getOrCreateLesson", () => {
     await expect(getOrCreateLesson(mapId, NODE.id, STRANGER)).rejects.toMatchObject({ status: 404 });
     await expect(getOrCreateLesson(randomUUID(), NODE.id, OWNER)).rejects.toMatchObject({ status: 404 });
     expect(mockStream).not.toHaveBeenCalled();
-  });
-
-  it("lets anyone read once the map is published as a course", async () => {
-    await publishCourse(mapId, OWNER);
-    expect(lessonIn(await getOrCreateLesson(mapId, NODE.id, STRANGER)).checks).toEqual(expect.any(Array));
   });
 
   it("deletes a map's lessons for Delete my data, and ignores ids that are not UUIDs", async () => {

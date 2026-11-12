@@ -1,5 +1,5 @@
 import { getDoc, listKeys } from "@/shared/store";
-import type { CourseSyllabus, ProgramDepth } from "@/shared/types";
+import type { CourseSyllabus } from "@/shared/types";
 import { catalogKeys } from "./identity";
 import { isCatalogId } from "./read";
 import type { CatalogCourse, CatalogProgram } from "./types";
@@ -32,8 +32,6 @@ export type SharedProgram = {
   title: string;
   summary: string;
   audience: string;
-  /** "quick" is a short path, "degree" a full degree. */
-  depth: ProgramDepth;
   courseCount: number;
 };
 
@@ -64,7 +62,6 @@ export function toSharedProgram(program: CatalogProgram): SharedProgram {
     title: program.title,
     summary: program.summary,
     audience: program.audience,
-    depth: program.depth,
     courseCount: program.courses.length,
   };
 }

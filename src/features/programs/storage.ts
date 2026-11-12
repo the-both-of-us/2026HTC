@@ -1,18 +1,13 @@
 import { claimDoc, deleteDoc, getDoc, listDocs, listKeys, putDoc } from "@/shared/store";
 import { readCatalogProgram, type CatalogProgramRead } from "@/features/catalog";
-import type { Program, ProgramCourse, ProgramPlanning, ProgramListing } from "./types";
+import type { Program, ProgramCourse, ProgramPlanning } from "./types";
 import { DEGREE_FRAME } from "@/shared/types";
 import { isUuid } from "@/shared/ids";
-
 
 /** Who is building a course's map, and under which id. Claimed once, so two clicks make one map. */
 export type CourseClaim = { mapId: string; claimedAt: string };
 
 const programKey = (id: string) => `programs/${id}`;
-/** Present means the program is public. Ids are checked as UUIDs before a key is built. */
-const listingKey = (programId: string) => `program-listings/${programId}`;
-/** A learner's own copy of a public program, so starting again opens it. */
-const startKey = (programId: string, userId: string) => `program-starts/${programId}/${userId}`;
 const claimKey = (programId: string, slug: string) => `program-courses/${programId}/${slug}`;
 
 /**
@@ -68,7 +63,7 @@ export async function getStoredProgram(id: string): Promise<Program | null> {
 
 /**
  * The learner's program as the rest of programs sees it: for one that follows a catalog program,
- * title, summary, audience, depth and the course list (titles, requires, years, courseIds) come
+ * title, summary, audience and the course list (titles, requires, years, courseIds) come
  * from the catalog, and each course's mapId from the learner's own doc.
  */
 export function mergeCatalog(stored: Program, read: CatalogProgramRead | null): Program {
@@ -95,7 +90,6 @@ export function mergeCatalog(stored: Program, read: CatalogProgramRead | null): 
     title: catalog.title,
     summary: catalog.summary,
     audience: catalog.audience,
-    depth: catalog.depth,
     courses,
   };
 }
@@ -105,7 +99,7 @@ export function planningOf(read: CatalogProgramRead): ProgramPlanning {
   return {
     state: read.state,
     planned: read.program.courses.length,
-    expected: read.program.depth === "degree" ? DEGREE_FRAME.courses : null,
+    expected: DEGREE_FRAME.courses,
   };
 }
 
@@ -184,101 +178,19 @@ export async function listProgramsByOwner(ownerId: string): Promise<Program[]> {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-/** A program as a list row, for "My programs" in /courses or the dashboard. No owner id, no source text. */
-export type ProgramSummary = { id: string; title: string; summary: string; courseCount: number; href: string };
-
-export async function listMyPrograms(userId: string): Promise<ProgramSummary[]> {
-  const stored = await listProgramsByOwner(userId);
-  // A catalog program's own doc lists only started courses: count the catalog's.
-  const programs = await Promise.all(
-    stored.map(async (program) => (program.catalogId ? mergeCatalog(program, await readCatalogProgram(program.catalogId)) : program)),
-  );
-  return programs.map((program) => ({
-    id: program.id,
-    title: program.title,
-    summary: program.summary,
-    courseCount: program.courses.length,
-    href: `/program/${program.id}`,
-  }));
-}
-
-function isListing(value: unknown): value is ProgramListing {
-  const listing = value as Partial<ProgramListing> | null;
-  return (
-    typeof listing?.programId === "string" &&
-    isUuid(listing.programId) &&
-    typeof listing.title === "string" &&
-    typeof listing.summary === "string" &&
-    typeof listing.authorId === "string" &&
-    typeof listing.authorName === "string" &&
-    typeof listing.courseCount === "number" &&
-    typeof listing.publishedAt === "string"
-  );
-}
-
-/** The program's public listing, or null while it is private. */
-export async function getListing(programId: string): Promise<ProgramListing | null> {
-  if (!isUuid(programId)) return null;
-  const listing = await getDoc<unknown>(listingKey(programId));
-  return isListing(listing) ? listing : null;
-}
-
-export async function saveListing(listing: ProgramListing): Promise<void> {
-  if (!isUuid(listing.programId)) throw new Error("A program listing needs a program id");
-  await putDoc(listingKey(listing.programId), listing);
-}
-
-export async function deleteListing(programId: string): Promise<void> {
-  if (!isUuid(programId)) return;
-  await deleteDoc(listingKey(programId));
-}
-
-/** Every public program. Each holds the owner id, so callers must make them public first. */
-export async function listListings(): Promise<ProgramListing[]> {
-  return (await listDocs<unknown>("program-listings/")).filter(isListing);
-}
-
-/** What `program-starts/<programId>/<userId>` holds. */
-export type ProgramStart = { copyId: string; startedAt: string };
-
-export async function getStart(programId: string, userId: string): Promise<ProgramStart | null> {
-  if (!isUuid(programId) || !isUuid(userId)) return null;
-  const doc = await getDoc<ProgramStart>(startKey(programId, userId));
-  return typeof doc?.copyId === "string" && isUuid(doc.copyId) ? doc : null;
-}
-
-export async function saveStart(programId: string, userId: string, start: ProgramStart): Promise<void> {
-  if (!isUuid(programId) || !isUuid(userId)) throw new Error("A program start needs ids");
-  await putDoc(startKey(programId, userId), start);
-}
-
 /**
- * For "Delete my data": removes this user's programs, their course claims and listings, the
- * start records other people left on them, and this user's own start records on others'
- * programs. The course maps themselves are maps, so they go with the user's other maps.
- * Only this user's records change, and running it twice is harmless. Catalog programs and
- * courses are canonical and hold nothing of this user's, so they stay.
+ * For "Delete my data": removes this user's programs and their course claims. The course maps
+ * themselves are maps, so they go with the user's other maps. Only this user's records change,
+ * and running it twice is harmless. Catalog programs and courses are canonical and hold nothing
+ * of this user's, so they stay.
  */
 export async function deleteProgramsByOwner(ownerId: string): Promise<number> {
   const programs = await listProgramsByOwner(ownerId);
   for (const program of programs) {
-    const keys = [
-      ...(await listKeys(`program-courses/${program.id}/`)),
-      ...(await listKeys(`program-starts/${program.id}/`)),
-    ];
+    const keys = await listKeys(`program-courses/${program.id}/`);
     await Promise.all(keys.map((key) => deleteDoc(key)));
-    await deleteListing(program.id);
     await deleteDoc(programKey(program.id));
     await deleteDoc(ownerIndexKey(ownerId, program.id));
-  }
-
-  if (isUuid(ownerId)) {
-    const prefix = "program-starts/";
-    const mine = (await listKeys(prefix)).filter((key) => {
-      const [programId, userId, ...rest] = key.slice(prefix.length).split("/");
-      return Boolean(programId) && userId === ownerId && rest.length === 0;
-    });
-    await Promise.all(mine.map((key) => deleteDoc(key)));
   }
   return programs.length;
 }

@@ -38,7 +38,7 @@ function makeNode(id: string, prerequisites: string[]): SkillNode {
   };
 }
 
-const integrity: Omit<IntegritySignals, "wordCount"> = { pasted: false, activeMs: 42_000, inputMethod: "typed" };
+const integrity: Omit<IntegritySignals, "wordCount" | "inputMethod"> = { pasted: false, activeMs: 42_000 };
 
 let mapId: string;
 
@@ -78,7 +78,7 @@ async function reachFollowUp(nodeId = "first", misconceptions: string[] = []): P
     nodeId,
     ownerId: OWNER,
     explanation: EXPLANATION,
-    integrity: { ...integrity, wordCount: EXPLANATION.split(" ").length },
+    integrity: { ...integrity, wordCount: EXPLANATION.split(" ").length, inputMethod: "typed" },
     grade: {
       score: 50,
       checkpoints: [
@@ -173,18 +173,18 @@ describe("status transitions", () => {
     expect(view.states).toEqual({ first: "proven", second: "available" });
   });
 
-  it("saves how the follow-up was answered, and leaves it out when the page didn't say", async () => {
-    const spoken = await reachFollowUp();
+  it("saves how the follow-up was answered, and leaves the delay out when the page didn't say", async () => {
+    const timed = await reachFollowUp();
     modelJudges(true);
-    const finished = await answerFollowUp(OWNER, spoken.id, "It stays.", { inputMethod: "voice", startedAfterMs: 8_400.6 });
-    expect(finished.followUp).toMatchObject({ inputMethod: "voice", startedAfterMs: 8_401 });
-    expect((await getAttempt(spoken.id))?.followUp?.inputMethod).toBe("voice");
+    const finished = await answerFollowUp(OWNER, timed.id, "It stays.", { startedAfterMs: 8_400.6 });
+    expect(finished.followUp).toMatchObject({ inputMethod: "typed", startedAfterMs: 8_401 });
+    expect((await getAttempt(timed.id))?.followUp?.inputMethod).toBe("typed");
 
     // "second" unlocked when "first" was proven. A page that sends only the answer still works.
     const plain = await reachFollowUp("second");
     modelJudges(true);
     const old = await answerFollowUp(OWNER, plain.id, "It stays.");
-    expect(old.followUp).not.toHaveProperty("inputMethod");
+    expect(old.followUp).toMatchObject({ inputMethod: "typed" });
     expect(old.followUp).not.toHaveProperty("startedAfterMs");
   });
 

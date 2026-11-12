@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { claimDoc, deleteDoc, getDoc, putDoc } from "@/shared/store";
-import type { ProgramDepth } from "@/shared/types";
 import { aliasHash, audKey, catalogKeys, titleKey } from "./identity";
 import { isCatalogId } from "./read";
 import type { CatalogClaim, CatalogCourse, CatalogNameEntry, CatalogProgramSeed } from "./types";
@@ -36,9 +35,9 @@ export async function claimCourseAlias(text: string, audience: string, courseId:
   await claimDoc(catalogKeys.courseAlias(audKey(audience), aliasHash(text)), { courseId } satisfies CatalogNameEntry);
 }
 
-export async function claimProgramAlias(text: string, audience: string, depth: ProgramDepth, programId: string): Promise<void> {
+export async function claimProgramAlias(text: string, audience: string, programId: string): Promise<void> {
   if (!titleKey(text)) return;
-  await claimDoc(catalogKeys.programAlias(audKey(audience), depth, aliasHash(text)), { programId } satisfies CatalogNameEntry);
+  await claimDoc(catalogKeys.programAlias(audKey(audience), aliasHash(text)), { programId } satisfies CatalogNameEntry);
 }
 
 /**
@@ -122,7 +121,6 @@ export async function claimCourse(input: {
 export async function claimProgram(input: {
   text: string;
   audience: string;
-  depth: ProgramDepth;
   title: string;
   summary: string;
 }): Promise<CatalogClaim> {
@@ -133,7 +131,6 @@ export async function claimProgram(input: {
     title: oneLine(input.title, 80),
     summary: oneLine(input.summary, 240),
     audience: input.audience,
-    depth: input.depth,
     createdAt: new Date().toISOString(),
   };
   await putDoc(catalogKeys.programSeed(id), seed);
@@ -141,8 +138,8 @@ export async function claimProgram(input: {
   return claimNew({
     id,
     docKey: catalogKeys.programSeed(id),
-    aliasKey: catalogKeys.programAlias(aud, input.depth, aliasHash(input.text || input.title)),
-    nameKey: name ? catalogKeys.programName(aud, input.depth, name) : null,
+    aliasKey: catalogKeys.programAlias(aud, aliasHash(input.text || input.title)),
+    nameKey: name ? catalogKeys.programName(aud, name) : null,
     entry: (programId) => ({ programId }),
     read: readProgramEntry,
   });

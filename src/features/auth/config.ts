@@ -98,7 +98,7 @@ export function authConfig(request?: Request): AuthConfig | null {
   return { ...config, baseUrl };
 }
 
-/** True when the four Auth0 values are set and well formed. Then publishing and liking need a sign-in. */
+/** True when the four Auth0 values are set and well formed. Then joining the network needs a sign-in. */
 export function isAuthConfigured(): boolean {
   if (!staticConfig()) return false;
   // A set but malformed APP_BASE_URL turns sign-in off rather than guessing.

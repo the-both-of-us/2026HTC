@@ -7,22 +7,20 @@ import { courseFacts } from "./programs";
 import { courseStates } from "./unlock";
 
 describe("unlock rules", () => {
-  it("opens a catalog (full) course at a quarter of the required course's planned topics; old quick programs keep half", () => {
+  it("opens a course at a quarter of the required course's planned topics", () => {
     const courses = [{ slug: "a", title: "A", requires: [] }, { slug: "b", title: "B", requires: ["a"] }];
-    expect(courseStates(courses, {}, "degree").b).toEqual({ state: "locked", blockers: [{ title: "A", needed: null }] });
-    expect(courseStates(courses, { a: { proven: 7, total: 32 } }, "degree").b.blockers).toEqual([{ title: "A", needed: 1 }]);
-    expect(courseStates(courses, { a: { proven: 8, total: 32 } }, "degree").b.state).toBe("open");
-    expect(courseStates(courses, { a: { proven: 8, total: 32 } }).b.blockers).toEqual([{ title: "A", needed: 8 }]);
+    expect(courseStates(courses, {}).b).toEqual({ state: "locked", blockers: [{ title: "A", needed: null }] });
+    expect(courseStates(courses, { a: { proven: 7, total: 32 } }).b.blockers).toEqual([{ title: "A", needed: 1 }]);
+    expect(courseStates(courses, { a: { proven: 8, total: 32 } }).b.state).toBe("open");
     // A course already started is never locked again.
-    expect(courseStates(courses, { b: { proven: 0, total: 4 } }, "degree").b.state).toBe("open");
+    expect(courseStates(courses, { b: { proven: 0, total: 4 } }).b.state).toBe("open");
     // A full course is done only when complete says so.
-    expect(courseStates(courses, { a: { proven: 32, total: 32, complete: false } }, "degree").a.state).toBe("open");
+    expect(courseStates(courses, { a: { proven: 32, total: 32, complete: false } }).a.state).toBe("open");
   });
 });
 
 describe("hours", () => {
   const facts = (over: Partial<CourseFacts> = {}): CourseFacts => ({
-    depth: "degree",
     lessonWords: { min: 1000, max: 1400 },
     practiceCasesPerTopic: 2,
     plan: { topics: 32, units: 8, unitTests: true, finalQuestions: 6 },
@@ -64,7 +62,6 @@ describe("hours", () => {
     const loaded = { course: { slug: "a", title: "A", summary: "", requires: [] }, index: 0, map: null, syllabus: null, progress: null, built: null, rail: null, units: null, final: null };
     expect(courseFacts({ ...program, audience: "Grade 1 students (about 6 years old)" }, loaded).lessonWords.max).toBeLessThan(1000);
     expect(courseFacts({ ...program, title: "Psychology", sourceText: "psychology", audience: "" }, loaded)).toMatchObject({
-      depth: "degree",
       lessonWords: { min: 1000, max: 1400 },
       practiceCasesPerTopic: 2,
       plan: null,

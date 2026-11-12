@@ -8,7 +8,7 @@
 
 `POST /api/reels { mapId, nodeId }` returns `{ reels: [{ videoId, title, channel, seconds, likes, myVote }] }`.
 
-`POST /api/reels/vote { mapId, nodeId, videoId, vote: 1 | -1 | 0 }` likes, dislikes or takes the vote back, and returns `{ likes, myVote, removed }`. Same access as the list; guests may vote. Only a video on the skill's saved list can be voted on (else 404). The skill's title comes from the saved map, never the request. Access is the same as its lesson: the map's owner, or anyone once it is a published course. A private map is a 404 for strangers, and a skill that is still locked is a 403 (the panel never asks for one).
+`POST /api/reels/vote { mapId, nodeId, videoId, vote: 1 | -1 | 0 }` likes, dislikes or takes the vote back, and returns `{ likes, myVote, removed }`. Same access as the list; guests may vote. Only a video on the skill's saved list can be voted on (else 404). The skill's title comes from the saved map, never the request. Access is the same as its lesson: only the map's owner. Someone else's map is a 404, and a skill that is still locked is a 403 (the panel never asks for one).
 
 ## Storage: one list per skill, shared by every copy
 

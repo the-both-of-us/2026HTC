@@ -6,25 +6,19 @@ import { countWords } from "../learnerText";
 const LONGEST_ACTIVE_GAP_MS = 5_000;
 
 /** Kept with the learner's draft, so reloading the page does not wipe the record of a paste. */
-export type SavedIntegrity = { pasted: boolean; usedVoice: boolean; typed?: boolean; activeMs: number };
+export type SavedIntegrity = { pasted: boolean; activeMs: number };
 
 /**
- * Records how an explanation was written: pasted or not, active time, typed or spoken.
+ * Records how an explanation was written: pasted or not, and active typing time.
  * These are signals shown on the evidence page, never a judgement.
- *
- * "voice" means every word came from speaking. Any typing, including fixing a misheard word,
- * makes it "typed", the same rule the spoken follow-up uses. It never claims more than happened.
  */
 export function createIntegrity(saved?: SavedIntegrity) {
   let pasted = saved?.pasted ?? false;
-  let usedVoice = saved?.usedVoice ?? false;
-  let typed = saved?.typed ?? false;
   let activeMs = saved?.activeMs ?? 0;
   let lastKeystrokeAt: number | null = null;
 
   return {
     recordTyping() {
-      typed = true;
       const now = Date.now();
       if (lastKeystrokeAt !== null) {
         const gap = now - lastKeystrokeAt;
@@ -37,26 +31,19 @@ export function createIntegrity(saved?: SavedIntegrity) {
       pasted = true;
     },
 
-    recordSpeaking(durationMs: number) {
-      usedVoice = true;
-      activeMs += durationMs;
-    },
-
     /** Emptying the box means starting fresh, so earlier signals no longer describe the text. */
     reset() {
       pasted = false;
-      usedVoice = false;
-      typed = false;
       activeMs = 0;
       lastKeystrokeAt = null;
     },
 
-    signalsFor(text: string): IntegritySignals {
-      return { pasted, activeMs, wordCount: countWords(text), inputMethod: usedVoice && !typed ? "voice" : "typed" };
+    signalsFor(text: string): Omit<IntegritySignals, "inputMethod"> {
+      return { pasted, activeMs, wordCount: countWords(text) };
     },
 
     toSave(): SavedIntegrity {
-      return { pasted, usedVoice, typed, activeMs };
+      return { pasted, activeMs };
     },
   };
 }

@@ -9,7 +9,6 @@ export const newAttemptBody = z.object({
   integrity: z.object({
     pasted: z.boolean(),
     activeMs: z.number().min(0),
-    inputMethod: z.enum(["typed", "voice"]),
   }),
   format: z.enum(["explain", "catch", "kid", "timed"]).optional(),
   picks: z
@@ -18,9 +17,8 @@ export const newAttemptBody = z.object({
     .optional(),
 });
 
-/** inputMethod and startedAfterMs are optional, so an older page that sends only the answer still works. */
+/** startedAfterMs is optional, so an older page that sends only the answer still works. */
 export const followUpBody = z.object({
   answer: z.string(),
-  inputMethod: z.enum(["typed", "voice"]).optional(),
   startedAfterMs: z.number().min(0).optional(),
 });

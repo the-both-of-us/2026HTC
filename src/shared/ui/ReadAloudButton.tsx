@@ -14,7 +14,7 @@ export function toSpeakable(text: string): string {
 
 /**
  * Reads text aloud with the browser's own voice. It is a reading aid in Learning Mode only:
- * nothing is sent to OryxLearn, and it has nothing to do with the voice interview.
+ * nothing is sent to OryxLearn.
  */
 export function ReadAloudButton({ text, what, className }: { text: string; what: string; className?: string }) {
   const learningMode = useLearningMode();
@@ -58,7 +58,7 @@ export function ReadAloudButton({ text, what, className }: { text: string; what:
     <button
       type="button"
       onClick={toggle}
-      title="Uses your browser's built-in voice. A reading aid, separate from the voice interview."
+      title="Uses your browser's built-in voice. A reading aid."
       className={clsx(
         "inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-control border border-rule-strong bg-raised/70 px-3 text-sm font-medium text-ink transition-control hover:border-control-edge hover:bg-raised",
         speaking && "border-accent/60 bg-accent/15",

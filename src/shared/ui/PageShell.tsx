@@ -21,12 +21,11 @@ type PageShellProps = {
   width?: PageWidth;
   /** Links or actions in a bar above the page. */
   headerActions?: ReactNode;
-  footer?: ReactNode;
   children: ReactNode;
 };
 
 /** Every page's frame: skip link, the sidebar (a top bar with a menu on phones), and <main>. */
-export function PageShell({ width = "wide", headerActions, footer, children }: PageShellProps) {
+export function PageShell({ width = "wide", headerActions, children }: PageShellProps) {
   // Appearance and Accessible learning mode live on /settings now.
   const footerControls = <AccountStatusLine />;
 
@@ -61,8 +60,6 @@ export function PageShell({ width = "wide", headerActions, footer, children }: P
         <main id="main" tabIndex={-1} className={clsx("flex flex-1 flex-col", WIDTH_CLASSES[width])}>
           {children}
         </main>
-
-        {footer && <footer className="px-4 py-6 text-sm text-ink-soft sm:px-7">{footer}</footer>}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { isYoungAudience } from "@/shared/audience";
 import { normalizeForMatch } from "@/shared/quote";
-import { SYLLABUS_SHAPE, type ProgramDepth } from "@/shared/types";
+import { SYLLABUS_SHAPE } from "@/shared/types";
 import { TARGET_WORDS, targetWords, wantsPractice, type RawLesson, type WordTarget } from "./prompt";
 import type { Lesson, LessonLine, LessonPart } from "./types";
 
@@ -66,9 +66,9 @@ const filled = (value: string) => value.trim() !== "";
 
 /**
  * What is wrong with a reply, in words the model can act on, or null if it is fine. `audience` is
- * the map's, and `depth` its syllabus depth: a degree lesson is longer and has practice cases.
+ * the map's, and `degree` true for a syllabus course: its lesson is longer and has practice cases.
  */
-export function lessonProblem(lesson: LessonLike, checkpoints: string[], audience?: string, depth?: ProgramDepth): string | null {
+export function lessonProblem(lesson: LessonLike, checkpoints: string[], audience?: string, degree = false): string | null {
   if (lesson.idea.filter(filled).length < 2) return "idea needs 2 to 4 paragraphs.";
   if (lesson.mistakes.filter((item) => filled(item.mistake) && filled(item.fix)).length < 2) {
     return "mistakes needs 3 items, each with a fix.";
@@ -76,12 +76,12 @@ export function lessonProblem(lesson: LessonLike, checkpoints: string[], audienc
   if (lesson.checks.filter((item) => filled(item.question) && filled(item.answer)).length < 2) {
     return "checks needs exactly 2 questions, each with an answer.";
   }
-  if (wantsPractice(audience, depth)) {
+  if (wantsPractice(audience, degree)) {
     const cases = (lesson.practice ?? []).filter((item) => filled(item.scenario) && filled(item.question) && filled(item.modelAnswer ?? ""));
-    const wanted = SYLLABUS_SHAPE.degree.practiceCases;
+    const wanted = SYLLABUS_SHAPE.practiceCases;
     if (cases.length !== wanted) return `practice needs exactly ${wanted} cases, each with a scenario, a question and a modelAnswer.`;
   }
-  const target = targetWords(audience, depth);
+  const target = targetWords(audience, degree);
   const limits = wordLimits(target);
   const words = wordsOf(lessonText(lesson)).length;
   if (words < limits.min) return `it has ${words} words. Write ${target.min} to ${target.max}.`;
@@ -117,7 +117,7 @@ export function toLesson(raw: RawLesson): Lesson {
 function practiceCases(raw: RawLesson) {
   return (raw.practice ?? [])
     .filter((item) => filled(item.scenario) && filled(item.question))
-    .slice(0, SYLLABUS_SHAPE.degree.practiceCases)
+    .slice(0, SYLLABUS_SHAPE.practiceCases)
     .map((item) => ({ scenario: item.scenario.trim(), question: item.question.trim() }));
 }
 
@@ -128,7 +128,7 @@ function practiceCases(raw: RawLesson) {
 export function practiceAnswersOf(raw: RawLesson): string[] {
   return (raw.practice ?? [])
     .filter((item) => filled(item.scenario) && filled(item.question))
-    .slice(0, SYLLABUS_SHAPE.degree.practiceCases)
+    .slice(0, SYLLABUS_SHAPE.practiceCases)
     .map((item) => item.modelAnswer.trim());
 }
 
@@ -143,7 +143,7 @@ export const PART_LIMITS: Record<LessonLine["part"], number> = {
   example: 1,
   mistake: 3,
   check: 2,
-  practice: SYLLABUS_SHAPE.degree.practiceCases,
+  practice: SYLLABUS_SHAPE.practiceCases,
 };
 
 /** The words of a line a learner reads. A practice line's model answer is not one of them. */

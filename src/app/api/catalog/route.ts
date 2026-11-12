@@ -24,7 +24,6 @@ export async function GET(request: Request) {
         title: program.title,
         summary: program.summary,
         audience: program.audience,
-        depth: program.depth,
         courseCount: program.courseCount,
       })),
     });

@@ -8,17 +8,16 @@ Paste a real job posting, upload a PDF or name a topic. OryxLearn turns it into 
 
 **Prompt 2:** develop in-demand skills and build meaningful networks in a rapidly changing job market.
 **Focus areas:** AI-driven skilling and verifiable portfolios (1), matching talent with mentors (2).
-**Local hook, verified from StatCan:** Alberta unemployment 7.3% vs Canada 6.7%, Oct 2026.
 
 ## Current shape
 
-Hosting is Vercel only (Vercel Blob for storage, in-memory locally). Claude Haiku is the only model. Topic courses and programs are generated once into a shared catalog and reused by everyone who asks for the same subject, and a topic course offers an optional placement pre-test. See each feature's README for details.
+Hosting is Vercel only (Vercel Blob for storage, in-memory locally). Claude Haiku is the only model. Topic courses and programs are generated once into a shared catalog and reused by everyone who asks for the same subject; `/courses` browses that catalog. A program is always a 40-course degree. Maps and programs are private: learners do not publish them. A topic course offers an optional placement pre-test. See each feature's README for details.
 
 ## The core loop (must never break)
 
 1. **Input:** paste a posting, upload a PDF or name a topic.
 2. **Map:** an interactive dependency graph. Nodes stay locked until their prerequisites are proven.
-3. **Teach-back:** explain a skill by typing or by voice.
+3. **Teach-back:** explain a skill in writing.
 4. **Grade:** fixed checkpoints, with quotes verified in code, and a score computed in code (see below).
 5. **Unlock:** the node is proven, and the next nodes open.
 6. **Evidence page:** public URL and QR code, showing proven skills, the transcript, integrity signals and sources.
@@ -51,13 +50,13 @@ The teach-back records whether text was pasted, active typing time, and word cou
 ## Checkpoints
 
 - **CP1, core loop:** skeleton, landing, posting to map, teach-back, unlocks, persistence. Deployed.
-- **CP2, study tools and trust:** flashcards and quiz in each node, public courses, evidence page and QR, PDF input with verified citations, accessibility mode, trust and delete-my-data page, zero serious axe violations.
-- **CP3, network and data:** QR quiz battle, matching by proven skills with labelled demo profiles, AESO live grid exercises (real data computed in code), StatCan labour numbers.
-- **CP4, ship:** eval harness results, tests, README, Devpost draft with AI disclosure, demo script and Q&A prep, video script.
+- **CP2, study tools and trust:** flashcards and quiz in each node, evidence page and QR, PDF input with verified citations, accessibility mode, trust and delete-my-data page, zero serious axe violations.
+- **CP3, network and data:** matching by proven skills with labelled demo profiles.
+- **CP4, ship:** eval harness results, tests, README.
 
 ## Hard rules
 
 - **Original work:** a judge okayed using the owner's earlier app OryxLearn for features and ideas. All code and design here is written new. OryxLearn is a read-only reference for behaviour. Never paste code from it. Disclose it on Devpost.
-- **No fabricated data:** demo profiles are visibly labelled. Energy and labour numbers come from live sources, or say they are unavailable.
+- **No fabricated data:** demo profiles are visibly labelled. 
 - **No gambling, no payments, no login wall.** Anonymous cookie identity, guest-first.
 - **Never break the demo:** errors are human sentences with a retry, never raw `TypeError: fetch failed`.

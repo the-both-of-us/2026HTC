@@ -101,7 +101,7 @@ export function DeleteMyData() {
       </h3>
       <p>
         Your maps, explanations, scores and proven skills are deleted. Evidence pages you published
-        stop working, and courses you published leave the directory. This cannot be undone.
+        stop working. This cannot be undone.
       </p>
       {step.kind === "failed" && <ErrorNotice message={step.message} onRetry={deleteEverything} />}
       <div className="flex flex-wrap gap-3">
@@ -142,8 +142,6 @@ export function deletedSentence(deleted: DeletedCounts): string {
     plural(deleted.attempts, "attempt"),
     plural(deleted.provenSkills, "proven skill"),
     plural(deleted.evidencePages, "evidence page"),
-    plural(deleted.courses, "published course"),
-    plural(deleted.gridAnswers, "grid answer"),
     plural(deleted.circles, "study circle"),
     plural(deleted.networkProfiles, "people profile"),
     plural(deleted.pretests, "pre-test result"),

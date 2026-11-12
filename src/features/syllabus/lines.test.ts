@@ -55,7 +55,6 @@ function fakeStreamLines(script: (options: StreamLinesOptions<unknown>) => Scrip
 const COURSE = { slug: "social-psychology", title: "Social psychology", summary: "Explain how others shape us.", requires: ["intro-psychology"], level: 200 as const };
 const INTRO_SYLLABUS = {
   version: 1 as const,
-  depth: "degree" as const,
   courseSlug: "intro-psychology",
   outcomes: [{ id: "o1", text: "Explain." }],
   units: [{ id: "u1", title: "Basics", outcomeIds: ["o1"], built: false, topics: [{ id: "what-is-psychology", title: "What psychology studies", objectives: ["a"], keyTerms: ["b"], inScope: "", outOfScope: "", buildsOn: [] }] }],
@@ -164,7 +163,7 @@ describe("streamSyllabus", () => {
     const { seen, hooks: h } = hooks();
     const syllabus = await streamSyllabus(context(), h);
     expect(seen).toEqual(["head", "u1:1", "u2:2", "u3:3", "u4:4", "u5:5", "u6:6", "u7:7", "u8:8"]);
-    expect(syllabus).toMatchObject({ depth: "degree", rootMapId: context().courseId, courseSlug: "social-psychology", level: 200 });
+    expect(syllabus).toMatchObject({ rootMapId: context().courseId, courseSlug: "social-psychology", level: 200 });
     expect(syllabus.planning).toBeUndefined();
     expect(syllabus.units).toHaveLength(8);
     expect(mockStream.mock.calls[0][0]).toMatchObject({ profile: "plan", label: "syllabus", effort: "medium" });

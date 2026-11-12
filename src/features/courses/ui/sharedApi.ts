@@ -1,4 +1,4 @@
-/** Calls for the shared catalog shelf on /courses. Every failure becomes a sentence a person can act on. */
+/** Calls and labels for /courses, the shared catalog. Every failure becomes a sentence a person can act on. */
 import { isUuid } from "@/shared/ids";
 
 export type SharedCourseItem = {
@@ -15,11 +15,28 @@ export type SharedProgramItem = {
   title: string;
   summary: string;
   audience: string;
-  depth: "quick" | "degree";
   courseCount: number;
 };
 
+export type SharedCatalog = { courses: SharedCourseItem[]; programs: SharedProgramItem[] };
+
 export type SharedResult<T> = ({ ok: true } & T) | { ok: false; message: string };
+
+/** How long to wait after the last keystroke before searching. */
+export const SEARCH_DEBOUNCE_MS = 250;
+
+/** "1 course", "3 courses". */
+export function countLabel(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+/** The polite announcement under the search field. */
+export function resultsSummary(count: number, query: string): string {
+  const q = query.trim();
+  if (count === 0) return q ? `Nothing matches "${q}".` : "No courses or programs have been shared yet.";
+  const results = countLabel(count, "result", "results");
+  return q ? `${results} match "${q}".` : `${results}.`;
+}
 
 const TIMEOUT_MS = 20_000;
 const COULD_NOT_CONNECT = "OryxLearn could not be reached. Check your connection, then try again.";
@@ -47,7 +64,7 @@ async function request<T>(url: string, init: RequestInit, fallback: string, read
   }
 }
 
-export function fetchSharedCatalog(q: string): Promise<SharedResult<{ courses: SharedCourseItem[]; programs: SharedProgramItem[] }>> {
+export function fetchSharedCatalog(q: string): Promise<SharedResult<SharedCatalog>> {
   const query = q.trim() ? `?${new URLSearchParams({ q: q.trim() })}` : "";
   return request(`/api/catalog${query}`, {}, "The shared courses could not be loaded this time.", (body) => {
     const courses = field(body, "courses");

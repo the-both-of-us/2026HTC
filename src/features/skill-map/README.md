@@ -67,11 +67,11 @@ A quote counts as verified only if code finds it in the posting (`@/shared/quote
 
 - **Catching up:** maps saved before the index existed are indexed by one full read of `maps/`, the first time anyone lists maps. The marker `indexes/maps-by-owner-v1` then says it is done, and the full read never happens again.
 - **Stale entries:** an entry whose map is gone is removed when it is next read. An entry whose map names another owner is skipped, so the index can only narrow an answer, never widen it.
-- Owner ids go into a key, so only plain ids (a UUID, or a fixed seed id such as `oryxlearn-sample-courses`) are indexed.
+- Owner ids go into a key, so only plain ids (letters, digits, - and _) are indexed.
 
 ## Reading a map
 
-Only the owner can read a map, unless it is published as a course (`isPublished` from `@/features/courses`). `GET /api/maps/[id]` and the map page check that with `canReadMap` in `src/app/api/maps/[id]/access.ts`. It sits at route level because courses imports skill-map. `getSkillMap` itself is not gated, so server code can still read a map. **Never send a full `SkillMap` to a browser:** `ownerId` is the owner's identity cookie value, so publishing it would let a reader act as them, and checkpoints are the answer key, so a reader gets only `checkpointCount`. `toPublicMap` handles both.
+Only the owner can read a map. `GET /api/maps/[id]` and the map page check that with `canReadMap` in `src/app/api/maps/[id]/access.ts`. `getSkillMap` itself is not gated, so server code can still read a map. **Never send a full `SkillMap` to a browser:** `ownerId` is the owner's identity cookie value, so publishing it would let a reader act as them, and checkpoints are the answer key, so a reader gets only `checkpointCount`. `toPublicMap` handles both.
 
 ## The demo cache
 

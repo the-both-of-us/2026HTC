@@ -12,11 +12,12 @@ import { syllabusSuffix } from "./skillLines";
 /**
  * The course boss: once every topic on a map is proven, a final interview of three questions
  * that each mix topics. Each question is saved as an attempt with an open follow-up, so the
- * voice interview and the follow-up route work for it unchanged.
+ * follow-up route works for it unchanged.
  *
- * A degree course (map.syllabus.depth "degree") has a 6-question final with pass mark 4, and a
+ * A syllabus course (every topic course) has a 6-question final with pass mark 4, and a
  * 4-question unit test (pass mark 3) after each unit, stored the same way under node id
- * `final:<unitId>` and key `final/<mapId>/<unitId>`. The constants below are the quick course's.
+ * `final:<unitId>` and key `final/<mapId>/<unitId>`. The constants below are
+ * the final of a map with no syllabus (a posting or PDF map).
  */
 export const FINAL_NODE_ID = "final-interview";
 export const FINAL_QUESTIONS = 3;
@@ -53,12 +54,12 @@ export type FinalPlan = {
  */
 export function finalPlan(map: SkillMap, unitId?: string): FinalPlan {
   if (unitId === undefined) {
-    const degree = map.syllabus?.depth === "degree";
+    const degree = map.syllabus !== undefined;
     return {
       kind: "course",
       nodeId: FINAL_NODE_ID,
-      questions: degree ? SYLLABUS_SHAPE.degree.finalQuestions : FINAL_QUESTIONS,
-      passMark: degree ? SYLLABUS_SHAPE.degree.finalPassMark : FINAL_PASS_MARK,
+      questions: degree ? SYLLABUS_SHAPE.finalQuestions : FINAL_QUESTIONS,
+      passMark: degree ? SYLLABUS_SHAPE.finalPassMark : FINAL_PASS_MARK,
       nodes: map.nodes,
     };
   }
@@ -90,7 +91,13 @@ export type FinalRecord = {
   result?: FinalResult;
 };
 
-export type FinalResult = { passed: boolean; passedCount: number; spokenCount: number; finishedAt: string };
+export type FinalResult = {
+  passed: boolean;
+  passedCount: number;
+  /** Only on results saved while answers could be spoken. New results leave it out. */
+  spokenCount?: number;
+  finishedAt: string;
+};
 
 export type FinalView = {
   state: "locked" | "ready" | "in-progress" | "passed" | "failed";
@@ -121,7 +128,7 @@ ${LEARNER_TEXT_RULE}`;
 const COURSE_INTRO = "A learner has just proved every topic in a course. Write 3 questions for a short final interview.";
 
 /**
- * The question writer's prompt for a plan. The quick course's is QUESTIONS_SYSTEM, byte for byte.
+ * The question writer's prompt for a plan. A map with no syllabus gets QUESTIONS_SYSTEM, byte for byte.
  * A degree course's final asks for more questions spread over the whole course, and a unit test
  * is about that unit only.
  */
@@ -152,7 +159,7 @@ export async function createFinal(
   plan: FinalPlan = finalPlan(map),
 ): Promise<{ record: FinalRecord; attempts: Attempt[] }> {
   // A degree course's final lists 30 to 50 topics, so it leaves out the syllabus lines to stay a prompt of a sane size.
-  const withLines = !(plan.kind === "course" && map.syllabus?.depth === "degree");
+  const withLines = !(plan.kind === "course" && map.syllabus !== undefined);
   const topicList = plan.nodes
     .map((node, index) => `${index + 1}. ${node.title}: ${node.checkpoints.join("; ")}${withLines ? syllabusSuffix(map, node, "   ") : ""}`)
     .join("\n");
@@ -184,7 +191,7 @@ export async function createFinal(
     mapId: map.id,
     ownerId,
     ...(plan.unitId !== undefined && { unitId: plan.unitId }),
-    // Only a plan that differs from the old final writes it, so quick records stay as they were.
+    // Only a plan that differs from the old final writes it, so a posting map's records stay as they were.
     ...(plan.passMark !== FINAL_PASS_MARK && { passMark: plan.passMark }),
     attemptIds: attempts.map((attempt) => attempt.id),
     topics: reply.questions.map((item) => topicTitles(plan.nodes, item.topics)),
@@ -243,7 +250,6 @@ export function settle(record: FinalRecord, attempts: (Attempt | null)[]): Final
     result: {
       passed: passedCount >= (record.passMark ?? FINAL_PASS_MARK),
       passedCount,
-      spokenCount: answered.filter((attempt) => attempt.followUp?.inputMethod === "voice").length,
       finishedAt: new Date().toISOString(),
     },
   };

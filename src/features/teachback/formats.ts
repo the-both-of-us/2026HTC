@@ -14,7 +14,7 @@ export const FORMAT_LABELS: Record<TopicFormat, { name: string; short: string; p
   explain: { name: "Explain it", short: "Explain", prompt: "Explain it in your own words." },
   catch: { name: "Catch the mistake", short: "Catch", prompt: "The AI explains it, with mistakes hidden inside. Find them." },
   kid: { name: "Explain it to a 10-year-old", short: "Age 10", prompt: "Short sentences and everyday words." },
-  timed: { name: "Say it in 30 seconds", short: "30 sec", prompt: "Beat the clock. Talk, or type if you can't." },
+  timed: { name: "Say it in 30 seconds", short: "30 sec", prompt: "Beat the clock. Type it before time runs out." },
 };
 
 /** For young children, who may be younger than 10 themselves, the "kid" format is explaining to a friend. */

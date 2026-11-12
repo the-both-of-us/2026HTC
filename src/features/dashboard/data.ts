@@ -1,5 +1,4 @@
 /** Gathers the dashboard from other features. Server only. */
-import { isPublished } from "@/features/courses";
 import { getReviewSummary, listReviewActivity, type ReviewSummary } from "@/features/review";
 import { listMapsByOwner } from "@/features/skill-map";
 import { listProvedNodes } from "@/features/teachback";
@@ -16,10 +15,9 @@ export type CourseRow = {
   subtitle: string;
   provenCount: number;
   totalSkills: number;
-  isPublic: boolean;
-  /** "Your copy of a shared course": started from a course or joined from a study circle. */
+  /** "Your copy": joined from a study circle. */
   isCopy: boolean;
-  /** The map this copy was started from, so "Start with a course" can leave that course out. */
+  /** The map this copy was made from, so the card shows that map's seal. */
   startedFrom: string | null;
   /** Its owner can delete it here. A course inside a program goes with the program, so it can't. */
   canDelete: boolean;
@@ -43,8 +41,6 @@ export type DashboardData = {
   provenTotal: number;
   /** Courses with at least one proof, counting a course and your copy of it once. */
   provenCourseCount: number;
-  /** Every map you hold and every map one was copied from, so "Start with a course" can leave them out. */
-  startedIds: string[];
   recentProven: ProvenItem[];
   /** Null when review could not be read: the rest of the page still shows. */
   review: ReviewSummary | null;
@@ -52,7 +48,7 @@ export type DashboardData = {
   activity: string[];
 };
 
-export type MapFacts = { map: SkillMap; proved: { nodeId: string; provenAt: string; pretest?: true }[]; isPublic: boolean };
+export type MapFacts = { map: SkillMap; proved: { nodeId: string; provenAt: string; pretest?: true }[] };
 
 /** A copy keeps its title and skills, so this also matches a copy whose original it was not made from. */
 function courseKey(map: SkillMap): string {
@@ -87,7 +83,7 @@ export function assembleDashboard(
   now: Date,
 ): DashboardData {
   const proven: ProvenItem[] = [];
-  const rows = facts.map(({ map, proved, isPublic }): { key: string; row: CourseRow } => {
+  const rows = facts.map(({ map, proved }): { key: string; row: CourseRow } => {
     const titles = new Map(map.nodes.map((node) => [node.id, node.title]));
     // Only skills still on the map, once each.
     const seen = new Set<string>();
@@ -112,7 +108,6 @@ export function assembleDashboard(
       subtitle: map.subtitle,
       provenCount: seen.size,
       totalSkills: map.nodes.length,
-      isPublic,
       isCopy: Boolean(map.forkedFrom),
       startedFrom: map.forkedFrom ?? null,
       canDelete: !map.program,
@@ -131,7 +126,6 @@ export function assembleDashboard(
     courses: onePerCourse(rows),
     provenTotal: proven.length,
     provenCourseCount: new Set(rows.filter(({ row }) => row.provenCount > 0).map(({ key }) => key)).size,
-    startedIds: facts.flatMap(({ map }) => (map.forkedFrom ? [map.id, map.forkedFrom] : [map.id])),
     recentProven: proven.slice(0, RECENT_PROVEN),
     review,
     activity,
@@ -158,11 +152,8 @@ export async function loadDashboard(userId: string, now = new Date()): Promise<D
   ]);
   const facts = await Promise.all(
     maps.map(async (map): Promise<MapFacts> => {
-      const [proved, isPublic] = await Promise.all([
-        orFallback(listProvedNodes(map.id, userId), [], "proven skills"),
-        orFallback(isPublished(map.id), false, "whether a map is published"),
-      ]);
-      return { map, proved, isPublic };
+      const proved = await orFallback(listProvedNodes(map.id, userId), [], "proven skills");
+      return { map, proved };
     }),
   );
   return assembleDashboard(facts, review, reviewActivity, now);

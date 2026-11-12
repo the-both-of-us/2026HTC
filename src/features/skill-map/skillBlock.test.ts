@@ -15,7 +15,6 @@ const LEGACY_NODE: SkillNode = {
 
 const SYLLABUS: CourseSyllabus = {
   version: 1,
-  depth: "degree",
   courseSlug: "intro",
   outcomes: [
     { id: "o1", text: "Describe the science of behaviour" },

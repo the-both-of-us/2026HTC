@@ -14,7 +14,6 @@ export const KEY_MARK = "ANSWERKEY";
 export function makeSyllabus(units = 3, topicsPerUnit = 4): CourseSyllabus {
   return {
     version: 1,
-    depth: "degree",
     courseSlug: "system-design",
     outcomes: [1, 2, 3, 4].map((n) => ({ id: `o${n}`, text: `Outcome ${n}.` })),
     units: Array.from({ length: units }, (_, u): SyllabusUnit => ({

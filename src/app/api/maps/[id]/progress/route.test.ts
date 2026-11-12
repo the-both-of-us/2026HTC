@@ -55,7 +55,6 @@ describe("GET /api/maps/[id]/progress", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      isOwner: true,
       mapId: map.id,
       proven: { "secret-first-node": "attempt-1" },
       unlocked: {},
@@ -64,15 +63,15 @@ describe("GET /api/maps/[id]/progress", () => {
     });
   });
 
-  it("tells anyone else it isn't theirs with a 200, and nothing about the map or its owner", async () => {
+  it("refuses anyone else with a 403 sentence, and nothing about the map or its owner", async () => {
     const map = await savedMap();
     mockGetUserId.mockResolvedValue("other-user");
 
     const response = await read(map.id);
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(403);
     const text = await response.text();
-    expect(JSON.parse(text)).toEqual({ isOwner: false, proven: {}, unlocked: {} });
+    expect(JSON.parse(text).error).toMatch(/someone else/);
     for (const secret of [OWNER, "secret-first-node", "attempt-1", "answer key"]) expect(text).not.toContain(secret);
   });
 

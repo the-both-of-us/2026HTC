@@ -8,12 +8,12 @@ Hack the Change 2026, Prompt 2. For students and curious people: learn a topic, 
 
 ## How it works
 
-1. **Start from anything.** Name a topic, paste a job posting or upload a PDF. A broad goal becomes a **program** of courses, and each course is a map of topics, foundations first.
+1. **Start from anything.** Name a topic, paste a job posting or upload a PDF. A broad subject becomes a **program**, always a four-year degree of 40 courses; a narrow one becomes one course. Each course is a map of topics, foundations first. Maps and programs are private to you.
 2. **Shared catalog and pre-test.** A topic course or program is generated once and reused by everyone who asks for the same subject. A topic course offers an optional, skippable pre-test so you do not repeat what you know.
 3. **Pick a topic.** Topics unlock as you prove the ones before them.
 4. **Read.** A 3 to 5 minute lesson, plus flashcards and a quiz.
-5. **Prove it** in a format that rotates by topic: *Explain it*, *Catch the AI's mistake*, *Explain it to a 10-year-old*, *Say it in 30 seconds*. Finish a course with a **final interview by voice** and earn its badge. You can type or talk hands-free.
-6. **Share an evidence page** with a QR code. Anyone can check what you proved, how (typed or spoken, which format), and the quotes behind it, without trusting our AI.
+5. **Prove it** in a format that rotates by topic: *Explain it*, *Catch the AI's mistake*, *Explain it to a 10-year-old*, *Say it in 30 seconds*. Finish a course with a typed **final interview** and earn its badge.
+6. **Share an evidence page** with a QR code. Anyone can check what you proved, how (which format, pasted or not, active time), and the quotes behind it, without trusting our AI.
 
 **Together:** start a **study circle**, share its QR code to join, and watch a live feed and a weekly race.
 **Habit loop:** a daily streak (one free freeze a week), a combo for proving topics close together, a map that slowly fades until a 60-second quick check relights it, and a topic of the day. Nothing can take a proof away.
@@ -29,19 +29,15 @@ Hack the Change 2026, Prompt 2. For students and curious people: learn a topic, 
 
 - Next.js 16 with feature folders: `src/app` has thin routes, `src/features/<name>` holds the code, `src/shared` holds what two or more features use.
 - **AI:** Claude Haiku only, through the Anthropic SDK, with three thinking profiles (plan, write, check). No fallback model: a failure shows a sentence and a retry.
-- **Voice:** Deepgram Flux for listening and for the spoken questions.
 - **Storage:** Vercel Blob (in-memory locally, when no Blob token is set).
 - **Sign-in:** optional Auth0. Without it, everyone is a guest.
 - **Hosting:** Vercel. Pushes to `main` deploy.
-- **Real data, computed in code:** AESO live grid figures and Statistics Canada labour numbers.
 
 ```mermaid
 flowchart LR
   U[Learner] --> App[Next.js app]
   App --> AI[Claude Haiku]
-  App --> V[Deepgram Flux voice]
   App --> S[(Vercel Blob)]
-  App --> D[AESO and StatCan]
   App -.-> A[Auth0]
 ```
 
@@ -55,13 +51,13 @@ npm run dev -- -p 3000
 
 Also: `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build`, `npm run eval` (real AI calls).
 
-Environment variable names (see `.env.example`): `SESSION_SECRET`, `BLOB_READ_WRITE_TOKEN`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `GEMINI_API_KEY` (backup voice only), `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `PROOF_SEAL_SECRET`, `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `APP_BASE_URL`. `ANTHROPIC_API_KEY` is required for AI features; without voice keys the interview moves to typing. `PROOF_SEAL_SECRET` (`openssl rand -hex 32`, set once on every host) signs each published evidence page; without it pages still publish, but say the server has no seal, so an edit to the store can only be caught by a saved fingerprint.
+Environment variable names (see `.env.example`): `SESSION_SECRET`, `BLOB_READ_WRITE_TOKEN`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `PROOF_SEAL_SECRET`, `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `APP_BASE_URL`. `ANTHROPIC_API_KEY` is required for AI features. `PROOF_SEAL_SECRET` (`openssl rand -hex 32`, set once on every host) signs each published evidence page; without it pages still publish, but say the server has no seal, so an edit to the store can only be caught by a saved fingerprint.
 
 ## AI disclosure
 
-- **Built with Claude Code** (AI coding agents) directed by the owner. We reviewed, ran and tested the changes. The 71 eval labels were also written by Claude. Full text: [docs/submission/ai-disclosure.md](docs/submission/ai-disclosure.md).
-- **AI models at runtime:** Claude Haiku for everything written or graded (programs, syllabi, maps, lessons, quiz, flashcards, grading, follow-ups), and Deepgram Flux for voice. Streaks, grid and labour data, matching and spaced repetition use no AI.
+- **Built with Claude Code** (AI coding agents) directed by the owner. We reviewed, ran and tested the changes. The 71 eval labels were also written by Claude.
+- **AI models at runtime:** Claude Haiku for everything written or graded (programs, syllabi, maps, lessons, quiz, flashcards, grading, follow-ups). Streaks, matching and spaced repetition use no AI.
 
 ## Prior work
 
-OryxLearn is a rebuild, with all-new code, of our earlier OryxLearn project. A judge okayed reusing its features and ideas; no code was copied. New this weekend: the grading method with code-checked quotes and the eval, PDF citations, programs, the Read lessons, the four proving formats and the final interview, voice, study circles, streaks, the evidence page and the /trust page.
+OryxLearn is a rebuild, with all-new code, of our earlier OryxLearn project. A judge okayed reusing its features and ideas; no code was copied. New this weekend: the grading method with code-checked quotes and the eval, PDF citations, programs, the Read lessons, the four proving formats and the final interview, study circles, streaks, the evidence page and the /trust page.

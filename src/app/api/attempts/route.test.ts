@@ -40,7 +40,7 @@ function post() {
         explanation: "",
         format: "catch",
         picks: [{ sentence: 2, correction: "Arrays are objects, not a primitive type." }],
-        integrity: { pasted: false, activeMs: 1000, inputMethod: "typed" },
+        integrity: { pasted: false, activeMs: 1000 },
       }),
     }),
   );

@@ -47,9 +47,9 @@ describe("catalog keys", () => {
     expect(audKey(GRADE_1)).toBe("grade-1-students-about-6-years-old");
   });
 
-  it("puts audience and depth in every name and alias key", () => {
+  it("puts the audience in every name and alias key", () => {
     expect(catalogKeys.courseName("general", "psychology")).toBe("catalog/names/course/general/psychology");
-    expect(catalogKeys.programAlias("general", "degree", "abc")).toBe("catalog/alias/program/general/degree/abc");
+    expect(catalogKeys.programAlias("general", "abc")).toBe("catalog/alias/program/general/abc");
     expect(catalogKeys.syllabus("c1")).toBe("catalog/syllabi/c1");
   });
 });
@@ -139,8 +139,8 @@ describe("resolveCourse", () => {
     await expect(resolveCourse({ text: "My cousin Zed's sql window functions", audience: "", deadline: later() })).rejects.toThrow(
       "The AI is unavailable right now. Please try again in a moment.",
     );
-    await expect(resolveProgram({ text: "My cousin Zed's psychology", audience: "", depth: "degree", deadline: later() })).rejects.toBeInstanceOf(AiUnavailableError);
-    await expect(resolveAuto({ text: "My cousin Zed's psychology", audience: "", depth: "quick", deadline: later() })).rejects.toBeInstanceOf(AiUnavailableError);
+    await expect(resolveProgram({ text: "My cousin Zed's psychology", audience: "", deadline: later() })).rejects.toBeInstanceOf(AiUnavailableError);
+    await expect(resolveAuto({ text: "My cousin Zed's psychology", audience: "", deadline: later() })).rejects.toBeInstanceOf(AiUnavailableError);
     expect(await listKeys("catalog/")).toEqual([]);
   });
 
@@ -174,7 +174,7 @@ describe("claims", () => {
   it("stores no learner words in a canonical doc or key", async () => {
     const secret = "my name is Zed and I want psychology";
     await claimCourse({ text: secret, audience: "", title: "Psychology", summary: "Know the field." });
-    await claimProgram({ text: secret, audience: "", depth: "quick", title: "Psychology", summary: "A path." });
+    await claimProgram({ text: secret, audience: "", title: "Psychology", summary: "A path." });
     const keys = await listKeys("catalog/");
     for (const key of keys) {
       expect(key).not.toContain("zed");
@@ -183,15 +183,12 @@ describe("claims", () => {
   });
 
   it("reads a claimed program as planning while its planner starts, then stalled until its frame is planned", async () => {
-    const { id } = await claimProgram({ text: "psychology", audience: "", depth: "degree", title: "Psychology", summary: "A degree." });
-    expect(await readCatalogProgram(id)).toMatchObject({ state: "planning", program: { title: "Psychology", depth: "degree", courses: [] } });
+    const { id } = await claimProgram({ text: "psychology", audience: "", title: "Psychology", summary: "A degree." });
+    expect(await readCatalogProgram(id)).toMatchObject({ state: "planning", program: { title: "Psychology", courses: [] } });
     const seed = (await getDoc<Record<string, unknown>>(catalogKeys.programSeed(id)))!;
     await putDoc(catalogKeys.programSeed(id), { ...seed, createdAt: new Date(Date.now() - 60_000).toISOString() });
     expect(await readCatalogProgram(id)).toMatchObject({ state: "stalled", program: { courses: [] } });
-    expect(await resolveProgram({ text: "Psychology", audience: "", depth: "degree", deadline: later() })).toEqual({ status: "found", programId: id });
-    // A quick program is a different entry.
-    mockChat.mockResolvedValueOnce({ pick: 0, title: "Psychology", summary: "A path." } as never);
-    expect(await resolveProgram({ text: "Psychology", audience: "", depth: "quick", deadline: later() })).toMatchObject({ status: "new" });
+    expect(await resolveProgram({ text: "Psychology", audience: "", deadline: later() })).toEqual({ status: "found", programId: id });
   });
 });
 
@@ -246,7 +243,7 @@ describe("readCatalogSyllabus", () => {
     const planning = await readCatalogSyllabus(id);
     expect(planning).toMatchObject({ state: "planning", syllabus: { planning: true, rootMapId: id, courseSlug: "intro-psychology", units: [{ id: "u1" }] } });
 
-    await putDoc(catalogKeys.syllabus(id), { version: 1, depth: "degree", courseSlug: "intro-psychology", outcomes: [], units: [], assessment: { unitTests: true, finalQuestions: 6 } });
+    await putDoc(catalogKeys.syllabus(id), { version: 1, courseSlug: "intro-psychology", outcomes: [], units: [], assessment: { unitTests: true, finalQuestions: 6 } });
     expect((await readCatalogSyllabus(id)).state).toBe("ready");
     expect(await getCatalogCourse(id)).toMatchObject({ title: "Introduction to psychology" });
   });

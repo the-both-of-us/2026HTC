@@ -24,7 +24,6 @@ beforeEach(() => {
 const topic = (id: string) => ({ id, title: id, objectives: ["a", "b"], keyTerms: ["x", "y", "z"], inScope: "in", outOfScope: "out", buildsOn: [] });
 const syllabus = (units: number, topicsPerUnit: number, extra: Partial<CourseSyllabus> = {}): CourseSyllabus => ({
   version: 1,
-  depth: "degree",
   courseSlug: "c",
   outcomes: [],
   units: Array.from({ length: units }, (_, u) => ({
@@ -46,14 +45,13 @@ async function addCourse(title: string, createdAt: string, syl: CourseSyllabus |
   return id;
 }
 
-async function addProgram(title: string, createdAt: string, courses: number, depth: "quick" | "degree" = "quick") {
+async function addProgram(title: string, createdAt: string, courses: number) {
   const id = randomUUID();
   const program: CatalogProgram = {
     id,
     title,
     summary: `Path through ${title}.`,
     audience: "",
-    depth,
     status: "ready",
     createdAt,
     courses: Array.from({ length: courses }, (_, i) => ({ slug: `c${i}`, title: `C${i}`, summary: "s", requires: [], courseId: randomUUID() })),
@@ -109,14 +107,14 @@ describe("listSharedCourses", () => {
 });
 
 describe("listSharedPrograms", () => {
-  it("lists final programs newest first with a counted course count, depth and public fields", async () => {
-    const a = await addProgram("Backend", "2026-11-01T00:00:00Z", 5);
-    const b = await addProgram("Psychology", "2026-11-05T00:00:00Z", 40, "degree");
+  it("lists final programs newest first with a counted course count and public fields", async () => {
+    const a = await addProgram("Backend", "2026-11-01T00:00:00Z", 40);
+    const b = await addProgram("Psychology", "2026-11-05T00:00:00Z", 40);
     await putDoc(catalogKeys.program(randomUUID()), { ...(await getDoc<CatalogProgram>(catalogKeys.program(a)))!, courses: [] });
     const list = await listSharedPrograms();
     expect(list.map((p) => p.programId)).toEqual([b, a]);
-    expect(list[0]).toMatchObject({ depth: "degree", courseCount: 40 });
-    expect(Object.keys(list[0]).sort()).toEqual(["audience", "courseCount", "depth", "programId", "summary", "title"]);
+    expect(list[0]).toMatchObject({ courseCount: 40 });
+    expect(Object.keys(list[0]).sort()).toEqual(["audience", "courseCount", "programId", "summary", "title"]);
     expect((await listSharedPrograms({ q: "BACK" })).map((p) => p.title)).toEqual(["Backend"]);
   });
 });

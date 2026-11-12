@@ -11,7 +11,6 @@ export {
 export { contentIdOf, discardUnitNodes, ensureUnitNodes, syncCourseMap } from "./canonical";
 export type { CourseBuildState, CreateMapRequest, CreateMapResponse, MapResponse, UnitNodesInput, UnitNodesResult } from "./types";
 export { inBackground, routeDeadline, ROUTE_BUDGET_MS } from "./background";
-export { isEnergyRelated } from "./energy";
 export { generatePdfSkillMap, generateSkillMap } from "./generate";
 export { MAX_PDF_BYTES, MAX_PDF_PAGES } from "./pdf";
 export { deriveNodeStates, unlockedEarlyIds } from "./states";

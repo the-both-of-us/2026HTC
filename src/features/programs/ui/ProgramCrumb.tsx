@@ -2,8 +2,8 @@
 
 import { ArrowLeft, Unlock } from "lucide-react";
 import Link from "next/link";
-import type { ProgramDepth, ProgramLink } from "@/shared/types";
-import { degreeProofsToUnlock, proofsToUnlock } from "../unlock";
+import type { ProgramLink } from "@/shared/types";
+import { proofsToUnlock } from "../unlock";
 
 /**
  * "Course 2 of 6 · Backend developer", linking back to the program, plus how close
@@ -13,16 +13,14 @@ export function ProgramCrumb({
   program,
   proven,
   total,
-  depth,
 }: {
   program: ProgramLink;
   proven: number;
+  /** Planned topics: the next course opens at a quarter of them. */
   total: number;
-  /** A degree course opens the next at a quarter of its planned topics, not half. */
-  depth?: ProgramDepth;
 }) {
   const next = program.unlocks[0];
-  const needed = (depth === "degree" ? degreeProofsToUnlock(total) : proofsToUnlock(total)) - proven;
+  const needed = proofsToUnlock(total) - proven;
 
   return (
     <p className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">

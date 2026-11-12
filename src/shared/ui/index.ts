@@ -2,7 +2,6 @@ export { Badge } from "./Badge";
 export { PretestBadge } from "./PretestBadge";
 export { Button, buttonClasses } from "./Button";
 export { Card } from "./Card";
-export { ComingSoon } from "./ComingSoon";
 export { ErrorNotice } from "./ErrorNotice";
 export { Field, Textarea, TextInput } from "./Field";
 export type { FieldControlProps } from "./Field";

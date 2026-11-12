@@ -15,9 +15,9 @@ export function needsProgramPoll(program: Pick<ProgramView, "planning" | "course
   return program.courses.some((course) => course.startable === false);
 }
 
-/** "Planning courses: 12 of 40", or "Planning courses: 5 so far" when the total is not known. */
+/** "Planning courses: 12 of 40". */
 export function planningLine(planning: Pick<ProgramPlanning, "planned" | "expected">): string {
-  return planning.expected !== null ? `Planning courses: ${planning.planned} of ${planning.expected}` : `Planning courses: ${planning.planned} so far`;
+  return `Planning courses: ${planning.planned} of ${planning.expected}`;
 }
 
 /** A course whose Start button is off: its catalog entry is not written yet. */

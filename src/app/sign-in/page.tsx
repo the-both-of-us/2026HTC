@@ -6,17 +6,16 @@ import { ContinueButton, ContinueLink } from "./ContinueButton";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Signing in is optional. It lets you publish courses, like them, have a profile, and use one account on every device.",
+  description: "Signing in is optional. It gives you a profile on People and one account on every device.",
 };
 
-/** Why sign in, in three lines, then one button. Signing in is never required. */
+/** Why sign in, in two lines, then one button. Signing in is never required. */
 export default function SignInPage() {
   return (
     <PageShell width="reading">
       <h1 className="text-3xl font-bold sm:text-4xl">Sign in</h1>
       <p className="mt-4 text-lg text-ink-soft">Signing in is optional. It adds:</p>
       <ul className="mt-3 flex list-disc flex-col gap-2 pl-6 text-lg">
-        <li>Publishing your courses to the public directory, and liking other people&apos;s.</li>
         <li>A profile on People, built from the skills you have proven.</li>
         <li>The same account and progress on every device.</li>
       </ul>

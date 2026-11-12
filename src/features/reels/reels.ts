@@ -1,4 +1,3 @@
-import { isPublished } from "@/features/courses";
 import { getSkillMap } from "@/features/skill-map";
 import { isNodeLockedFor } from "@/features/teachback";
 import { HttpError } from "@/shared/http";
@@ -30,12 +29,12 @@ const inFlight = new Map<string, Promise<Reel[]>>();
 export type ReelOptions = { apiKey?: string; now?: number };
 
 /**
- * The map and skill, checked like its lesson: the map's owner, or anyone once it is a published
- * course, and never a skill that is still locked. A private map is the same 404 as a missing one.
+ * The map and skill, checked like its lesson: only the map's owner, and never a skill that is still
+ * locked. Someone else's map is the same 404 as a missing one.
  */
 async function resolveSkill(mapId: string, nodeId: string, viewerId: string) {
   const map = await getSkillMap(mapId);
-  const mayRead = map && ((viewerId !== "" && map.ownerId === viewerId) || (await isPublished(map.id)));
+  const mayRead = map && viewerId !== "" && map.ownerId === viewerId;
   if (!map || !mayRead) throw new HttpError("We could not find that map. Check the link, or build a new one.", 404);
   const node = map.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new HttpError("We could not find that skill on this map.", 404);
