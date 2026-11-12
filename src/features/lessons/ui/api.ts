@@ -1,5 +1,5 @@
 /** The calls to the lessons API. Every failure becomes a sentence a person can act on. */
-import type { Lesson, LessonPart, PracticeFeedback } from "../types";
+import type { Lesson, LessonPart, PracticeFeedback, PracticeHint } from "../types";
 
 /** One step of a lesson being read: the final lesson, the parts written so far, or a failure. */
 export type LessonStep =
@@ -102,5 +102,30 @@ export async function checkPractice(mapId: string, nodeId: string, caseIndex: nu
     return { ok: false, message: typeof body?.error === "string" ? body.error : "Your answer could not be checked this time. Please try again." };
   } catch {
     return { ok: false, message: "Your answer could not be checked. Check your connection, then try again." };
+  }
+}
+
+export type PracticeHintResult = { ok: true; hint: PracticeHint } | { ok: false; message: string };
+
+/**
+ * The next step of help on practice case `caseIndex`: hint 1, 2 or 3 (written for what the learner
+ * has typed so far), or step 4, the model answer.
+ */
+export async function fetchPracticeHint(mapId: string, nodeId: string, caseIndex: number, step: number, answer: string): Promise<PracticeHintResult> {
+  try {
+    const response = await fetch("/api/lessons/practice/hint", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mapId, nodeId, caseIndex, step, answer: answer.slice(0, 4_000) }),
+      signal: AbortSignal.timeout(40_000),
+    });
+    const body = await response.json().catch(() => null);
+    const hint = body?.hint;
+    if (response.ok && typeof hint?.text === "string" && (hint.kind === "hint" || hint.kind === "answer") && typeof hint.step === "number") {
+      return { ok: true, hint: { step: hint.step, kind: hint.kind, text: hint.text } };
+    }
+    return { ok: false, message: typeof body?.error === "string" ? body.error : "We could not get a hint this time. Please try again." };
+  } catch {
+    return { ok: false, message: "We could not get a hint. Check your connection, then try again." };
   }
 }

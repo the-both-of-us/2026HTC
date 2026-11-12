@@ -28,6 +28,12 @@ export type PracticeCase = { scenario: string; question: string };
 /** What checking a practice answer returns. Only a verdict and a sentence: never the model answer. */
 export type PracticeFeedback = { verdict: "solid" | "partly" | "off"; feedback: string };
 
+/**
+ * One step of help on a practice case. Steps 1 to 3 are hints, each more specific; step 4 is the
+ * model answer, which a learner gets only by asking for it. Practice never counts as proof.
+ */
+export type PracticeHint = { step: number; kind: "hint" | "answer"; text: string };
+
 /*
  * Wave 2: progressive lessons. A lesson is written once per canonical course and node
  * (`lessons/<contentIdOf(map)>/<nodeId>[/<aud>]`, guarded by `startOnce`), as JSON lines that

@@ -51,6 +51,10 @@ describe("progressive lesson", () => {
     const html = renderToStaticMarkup(<LessonArticle mapId="m" skill={skill} draft={draftOfLesson(lesson)} lesson={lesson} onReady={() => {}} />);
     expect(html).toContain("3 min read");
     expect(html).toContain("<textarea");
+    // A stuck learner can always ask for help, before typing anything.
+    expect(html).toContain("Get a hint");
+    expect(html).not.toMatch(/<button[^>]* disabled=""[^>]*>Get a hint/);
+    expect(html).toMatch(/<button[^>]* disabled=""[^>]*>Check my answer/);
     expect(html).toContain("Prove Memory");
     expect(html).not.toContain("Writing…");
   });

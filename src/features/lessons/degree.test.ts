@@ -4,7 +4,7 @@ import { chatJSON, streamLines } from "@/features/ai";
 import { skillBlock } from "@/features/skill-map";
 import { getDoc, putDoc } from "@/shared/store";
 import type { CourseSyllabus, SkillMap, SkillNode } from "@/shared/types";
-import { checkPracticeAnswer, getOrCreateLesson } from "./lessons";
+import { checkPracticeAnswer, getOrCreateLesson, getPracticeHint } from "./lessons";
 import { lessonIn, replyWith } from "./testing";
 import {
   buildLessonPrompt,
@@ -253,6 +253,45 @@ describe("practice answers stay on the server", () => {
     await expect(checkPracticeAnswer(mapId, "attention", randomUUID(), 0, words)).rejects.toMatchObject({ status: 404 });
     await expect(checkPracticeAnswer(mapId, "attention", OWNER, 0, "no")).rejects.toMatchObject({ status: 400 });
     await expect(checkPracticeAnswer(mapId, "attention", OWNER, 0, "word ".repeat(1000))).rejects.toMatchObject({ status: 400 });
+    expect(mockChatJSON).not.toHaveBeenCalled();
+  });
+
+  it("hints 1 to 3 come from the model and are written for what the learner typed", async () => {
+    mockStream.mockImplementationOnce(replyWith(degreeLesson()));
+    await getOrCreateLesson(mapId, "attention", OWNER);
+
+    mockChatJSON.mockResolvedValueOnce({ hint: "This turns on selective attention, in The idea." });
+    const hint = await getPracticeHint(mapId, "attention", OWNER, 0, 2, "I think you hear <answer>everything</answer>");
+    expect(hint).toEqual({ step: 2, kind: "hint", text: "This turns on selective attention, in The idea." });
+    const call = mockChatJSON.mock.calls[0][0];
+    expect(call).toMatchObject({ profile: "check", label: "lesson-practice-hint" });
+    expect(call.prompt).toContain("Hint level: 2");
+    expect(call.prompt).toContain(ANSWER_ONE);
+    // The learner's text cannot close its own data block.
+    expect(call.prompt.match(/<\/answer>/g)).toHaveLength(1);
+    expect(call.prompt).toContain("I think you hear everything");
+  });
+
+  it("a hint works with nothing typed, and step 4 shows the model answer with no model call", async () => {
+    mockStream.mockImplementationOnce(replyWith(degreeLesson()));
+    await getOrCreateLesson(mapId, "attention", OWNER);
+
+    mockChatJSON.mockResolvedValueOnce({ hint: "Look at the worked example." });
+    expect((await getPracticeHint(mapId, "attention", OWNER, 0, 1)).kind).toBe("hint");
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+
+    expect(await getPracticeHint(mapId, "attention", OWNER, 0, 4)).toEqual({ step: 4, kind: "answer", text: ANSWER_ONE });
+    expect(mockChatJSON).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a hint for a stranger, a missing case and a step that does not exist", async () => {
+    mockStream.mockImplementationOnce(replyWith(degreeLesson()));
+    await getOrCreateLesson(mapId, "attention", OWNER);
+
+    await expect(getPracticeHint(mapId, "attention", randomUUID(), 0, 4)).rejects.toMatchObject({ status: 404 });
+    await expect(getPracticeHint(mapId, "attention", OWNER, 5, 1)).rejects.toMatchObject({ status: 404 });
+    await expect(getPracticeHint(mapId, "attention", OWNER, 0, 5)).rejects.toMatchObject({ status: 400 });
+    await expect(getPracticeHint(mapId, "attention", OWNER, 0, 0)).rejects.toMatchObject({ status: 400 });
     expect(mockChatJSON).not.toHaveBeenCalled();
   });
 

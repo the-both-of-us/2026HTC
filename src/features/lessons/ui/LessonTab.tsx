@@ -14,8 +14,8 @@ import {
 import { useEffect, useState, type ReactNode } from "react";
 import type { PublicSkillNode } from "@/shared/types";
 import { Button, ErrorNotice, Field, pollLoop, ReadAloudButton, Spinner, Textarea } from "@/shared/ui";
-import type { Lesson, LessonPart, PracticeCase, PracticeFeedback } from "../types";
-import { checkPractice, fetchLessonStep } from "./api";
+import type { Lesson, LessonPart, PracticeCase, PracticeFeedback, PracticeHint } from "../types";
+import { checkPractice, fetchLessonStep, fetchPracticeHint } from "./api";
 import { draftOfLesson, draftOfParts, type LessonDraft } from "./draft";
 import { HighlightedCode, MdBlocks, MdInline, plainText, unfence } from "./LessonMarkdown";
 
@@ -344,16 +344,31 @@ const VERDICT_LABELS: Record<PracticeFeedback["verdict"], string> = {
   off: "Not yet",
 };
 
+/** Hints 1 to 3 get more specific; the step after them shows a model answer. */
+const HINT_COUNT = 3;
+
+function hintButtonLabel(shown: number, loading: boolean): string {
+  if (shown >= HINT_COUNT) return loading ? "Getting the answer" : "Show a model answer";
+  if (loading) return "Getting a hint";
+  return shown === 0 ? "Get a hint" : `Get a clearer hint (${shown + 1} of ${HINT_COUNT})`;
+}
+
 /**
- * A practice case: a situation, a question and a box. The model answer never reaches the page, so
- * the check goes to the server, which answers with a verdict and a short note.
+ * A practice case: a situation, a question and a box. Checking an answer gets a verdict and a
+ * specific note. A stuck learner can ask for up to three hints, each clearer than the last and
+ * written for what they have typed, and then for a model answer. Practice never counts as proof.
  */
 function PracticeQuestion({ mapId, nodeId, index, practice }: { mapId: string; nodeId: string; index: number; practice: PracticeCase }) {
   const [answer, setAnswer] = useState("");
   const [checking, setChecking] = useState(false);
   const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hints, setHints] = useState<PracticeHint[]>([]);
+  const [hinting, setHinting] = useState(false);
+  const [hintError, setHintError] = useState<string | null>(null);
   const id = `practice-${nodeId}-${index}`;
+  const modelAnswer = hints.find((hint) => hint.kind === "answer") ?? null;
+  const shownHints = hints.filter((hint) => hint.kind === "hint");
 
   async function check() {
     setChecking(true);
@@ -362,6 +377,15 @@ function PracticeQuestion({ mapId, nodeId, index, practice }: { mapId: string; n
     setChecking(false);
     if (result.ok) setFeedback(result.feedback);
     else setError(result.message);
+  }
+
+  async function moreHelp() {
+    setHinting(true);
+    setHintError(null);
+    const result = await fetchPracticeHint(mapId, nodeId, index, hints.length + 1, answer);
+    setHinting(false);
+    if (result.ok) setHints((all) => [...all, result.hint]);
+    else setHintError(result.message);
   }
 
   return (
@@ -374,14 +398,45 @@ function PracticeQuestion({ mapId, nodeId, index, practice }: { mapId: string; n
           <Textarea {...control} rows={4} value={answer} onChange={(event) => setAnswer(event.target.value)} disabled={checking} />
         )}
       </Field>
-      <Button variant="subtle" size="sm" onClick={check} disabled={checking || answer.trim() === ""}>
-        {checking ? "Checking" : "Check my answer"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="subtle" size="sm" onClick={check} disabled={checking || answer.trim() === ""}>
+          {checking ? "Checking" : "Check my answer"}
+        </Button>
+        {!modelAnswer && (
+          <Button variant="subtle" size="sm" onClick={moreHelp} disabled={hinting}>
+            {hintButtonLabel(shownHints.length, hinting)}
+          </Button>
+        )}
+      </div>
       {feedback && (
         <p role="status" className="text-ink-soft">
           <span className="font-semibold text-ink">{VERDICT_LABELS[feedback.verdict]}.</span> {feedback.feedback}
         </p>
       )}
+      <div role="status" aria-live="polite" className="flex w-full flex-col gap-2">
+        {shownHints.length > 0 && (
+          <ol className="flex flex-col gap-2">
+            {shownHints.map((hint) => (
+              <li key={hint.step} className="border-l-2 border-rule-strong pl-3 text-ink-soft">
+                <span className="font-semibold text-ink">
+                  Hint {hint.step} of {HINT_COUNT}.
+                </span>{" "}
+                <MdInline text={hint.text} />
+              </li>
+            ))}
+          </ol>
+        )}
+        {modelAnswer && (
+          <div className="border-l-2 border-read-key pl-3">
+            <p className="font-semibold text-ink">A model answer</p>
+            <p className="text-ink-soft">
+              <MdInline text={modelAnswer.text} />
+            </p>
+            <p className="mt-1 text-sm text-ink-soft">Compare it with yours. Practice is not graded and does not count toward proving the skill.</p>
+          </div>
+        )}
+        {hintError && <p className="text-sm text-ink-soft">{hintError}</p>}
+      </div>
     </div>
   );
 }
